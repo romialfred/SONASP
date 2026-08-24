@@ -283,7 +283,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Ces écritures de suivi ne conditionnent pas l'autorisation. Les
         // lancer en arrière-plan évite d'ajouter deux allers-retours réseau au
         // délai perçu entre la validation et l'ouverture du tableau de bord.
-        void Promise.all([
+        // Ces appels sont non bloquants et indépendants. `allSettled` évite
+        // qu'une fonction d'audit momentanément absente ou indisponible ne
+        // produise un rejet non géré après une connexion pourtant valide.
+        void Promise.allSettled([
           logSecurityEvent(data.user.id, 'login_success', { email: normalizedEmail }),
           supabase.rpc('snp_enregistrer_connexion'),
         ]);

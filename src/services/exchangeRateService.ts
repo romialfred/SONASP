@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getLatestReferentialFxRate, getReferentialFxRates } from '@/services/fxRateReferential';
 
 export interface ExchangeRate {
   from_currency: string;
@@ -49,30 +50,20 @@ export async function updateExchangeRates(): Promise<{ success: boolean; updated
     }
 
     const { rates, date } = result.data;
-    const targetCurrencies = ['XOF', 'EUR', 'GBP', 'CHF'];
+    const records = [
+      rates.XOF ? { currency_pair: 'USD/XOF', rate: rates.XOF } : null,
+      rates.EUR ? { currency_pair: 'EUR/USD', rate: 1 / rates.EUR } : null,
+      rates.EUR && rates.XOF ? { currency_pair: 'EUR/XOF', rate: rates.XOF / rates.EUR } : null,
+    ].filter((row): row is { currency_pair: string; rate: number } => Boolean(row));
+
     let updatedCount = 0;
-
-    for (const currency of targetCurrencies) {
-      if (rates[currency]) {
-        const { error } = await supabase
-          .from('fx_rates')
-          .upsert({
-            from_currency: currency,
-            to_currency: 'USD',
-            rate: 1 / rates[currency],
-            rate_date: date,
-            source: 'ECB',
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'from_currency,to_currency,rate_date',
-          });
-
-        if (!error) {
-          updatedCount++;
-        } else {
-          console.error(`Error updating ${currency} rate:`, error);
-        }
-      }
+    for (const record of records) {
+      const { error } = await supabase.from('fx_rates_daily').insert({
+        ...record,
+        rate_date: date,
+        notes: 'Import quotidien du référentiel de change',
+      });
+      if (!error || error.code === '23505') updatedCount++;
     }
 
     return { success: true, updated: updatedCount };
@@ -87,20 +78,10 @@ export async function getLatestRate(
   toCurrency: string = 'USD'
 ): Promise<{ success: boolean; data?: ExchangeRate; error?: string }> {
   try {
-    const { data, error } = await supabase
-      .from('fx_rates')
-      .select('*')
-      .eq('from_currency', fromCurrency)
-      .eq('to_currency', toCurrency)
-      .order('rate_date', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, data };
+    const data = await getLatestReferentialFxRate(fromCurrency, toCurrency);
+    return data
+      ? { success: true, data }
+      : { success: false, error: 'Rate not found' };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -114,20 +95,10 @@ export async function getRateHistory(
   try {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-
-    const { data, error } = await supabase
-      .from('fx_rates')
-      .select('*')
-      .eq('from_currency', fromCurrency)
-      .eq('to_currency', toCurrency)
-      .gte('rate_date', startDate.toISOString().split('T')[0])
-      .order('rate_date', { ascending: true });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, data: data || [] };
+    const data = (await getReferentialFxRates(fromCurrency, toCurrency, Math.max(days, 2)))
+      .filter((rate) => rate.rate_date >= startDate.toISOString().split('T')[0])
+      .reverse();
+    return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -172,15 +143,8 @@ export async function compareRates(
   error?: string;
 }> {
   try {
-    const { data, error } = await supabase
-      .from('fx_rates')
-      .select('rate, rate_date')
-      .eq('from_currency', fromCurrency)
-      .eq('to_currency', toCurrency)
-      .order('rate_date', { ascending: false })
-      .limit(2);
-
-    if (error || !data || data.length < 2) {
+    const data = await getReferentialFxRates(fromCurrency, toCurrency, 2);
+    if (data.length < 2) {
       return { success: false, error: 'Insufficient data for comparison' };
     }
 

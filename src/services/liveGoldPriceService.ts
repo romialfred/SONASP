@@ -3,6 +3,7 @@
  *
  * Integrates multiple real-time gold price APIs with proper fallback strategy
  */
+import { supabase } from '@/lib/supabase';
 
 export interface LiveGoldPrice {
   price: number;
@@ -34,48 +35,44 @@ let priceCache: {
 const CACHE_DURATION = 60 * 1000; // 1 minute cache
 
 /**
- * Fetch gold price from GoldPrice.org (Free, no auth required)
- * This is the most reliable free API with comprehensive data
+ * Source prioritaire : le référentiel SONASP alimenté côté serveur.
+ *
+ * L'ancienne implémentation appelait GoldPrice.org directement depuis le
+ * navigateur. Cette origine n'autorise pas sonasp.data-univers.com en CORS et
+ * produisait donc une erreur à chaque chargement. La donnée officielle déjà
+ * stockée dans Supabase évite cette dépendance navigateur fragile.
  */
-async function fetchFromGoldPriceOrg(): Promise<LiveGoldPrice | null> {
+async function fetchFromSonaspReferential(): Promise<LiveGoldPrice | null> {
   try {
-    const response = await fetch('https://data-asg.goldprice.org/dbXRates/USD');
+    const { data, error } = await supabase
+      .from('gold_prices_daily')
+      .select('price_date, spot_price, london_pm_rate, london_am_rate, average_price, high_price, low_price, source, currency, updated_at')
+      .order('price_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (!response.ok) {
-      console.warn('GoldPrice.org request failed:', response.status);
-      return null;
-    }
+    if (error || !data) return null;
 
-    const data = await response.json();
+    const price = Number(
+      data.spot_price
+        ?? data.london_pm_rate
+        ?? data.london_am_rate
+        ?? data.average_price,
+    );
+    if (!Number.isFinite(price) || price <= 0) return null;
 
-    if (data && data.items && data.items.length > 0) {
-      const goldItem = data.items.find((item: any) => item.curr === 'XAU');
-
-      if (goldItem && goldItem.xauPrice) {
-        const change24h = Number.isFinite(Number(goldItem.chgXau))
-          ? Number(goldItem.chgXau)
-          : undefined;
-        const changePercent24h = Number.isFinite(Number(goldItem.pcXau))
-          ? Number(goldItem.pcXau)
-          : undefined;
-
-        return {
-          price: goldItem.xauPrice,
-          timestamp: Date.now(),
-          source: 'GoldPrice.org',
-          currency: 'USD',
-          high24h: Number.isFinite(Number(goldItem.highPrice)) ? Number(goldItem.highPrice) : undefined,
-          low24h: Number.isFinite(Number(goldItem.lowPrice)) ? Number(goldItem.lowPrice) : undefined,
-          change24h,
-          changePercent24h,
-          openPrice: change24h === undefined ? undefined : goldItem.xauPrice - change24h,
-        };
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error('GoldPrice.org error:', error);
+    const parsedTimestamp = Date.parse(data.updated_at ?? data.price_date);
+    const high = data.high_price === null ? undefined : Number(data.high_price);
+    const low = data.low_price === null ? undefined : Number(data.low_price);
+    return {
+      price,
+      timestamp: Number.isFinite(parsedTimestamp) ? parsedTimestamp : Date.now(),
+      source: data.source ? `Référentiel SONASP · ${data.source}` : 'Référentiel SONASP',
+      currency: data.currency || 'USD',
+      high24h: Number.isFinite(high) ? high : undefined,
+      low24h: Number.isFinite(low) ? low : undefined,
+    };
+  } catch {
     return null;
   }
 }
@@ -88,10 +85,7 @@ async function fetchFromCoinbaseCommerce(): Promise<LiveGoldPrice | null> {
     // Using public Coinbase API for PAXG (tokenized gold)
     const response = await fetch('https://api.coinbase.com/v2/prices/PAXG-USD/spot');
 
-    if (!response.ok) {
-      console.warn('Coinbase request failed:', response.status);
-      return null;
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
 
@@ -107,8 +101,7 @@ async function fetchFromCoinbaseCommerce(): Promise<LiveGoldPrice | null> {
     }
 
     return null;
-  } catch (error) {
-    console.error('Coinbase error:', error);
+  } catch {
     return null;
   }
 }
@@ -120,25 +113,21 @@ export async function fetchLiveGoldPrice(): Promise<LiveGoldPrice | null> {
   // Check cache first
   const now = Date.now();
   if (priceCache.data && (now - priceCache.timestamp) < CACHE_DURATION) {
-    console.log('Returning cached gold price');
     return priceCache.data;
   }
 
-  console.log('Fetching fresh gold price data...');
-
-  // Try primary API first (GoldPrice.org - most reliable and comprehensive)
-  let price = await fetchFromGoldPriceOrg();
+  // Le référentiel interne est la source autoritative et ne dépend pas du CORS
+  // d'un fournisseur public tiers.
+  let price = await fetchFromSonaspReferential();
 
   // Fallback to Coinbase (PAXG tokenized gold)
   if (!price) {
-    console.log('Primary API failed, trying Coinbase...');
     price = await fetchFromCoinbaseCommerce();
   }
 
   // Aucune valeur de repli n'est fabriquee. Une indisponibilite doit rester
   // visible : un cours invente peut contaminer une vente ou un rapprochement.
   if (!price) {
-    console.warn('Toutes les sources de cours ont échoué ; aucun cours ne sera affiché.');
     return null;
   }
 
@@ -148,7 +137,6 @@ export async function fetchLiveGoldPrice(): Promise<LiveGoldPrice | null> {
       data: price,
       timestamp: now,
     };
-    console.log('Gold price updated:', price.price, 'from', price.source);
   }
 
   return price;
@@ -318,5 +306,4 @@ export function clearPriceCache(): void {
     data: null,
     timestamp: 0,
   };
-  console.log('Gold price cache cleared');
 }

@@ -254,8 +254,8 @@ export function ShippingPreparationDetailsEnhanced() {
           let userEmail = 'Système';
           if (entry.changed_by) {
             const { data: userData } = await supabase
-              .from('profiles')
-              .select('email, full_name, first_name, last_name')
+              .from('user_profiles')
+              .select('email, full_name')
               .eq('id', entry.changed_by)
               .maybeSingle();
 
@@ -264,8 +264,6 @@ export function ShippingPreparationDetailsEnhanced() {
                 userEmail = userData.email;
               } else if (userData.full_name) {
                 userEmail = userData.full_name;
-              } else if (userData.first_name || userData.last_name) {
-                userEmail = [userData.first_name, userData.last_name].filter(Boolean).join(' ');
               } else {
                 userEmail = 'Utilisateur';
               }

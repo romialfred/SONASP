@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getLatestReferentialFxRate, getReferentialFxRates } from '@/services/fxRateReferential';
 
 export interface CreatePaymentData {
   sale_id: string;
@@ -293,19 +294,8 @@ export async function getCurrentFXRate(
   toCurrency: string = 'USD'
 ): Promise<{ success: boolean; data?: FXRate; error?: string }> {
   try {
-    const { data, error } = await supabase
-      .from('fx_rates')
-      .select('*')
-      .eq('from_currency', fromCurrency)
-      .eq('to_currency', toCurrency)
-      .order('rate_date', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
+    const data = await getLatestReferentialFxRate(fromCurrency, toCurrency);
+    if (!data) return { success: false, error: 'Taux de change indisponible' };
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -319,28 +309,12 @@ export async function getFXRateHistory(
   dateTo?: string
 ): Promise<{ success: boolean; data?: FXRate[]; error?: string }> {
   try {
-    let query = supabase
-      .from('fx_rates')
-      .select('*')
-      .eq('from_currency', fromCurrency)
-      .eq('to_currency', toCurrency)
-      .order('rate_date', { ascending: false });
-
-    if (dateFrom) {
-      query = query.gte('rate_date', dateFrom);
-    }
-
-    if (dateTo) {
-      query = query.lte('rate_date', dateTo);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, data: data || [] };
+    const rates = await getReferentialFxRates(fromCurrency, toCurrency, 366);
+    const data = rates.filter((rate) => (
+      (!dateFrom || rate.rate_date >= dateFrom)
+      && (!dateTo || rate.rate_date <= dateTo)
+    ));
+    return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -362,15 +336,8 @@ export async function compareFXRates(
   error?: string;
 }> {
   try {
-    const { data, error } = await supabase
-      .from('fx_rates')
-      .select('rate, rate_date')
-      .eq('from_currency', fromCurrency)
-      .eq('to_currency', toCurrency)
-      .order('rate_date', { ascending: false })
-      .limit(2);
-
-    if (error || !data || data.length < 2) {
+    const data = await getReferentialFxRates(fromCurrency, toCurrency, 2);
+    if (data.length < 2) {
       return { success: false, error: 'Insufficient data for comparison' };
     }
 

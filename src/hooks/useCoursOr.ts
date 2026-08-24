@@ -41,6 +41,30 @@ export function ecartAuCours(prixSaisi: number, prixMarche: number | null): numb
 }
 
 /**
+ * Lit le dernier taux USD/XOF du référentiel officiel de la plateforme.
+ *
+ * Cette lecture reste facultative : une table momentanément indisponible ne
+ * doit jamais empêcher une page métier de s'afficher.
+ */
+export async function chargerDernierTauxUsdXof(): Promise<number | null> {
+  try {
+    const { data, error } = await supabase
+      .from('fx_rates_daily')
+      .select('rate')
+      .eq('currency_pair', 'USD/XOF')
+      .order('rate_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    const rate = Number(data.rate);
+    return Number.isFinite(rate) && rate > 0 ? rate : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Source unique du cours de l'or pour la plateforme.
  *
  * Le panneau de cours et le formulaire de vente interrogeaient chacun leur côté ;
@@ -54,16 +78,8 @@ export function useCoursOr({ actualisationAutomatique = true }: OptionsCoursOr =
   const [erreur, setErreur] = useState<string | null>(null);
 
   const chargerTaux = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('exchange_rates')
-      .select('rate')
-      .eq('from_currency', 'USD')
-      .eq('to_currency', 'XOF')
-      .order('rate_date', { ascending: false })
-      .limit(1)
-      .maybeSingle();
     // Aucun taux de repli : une conversion approximative vaut moins que pas de conversion.
-    setTauxUsdXof(!error && data ? Number(data.rate) : null);
+    setTauxUsdXof(await chargerDernierTauxUsdXof());
   }, []);
 
   const chargerCours = useCallback(async (manuel = false) => {

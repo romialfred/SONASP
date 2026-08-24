@@ -12,6 +12,7 @@ import { Loading } from '@/components/ui/Loading';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';
+import { getReferentialFxRates } from '@/services/fxRateReferential';
 
 interface Sale {
   id: string;
@@ -136,13 +137,8 @@ export function PaymentCreate() {
               .eq('id', sale.seller_id)
               .single();
             sellerName = miningData?.name || 'N/A';
-          } else if (sale.seller_type === 'stakeholder' && sale.seller_id) {
-            const { data: stakeholderData } = await supabase
-              .from('stakeholders')
-              .select('name')
-              .eq('id', sale.seller_id)
-              .single();
-            sellerName = stakeholderData?.name || 'N/A';
+          } else if (sale.seller_type === 'sonasp') {
+            sellerName = 'SONASP';
           }
 
           return {
@@ -226,20 +222,17 @@ export function PaymentCreate() {
       const fromCurrency = formData.paymentCurrency;
       const toCurrency = selectedSale.currency || 'USD';
 
-      const { data: fxRates, error: fxError } = await supabase
-        .from('fx_rates')
-        .select('*')
-        .eq('from_currency', fromCurrency)
-        .eq('to_currency', toCurrency)
-        .order('date', { ascending: false })
-        .limit(10);
+      const fxRates = await getReferentialFxRates(fromCurrency, toCurrency, 10);
+      const referenceRate = fxRates[0]?.rate;
+      if (!referenceRate) throw new Error('Aucun taux de change disponible pour cette paire.');
 
-      if (fxError) throw fxError;
-
-      const customerRate = fxRates?.find(r => r.source === 'customer')?.rate || 1;
-      const revolutRate = fxRates?.find(r => r.source === 'revolut')?.rate || customerRate;
-      const ecbRate = fxRates?.find(r => r.source === 'ecb')?.rate || customerRate;
-      const bceaoRate = fxRates?.find(r => r.source === 'bceao')?.rate || customerRate;
+      // Le référentiel actuel fournit un taux officiel unique par jour. Les
+      // quatre indicateurs restent alignés sur cette valeur tant qu'aucune
+      // cotation bancaire certifiée n'est enregistrée.
+      const customerRate = referenceRate;
+      const revolutRate = referenceRate;
+      const ecbRate = referenceRate;
+      const bceaoRate = referenceRate;
 
       const rates = [
         { source: 'Customer Bank', rate: customerRate },

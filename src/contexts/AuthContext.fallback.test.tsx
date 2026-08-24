@@ -263,4 +263,30 @@ describe('AuthProvider profile fallback', () => {
     });
     expect(authMocks.signOut).toHaveBeenCalledTimes(1);
   });
+
+  it('ne transforme pas une panne du suivi de connexion en échec d’authentification', async () => {
+    authMocks.profileResult = {
+      id: 'active-123',
+      email: 'agent@sonasp.bf',
+      full_name: 'Agent actif',
+      role: 'management',
+      is_active: true,
+    };
+    authMocks.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    authMocks.signInWithPassword.mockResolvedValue({
+      data: { user: { id: 'active-123' } },
+      error: null,
+    });
+    authMocks.rpc.mockImplementation((name: string) => name === 'snp_enregistrer_connexion'
+      ? Promise.reject(new Error('fonction indisponible'))
+      : Promise.resolve({ error: null }));
+
+    render(<AuthProvider><SignInProbe /></AuthProvider>);
+    const button = await screen.findByRole('button', { name: 'Connexion test' });
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+
+    await waitFor(() => expect(screen.getByTestId('sign-in-result')).toHaveTextContent('ok'));
+    expect(authMocks.rpc).toHaveBeenCalledWith('snp_enregistrer_connexion');
+  });
 });

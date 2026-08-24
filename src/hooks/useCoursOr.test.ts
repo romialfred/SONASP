@@ -1,5 +1,57 @@
-import { describe, expect, it } from 'vitest';
-import { GRAMMES_PAR_ONCE, ecartAuCours, prixGrammeDepuisOnce } from './useCoursOr';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  GRAMMES_PAR_ONCE,
+  chargerDernierTauxUsdXof,
+  ecartAuCours,
+  prixGrammeDepuisOnce,
+} from './useCoursOr';
+
+const mocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  maybeSingle: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: { from: mocks.from },
+}));
+
+vi.mock('@/services/liveGoldPriceService', () => ({
+  clearPriceCache: vi.fn(),
+  fetchLiveGoldPrice: vi.fn(),
+}));
+
+describe('chargerDernierTauxUsdXof', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    const query = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn(),
+      maybeSingle: mocks.maybeSingle,
+    };
+    query.select.mockReturnValue(query);
+    query.eq.mockReturnValue(query);
+    query.order.mockReturnValue(query);
+    query.limit.mockReturnValue(query);
+    mocks.from.mockReturnValue(query);
+  });
+
+  it('lit le couple USD/XOF dans le vrai référentiel de change', async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: { rate: 600.25 }, error: null });
+
+    await expect(chargerDernierTauxUsdXof()).resolves.toBe(600.25);
+    expect(mocks.from).toHaveBeenCalledWith('fx_rates_daily');
+    const query = mocks.from.mock.results[0].value;
+    expect(query.eq).toHaveBeenCalledWith('currency_pair', 'USD/XOF');
+    expect(query.order).toHaveBeenCalledWith('rate_date', { ascending: false });
+  });
+
+  it('reste non bloquant si le référentiel ne répond pas', async () => {
+    mocks.maybeSingle.mockRejectedValue(new TypeError('offline'));
+    await expect(chargerDernierTauxUsdXof()).resolves.toBeNull();
+  });
+});
 
 describe('prixGrammeDepuisOnce', () => {
   it('convertit l’once en gramme au taux du référentiel', () => {

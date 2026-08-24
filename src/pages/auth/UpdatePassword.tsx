@@ -1,5 +1,5 @@
 import { CheckCircle2, LockKeyhole } from 'lucide-react';
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
 import { supabase } from '@/lib/supabase';
@@ -13,7 +13,13 @@ export default function UpdatePassword() {
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [sessionState, setSessionState] = useState<'checking' | 'ready' | 'invalid'>('checking');
+  const verificationEnCours = useRef<{
+    tokenHash: string;
+    promise: ReturnType<typeof supabase.auth.verifyOtp>;
+  } | null>(null);
   const afficherEnrolement = sessionState === 'ready' && status === 'success';
+  const jetonHache = searchParams.get('token_hash');
+  const typeLien = searchParams.get('type');
 
   useEffect(() => {
     let active = true;
@@ -23,14 +29,26 @@ export default function UpdatePassword() {
     });
 
     const verifierLien = async () => {
-      const jetonHache = searchParams.get('token_hash');
-      const type = searchParams.get('type');
+      if (jetonHache && typeLien === 'recovery') {
+        const urlNettoyee = new URL(window.location.href);
+        urlNettoyee.searchParams.delete('token_hash');
+        urlNettoyee.searchParams.delete('type');
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${urlNettoyee.pathname}${urlNettoyee.search}${urlNettoyee.hash}`,
+        );
 
-      if (jetonHache && type === 'recovery') {
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: jetonHache,
-          type: 'recovery',
-        });
+        if (verificationEnCours.current?.tokenHash !== jetonHache) {
+          verificationEnCours.current = {
+            tokenHash: jetonHache,
+            promise: supabase.auth.verifyOtp({
+              token_hash: jetonHache,
+              type: 'recovery',
+            }),
+          };
+        }
+        const { data, error } = await verificationEnCours.current.promise;
         if (!active) return;
         setSessionState(!error && data.session ? 'ready' : 'invalid');
         if (!error && data.session) navigate('/modifier-mot-de-passe', { replace: true });
@@ -49,7 +67,7 @@ export default function UpdatePassword() {
       active = false;
       ecoute.subscription.unsubscribe();
     };
-  }, [navigate, searchParams]);
+  }, [jetonHache, navigate, typeLien]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();

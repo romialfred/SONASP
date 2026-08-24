@@ -1,7 +1,8 @@
 import { AlertTriangle, ArrowLeft, KeyRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { exchangeActivationToken } from '@/services/accountActivationService';
 
 /**
  * Route de compatibilite pour les anciens liens `/activate-account`.
@@ -14,12 +15,40 @@ import { supabase } from '@/lib/supabase';
  */
 export default function ActivateAccount() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [checking, setChecking] = useState(true);
+  const echangeEnCours = useRef<Promise<string> | null>(null);
+  const jetonHistorique = searchParams.get('token');
 
   useEffect(() => {
     let active = true;
 
     const orienter = async () => {
+      if (jetonHistorique) {
+        // Retirer immédiatement le secret historique de l'historique et du
+        // Referer, avant tout appel réseau. La valeur capturée reste uniquement
+        // en mémoire le temps de l'échange.
+        const urlNettoyee = new URL(window.location.href);
+        urlNettoyee.searchParams.delete('token');
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${urlNettoyee.pathname}${urlNettoyee.search}${urlNettoyee.hash}`,
+        );
+
+        // React StrictMode rejoue les effets en développement. La promesse
+        // mémorisée garantit qu'un lien à usage unique n'est jamais consommé
+        // deux fois par ce rejeu.
+        echangeEnCours.current ??= exchangeActivationToken(jetonHistorique);
+        try {
+          const destination = await echangeEnCours.current;
+          if (active) navigate(destination, { replace: true });
+        } catch {
+          if (active) setChecking(false);
+        }
+        return;
+      }
+
       const { data, error } = await supabase.auth.getSession();
       if (!active) return;
 
@@ -35,7 +64,7 @@ export default function ActivateAccount() {
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, [jetonHistorique, navigate]);
 
   return (
     <main className="grid min-h-screen place-items-center bg-[#f8f5ec] p-5">
@@ -70,8 +99,8 @@ export default function ActivateAccount() {
               Demandez un nouveau lien sécurisé
             </h1>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Cet ancien lien ne permet plus de transmettre un mot de passe provisoire. Utilisez la
-              procédure de récupération pour recevoir un lien signé et limité dans le temps.
+              Ce lien ne peut pas être validé ou a déjà été utilisé. Utilisez la procédure de
+              récupération pour recevoir un nouveau lien signé et limité dans le temps.
             </p>
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               <Link

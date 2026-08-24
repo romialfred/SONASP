@@ -25,3 +25,8 @@ verify_jwt = false
 
 [functions.envoyer-courriel]
 verify_jwt = false
+
+# Endpoint public par nature : il valide son Origin, limite les tentatives et
+# n'utilise la clé de service que dans la fonction pour consommer le jeton.
+[functions.activate-account]
+verify_jwt = false

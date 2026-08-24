@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import UpdatePassword from './UpdatePassword';
@@ -79,14 +80,19 @@ describe('UpdatePassword', () => {
   });
 
   it('échange le jeton du lien SONASP contre une session de récupération', async () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
     render(
-      <MemoryRouter initialEntries={['/modifier-mot-de-passe?token_hash=jeton-signe&type=recovery']}>
-        <UpdatePassword />
-      </MemoryRouter>,
+      <StrictMode>
+        <MemoryRouter initialEntries={['/modifier-mot-de-passe?token_hash=jeton-signe&type=recovery']}>
+          <UpdatePassword />
+        </MemoryRouter>
+      </StrictMode>,
     );
 
     await screen.findByLabelText('Nouveau mot de passe');
     expect(mocks.verifyOtp).toHaveBeenCalledWith({ token_hash: 'jeton-signe', type: 'recovery' });
     expect(mocks.verifyOtp).toHaveBeenCalledTimes(1);
+    expect(replaceState).toHaveBeenCalled();
+    expect(String(replaceState.mock.calls.at(-1)?.[2])).not.toContain('token_hash');
   });
 });

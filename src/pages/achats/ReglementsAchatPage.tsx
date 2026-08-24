@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Field, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { errorMessage } from '@/lib/errorMessage';
 import {
   achatsIndustrielsService,
@@ -17,6 +18,7 @@ import {
   type Societe,
 } from '@/services/achatsIndustrielsService';
 import { simulerAffectationFifo } from '@/services/achatsIndustrielsCalculs';
+import { minePortalService } from '@/services/minePortalService';
 import {
   formaterFcfa,
   LIBELLES_CYCLE,
@@ -46,6 +48,7 @@ const entier = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
 export function ReglementsAchatPage() {
   const navigate = useNavigate();
+  const { isMine, companyId } = useMineWorkspace();
   const [reglements, setReglements] = useState<ReglementAchat[]>([]);
   const [factures, setFactures] = useState<FactureAchat[]>([]);
   const [societes, setSocietes] = useState<Societe[]>([]);
@@ -59,6 +62,10 @@ export function ReglementsAchatPage() {
   const [filtreSociete, setFiltreSociete] = useState('all');
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [reglementOuvert, setReglementOuvert] = useState<ReglementAchat | null>(null);
+  const [reponseMine, setReponseMine] = useState<{
+    reglement: ReglementAchat;
+    commentaire: string;
+  } | null>(null);
   const [saisieAffectation, setSaisieAffectation] = useState<Record<string, string>>({});
 
   const [saisie, setSaisie] = useState({
@@ -76,10 +83,11 @@ export function ReglementsAchatPage() {
     setChargement(true);
     setErreur(null);
     try {
+      const societeImposee = isMine ? companyId || '__mine_indisponible__' : filtreSociete;
       const [listeReglements, listeFactures, listeSocietes] = await Promise.all([
-        achatsIndustrielsService.listerReglements(filtreSociete),
-        achatsIndustrielsService.listerFactures({ societe: filtreSociete }),
-        achatsIndustrielsService.societesProductrices(),
+        achatsIndustrielsService.listerReglements(societeImposee),
+        achatsIndustrielsService.listerFactures({ societe: societeImposee }),
+        isMine ? Promise.resolve([]) : achatsIndustrielsService.societesProductrices(),
       ]);
       setReglements(listeReglements);
       setFactures(listeFactures);
@@ -89,7 +97,7 @@ export function ReglementsAchatPage() {
     } finally {
       setChargement(false);
     }
-  }, [filtreSociete]);
+  }, [companyId, filtreSociete, isMine]);
 
   useEffect(() => {
     void charger();
@@ -216,14 +224,33 @@ export function ReglementsAchatPage() {
       return 'Affectation annulée. Le montant redevient disponible sur le règlement.';
     });
 
+  const repondreAuReglement = (decision: 'confirmer' | 'contester') =>
+    executer(`reception-${decision}`, async () => {
+      if (!reponseMine) throw new Error('Aucun règlement sélectionné.');
+      if (decision === 'contester' && reponseMine.commentaire.trim().length < 5) {
+        throw new Error('Précisez le motif de la contestation.');
+      }
+      await minePortalService.respondToPayment(
+        reponseMine.reglement.id,
+        decision,
+        reponseMine.commentaire
+      );
+      setReponseMine(null);
+      return decision === 'confirmer'
+        ? 'Réception du règlement confirmée à la SONASP.'
+        : 'Contestation du règlement transmise à la SONASP.';
+    });
+
   return (
     <NationalDashboardLayout>
       <div className="sn-page achats-page">
         <PageHeader
           icon={Wallet}
-          title="Règlements aux sociétés minières"
-          subtitle="Sommes versées par la SONASP et leur imputation sur les factures d’achat."
-          breadcrumb={[{ label: 'Achats industriels' }, { label: 'Règlements' }]}
+          title={isMine ? 'Règlements reçus' : 'Règlements aux sociétés minières'}
+          subtitle={isMine
+            ? 'Versements exécutés par la SONASP : confirmez leur réception ou signalez un écart.'
+            : 'Sommes versées par la SONASP et leur imputation sur les factures d’achat.'}
+          breadcrumb={[{ label: isMine ? 'Relations avec la SONASP' : 'Achats industriels' }, { label: 'Règlements' }]}
           info={{
             titre: 'Pourquoi un règlement n’est pas une facture',
             contenu:
@@ -233,12 +260,12 @@ export function ReglementsAchatPage() {
             <>
               {/* La préparation d'un virement de plusieurs milliards a son
                   écran : un tiroir de six champs n'y suffisait pas. */}
-              <button
+              {!isMine && <button
                 type="button" className="sn-btn sn-btn--primary"
                 onClick={() => navigate('/achats/reglements/nouveau')}
               >
                 <Plus aria-hidden="true" /> Préparer un règlement
-              </button>
+              </button>}
               <button type="button" className="sn-btn" onClick={() => void charger()} disabled={chargement}>
                 <RefreshCw className={chargement ? 'sn-spin' : ''} aria-hidden="true" /> Actualiser
               </button>
@@ -267,7 +294,7 @@ export function ReglementsAchatPage() {
           description="Sélectionnez un règlement pour imputer son solde sur les factures ouvertes."
         >
           <div className="sn-grid sn-grid--3" style={{ marginBottom: 14 }}>
-            <label className="sn-field">
+            {!isMine && <label className="sn-field">
               <span className="sn-field__label">Société minière</span>
               <select value={filtreSociete} onChange={(evenement) => setFiltreSociete(evenement.target.value)}>
                 <option value="all">Toutes les sociétés</option>
@@ -275,7 +302,7 @@ export function ReglementsAchatPage() {
                   <option key={societe.id} value={societe.id}>{societe.name}</option>
                 ))}
               </select>
-            </label>
+            </label>}
           </div>
 
           {chargement ? (
@@ -298,7 +325,7 @@ export function ReglementsAchatPage() {
                     <th scope="col" className="is-right">Imputé</th>
                     <th scope="col" className="is-right">Sans affectation</th>
                     <th scope="col">État</th>
-                    <th scope="col">Imputation</th>
+                    <th scope="col">{isMine ? 'Réception' : 'Imputation'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -332,7 +359,25 @@ export function ReglementsAchatPage() {
                           </Badge>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {isMine ? (
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                              <Badge tone={reglement.reception_statut === 'confirmee' ? 'success'
+                                : reglement.reception_statut === 'contestee' ? 'danger' : 'warning'}>
+                                {reglement.reception_statut === 'confirmee' ? 'Réception confirmée'
+                                  : reglement.reception_statut === 'contestee' ? 'Contesté'
+                                    : 'À confirmer'}
+                              </Badge>
+                              {reglement.reception_statut === 'a_confirmer'
+                                && ['execute', 'rapproche'].includes(reglement.statut) && (
+                                <button
+                                  type="button" className="sn-btn" style={{ height: 28, fontSize: 11 }}
+                                  onClick={() => setReponseMine({ reglement, commentaire: '' })}
+                                >
+                                  Répondre
+                                </button>
+                              )}
+                            </div>
+                          ) : <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                             <button
                               type="button" className="sn-btn" style={{ height: 28, fontSize: 11 }}
                               onClick={() => {
@@ -351,7 +396,7 @@ export function ReglementsAchatPage() {
                                 Plus ancienne d’abord
                               </button>
                             )}
-                          </div>
+                          </div>}
                         </td>
                       </tr>
                     );
@@ -361,6 +406,54 @@ export function ReglementsAchatPage() {
             </div>
           )}
         </Section>
+
+        {reponseMine && (
+          <div className="achats-fenetre" role="dialog" aria-modal="true" aria-label="Répondre au règlement">
+            <div className="achats-fenetre__voile" aria-hidden="true" onClick={() => setReponseMine(null)} />
+            <div className="achats-fenetre__panneau">
+              <header>
+                <h3><CheckCircle2 aria-hidden="true" /> Réception du règlement</h3>
+                <button type="button" aria-label="Fermer" onClick={() => setReponseMine(null)}>
+                  <X aria-hidden="true" />
+                </button>
+              </header>
+              <div className="achats-fenetre__corps">
+                <Note>
+                  {reponseMine.reglement.reference_reglement} · {formaterFcfa(reponseMine.reglement.montant_fcfa)}
+                </Note>
+                <Field label="Commentaire" htmlFor="commentaire-reglement">
+                  <textarea
+                    id="commentaire-reglement"
+                    className="sn-input"
+                    rows={3}
+                    value={reponseMine.commentaire}
+                    onChange={(evenement) => setReponseMine({
+                      ...reponseMine,
+                      commentaire: evenement.target.value,
+                    })}
+                    placeholder="Précisez un écart en cas de contestation"
+                  />
+                </Field>
+              </div>
+              <footer>
+                <button
+                  type="button" className="sn-btn"
+                  disabled={action !== null || reponseMine.commentaire.trim().length < 5}
+                  onClick={() => void repondreAuReglement('contester')}
+                >
+                  Contester
+                </button>
+                <button
+                  type="button" className="sn-btn sn-btn--primary"
+                  disabled={action !== null}
+                  onClick={() => void repondreAuReglement('confirmer')}
+                >
+                  Confirmer la réception
+                </button>
+              </footer>
+            </div>
+          </div>
+        )}
 
         {/* ------------------------------------------------ Enregistrement -- */}
         {formulaireOuvert && (

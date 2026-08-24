@@ -9,6 +9,10 @@ export interface CreateUserRequest {
   role: string;
   is_active?: boolean;
   mining_company_id?: string | null;
+  account_type?: 'comptoir';
+  organization_id?: string;
+  organization_code?: string;
+  organization_name?: string;
   permissions?: PermissionMap;
   capabilities?: OperationalCapabilityMap;
 }
@@ -20,6 +24,7 @@ export interface CreateUserResponse {
     email: string;
     full_name: string;
     role: string;
+    account_type?: 'comptoir' | null;
   };
   email_sent?: boolean;
   requires_password_change?: boolean;

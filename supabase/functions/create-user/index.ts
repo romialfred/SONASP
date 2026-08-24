@@ -35,6 +35,10 @@ interface RequeteCreation {
   role?: unknown;
   is_active?: unknown;
   mining_company_id?: unknown;
+  account_type?: unknown;
+  organization_id?: unknown;
+  organization_code?: unknown;
+  organization_name?: unknown;
   permissions?: unknown;
   capabilities?: unknown;
 }
@@ -155,6 +159,7 @@ Deno.serve(async (req: Request) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   let utilisateurCree: string | null = null;
+  let organisationCreee: string | null = null;
 
   try {
     const autorisation = req.headers.get('Authorization') ?? '';
@@ -198,6 +203,10 @@ Deno.serve(async (req: Request) => {
     const telephone = texte(corps.phone, 40) || null;
     const role = texte(corps.role, 40).toLowerCase();
     const societeMiniere = texte(corps.mining_company_id, 64) || null;
+    const typeCompte = texte(corps.account_type, 40).toLowerCase() || null;
+    const organisationDemandee = texte(corps.organization_id, 64) || null;
+    const codeOrganisation = texte(corps.organization_code, 20).toUpperCase() || null;
+    const nomOrganisation = texte(corps.organization_name, 160) || null;
     const actif = corps.is_active !== false;
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -221,6 +230,32 @@ Deno.serve(async (req: Request) => {
     }
     if (role !== 'mine' && societeMiniere) {
       throw new ErreurPublique(400, 'Ce rôle ne peut pas recevoir un périmètre de société minière.');
+    }
+    if (typeCompte && typeCompte !== 'comptoir') {
+      throw new ErreurPublique(400, 'Le type de compte sélectionné n’est pas reconnu.');
+    }
+    if (typeCompte === 'comptoir') {
+      if (role !== 'customer') {
+        throw new ErreurPublique(400, 'Le profil Comptoir doit utiliser le rôle partenaire sécurisé.');
+      }
+      const rattachementExistant = Boolean(organisationDemandee);
+      const nouveauRattachement = Boolean(codeOrganisation || nomOrganisation);
+      if (rattachementExistant === nouveauRattachement) {
+        throw new ErreurPublique(400, 'Sélectionnez un comptoir existant ou renseignez un nouveau comptoir.');
+      }
+      if (organisationDemandee && !UUID.test(organisationDemandee)) {
+        throw new ErreurPublique(400, 'Le comptoir sélectionné est invalide.');
+      }
+      if (nouveauRattachement) {
+        if (!codeOrganisation || !/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(codeOrganisation)) {
+          throw new ErreurPublique(400, 'Le code du comptoir est invalide.');
+        }
+        if (!nomOrganisation || nomOrganisation.length < 3) {
+          throw new ErreurPublique(400, 'Le nom du comptoir est obligatoire.');
+        }
+      }
+    } else if (organisationDemandee || codeOrganisation || nomOrganisation) {
+      throw new ErreurPublique(400, 'Ce profil ne peut pas recevoir un périmètre Comptoir.');
     }
 
     if (societeMiniere) {
@@ -257,6 +292,28 @@ Deno.serve(async (req: Request) => {
 
     const permissions = normaliserPermissions(corps.permissions, role);
     const capacites = normaliserCapacites(corps.capabilities, role);
+    if (typeCompte === 'comptoir' && !capacites.some(
+      (capacite) => capacite.code === 'comptoir.manage' && capacite.allowed
+    )) {
+      throw new ErreurPublique(400, 'L’habilitation Comptoir d’achat est obligatoire pour ce profil.');
+    }
+    if (typeCompte !== 'comptoir' && role === 'customer' && capacites.some(
+      (capacite) => capacite.code === 'comptoir.manage' && capacite.allowed
+    )) {
+      throw new ErreurPublique(400, 'L’habilitation Comptoir exige un périmètre Comptoir actif.');
+    }
+
+    if (typeCompte === 'comptoir' && organisationDemandee) {
+      const { data: organisation, error: erreurOrganisation } = await admin
+        .from('snp_organizations')
+        .select('id')
+        .eq('id', organisationDemandee)
+        .eq('organization_type', 'comptoir')
+        .eq('is_active', true)
+        .maybeSingle();
+      if (erreurOrganisation) throw new Error(`comptoir: ${erreurOrganisation.message}`);
+      if (!organisation) throw new ErreurPublique(400, 'Le comptoir sélectionné est inactif ou introuvable.');
+    }
     if (permissions.length > 0) {
       const ids = [...new Set(permissions.map((permission) => permission.module_id))];
       const { data: modules, error: erreurModules } = await admin.from('modules').select('id').in('id', ids);
@@ -303,6 +360,48 @@ Deno.serve(async (req: Request) => {
         throw new ErreurPublique(409, 'Cette société minière possède déjà un compte.');
       }
       throw new Error(`profil: ${erreurProfil.message}`);
+    }
+
+    if (typeCompte === 'comptoir') {
+      let organisationId = organisationDemandee;
+      if (!organisationId) {
+        const { data: nouvelleOrganisation, error: erreurNouvelleOrganisation } = await admin
+          .from('snp_organizations')
+          .insert({
+            code: codeOrganisation,
+            name: nomOrganisation,
+            organization_type: 'comptoir',
+            is_active: true,
+            created_by: acteur.id,
+          })
+          .select('id')
+          .single();
+        if (erreurNouvelleOrganisation || !nouvelleOrganisation?.id) {
+          const conflit = erreurNouvelleOrganisation?.code === '23505';
+          throw new ErreurPublique(
+            conflit ? 409 : 400,
+            conflit
+              ? 'Un comptoir utilise déjà ce code.'
+              : 'Le périmètre du comptoir n’a pas pu être créé.',
+          );
+        }
+        organisationId = nouvelleOrganisation.id;
+        organisationCreee = organisationId;
+      }
+
+      const { error: erreurRattachement } = await admin
+        .from('snp_user_organization_memberships')
+        .insert({
+          user_id: utilisateurCree,
+          organization_id: organisationId,
+          membership_role: 'manager',
+          is_primary: true,
+          reason: 'Rattachement lors de la création sécurisée du compte Comptoir',
+          granted_by: acteur.id,
+        });
+      if (erreurRattachement) {
+        throw new Error(`rattachement au comptoir: ${erreurRattachement.message}`);
+      }
     }
 
     if (capacites.length > 0) {
@@ -366,7 +465,7 @@ Deno.serve(async (req: Request) => {
         action: 'bienvenue',
         to: email,
         nom_complet: nomComplet,
-        role,
+        role: typeCompte === 'comptoir' ? 'comptoir' : role,
         lien_activation: lienActivation,
       }),
     });
@@ -384,19 +483,33 @@ Deno.serve(async (req: Request) => {
 
     const reponse = reponseJson(req, {
       success: true,
-      user: { id: utilisateurCree, email, full_name: nomComplet, role },
+      user: {
+        id: utilisateurCree,
+        email,
+        full_name: nomComplet,
+        role,
+        account_type: typeCompte,
+      },
       email_sent: true,
       requires_password_change: true,
       requires_mfa_enrollment: true,
       message: 'Compte créé. Le courriel de bienvenue a été envoyé.',
     }, 201);
     utilisateurCree = null;
+    organisationCreee = null;
     return reponse;
   } catch (erreur) {
     if (utilisateurCree) {
       await annulerCreation(admin, utilisateurCree).catch((raison) =>
         console.error('[create-user] Retour arrière incomplet.', raison)
       );
+    }
+    if (organisationCreee) {
+      try {
+        await admin.from('snp_organizations').delete().eq('id', organisationCreee);
+      } catch (raison) {
+        console.error('[create-user] Nettoyage du comptoir incomplet.', raison);
+      }
     }
 
     if (erreur instanceof ErreurPublique) {

@@ -46,7 +46,8 @@ const MARGE = 10;
 describe('intitulés de la barre latérale', () => {
   it('tient sur une ligne pour chaque groupe dépliable', () => {
     const trop = ALL_GROUPS.filter((groupe) => groupe.children?.length).filter(
-      (groupe) => largeurTexte(groupe.label, 13) > BUDGETS.groupeAvecSigne - MARGE
+      (groupe) => largeurTexte(groupe.label, ['market', 'sales'].includes(groupe.id) ? 12 : 13)
+        > BUDGETS.groupeAvecSigne - MARGE
     );
     expect(trop.map((groupe) => groupe.label)).toEqual([]);
   });
@@ -91,6 +92,23 @@ describe('section « Rapports et analyses »', () => {
 });
 
 describe('navigation', () => {
+  it('organise la vente internationale et ses parties prenantes', () => {
+    const marche = ALL_GROUPS.find((group) => group.id === 'market');
+    const ventes = ALL_GROUPS.find((group) => group.id === 'sales');
+    const partiesPrenantes = ALL_GROUPS.find((group) => group.id === 'stakeholders');
+
+    expect(marche?.label).toBe('Marchés internationaux');
+    expect(ventes?.label).toBe('Vente d’or international');
+    expect(ventes?.children).toEqual([
+      expect.objectContaining({ label: 'Ventes', path: '/sales' }),
+      expect.objectContaining({ label: 'Paiements', path: '/payments' }),
+    ]);
+    expect(ventes?.children?.map((item) => item.path)).not.toContain('/customers');
+    expect(partiesPrenantes?.children).toContainEqual(
+      expect.objectContaining({ label: 'Clients internationaux', path: '/customers' })
+    );
+  });
+
   it('place les Approbateurs uniquement dans Parties prenantes', () => {
     const partiesPrenantes = ALL_GROUPS.find((group) => group.id === 'stakeholders');
     const administration = ALL_GROUPS.find((group) => group.id === 'administration');
@@ -152,6 +170,8 @@ describe('navigation', () => {
     expect(routes).toContain('/production/daily');
     expect(routes).toContain('/shipping/preparation');
     expect(routes).toContain('/sales');
+    expect(routes).toContain('/customers');
+    expect(routes).toContain('/stakeholders/depositors');
     expect(routes).not.toContain('/production/achats-mines');
     expect(routes).not.toContain('/inventory/add');
   });

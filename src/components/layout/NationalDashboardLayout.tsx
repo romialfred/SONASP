@@ -451,7 +451,12 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
               <div className="national-sidebar__group" key={group.label}>
                 <button
                   type="button"
-                  className={cn('national-sidebar__group-trigger', groupActive && 'is-current')}
+                  className={cn(
+                    'national-sidebar__group-trigger',
+                    !isMine && !isComptoir && ['market', 'sales'].includes(group.id)
+                      && 'national-sidebar__group-trigger--compact',
+                    groupActive && 'is-current'
+                  )}
                   onClick={(evenement) => basculerGroupe(group.id, evenement.currentTarget)}
                   aria-expanded={isOpen}
                 >

@@ -47,7 +47,6 @@ export function DepositorForm({
 
   // Update formData when miningCompanyId prop changes
   useEffect(() => {
-    console.log('🔄 miningCompanyId prop changed to:', miningCompanyId);
     setFormData((prev) => ({
       ...prev,
       mining_company_id: miningCompanyId,
@@ -98,7 +97,7 @@ export function DepositorForm({
       if (duplicates.length > 0) {
         setErrors({
           ...errors,
-          full_name: 'This person is already registered for this company with the same category/role. Please check existing records.',
+          full_name: 'Cette personne possède déjà ce rôle dans la société.',
         });
         return true;
       }
@@ -114,21 +113,21 @@ export function DepositorForm({
     const newErrors: Record<string, string> = {};
 
     if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
+      newErrors.full_name = 'Le nom complet est requis';
     }
 
     if (!formData.job_title.trim()) {
-      newErrors.job_title = 'Job title is required';
+      newErrors.job_title = 'La fonction est requise';
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Le courriel est requis';
     } else if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = 'Le format du courriel est invalide';
     }
 
     if (!formData.telephone?.trim() && !formData.cellphone?.trim()) {
-      newErrors.contact = 'At least one phone number is required';
+      newErrors.contact = 'Au moins un numéro de téléphone est requis';
     }
 
     setErrors(newErrors);
@@ -137,11 +136,6 @@ export function DepositorForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log('=== DepositorForm SUBMIT ===');
-    console.log('formData.mining_company_id:', formData.mining_company_id);
-    console.log('miningCompanyId prop:', miningCompanyId);
-    console.log('Full formData:', formData);
 
     if (!validateForm()) {
       return;
@@ -193,16 +187,15 @@ export function DepositorForm({
     <form onSubmit={handleSubmit}>
       <Card>
         <div className="p-6 space-y-6">
-          {errors.full_name && errors.full_name.includes('already registered') && (
+          {errors.full_name && errors.full_name.includes('déjà ce rôle') && (
             <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
               <div className="flex items-start">
                 <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
                 <div>
-                  <h3 className="text-sm font-semibold text-amber-800">Duplicate Depositor Warning</h3>
+                  <h3 className="text-sm font-semibold text-amber-800">Dépositaire déjà enregistré</h3>
                   <p className="text-sm text-amber-700 mt-1">{errors.full_name}</p>
                   <p className="text-xs text-amber-600 mt-2">
-                    The same person cannot be registered multiple times for the same company with the same role.
-                    If this is a different role, please select a different one.
+                    Une même personne ne peut pas être enregistrée deux fois avec la même responsabilité.
                   </p>
                 </div>
               </div>
@@ -229,7 +222,7 @@ export function DepositorForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
+                Nom complet <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
@@ -245,7 +238,7 @@ export function DepositorForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Job Title <span className="text-red-500">*</span>
+                Fonction <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
@@ -363,11 +356,11 @@ export function DepositorForm({
               disabled={isSubmitting}
             >
               <X className="w-4 h-4 mr-2" />
-              Cancel
+              Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               <Save className="w-4 h-4 mr-2" />
-              {isSubmitting ? 'Saving...' : depositor ? 'Update' : 'Create'}
+              {isSubmitting ? 'Enregistrement…' : depositor ? 'Mettre à jour' : 'Ajouter'}
             </Button>
           </div>
         </div>

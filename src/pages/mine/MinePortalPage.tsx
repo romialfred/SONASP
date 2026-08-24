@@ -328,8 +328,8 @@ export default function MinePortalPage() {
         <Section id="mine-actions" title="À traiter" icon={ShieldCheck} tone="violet">
           <div className="mine-pending-grid">
             <Link to="/achats/demandes"><span>Demandes SONASP</span><strong>{dashboard.pendingRequests}</strong></Link>
-            <Link to="/achats/analyses"><span>Analyses</span><strong>{dashboard.pendingAnalyses}</strong></Link>
-            <Link to="/achats/requisitions"><span>Réquisitions</span><strong>{dashboard.pendingRequisitions}</strong></Link>
+            <Link to="/documents/assay-certificates"><span>Analyses</span><strong>{dashboard.pendingAnalyses}</strong></Link>
+            <Link to="/requisitions"><span>Réquisitions</span><strong>{dashboard.pendingRequisitions}</strong></Link>
             <Link to="/achats/reglements"><span>Règlements à confirmer</span><strong>{dashboard.pendingPayments}</strong></Link>
             <Link to="/shipping/preparation"><span>Expéditions en cours</span><strong>{dashboard.pendingShipments}</strong></Link>
             <Link to="/sales"><span>Ventes en cours</span><strong>{dashboard.pendingSales}</strong></Link>

@@ -29,6 +29,7 @@ export interface AdminUser {
   full_name: string | null;
   email: string;
   role: UserRole;
+  account_type?: 'comptoir' | null;
   phone?: string | null;
   mining_company_names: string[];
   is_active: boolean;
@@ -38,11 +39,20 @@ export interface AdminUser {
 
 export interface UserFilters {
   recherche: string;
-  role: 'all' | UserRole;
+  role: 'all' | UserRole | 'comptoir';
   statut: 'all' | 'actif' | 'inactif';
 }
 
 export const EMPTY_USER_FILTERS: UserFilters = { recherche: '', role: 'all', statut: 'all' };
+
+const displayRole = (user: Pick<AdminUser, 'role' | 'account_type'>): UserRole | 'comptoir' =>
+  user.account_type === 'comptoir' ? 'comptoir' : user.role;
+
+const displayRoleLabel = (role: UserRole | 'comptoir'): string =>
+  role === 'comptoir' ? 'Comptoir d’achat' : roleLabel(role);
+
+const displayRoleTone = (role: UserRole | 'comptoir') =>
+  role === 'comptoir' ? 'warning' as const : roleTone(role);
 
 const STATUS_TABS: Array<{ value: UserFilters['statut']; label: string }> = [
   { value: 'all', label: 'Tous' },
@@ -59,7 +69,7 @@ export function filterUsers(users: AdminUser[], filters: UserFilters): AdminUser
       user.full_name?.toLowerCase().includes(recherche) ||
       user.email.toLowerCase().includes(recherche) ||
       user.mining_company_names.some((nom) => nom.toLowerCase().includes(recherche));
-    const roleOk = filters.role === 'all' || user.role === filters.role;
+    const roleOk = filters.role === 'all' || displayRole(user) === filters.role;
     const statutOk =
       filters.statut === 'all' ||
       (filters.statut === 'actif' && user.is_active) ||
@@ -157,12 +167,21 @@ export function UsersListPage() {
             full_name: (compte.full_name as string) || null,
             email: String(compte.email),
             role: compte.role as UserRole,
+            account_type: compte.account_type === 'comptoir' ? 'comptoir' : null,
             phone: (compte.phone as string) || null,
             mining_company_names: Array.from(new Set([
               ...(typeof compte.mining_company_id === 'string'
                 ? [compagnieParId.get(compte.mining_company_id)]
                 : []),
               ...(parUtilisateur.get(String(compte.id)) || []),
+              ...(
+                compte.account_type === 'comptoir'
+                && compte.organization
+                && typeof compte.organization === 'object'
+                && 'code' in compte.organization
+                  ? [String((compte.organization as { code: unknown }).code)]
+                  : []
+              ),
             ].filter((nom): nom is string => Boolean(nom)))),
             is_active: compte.is_active !== false,
             last_login_at: (compte.last_login_at as string) || null,
@@ -347,6 +366,7 @@ export function UsersListPage() {
                   {roleLabel(role)}
                 </option>
               ))}
+              <option value="comptoir">Comptoir d’achat</option>
             </select>
           </label>
           <button type="button" className="sn-btn" onClick={() => setFilters(EMPTY_USER_FILTERS)}>
@@ -399,7 +419,9 @@ export function UsersListPage() {
                       </td>
                       <td>{user.phone || '—'}</td>
                       <td>
-                        <Badge tone={roleTone(user.role)}>{roleLabel(user.role)}</Badge>
+                        <Badge tone={displayRoleTone(displayRole(user))}>
+                          {displayRoleLabel(displayRole(user))}
+                        </Badge>
                       </td>
                       <td>
                         {user.mining_company_names.length === 0 ? (

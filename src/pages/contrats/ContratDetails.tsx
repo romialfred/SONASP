@@ -8,6 +8,7 @@ import { AnalysesTeneur } from '@/components/contrats/AnalysesTeneur';
 import { PiecesContractuelles } from '@/components/contrats/PiecesContractuelles';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { errorMessage } from '@/lib/errorMessage';
 import {
   contratsService,
@@ -65,6 +66,7 @@ export const STATUTS_A_MOTIVER: StatutContrat[] = ['rejete', 'suspendu', 'resili
 export function ContratDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isMine } = useMineWorkspace();
 
   const [contrat, setContrat] = useState<Contrat | null>(null);
   const [execution, setExecution] = useState<ExecutionContrat | null>(null);
@@ -100,7 +102,7 @@ export function ContratDetails() {
         contratsService.documents(id),
         contratsService.defauts(id),
         contratsService.historique(id),
-        contratsService.transitions(fiche.statut),
+        isMine ? Promise.resolve([]) : contratsService.transitions(fiche.statut),
       ]);
       setExecution(exec);
       setEcheancier(lignes);
@@ -113,7 +115,7 @@ export function ContratDetails() {
     } finally {
       setChargement(false);
     }
-  }, [id]);
+  }, [id, isMine]);
 
   useEffect(() => {
     void charger();
@@ -223,7 +225,7 @@ export function ContratDetails() {
               <button type="button" className="sn-btn" onClick={() => void charger()} disabled={chargement}>
                 <RefreshCw className={chargement ? 'sn-spin' : ''} aria-hidden="true" /> Actualiser
               </button>
-              {contrat && ['brouillon', 'rejete'].includes(contrat.statut) && (
+              {!isMine && contrat && ['brouillon', 'rejete'].includes(contrat.statut) && (
                 <button
                   type="button" className="sn-btn"
                   onClick={() => navigate(`/contrats/${contrat.id}/modifier`)}
@@ -231,7 +233,7 @@ export function ContratDetails() {
                   <Pencil aria-hidden="true" /> Modifier
                 </button>
               )}
-              {contrat && ['actif', 'suspendu'].includes(contrat.statut)
+              {!isMine && contrat && ['actif', 'suspendu'].includes(contrat.statut)
                 && contrat.type_contrat !== 'avenant' && (
                 <button
                   type="button" className="sn-btn"
@@ -259,7 +261,7 @@ export function ContratDetails() {
               </span>
             </div>
 
-            {transitions.length > 0 && (
+            {!isMine && transitions.length > 0 && (
               <div className="contrat-barre__actions">
                 {transitions.map((statut) => (
                   <button
@@ -285,7 +287,7 @@ export function ContratDetails() {
           </Note>
         )}
 
-        {decision && (
+        {!isMine && decision && (
           <section className="contrat-decision" aria-label="Motiver la décision">
             <h3>Motiver le passage à « {LIBELLES_STATUT_CONTRAT[decision.statut]} »</h3>
             <p>Cette décision se conserve dans l’historique du contrat, avec son auteur.</p>
@@ -613,7 +615,7 @@ export function ContratDetails() {
             </div>
           )}
 
-          {contrat && !['brouillon', 'annule'].includes(contrat.statut) && (
+          {!isMine && contrat && !['brouillon', 'annule'].includes(contrat.statut) && (
             <div className="contrat-gestes" style={{ marginTop: 14 }}>
               <button
                 type="button" className="sn-btn"
@@ -738,7 +740,7 @@ export function ContratDetails() {
         </Section>
 
         {/* --------------------------------------------------- Analyses -- */}
-        {contrat && (
+        {!isMine && contrat && (
           <AnalysesTeneur
             contratId={contrat.id}
             miningCompanyId={contrat.mining_company_id}
@@ -752,7 +754,7 @@ export function ContratDetails() {
             domaine="contrat"
             objetId={contrat.id}
             categorieAttendue="contrat_signe"
-            modifiable={!['cloture', 'annule', 'resilie'].includes(contrat.statut)}
+            modifiable={!isMine && !['cloture', 'annule', 'resilie'].includes(contrat.statut)}
           />
         )}
 

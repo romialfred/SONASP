@@ -481,6 +481,24 @@ export const contratsService = {
     return lancerSiErreur(reponse) as Contrat;
   },
 
+  /**
+   * Proposition émise par la société minière connectée.
+   *
+   * Le déclencheur en base remplace toujours la société, le statut et l'auteur
+   * par les valeurs du compte authentifié. Les valeurs passées par l'écran ne
+   * constituent donc jamais une frontière de sécurité.
+   */
+  async proposerMine(contrat: Partial<Contrat>): Promise<Contrat> {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw new Error('Votre session a expiré. Reconnectez-vous.');
+    const reponse = await supabase
+      .from('snp_contrats')
+      .insert({ ...contrat, statut: 'soumis', created_by: data.user.id, updated_by: data.user.id })
+      .select()
+      .single();
+    return lancerSiErreur(reponse) as Contrat;
+  },
+
   async modifier(id: string, champs: Partial<Contrat>): Promise<Contrat> {
     const reponse = await supabase
       .from('snp_contrats').update(champs).eq('id', id).select().single();

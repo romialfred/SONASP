@@ -336,6 +336,20 @@ export const requisitionsService = {
     return lancerSiErreur(reponse) as Requisition;
   },
 
+  /** Réponse de la société minière destinataire, contrôlée et historisée en base. */
+  async repondreMine(
+    id: string,
+    decision: 'approuver' | 'contester',
+    commentaire: string
+  ): Promise<Requisition> {
+    const reponse = await supabase.rpc('snp_portail_mine_repondre_requisition', {
+      p_requisition_id: id,
+      p_decision: decision,
+      p_commentaire: commentaire.trim(),
+    });
+    return lancerSiErreur(reponse) as Requisition;
+  },
+
   /* ----------------------------------------------------- Notifications -- */
 
   async notifications(requisitionId: string): Promise<NotificationRequisition[]> {

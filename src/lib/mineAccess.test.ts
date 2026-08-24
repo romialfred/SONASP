@@ -9,8 +9,9 @@ describe('matrice d’accès du portail Mine', () => {
 
   it.each([
     '/production/daily', '/production/in-safe', '/production/licenses/123',
-    '/performance/budgets', '/performance/forecasts', '/shipping/preparation/new',
-    '/refining', '/inventory', '/sales/new',
+    '/performance/budgets', '/performance/forecasts', '/shipping', '/shipping/preparation/new',
+    '/refining', '/inventory', '/sales/new', '/stakeholders/depositors/new',
+    '/contrats/nouveau', '/contrats/123', '/requisitions/123', '/achats/reglements',
   ])('autorise %s', (route) => {
     expect(isMineRouteAllowed(route)).toBe(true);
   });

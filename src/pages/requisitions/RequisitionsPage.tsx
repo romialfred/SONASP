@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { errorMessage } from '@/lib/errorMessage';
 import { achatsIndustrielsService, type Societe } from '@/services/achatsIndustrielsService';
 import {
@@ -44,6 +45,7 @@ const formaterDate = (iso: string | null | undefined) => {
 
 export function RequisitionsPage() {
   const navigate = useNavigate();
+  const { isMine, companyId } = useMineWorkspace();
 
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
   const [toutes, setToutes] = useState<Requisition[]>([]);
@@ -59,12 +61,13 @@ export function RequisitionsPage() {
     setChargement(true);
     setErreur(null);
     try {
+      const societeImposee = isMine ? companyId || '__mine_indisponible__' : filtreSociete;
       const [liste, ensemble, societesChargees] = await Promise.all([
         requisitionsService.lister({
-          statut: filtreStatut, societe: filtreSociete, regime: filtreRegime,
+          statut: filtreStatut, societe: societeImposee, regime: filtreRegime,
         }),
-        requisitionsService.lister(),
-        achatsIndustrielsService.societesProductrices(),
+        requisitionsService.lister(isMine ? { societe: societeImposee } : undefined),
+        isMine ? Promise.resolve([]) : achatsIndustrielsService.societesProductrices(),
       ]);
       setRequisitions(liste);
       setToutes(ensemble);
@@ -76,7 +79,7 @@ export function RequisitionsPage() {
     } finally {
       setChargement(false);
     }
-  }, [filtreStatut, filtreSociete, filtreRegime]);
+  }, [companyId, filtreStatut, filtreSociete, filtreRegime, isMine]);
 
   useEffect(() => {
     void charger();
@@ -106,9 +109,11 @@ export function RequisitionsPage() {
       <div className="sn-page contrats-page requisitions-page">
         <PageHeader
           icon={Gavel}
-          title="Réquisitions de production"
-          subtitle="Mesures portant sur tout ou partie de la production d’une mine, sur fondement juridique."
-          breadcrumb={[{ label: 'Achats d’or' }, { label: 'Réquisitions' }]}
+          title={isMine ? 'Réquisitions reçues' : 'Réquisitions de production'}
+          subtitle={isMine
+            ? 'Demandes émises par la SONASP : consultez le dossier puis approuvez ou contestez avec un commentaire.'
+            : 'Mesures portant sur tout ou partie de la production d’une mine, sur fondement juridique.'}
+          breadcrumb={[{ label: isMine ? 'Relations avec la SONASP' : 'Achats d’or' }, { label: 'Réquisitions' }]}
           info={{
             titre: 'Trois régimes, qui ne se confondent pas',
             contenu: (
@@ -133,12 +138,12 @@ export function RequisitionsPage() {
               <button type="button" className="sn-btn" onClick={() => void charger()} disabled={chargement}>
                 <RefreshCw className={chargement ? 'sn-spin' : ''} aria-hidden="true" /> Actualiser
               </button>
-              <button
+              {!isMine && <button
                 type="button" className="sn-btn sn-btn--primary"
                 onClick={() => navigate('/requisitions/nouvelle')}
               >
                 <Plus aria-hidden="true" /> Nouvelle réquisition
-              </button>
+              </button>}
             </>
           }
         />
@@ -188,7 +193,7 @@ export function RequisitionsPage() {
           ]}
         />
 
-        {cumuls.aQualifier > 0 && (
+        {!isMine && cumuls.aQualifier > 0 && (
           <Note tone="danger" icon={AlertTriangle}>
             {formaterNombre(cumuls.aQualifier)} réquisition(s) portent un régime juridique non
             qualifié. Elles ne peuvent être ni autorisées, ni rendues exécutoires tant que le
@@ -221,7 +226,7 @@ export function RequisitionsPage() {
                 ))}
               </select>
             </label>
-            <label className="sn-field">
+            {!isMine && <label className="sn-field">
               <span className="sn-field__label">Société minière</span>
               <select value={filtreSociete} onChange={(evenement) => setFiltreSociete(evenement.target.value)}>
                 <option value="all">Toutes les sociétés</option>
@@ -229,7 +234,7 @@ export function RequisitionsPage() {
                   <option key={societe.id} value={societe.id}>{societe.name}</option>
                 ))}
               </select>
-            </label>
+            </label>}
           </div>
 
           {chargement ? (
@@ -240,13 +245,15 @@ export function RequisitionsPage() {
               description={
                 filtre && cumuls.total > 0
                   ? `${cumuls.total} réquisition(s) existent sous d’autres critères.`
-                  : 'Une réquisition porte sur tout ou partie de la production d’une mine et se fonde sur un acte juridique habilitant, versé au dossier.'
+                  : isMine
+                    ? 'Aucune réquisition ne vous a encore été notifiée par la SONASP.'
+                    : 'Une réquisition porte sur tout ou partie de la production d’une mine et se fonde sur un acte juridique habilitant, versé au dossier.'
               }
               action={filtre ? (
                 <button type="button" className="sn-btn" onClick={retirerFiltres}>
                   Retirer les filtres
                 </button>
-              ) : (
+              ) : isMine ? undefined : (
                 <button
                   type="button" className="sn-btn sn-btn--primary"
                   onClick={() => navigate('/requisitions/nouvelle')}

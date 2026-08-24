@@ -109,9 +109,6 @@ export default function ShippingPreparationNew() {
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [selectedRefineryId, setSelectedRefineryId] = useState('');
   const effectiveCompanyId = mineCompanyId || selectedMiningCompanyId;
-  const mineName = mineCompanyId
-    ? miningCompanies.find((company) => company.id === mineCompanyId)?.name || 'Votre société minière'
-    : null;
 
   // Signatory form
   const [selectedDepositorId, setSelectedDepositorId] = useState('');
@@ -655,7 +652,7 @@ export default function ShippingPreparationNew() {
 
     if (!selectedFreightCompanyId || !selectedRefineryId) {
       setErrorTitle('Informations de transport requises');
-      setErrorMessage('Veuillez sélectionner une Freight Company et une Refinery (destination).');
+      setErrorMessage('Veuillez sélectionner un transporteur et une raffinerie de destination.');
       setShowErrorDialog(true);
       return;
     }
@@ -841,7 +838,6 @@ export default function ShippingPreparationNew() {
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">
                     {isEditMode ? 'Modifier Expédition' : 'Nouvelle Expédition'}
-                    {mineName && <span className="text-emerald-700"> — {mineName}</span>}
                   </h1>
                   <p className="text-xs text-gray-500">Préparez les barres pour l'expédition</p>
                 </div>
@@ -849,15 +845,9 @@ export default function ShippingPreparationNew() {
             </div>
 
             {/* Mining Company & License Selection - Same Row */}
-            <Card className="p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-              <div className="grid grid-cols-2 gap-4">
-                {mineCompanyId ? (
-                  <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
-                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Mine expéditrice</span>
-                    <strong className="mt-1 block text-sm text-emerald-950">{mineName}</strong>
-                    <small className="mt-1 block text-[11px] leading-snug text-emerald-700">Périmètre fixé par votre compte</small>
-                  </div>
-                ) : (
+            <Card className="border border-emerald-200 bg-gradient-to-br from-emerald-50/70 to-white p-4">
+              <div className={mineCompanyId ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-2 gap-4'}>
+                {!mineCompanyId && (
                 <div>
                   <label className="block text-xs font-semibold text-blue-900 mb-2 flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5" />
@@ -876,11 +866,6 @@ export default function ShippingPreparationNew() {
                       </option>
                     ))}
                   </select>
-                  {selectedMiningCompanyId && (
-                    <p className="mt-2 text-xs text-blue-600">
-                      ✓ Seules les productions de cette compagnie seront disponibles
-                    </p>
-                  )}
                 </div>
                 )}
 
@@ -1065,7 +1050,7 @@ export default function ShippingPreparationNew() {
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
                     <Truck className="w-3.5 h-3.5" />
-                    Freight Company *
+                    Transporteur *
                   </label>
                   <select
                     value={selectedFreightCompanyId}
@@ -1084,7 +1069,7 @@ export default function ShippingPreparationNew() {
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5" />
-                    Refinery *
+                    Raffinerie *
                   </label>
                   <select
                     value={selectedRefineryId}

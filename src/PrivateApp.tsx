@@ -980,7 +980,7 @@ function AppRoutes() {
             <Route
               path="/shipping"
               element={
-                <ProtectedRoute allowedRoles={['factory', 'management']}>
+                <ProtectedRoute allowedRoles={['factory', 'management', 'mine']}>
                   <ProfileGuard>
                     <ShippingDashboard />
                   </ProfileGuard>
@@ -1304,7 +1304,7 @@ function AppRoutes() {
             <Route
               path="/stakeholders/depositors"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['management', 'admin', 'mine']}>
                   <DepositorsPage />
                 </ProtectedRoute>
               }
@@ -1313,7 +1313,7 @@ function AppRoutes() {
             <Route
               path="/stakeholders/depositors/new"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['management', 'admin', 'mine']}>
                   <DepositorFormPage />
                 </ProtectedRoute>
               }
@@ -1322,7 +1322,7 @@ function AppRoutes() {
             <Route
               path="/stakeholders/depositors/:id/edit"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['management', 'admin', 'mine']}>
                   <DepositorFormPage />
                 </ProtectedRoute>
               }

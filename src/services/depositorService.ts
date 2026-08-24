@@ -61,17 +61,17 @@ export interface UpdateDepositorInput extends Partial<CreateDepositorInput> {
 }
 
 export const DEPOSITOR_CATEGORIES: Record<DepositorCategory, string> = {
-  general_management: 'General Management',
-  general_management_backup: 'General Management Backup',
-  finance: 'Finance (Payment & Invoicing)',
-  finance_backup: 'Finance Backup',
-  bullion_dispatch: 'Bullion Dispatch and Logistics',
-  sale_of_gold: 'Sale of Gold (Treasury)',
-  pmr_assay: 'PMR / Assay Discrepancy',
-  security: 'Security Management',
-  security_backup: 'Security Management Backup',
-  legal: 'Company Secretary (Legal)',
-  legal_backup: 'Company Secretary Backup',
+  general_management: 'Direction générale',
+  general_management_backup: 'Suppléance de la direction',
+  finance: 'Finance et facturation',
+  finance_backup: 'Suppléance finance',
+  bullion_dispatch: 'Expéditions et logistique',
+  sale_of_gold: 'Vente d’or et trésorerie',
+  pmr_assay: 'Analyse et contrôle de teneur',
+  security: 'Sécurité',
+  security_backup: 'Suppléance sécurité',
+  legal: 'Affaires juridiques',
+  legal_backup: 'Suppléance juridique',
 };
 
 class DepositorService {

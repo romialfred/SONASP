@@ -165,6 +165,7 @@ describe('UserManagementModern', () => {
     mocks.reponses = {
       mining_companies: [{ id: 'c1', name: 'Essakane SA', abbreviation: 'ESK', is_active: true }],
       user_profiles: [],
+      snp_organizations: [{ id: 'org-nafo', code: 'NAFO', name: 'Comptoir d’or NAFO', is_active: true }],
       user_site_assignments: [],
     };
     mocks.from.mockImplementation((table: string) => stub(table));
@@ -184,6 +185,10 @@ describe('UserManagementModern', () => {
     expect(screen.getByRole('radio', { name: /Administrateur/ })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Direction/ })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Société minière/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Comptoir d’achat/ })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Manager/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Usine/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Aéroport/ })).not.toBeInTheDocument();
     expect(screen.queryByText('Add New User')).not.toBeInTheDocument();
   });
 
@@ -277,6 +282,31 @@ describe('UserManagementModern', () => {
       mining_company_id: 'c1',
     });
     expect(mocks.inserts).not.toContainEqual(expect.objectContaining({ table: 'user_site_assignments' }));
+  });
+
+  it('crée un compte Comptoir avec son périmètre et son habilitation obligatoires', async () => {
+    render(<UserManagementModern />);
+    await waitFor(() => expect(screen.getByLabelText(/Nom complet/)).toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText(/Nom complet/), { target: { value: 'Compte NAFO' } });
+    fireEvent.change(screen.getByLabelText(/Adresse e-mail/), { target: { value: 'nafo@comptoir.bf' } });
+    fireEvent.click(screen.getByRole('radio', { name: /Comptoir d’achat/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Comptoir d’or NAFO/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Habilitations/ }));
+
+    expect(screen.getByLabelText('Comptoir d’achat')).toBeChecked();
+    expect(screen.getByLabelText('Comptoir d’achat')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /Créer le compte/ }));
+
+    await waitFor(() => expect(mocks.createUser).toHaveBeenCalled());
+    expect(mocks.createUser.mock.calls[0][0]).toMatchObject({
+      email: 'nafo@comptoir.bf',
+      role: 'customer',
+      account_type: 'comptoir',
+      organization_id: 'org-nafo',
+      mining_company_id: null,
+      capabilities: expect.objectContaining({ 'comptoir.manage': true }),
+    });
   });
 
   it('affiche les mines déjà rattachées en grisé sans permettre leur sélection', async () => {

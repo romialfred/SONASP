@@ -231,6 +231,7 @@ Deno.serve(async (req: Request) => {
         owner: 'Propriétaire', admin: 'Administrateur', management: 'Direction',
         manager: 'Responsable', mine: 'Société minière', factory: 'Usine',
         airport: 'Aéroport', refinery: 'Raffinerie', customer: 'Client',
+        comptoir: 'Comptoir d’achat',
       };
       const client = await ouvrirClient(cfg);
       try {

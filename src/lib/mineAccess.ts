@@ -19,7 +19,7 @@ const MINE_ROUTE_PREFIXES = [
   '/achats/demandes',
   '/achats/reglements',
   '/requisitions',
-  '/shipping/preparation',
+  '/shipping',
   '/freight',
   '/freight-customs',
   '/refining',
@@ -31,6 +31,7 @@ const MINE_ROUTE_PREFIXES = [
   '/fx-rates',
   '/stakeholders/freight-companies',
   '/stakeholders/refinery-plants',
+  '/stakeholders/depositors',
   '/documents/assay-certificates',
   '/reports',
   '/profile',
@@ -39,7 +40,6 @@ const MINE_ROUTE_PREFIXES = [
 
 const MINE_FORBIDDEN_ROUTES = [
   '/production/achats-mines',
-  '/contrats/nouveau',
   '/contrats/pilotage',
   '/achats/plans',
   '/achats/comptes',

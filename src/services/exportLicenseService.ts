@@ -62,6 +62,30 @@ export interface UpdateLicenseData extends Partial<CreateLicenseData> {
   status?: 'pending' | 'active' | 'expired' | 'exhausted' | 'suspended' | 'cancelled';
 }
 
+/**
+ * Certains environnements historiques conservent le reliquat dans une colonne
+ * ordinaire. Une licence nouvellement créée peut donc revenir avec `NULL` tant
+ * que la migration de synchronisation n'a pas encore été appliquée.
+ *
+ * Le client ne doit ni masquer cette licence ni propager un quota indéfini : le
+ * reliquat canonique est toujours quantité autorisée - quantité consommée.
+ */
+export function normalizeExportLicenseQuota(license: ExportLicense): ExportLicense {
+  const authorizedQuantity = Number(license.authorized_quantity_grams) || 0;
+  const usedQuantity = Number(license.used_quantity_grams) || 0;
+  const storedRemaining = license.remaining_quantity_grams;
+  const remainingQuantity = storedRemaining == null
+    ? authorizedQuantity - usedQuantity
+    : Number(storedRemaining);
+
+  return {
+    ...license,
+    authorized_quantity_grams: authorizedQuantity,
+    used_quantity_grams: usedQuantity,
+    remaining_quantity_grams: Math.max(0, Number.isFinite(remainingQuantity) ? remainingQuantity : 0),
+  };
+}
+
 class ExportLicenseService {
   /**
    * Récupérer toutes les licences avec leurs compagnies minières
@@ -76,7 +100,7 @@ class ExportLicenseService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map((license) => normalizeExportLicenseQuota(license as ExportLicense));
   }
 
   /**
@@ -98,13 +122,16 @@ class ExportLicenseService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map((license) => normalizeExportLicenseQuota(license as ExportLicense));
   }
 
   /**
    * Récupérer les licences actives pour une compagnie minière
    */
   async getActiveLicensesByCompany(miningCompanyId: string): Promise<ExportLicense[]> {
+    if (!miningCompanyId.trim()) return [];
+
+    const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('export_licenses')
       .select(`
@@ -113,12 +140,14 @@ class ExportLicenseService {
       `)
       .eq('mining_company_id', miningCompanyId)
       .eq('status', 'active')
-      .gte('end_date', new Date().toISOString().split('T')[0])
-      .gt('remaining_quantity_grams', 0)
+      .lte('start_date', today)
+      .gte('end_date', today)
       .order('end_date', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || [])
+      .map((license) => normalizeExportLicenseQuota(license as ExportLicense))
+      .filter((license) => license.remaining_quantity_grams > 0);
   }
 
   /**
@@ -138,7 +167,7 @@ class ExportLicenseService {
     const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
-    return data;
+    return data ? normalizeExportLicenseQuota(data as ExportLicense) : null;
   }
 
   /**
@@ -175,7 +204,7 @@ class ExportLicenseService {
       }
 
       console.log('✅ License created successfully:', data);
-      return data;
+      return normalizeExportLicenseQuota(data as ExportLicense);
     } catch (error: any) {
       console.error('❌ Service error:', error);
       throw new Error(error.message || 'Impossible de créer la licence');
@@ -206,7 +235,7 @@ class ExportLicenseService {
       .single();
 
     if (error) throw error;
-    return data;
+    return normalizeExportLicenseQuota(data as ExportLicense);
   }
 
   /**
@@ -251,7 +280,15 @@ class ExportLicenseService {
         };
       }
 
-      return data[0];
+      const result = data[0] as LicenseAvailability;
+      if (result.remaining_quantity == null || !Number.isFinite(Number(result.remaining_quantity))) {
+        return await this.manualLicenseCheck(licenseId, requiredQuantity);
+      }
+
+      return {
+        ...result,
+        remaining_quantity: Number(result.remaining_quantity),
+      };
     } catch (error: any) {
       console.error('License check error:', error);
       // Fallback to manual check
@@ -284,7 +321,16 @@ class ExportLicenseService {
       };
     }
 
-    if (new Date(license.end_date) < new Date()) {
+    const today = new Date().toISOString().split('T')[0];
+    if (license.start_date > today) {
+      return {
+        is_available: false,
+        remaining_quantity: license.remaining_quantity_grams,
+        message: `Licence ${license.license_number} valide à partir du ${license.start_date}`,
+      };
+    }
+
+    if (license.end_date < today) {
       return {
         is_available: false,
         remaining_quantity: license.remaining_quantity_grams,

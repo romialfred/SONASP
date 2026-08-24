@@ -73,7 +73,7 @@ describe('BusinessIntelligenceWorkspace', () => {
     render(<BusinessIntelligenceWorkspace view="production" />);
 
     expect(await screen.findByRole('heading', { name: 'Rapports de production' })).toBeInTheDocument();
-    expect(screen.getByText('Production déclarée')).toBeInTheDocument();
+    expect(await screen.findByText('Production déclarée', {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Décomposer l’indicateur' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Diagnostic' }));

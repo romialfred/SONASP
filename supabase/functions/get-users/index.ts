@@ -57,22 +57,66 @@ Deno.serve(async (req: Request) => {
       throw usersError;
     }
 
+    // Le profil Comptoir réutilise volontairement le rôle partenaire `customer`.
+    // Le rattachement d'organisation est l'autorité qui permet à l'interface
+    // d'afficher le libellé métier sans ajouter un rôle de base divergent.
+    const identifiants = (users || []).map((compte) => compte.id);
+    const rattachementParUtilisateur = new Map<string, { id: string; code: string; name: string }>();
+    if (identifiants.length > 0) {
+      const { data: rattachements, error: erreurRattachements } = await supabaseAdmin
+        .from('snp_user_organization_memberships')
+        .select('user_id, organization_id')
+        .in('user_id', identifiants)
+        .eq('is_primary', true)
+        .is('valid_until', null);
+
+      if (erreurRattachements) {
+        console.warn('[get-users] Rattachements d’organisation indisponibles.', erreurRattachements.message);
+      } else {
+        const organisationsIds = [...new Set((rattachements || []).map((ligne) => ligne.organization_id))];
+        if (organisationsIds.length > 0) {
+          const { data: organisations, error: erreurOrganisations } = await supabaseAdmin
+            .from('snp_organizations')
+            .select('id, code, name')
+            .in('id', organisationsIds)
+            .eq('organization_type', 'comptoir')
+            .eq('is_active', true);
+          if (erreurOrganisations) {
+            console.warn('[get-users] Comptoirs indisponibles.', erreurOrganisations.message);
+          } else {
+            const organisationsParId = new Map(
+              (organisations || []).map((organisation) => [organisation.id, organisation] as const),
+            );
+            (rattachements || []).forEach((rattachement) => {
+              const organisation = organisationsParId.get(rattachement.organization_id);
+              if (organisation) rattachementParUtilisateur.set(rattachement.user_id, organisation);
+            });
+          }
+        }
+      }
+    }
+
     console.log('Successfully fetched users:', users?.length || 0);
 
     // Ensure we return valid user data
-    const validUsers = (users || []).map(user => ({
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name,
-      phone: user.phone,
-      role: user.role,
-      mining_company_id: user.mining_company_id ?? null,
-      is_active: user.is_active !== false,
-      two_factor_enabled: Boolean(user.mfa_enrolled_at),
-      last_login_at: user.last_login_at,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-    }));
+    const validUsers = (users || []).map(user => {
+      const comptoir = rattachementParUtilisateur.get(user.id) ?? null;
+      return {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        phone: user.phone,
+        role: user.role,
+        account_type: comptoir ? 'comptoir' : null,
+        organization: comptoir,
+        mining_company_id: user.mining_company_id ?? null,
+        is_active: user.is_active !== false,
+        two_factor_enabled: Boolean(user.mfa_enrolled_at),
+        last_login_at: user.last_login_at,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+      };
+    });
 
     return reponseJson(req, { success: true, users: validUsers, count: validUsers.length });
   } catch (error: any) {

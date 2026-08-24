@@ -8,6 +8,7 @@ import { AnalysesTeneur } from '@/components/contrats/AnalysesTeneur';
 import { PiecesContractuelles } from '@/components/contrats/PiecesContractuelles';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { errorMessage } from '@/lib/errorMessage';
 import { contratsService, formaterFcfa, formaterQuantite, type Contrat } from '@/services/contratsService';
 import {
@@ -62,6 +63,7 @@ const formaterHorodatage = (iso: string | null | undefined) => {
 export function RequisitionDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isMine } = useMineWorkspace();
 
   const [requisition, setRequisition] = useState<Requisition | null>(null);
   const [execution, setExecution] = useState<ExecutionRequisition | null>(null);
@@ -75,6 +77,7 @@ export function RequisitionDetails() {
   const [action, setAction] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [commentaireMine, setCommentaireMine] = useState('');
 
   const [decision, setDecision] = useState<{ statut: StatutRequisition; motif: string } | null>(null);
   const [formNotification, setFormNotification] = useState<{
@@ -103,8 +106,8 @@ export function RequisitionDetails() {
         requisitionsService.notifications(id),
         requisitionsService.enlevements(id),
         requisitionsService.historique(id),
-        requisitionsService.transitions(fiche.statut),
-        contratsService.lister({ statut: 'actif' }),
+        isMine ? Promise.resolve([]) : requisitionsService.transitions(fiche.statut),
+        isMine ? Promise.resolve([]) : contratsService.lister({ statut: 'actif' }),
       ]);
       setExecution(exec);
       setNotifications(envois);
@@ -119,7 +122,7 @@ export function RequisitionDetails() {
     } finally {
       setChargement(false);
     }
-  }, [id]);
+  }, [id, isMine]);
 
   useEffect(() => {
     void charger();
@@ -202,6 +205,19 @@ export function RequisitionDetails() {
       return 'Décision d’imputation enregistrée, avec son motif et son auteur.';
     });
 
+  const repondreCommeMine = (decisionMine: 'approuver' | 'contester') =>
+    executer(`mine-${decisionMine}`, async () => {
+      if (!id) throw new Error('Réquisition inconnue.');
+      if (commentaireMine.trim().length < 5) {
+        throw new Error('Ajoutez un commentaire d’au moins cinq caractères.');
+      }
+      await requisitionsService.repondreMine(id, decisionMine, commentaireMine);
+      setCommentaireMine('');
+      return decisionMine === 'approuver'
+        ? 'Votre approbation a été transmise à la SONASP.'
+        : 'Votre contestation a été transmise à la SONASP.';
+    });
+
   const collecte = useMemo(
     () => enlevements
       .filter((operation) => ['realise', 'partiel'].includes(operation.statut))
@@ -211,6 +227,14 @@ export function RequisitionDetails() {
 
   const accordManquant = requisition?.regime_juridique === 'accord_requis'
     && requisition.accord_mine !== true;
+  const reponseMineEnAttente = Boolean(
+    isMine
+      && requisition
+      && ['notifiee', 'accusee'].includes(requisition.statut)
+      && !requisition.observations_recues_le
+      && !requisition.contestation_recue_le
+      && !requisition.accord_recu_le
+  );
 
   if (!chargement && !requisition) {
     return (
@@ -254,7 +278,7 @@ export function RequisitionDetails() {
               <button type="button" className="sn-btn" onClick={() => void charger()} disabled={chargement}>
                 <RefreshCw className={chargement ? 'sn-spin' : ''} aria-hidden="true" /> Actualiser
               </button>
-              {requisition && ['brouillon', 'verification_juridique'].includes(requisition.statut) && (
+              {!isMine && requisition && ['brouillon', 'verification_juridique'].includes(requisition.statut) && (
                 <button
                   type="button" className="sn-btn"
                   onClick={() => navigate(`/requisitions/${requisition.id}/modifier`)}
@@ -283,7 +307,7 @@ export function RequisitionDetails() {
                 </span>
               </div>
 
-              {transitions.length > 0 && (
+              {!isMine && transitions.length > 0 && (
                 <div className="contrat-barre__actions">
                   {transitions.map((statut) => (
                     <button
@@ -308,6 +332,50 @@ export function RequisitionDetails() {
               {PORTEE_REGIME[requisition.regime_juridique]}
             </div>
 
+            {isMine && reponseMineEnAttente && (
+              <section className="contrat-decision" aria-label="Répondre à la réquisition">
+                <h3>Votre réponse à la SONASP</h3>
+                <p>
+                  Consultez l’acte et les pièces du dossier, puis laissez un commentaire avant
+                  d’approuver ou de contester cette réquisition.
+                </p>
+                <label className="sn-field" htmlFor="commentaire-mine">
+                  <span className="sn-field__label">Commentaire</span>
+                  <textarea
+                    id="commentaire-mine"
+                    rows={3}
+                    value={commentaireMine}
+                    onChange={(evenement) => setCommentaireMine(evenement.target.value)}
+                    placeholder="Votre décision et, si nécessaire, vos réserves"
+                  />
+                </label>
+                <div className="contrat-decision__gestes">
+                  <button
+                    type="button"
+                    className="sn-btn"
+                    disabled={action !== null || commentaireMine.trim().length < 5}
+                    onClick={() => void repondreCommeMine('contester')}
+                  >
+                    Contester
+                  </button>
+                  <button
+                    type="button"
+                    className="sn-btn sn-btn--primary"
+                    disabled={action !== null || commentaireMine.trim().length < 5}
+                    onClick={() => void repondreCommeMine('approuver')}
+                  >
+                    <CheckCircle2 aria-hidden="true" /> Approuver et transmettre
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {isMine && !reponseMineEnAttente && requisition.observations_mine && (
+              <Note icon={CheckCircle2} tone={requisition.statut === 'contestee' ? 'warning' : 'success'}>
+                Réponse transmise : {requisition.observations_mine}
+              </Note>
+            )}
+
             {accordManquant && requisition.statut !== 'annulee' && (
               <Note tone="warning" icon={AlertTriangle}>
                 Ce régime subordonne l’exécution à l’accord de la mine. Tant que cet accord n’est
@@ -318,7 +386,7 @@ export function RequisitionDetails() {
           </>
         )}
 
-        {decision && (
+        {!isMine && decision && (
           <section className="contrat-decision" aria-label="Motiver la décision">
             <h3>Motiver le passage à « {LIBELLES_STATUT_REQUISITION[decision.statut]} »</h3>
             <p>Cette décision se conserve dans l’historique, avec son auteur et sa date.</p>
@@ -386,7 +454,7 @@ export function RequisitionDetails() {
           title={`Notifications (${notifications.length})`}
           description="Ce qui a été envoyé à la mine, à qui, par quel canal, et ce qu’elle en a accusé."
         >
-          {requisition && !['brouillon', 'verification_juridique', 'validation_metier',
+          {!isMine && requisition && !['brouillon', 'verification_juridique', 'validation_metier',
             'validation_direction', 'annulee'].includes(requisition.statut) && (
             <div className="contrat-gestes">
               <button
@@ -510,7 +578,7 @@ export function RequisitionDetails() {
                     <p className="requisition-notifications__meta">
                       Accusée par {envoi.accuse_par} le {formaterHorodatage(envoi.accuse_le)}
                     </p>
-                  ) : (
+                  ) : !isMine ? (
                     <button
                       type="button" className="sn-btn"
                       onClick={() => void accuserReception(envoi.id)}
@@ -518,6 +586,8 @@ export function RequisitionDetails() {
                     >
                       Consigner l’accusé de réception
                     </button>
+                  ) : (
+                    <p className="requisition-notifications__meta">Réponse à transmettre depuis le bloc de décision.</p>
                   )}
                   <details className="requisition-notifications__contenu">
                     <summary>Contenu notifié</summary>
@@ -537,7 +607,7 @@ export function RequisitionDetails() {
           title={`Enlèvements (${enlevements.length})`}
           description="Pesées, scellés et constats contradictoires de chaque opération."
         >
-          {requisition && ['executoire', 'enlevement_planifie', 'en_cours_enlevement']
+          {!isMine && requisition && ['executoire', 'enlevement_planifie', 'en_cours_enlevement']
             .includes(requisition.statut) && (
             <div className="contrat-gestes">
               <button
@@ -718,7 +788,7 @@ export function RequisitionDetails() {
         </Section>
 
         {/* ---------------------------------------------------- Analyses -- */}
-        {requisition && (
+        {!isMine && requisition && (
           <AnalysesTeneur
             requisitionId={requisition.id}
             miningCompanyId={requisition.mining_company_id}
@@ -732,7 +802,7 @@ export function RequisitionDetails() {
             domaine="requisition"
             objetId={requisition.id}
             categorieAttendue="acte_juridique"
-            modifiable={!['cloturee', 'annulee'].includes(requisition.statut)}
+            modifiable={!isMine && !['cloturee', 'annulee'].includes(requisition.statut)}
           />
         )}
 
@@ -773,7 +843,7 @@ export function RequisitionDetails() {
             />
           )}
 
-          {requisition && !['annulee', 'cloturee'].includes(requisition.statut) && (
+          {!isMine && requisition && !['annulee', 'cloturee'].includes(requisition.statut) && (
             <div className="contrat-gestes">
               <button
                 type="button" className="sn-btn"

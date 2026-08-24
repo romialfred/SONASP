@@ -173,7 +173,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'market',
-        label: 'Marché',
+        label: 'Marchés internationaux',
         path: '/sales/trade-space',
         icon: TrendingUp,
         color: '#f59e0b',
@@ -185,13 +185,12 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'sales',
-        label: 'Ventes',
+        label: 'Vente d’or international',
         path: '/sales',
         icon: CircleDollarSign,
         color: '#ec4899',
         children: [
           { label: 'Ventes', path: '/sales', icon: CircleDollarSign, color: '#ec4899' },
-          { label: 'Clients', path: '/customers', icon: Users, color: '#14b8a6' },
           { label: 'Paiements', path: '/payments', icon: CircleDollarSign, color: '#16a363' },
         ],
       },
@@ -203,9 +202,11 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         color: '#10976b',
         children: [
           { label: 'Sociétés minières', path: '/stakeholders/mining-companies', icon: Building2, color: '#10976b' },
+          { label: 'Clients internationaux', path: '/customers', icon: Users, color: '#14b8a6' },
           { label: 'Approbateurs', path: '/stakeholders/approvers', icon: CheckCircle2, color: '#2f6fec' },
           { label: 'Transporteurs', path: '/stakeholders/freight-companies', icon: Truck, color: '#d79a00' },
           { label: 'Raffineries', path: '/stakeholders/refinery-plants', icon: FlaskConical, color: '#8b5cf6' },
+          { label: 'Dépositaires', path: '/stakeholders/depositors', icon: Users, color: '#10976b' },
         ],
       },
       {
@@ -405,10 +406,12 @@ const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
   refining: new Set(['/refining', '/refining/freight-shipments']),
   inventory: new Set(['/inventory', '/inventory/silver']),
   market: new Set(['/sales/trade-space', '/gold-prices', '/fx-rates']),
-  sales: new Set(['/sales', '/customers', '/payments']),
+  sales: new Set(['/sales', '/payments']),
   stakeholders: new Set([
+    '/customers',
     '/stakeholders/freight-companies',
     '/stakeholders/refinery-plants',
+    '/stakeholders/depositors',
   ]),
   documents: new Set(['/documents/assay-certificates', '/reports']),
 };

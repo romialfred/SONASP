@@ -27,8 +27,8 @@ import {
   type PermissionMap,
   type PermissionModule,
 } from '@/services/userPermissionsService';
-import { ALL_ROLES, roleLabel, roleTone } from '@/lib/roleLabels';
-import { assignableRoles, canAssignRole, canManageAccount } from '@/lib/roleHierarchy';
+import { roleLabel, roleTone, type RoleTone } from '@/lib/roleLabels';
+import { canAssignRole, canManageAccount } from '@/lib/roleHierarchy';
 import {
   OPERATIONAL_CAPABILITY_OPTIONS,
   operationalCapabilitiesForRole,
@@ -38,12 +38,17 @@ import { userCapabilitiesService } from '@/services/userCapabilitiesService';
 import type { UserRole } from '@/types/auth';
 import './admin.css';
 
+export type AccountRoleChoice = UserRole | 'comptoir';
+
 export interface UserFormData {
   fullName: string;
   email: string;
   phone: string;
-  role: UserRole | '';
+  role: AccountRoleChoice | '';
   miningCompanyIds: string[];
+  comptoirOrganizationId: string;
+  comptoirOrganizationCode: string;
+  comptoirOrganizationName: string;
   isActive: boolean;
 }
 
@@ -53,8 +58,36 @@ export const EMPTY_USER_FORM: UserFormData = {
   phone: '',
   role: '',
   miningCompanyIds: [],
+  comptoirOrganizationId: '',
+  comptoirOrganizationCode: '',
+  comptoirOrganizationName: '',
   isActive: true,
 };
+
+export const NEW_COMPTOIR_VALUE = '__new_comptoir__';
+
+/**
+ * Profils proposés lors d'une nouvelle création. Les anciens profils Usine,
+ * Aéroport et Manager restent lisibles en modification, mais leurs opérations
+ * sont désormais portées respectivement par Société minière ou Direction.
+ */
+export const ACCOUNT_CREATION_ROLES: AccountRoleChoice[] = [
+  'admin',
+  'management',
+  'mine',
+  'comptoir',
+  'refinery',
+  'customer',
+];
+
+export const persistedRole = (role: AccountRoleChoice | ''): UserRole | '' =>
+  role === 'comptoir' ? 'customer' : role;
+
+export const accountRoleLabel = (role: AccountRoleChoice): string =>
+  role === 'comptoir' ? 'Comptoir d’achat' : roleLabel(role);
+
+export const accountRoleTone = (role: AccountRoleChoice): RoleTone =>
+  role === 'comptoir' ? 'warning' : roleTone(role);
 
 /** Vocation de chaque rôle, en français et sans référence à un module inexistant. */
 export const DESCRIPTIONS_ROLE: Record<UserRole, string> = {
@@ -68,6 +101,9 @@ export const DESCRIPTIONS_ROLE: Record<UserRole, string> = {
   customer: 'Consultation de ses commandes et de ses documents',
   mine: 'Compte principal d’une société, limité à son propre périmètre',
 };
+
+export const DESCRIPTION_COMPTOIR =
+  'Achats aux orpailleurs, facturation DGI, paiements, taxes et vente à la SONASP';
 
 type DroitClef = 'can_view' | 'can_create' | 'can_edit' | 'can_delete' | 'can_approve';
 
@@ -93,6 +129,17 @@ export function validateIdentite(
   if (form.role === 'mine') {
     const indisponibilite = indisponibilites.get(form.miningCompanyIds[0]);
     if (indisponibilite) return indisponibilite;
+  }
+  if (form.role === 'comptoir') {
+    if (!form.comptoirOrganizationId) return 'Sélectionnez ou créez le comptoir représenté.';
+    if (form.comptoirOrganizationId === NEW_COMPTOIR_VALUE) {
+      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{1,19}$/.test(form.comptoirOrganizationCode.trim())) {
+        return 'Le code du comptoir doit contenir 2 à 20 lettres, chiffres, tirets ou tirets bas.';
+      }
+      if (form.comptoirOrganizationName.trim().length < 3) {
+        return 'Le nom du comptoir doit contenir au moins 3 caractères.';
+      }
+    }
   }
   return null;
 }
@@ -129,6 +176,13 @@ export interface MiningCompanyAccount {
   email: string | null;
   is_active: boolean;
   mining_company_id: string;
+}
+
+export interface ComptoirOrganization {
+  id: string;
+  code: string;
+  name: string;
+  is_active: boolean;
 }
 
 export function indisponibiliteSocieteMiniere(
@@ -175,12 +229,13 @@ export function UserManagementModern() {
   );
   const [compagnies, setCompagnies] = useState<MiningCompany[]>([]);
   const [comptesCompagnies, setComptesCompagnies] = useState<MiningCompanyAccount[]>([]);
+  const [comptoirs, setComptoirs] = useState<ComptoirOrganization[]>([]);
 
   const charger = useCallback(async () => {
     setLoading(true);
     setErreur(null);
     try {
-      const [resultatSocietes, resultatComptesCompagnies] = await Promise.all([
+      const [resultatSocietes, resultatComptesCompagnies, resultatComptoirs] = await Promise.all([
         supabase
           .from('mining_companies')
           .select('id, name, abbreviation, is_active')
@@ -190,6 +245,12 @@ export function UserManagementModern() {
           .select('id, full_name, email, is_active, mining_company_id')
           .eq('role', 'mine')
           .not('mining_company_id', 'is', null),
+        (supabase as any)
+          .from('snp_organizations')
+          .select('id, code, name, is_active')
+          .eq('organization_type', 'comptoir')
+          .eq('is_active', true)
+          .order('name'),
       ]);
       const { data: societes, error: erreurSocietes } = resultatSocietes;
       if (erreurSocietes) throw erreurSocietes;
@@ -201,6 +262,14 @@ export function UserManagementModern() {
       const { data: comptesMines, error: erreurComptesMines } = resultatComptesCompagnies;
       if (erreurComptesMines) throw erreurComptesMines;
       setComptesCompagnies((comptesMines || []) as MiningCompanyAccount[]);
+      if (resultatComptoirs.error) {
+        // La création des autres profils reste disponible sur un environnement
+        // où le référentiel Comptoir n'aurait pas encore été migré.
+        console.warn('[Comptes] Référentiel des comptoirs indisponible.', resultatComptoirs.error);
+        setComptoirs([]);
+      } else {
+        setComptoirs((resultatComptoirs.data || []) as ComptoirOrganization[]);
+      }
 
       // `user_permissions.module_id` référence `modules`, et non `snp_modules` comme
       // cet écran le faisait : les droits accordés portaient alors des identifiants
@@ -231,6 +300,9 @@ export function UserManagementModern() {
           phone: profil?.phone || '',
           role: (profil?.role as UserRole) || '',
           miningCompanyIds: profil?.mining_company_id ? [profil.mining_company_id] : [],
+          comptoirOrganizationId: '',
+          comptoirOrganizationCode: '',
+          comptoirOrganizationName: '',
           isActive: profil?.is_active !== false,
         });
 
@@ -262,15 +334,26 @@ export function UserManagementModern() {
   const setValue = <K extends keyof UserFormData>(clef: K, valeur: UserFormData[K]) =>
     setForm((current) => ({ ...current, [clef]: valeur }));
 
-  const setRole = (role: UserRole) => {
+  const setRole = (role: AccountRoleChoice) => {
+    const roleTechnique = persistedRole(role);
     setForm((current) => ({
       ...current,
       role,
       miningCompanyIds: role === 'mine' && current.role === 'mine'
         ? current.miningCompanyIds
         : [],
+      comptoirOrganizationId: role === 'comptoir'
+        ? current.comptoirOrganizationId
+        : '',
+      comptoirOrganizationCode: role === 'comptoir'
+        ? current.comptoirOrganizationCode
+        : '',
+      comptoirOrganizationName: role === 'comptoir'
+        ? current.comptoirOrganizationName
+        : '',
     }));
-    const defaults = operationalCapabilitiesForRole(role);
+    const defaults = operationalCapabilitiesForRole(roleTechnique);
+    if (role === 'comptoir') defaults['comptoir.manage'] = true;
     setCapacites(defaults);
     if (!isEditMode) setCapacitesEnBase(defaults);
   };
@@ -292,8 +375,17 @@ export function UserManagementModern() {
     && canManageAccount(utilisateurCourant?.role, roleInitial, utilisateurCourant?.id, userId),
   );
   const rolesDisponibles = useMemo(
-    () => assignableRoles(utilisateurCourant?.role, ALL_ROLES),
-    [utilisateurCourant?.role],
+    () => {
+      const rolesCreation = ACCOUNT_CREATION_ROLES.filter((role) => {
+        const roleTechnique = persistedRole(role);
+        return Boolean(roleTechnique && canAssignRole(utilisateurCourant?.role, roleTechnique));
+      });
+      if (!isEditMode || !roleInitial || rolesCreation.includes(roleInitial)) return rolesCreation;
+      // Compatibilité : un ancien compte Usine, Aéroport ou Manager reste
+      // administrable sans réintroduire ce profil dans les nouvelles créations.
+      return [...rolesCreation, roleInitial];
+    },
+    [isEditMode, roleInitial, utilisateurCourant?.role],
   );
   const modulesOuverts = useMemo(
     () => Object.values(permissions).filter((permission) => permission.can_view).length,
@@ -335,7 +427,8 @@ export function UserManagementModern() {
       setErreur('Votre rôle ne permet pas d’administrer ce compte.');
       return;
     }
-    if (!canAssignRole(utilisateurCourant.role, form.role as UserRole)) {
+    const roleTechnique = persistedRole(form.role);
+    if (!roleTechnique || !canAssignRole(utilisateurCourant.role, roleTechnique)) {
       setErreur('Vous ne pouvez pas attribuer un rôle supérieur au vôtre.');
       setEtape(1);
       return;
@@ -354,11 +447,23 @@ export function UserManagementModern() {
           email: form.email,
           full_name: form.fullName,
           phone: form.phone,
-          role: form.role as UserRole,
+          role: roleTechnique,
           is_active: form.isActive,
           mining_company_id: form.role === 'mine' ? form.miningCompanyIds[0] : null,
+          account_type: form.role === 'comptoir' ? 'comptoir' : undefined,
+          organization_id: form.role === 'comptoir' && form.comptoirOrganizationId !== NEW_COMPTOIR_VALUE
+            ? form.comptoirOrganizationId
+            : undefined,
+          organization_code: form.role === 'comptoir' && form.comptoirOrganizationId === NEW_COMPTOIR_VALUE
+            ? form.comptoirOrganizationCode.trim().toUpperCase()
+            : undefined,
+          organization_name: form.role === 'comptoir' && form.comptoirOrganizationId === NEW_COMPTOIR_VALUE
+            ? form.comptoirOrganizationName.trim()
+            : undefined,
           permissions: permissionsEnregistrees,
-          capabilities: capacites,
+          capabilities: form.role === 'comptoir'
+            ? { ...capacites, 'comptoir.manage': true }
+            : capacites,
         });
         if (!resultat.success || !resultat.user) {
           throw new Error(resultat.error || 'La création du compte a échoué.');
@@ -590,10 +695,10 @@ export function UserManagementModern() {
                         onChange={() => setRole(role)}
                       />
                       <span>
-                        <strong>{roleLabel(role)}</strong>
-                        <small>{DESCRIPTIONS_ROLE[role]}</small>
+                        <strong>{accountRoleLabel(role)}</strong>
+                        <small>{role === 'comptoir' ? DESCRIPTION_COMPTOIR : DESCRIPTIONS_ROLE[role]}</small>
                       </span>
-                      <Badge tone={roleTone(role)}>{roleLabel(role)}</Badge>
+                      <Badge tone={accountRoleTone(role)}>{accountRoleLabel(role)}</Badge>
                     </label>
                   </li>
                 ))}
@@ -670,6 +775,74 @@ export function UserManagementModern() {
               )}
             </Section>}
 
+            {form.role === 'comptoir' && <Section
+              id="rattachement-comptoir"
+              icon={Building2}
+              tone="amber"
+              title="Comptoir représenté"
+              description="Le compte ouvre uniquement les opérations du comptoir sélectionné."
+            >
+              <ul className="compte__compagnies">
+                {comptoirs.map((comptoir) => (
+                  <li key={comptoir.id}>
+                    <label className={form.comptoirOrganizationId === comptoir.id ? 'is-checked' : ''}>
+                      <input
+                        type="radio"
+                        name="comptoir-organization"
+                        checked={form.comptoirOrganizationId === comptoir.id}
+                        disabled={editionPropreCompte || !peutAdministrerCompte}
+                        onChange={() => setValue('comptoirOrganizationId', comptoir.id)}
+                      />
+                      <span>
+                        <strong>{comptoir.name}</strong>
+                        <small>{comptoir.code}</small>
+                      </span>
+                      <Badge tone="success">Actif</Badge>
+                    </label>
+                  </li>
+                ))}
+                <li>
+                  <label className={form.comptoirOrganizationId === NEW_COMPTOIR_VALUE ? 'is-checked' : ''}>
+                    <input
+                      type="radio"
+                      name="comptoir-organization"
+                      checked={form.comptoirOrganizationId === NEW_COMPTOIR_VALUE}
+                      disabled={editionPropreCompte || !peutAdministrerCompte}
+                      onChange={() => setValue('comptoirOrganizationId', NEW_COMPTOIR_VALUE)}
+                    />
+                    <span>
+                      <strong>Nouveau comptoir</strong>
+                      <small>Créer son périmètre sécurisé avec ce compte</small>
+                    </span>
+                    <Badge tone="warning">Nouveau</Badge>
+                  </label>
+                </li>
+              </ul>
+
+              {form.comptoirOrganizationId === NEW_COMPTOIR_VALUE && (
+                <div className="admin-form__row is-deux">
+                  <Field label="Code du comptoir" required htmlFor="comptoir-code">
+                    <input
+                      id="comptoir-code"
+                      value={form.comptoirOrganizationCode}
+                      maxLength={20}
+                      onChange={(event) => setValue('comptoirOrganizationCode', event.target.value.toUpperCase())}
+                      placeholder="NAFO"
+                    />
+                  </Field>
+                  <Field label="Nom du comptoir" required htmlFor="comptoir-nom">
+                    <input
+                      id="comptoir-nom"
+                      value={form.comptoirOrganizationName}
+                      maxLength={160}
+                      onChange={(event) => setValue('comptoirOrganizationName', event.target.value)}
+                      placeholder="Comptoir d’or NAFO"
+                    />
+                  </Field>
+                </div>
+              )}
+            </Section>}
+
             {!isEditMode && (
               <Section
                 id="acces"
@@ -723,6 +896,7 @@ export function UserManagementModern() {
                         checked={capacites[option.code]}
                         disabled={
                           form.role === 'manager'
+                          || (form.role === 'comptoir' && option.code === 'comptoir.manage')
                           || editionPropreCompte
                           || !peutAdministrerCompte
                         }

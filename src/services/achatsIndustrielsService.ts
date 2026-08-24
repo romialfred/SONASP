@@ -214,6 +214,9 @@ export interface ReglementAchat {
   reference_bancaire: string | null;
   statut: StatutReglement;
   observations: string | null;
+  reception_statut?: 'non_requise' | 'a_confirmer' | 'confirmee' | 'contestee';
+  reception_motif?: string | null;
+  reception_repondu_le?: string | null;
   mining_company?: Societe | null;
 }
 

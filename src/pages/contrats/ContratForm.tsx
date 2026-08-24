@@ -5,6 +5,7 @@ import {
   FlaskConical, Gavel, Loader2, Save, Scale, Truck,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { errorMessage } from '@/lib/errorMessage';
 import { achatsIndustrielsService, type Societe } from '@/services/achatsIndustrielsService';
 import {
@@ -215,6 +216,7 @@ export function ContratForm() {
   const [parametres] = useSearchParams();
   const navigate = useNavigate();
   const modeEdition = Boolean(id);
+  const { isMine, companyId, companyName } = useMineWorkspace();
 
   /* Un avenant se rattache a son parent des l'ouverture : il en herite le
      partenaire, et ne modifie que ce qu'il declare. */
@@ -234,8 +236,18 @@ export function ContratForm() {
     setChargement(true);
     setErreur(null);
     try {
-      const societesChargees = await achatsIndustrielsService.societesProductrices();
+      const societesChargees = isMine && companyId
+        ? [{ id: companyId, name: companyName || 'Votre société minière' }]
+        : await achatsIndustrielsService.societesProductrices();
       setSocietes(societesChargees);
+
+      if (isMine && companyId && !id) {
+        setSaisie((actuelle) => ({
+          ...actuelle,
+          partenaire_type: 'mine_industrielle',
+          mining_company_id: companyId,
+        }));
+      }
 
       if (parentId && !id) {
         const contratParent = await contratsService.contrat(parentId);
@@ -329,13 +341,15 @@ export function ContratForm() {
     } finally {
       setChargement(false);
     }
-  }, [id, parentId]);
+  }, [companyId, companyName, id, isMine, parentId]);
 
   useEffect(() => {
     void charger();
   }, [charger]);
 
-  const modifiable = !contrat || ['brouillon', 'rejete'].includes(contrat.statut);
+  const modifiable = isMine
+    ? !contrat
+    : !contrat || ['brouillon', 'rejete'].includes(contrat.statut);
   const industriel = PARTENAIRES_INDUSTRIELS.includes(saisie.partenaire_type);
   const societeChoisie = societes.find((societe) => societe.id === saisie.mining_company_id);
 
@@ -443,14 +457,24 @@ export function ContratForm() {
     setMessage(null);
     try {
       const charge = construireCharge();
-      const enregistre = id
-        ? await contratsService.modifier(id, charge)
-        : await contratsService.creer(charge);
+      if (isMine && id) throw new Error('Une proposition déjà transmise ne peut plus être modifiée.');
+      const enregistre = isMine
+        ? await contratsService.proposerMine({
+            ...charge,
+            partenaire_type: 'mine_industrielle',
+            mining_company_id: companyId,
+            date_signature: null,
+          })
+        : id
+          ? await contratsService.modifier(id, charge)
+          : await contratsService.creer(charge);
       setContrat(enregistre);
       if (puisOuvrir) {
         navigate(`/contrats/${enregistre.id}`);
       } else {
-        setMessage(`Contrat ${enregistre.numero_contrat} enregistré en brouillon.`);
+        setMessage(isMine
+          ? `Proposition ${enregistre.numero_contrat} transmise à la SONASP.`
+          : `Contrat ${enregistre.numero_contrat} enregistré en brouillon.`);
         if (!id) navigate(`/contrats/${enregistre.id}/modifier`, { replace: true });
       }
     } catch (raison) {
@@ -481,12 +505,15 @@ export function ContratForm() {
             <h2>
               {modeEdition ? 'Modifier le contrat'
                 : parent ? `Avenant au contrat ${parent.numero_contrat}`
-                  : 'Établir un contrat de fourniture'}
+                  : isMine ? 'Proposer un contrat de fourniture'
+                    : 'Établir un contrat de fourniture'}
             </h2>
             <p className="site-form__subtitle">
               {parent
                 ? 'L’avenant hérite du partenaire et ne modifie que ce qu’il déclare.'
-                : 'Engagement de livraison d’or entre la SONASP et son fournisseur.'}
+                : isMine
+                  ? 'Votre proposition sera transmise à la SONASP pour instruction.'
+                  : 'Engagement de livraison d’or entre la SONASP et son fournisseur.'}
             </p>
           </div>
 
@@ -594,7 +621,7 @@ export function ContratForm() {
 
                     <div className="site-form__field is-wide">
                       <label className="site-form__label" htmlFor="observations">
-                        Observations internes
+                        {isMine ? 'Commentaire à la SONASP' : 'Observations internes'}
                       </label>
                       <textarea
                         id="observations" rows={3} value={saisie.observations} disabled={!modifiable}
@@ -618,7 +645,7 @@ export function ContratForm() {
                 </header>
                 <div className="site-form__section-body">
                   <div className="site-form__grid">
-                    <div className="site-form__field">
+                    {!isMine && <div className="site-form__field">
                       <label className="site-form__label" htmlFor="categorie">
                         Catégorie de partenaire <i>*</i>
                       </label>
@@ -631,24 +658,28 @@ export function ContratForm() {
                           <option key={type} value={type}>{LIBELLES_PARTENAIRE[type]}</option>
                         ))}
                       </select>
-                    </div>
+                    </div>}
 
                     {industriel ? (
                       <div className="site-form__field">
                         <label className="site-form__label" htmlFor="societe">
                           Société minière <i>*</i>
                         </label>
-                        <select
-                          id="societe" value={saisie.mining_company_id} disabled={!modifiable}
-                          onChange={(evenement) => modifier('mining_company_id', evenement.target.value)}
-                        >
-                          <option value="">Choisir une société</option>
-                          {societes.map((societe) => (
-                            <option key={societe.id} value={societe.id}>
-                              {societe.name}{societe.code ? ` (${societe.code})` : ''}
-                            </option>
-                          ))}
-                        </select>
+                        {isMine ? (
+                          <input id="societe" value={companyName || 'Votre société minière'} readOnly />
+                        ) : (
+                          <select
+                            id="societe" value={saisie.mining_company_id} disabled={!modifiable}
+                            onChange={(evenement) => modifier('mining_company_id', evenement.target.value)}
+                          >
+                            <option value="">Choisir une société</option>
+                            {societes.map((societe) => (
+                              <option key={societe.id} value={societe.id}>
+                                {societe.name}{societe.code ? ` (${societe.code})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                     ) : (
                       <div className="site-form__field">
@@ -1287,17 +1318,17 @@ export function ContratForm() {
               </button>
               {modifiable && (
                 <>
-                  <button
+                  {!isMine && <button
                     type="button" onClick={() => void enregistrer(false)} disabled={enregistrement}
                   >
                     {enregistrement ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Save aria-hidden="true" />}
                     Enregistrer le brouillon
-                  </button>
+                  </button>}
                   <button
                     type="button" className="is-primary"
                     onClick={() => void enregistrer(true)} disabled={enregistrement}
                   >
-                    Enregistrer et ouvrir le dossier
+                    {isMine ? 'Transmettre à la SONASP' : 'Enregistrer et ouvrir le dossier'}
                   </button>
                 </>
               )}

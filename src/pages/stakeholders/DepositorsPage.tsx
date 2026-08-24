@@ -24,6 +24,7 @@ import {
   DEPOSITOR_CATEGORIES,
 } from '@/services/depositorService';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 
 interface MiningCompany {
   id: string;
@@ -33,31 +34,39 @@ interface MiningCompany {
 export function DepositorsPage() {
   const navigate = useNavigate();
   const { showSuccess, showError, showConfirm } = useCustomAlert();
+  const { isMine, companyId, companyName } = useMineWorkspace();
   const [depositors, setDepositors] = useState<Depositor[]>([]);
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCompany, setSelectedCompany] = useState<string>('all');
+  const [selectedCompany, setSelectedCompany] = useState<string>(companyId || 'all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     loadMiningCompanies();
     loadDepositors();
-  }, [selectedCompany, selectedCategory]);
+  }, [selectedCompany, selectedCategory, companyId, isMine]);
 
   const loadMiningCompanies = async () => {
+    if (isMine && !companyId) {
+      setMiningCompanies([]);
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('mining_companies')
         .select('id, name')
         .eq('is_active', true)
         .order('name');
+      if (isMine && companyId) query = query.eq('id', companyId);
+      const { data, error } = await query;
 
       if (error) throw error;
       setMiningCompanies(data || []);
     } catch (error: any) {
       console.error('Error loading mining companies:', error);
-      showError('Failed to load mining companies');
+      showError('Impossible de charger les sociétés minières');
     }
   };
 
@@ -66,7 +75,9 @@ export function DepositorsPage() {
       setLoading(true);
       const filters: any = { is_active: true };
 
-      if (selectedCompany !== 'all') {
+      if (isMine && companyId) {
+        filters.mining_company_id = companyId;
+      } else if (selectedCompany !== 'all') {
         filters.mining_company_id = selectedCompany;
       }
 
@@ -80,7 +91,7 @@ export function DepositorsPage() {
       setDepositors(data || []);
     } catch (error: any) {
       console.error('Error loading depositors:', error);
-      showError('Failed to load depositors');
+      showError('Impossible de charger les dépositaires');
     } finally {
       setLoading(false);
     }
@@ -88,8 +99,8 @@ export function DepositorsPage() {
 
   const handleDelete = async (id: string, name: string) => {
     const confirmed = await showConfirm(
-      `Are you sure you want to delete ${name}?`,
-      'This action cannot be undone.'
+      `Désactiver le dépositaire ${name} ?`,
+      'Il ne sera plus proposé comme signataire.'
     );
 
     if (!confirmed) return;
@@ -99,11 +110,11 @@ export function DepositorsPage() {
 
       if (error) throw error;
 
-      showSuccess('Depositor deleted successfully');
+      showSuccess('Dépositaire désactivé');
       loadDepositors();
     } catch (error: any) {
       console.error('Error deleting depositor:', error);
-      showError('Failed to delete depositor');
+      showError('Impossible de désactiver ce dépositaire');
     }
   };
 
@@ -136,7 +147,7 @@ export function DepositorsPage() {
 
   const getCompanyName = (companyId: string): string => {
     const company = miningCompanies.find((c) => c.id === companyId);
-    return company?.name || 'Unknown';
+    return company?.name || (isMine ? companyName || 'Votre mine' : 'Société inconnue');
   };
 
   return (
@@ -144,50 +155,50 @@ export function DepositorsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Depositor List</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Dépositaires</h1>
             <p className="text-gray-600 mt-1">
-              Manage depositor contacts, signatories and approvers
+              Signataires et contacts autorisés pour les expéditions.
             </p>
           </div>
           <div className="flex gap-3">
             <Button onClick={() => navigate('/stakeholders/depositors/new')} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Depositor
+              Ajouter un dépositaire
             </Button>
           </div>
         </div>
 
         <Card>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className={`grid grid-cols-1 gap-4 mb-6 ${isMine ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search by name, email, or title..."
+                  placeholder="Rechercher par nom, courriel ou fonction…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
 
-              <Select
+              {!isMine && <Select
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
               >
-                <option value="all">All Companies</option>
+                <option value="all">Toutes les sociétés</option>
                 {miningCompanies.map((company) => (
                   <option key={company.id} value={company.id}>
                     {company.name}
                   </option>
                 ))}
-              </Select>
+              </Select>}
 
               <Select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
-                <option value="all">All Categories</option>
+                <option value="all">Tous les rôles</option>
                 {Object.entries(DEPOSITOR_CATEGORIES).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -204,16 +215,16 @@ export function DepositorsPage() {
               <div className="text-center py-12">
                 <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No depositors found
+                  Aucun dépositaire
                 </h3>
                 <p className="text-gray-600 mb-4">
                   {searchQuery || selectedCompany !== 'all' || selectedCategory !== 'all'
-                    ? 'Try adjusting your filters'
-                    : 'Get started by adding your first depositor'}
+                    ? 'Aucun contact ne correspond aux filtres.'
+                    : 'Ajoutez le premier signataire autorisé.'}
                 </p>
                 <Button onClick={() => navigate('/stakeholders/depositors/new')}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Depositor
+                  Ajouter un dépositaire
                 </Button>
               </div>
             ) : (
@@ -222,19 +233,19 @@ export function DepositorsPage() {
                   <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Depositor Information
+                        Dépositaire
+                      </th>
+                      {!isMine && <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Société minière
+                      </th>}
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Responsabilité
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Mining Company
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Contact Details
+                        Coordonnées
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Role
+                        Statut
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Actions
@@ -264,14 +275,14 @@ export function DepositorsPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        {!isMine && <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             <span className="text-sm font-medium text-gray-900">
                               {getCompanyName(depositor.mining_company_id)}
                             </span>
                           </div>
-                        </td>
+                        </td>}
                         <td className="px-6 py-4">
                           <span
                             className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCategoryBadgeColor(
@@ -316,12 +327,12 @@ export function DepositorsPage() {
                             {depositor.is_primary && (
                               <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
                                 <UserCheck className="w-3.5 h-3.5 mr-1" />
-                                Primary
+                                Principal
                               </span>
                             )}
                             {depositor.is_backup && (
                               <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                                Backup
+                                Suppléant
                               </span>
                             )}
                             {!depositor.is_primary && !depositor.is_backup && (
@@ -336,7 +347,7 @@ export function DepositorsPage() {
                                 navigate(`/stakeholders/depositors/${depositor.id}/edit`)
                               }
                               className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                              title="Edit Depositor"
+                              title="Modifier le dépositaire"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
@@ -345,7 +356,7 @@ export function DepositorsPage() {
                                 handleDelete(depositor.id, depositor.full_name)
                               }
                               className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                              title="Delete Depositor"
+                              title="Désactiver le dépositaire"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -360,8 +371,8 @@ export function DepositorsPage() {
 
             {!loading && filteredDepositors.length > 0 && (
               <div className="mt-4 text-sm text-gray-600">
-                Showing {filteredDepositors.length} of {depositors.length} depositor
-                {depositors.length !== 1 ? 's' : ''}
+                {filteredDepositors.length} dépositaire{filteredDepositors.length > 1 ? 's' : ''}
+                {filteredDepositors.length !== depositors.length ? ` sur ${depositors.length}` : ''}
               </div>
             )}
           </div>

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { errorMessage } from '@/lib/errorMessage';
 import { achatsIndustrielsService, type Societe } from '@/services/achatsIndustrielsService';
 import {
@@ -49,6 +50,7 @@ const formaterDate = (iso: string | null | undefined) => {
 
 export function ContratsPage() {
   const navigate = useNavigate();
+  const { isMine, companyId } = useMineWorkspace();
 
   const [contrats, setContrats] = useState<Contrat[]>([]);
   const [tous, setTous] = useState<Contrat[]>([]);
@@ -66,15 +68,16 @@ export function ContratsPage() {
     setChargement(true);
     setErreur(null);
     try {
+      const societeImposee = isMine ? companyId || '__mine_indisponible__' : filtreSociete;
       const [liste, ensemble, societesChargees] = await Promise.all([
         contratsService.lister({
           statut: filtreStatut,
           partenaireType: filtrePartenaire,
-          societe: filtreSociete,
+          societe: societeImposee,
           recherche,
         }),
-        contratsService.lister(),
-        achatsIndustrielsService.societesProductrices(),
+        contratsService.lister(isMine ? { societe: societeImposee } : undefined),
+        isMine ? Promise.resolve([]) : achatsIndustrielsService.societesProductrices(),
       ]);
       setContrats(liste);
       setTous(ensemble);
@@ -86,7 +89,7 @@ export function ContratsPage() {
     } finally {
       setChargement(false);
     }
-  }, [filtreStatut, filtrePartenaire, filtreSociete, recherche]);
+  }, [companyId, filtreStatut, filtrePartenaire, filtreSociete, isMine, recherche]);
 
   useEffect(() => {
     void charger();
@@ -129,9 +132,11 @@ export function ContratsPage() {
       <div className="sn-page contrats-page">
         <PageHeader
           icon={FileSignature}
-          title="Contrats de fourniture d’or"
-          subtitle="Engagements pris avec les mines, les sites artisanaux et les orpailleurs."
-          breadcrumb={[{ label: 'Achats d’or' }, { label: 'Contrats' }]}
+          title={isMine ? 'Contrats avec la SONASP' : 'Contrats de fourniture d’or'}
+          subtitle={isMine
+            ? 'Vos contrats actifs et les propositions transmises à la SONASP.'
+            : 'Engagements pris avec les mines, les sites artisanaux et les orpailleurs.'}
+          breadcrumb={[{ label: isMine ? 'Relations avec la SONASP' : 'Achats d’or' }, { label: 'Contrats' }]}
           info={{
             titre: 'Ce que porte un contrat',
             contenu: (
@@ -152,7 +157,7 @@ export function ContratsPage() {
                 type="button" className="sn-btn sn-btn--primary"
                 onClick={() => navigate('/contrats/nouveau')}
               >
-                <Plus aria-hidden="true" /> Nouveau contrat
+                <Plus aria-hidden="true" /> {isMine ? 'Proposer un contrat' : 'Nouveau contrat'}
               </button>
             </>
           }
@@ -227,7 +232,7 @@ export function ContratsPage() {
                 ))}
               </select>
             </label>
-            <label className="sn-field">
+            {!isMine && <label className="sn-field">
               <span className="sn-field__label">Catégorie de partenaire</span>
               <select
                 value={filtrePartenaire}
@@ -238,8 +243,8 @@ export function ContratsPage() {
                   <option key={type} value={type}>{LIBELLES_PARTENAIRE[type]}</option>
                 ))}
               </select>
-            </label>
-            <label className="sn-field">
+            </label>}
+            {!isMine && <label className="sn-field">
               <span className="sn-field__label">Société minière</span>
               <select value={filtreSociete} onChange={(evenement) => setFiltreSociete(evenement.target.value)}>
                 <option value="all">Toutes les sociétés</option>
@@ -247,7 +252,7 @@ export function ContratsPage() {
                   <option key={societe.id} value={societe.id}>{societe.name}</option>
                 ))}
               </select>
-            </label>
+            </label>}
           </div>
 
           {chargement ? (
@@ -258,7 +263,9 @@ export function ContratsPage() {
               description={
                 filtre && cumuls.total > 0
                   ? `${cumuls.total} contrat(s) existent sous d’autres critères.`
-                  : 'Un contrat fixe les quantités qu’un fournisseur s’engage à livrer, la teneur attendue et le prix. Il alimente ensuite les plans d’achat mensuels.'
+                  : isMine
+                    ? 'Proposez un contrat à la SONASP ou consultez les engagements déjà conclus.'
+                    : 'Un contrat fixe les quantités qu’un fournisseur s’engage à livrer, la teneur attendue et le prix. Il alimente ensuite les plans d’achat mensuels.'
               }
               action={filtre ? (
                 <button type="button" className="sn-btn" onClick={retirerFiltres}>
@@ -269,7 +276,7 @@ export function ContratsPage() {
                   type="button" className="sn-btn sn-btn--primary"
                   onClick={() => navigate('/contrats/nouveau')}
                 >
-                  <Plus aria-hidden="true" /> Établir un contrat
+                  <Plus aria-hidden="true" /> {isMine ? 'Proposer un contrat' : 'Établir un contrat'}
                 </button>
               )}
             />

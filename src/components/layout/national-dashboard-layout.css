@@ -215,6 +215,12 @@
   transition: background-color 150ms ease, color 150ms ease;
 }
 
+/* Les libellés internationaux restent intégralement visibles sans élargir la
+   barre ni compacter les espaces Mine et Comptoir. */
+.national-sidebar__group-trigger--compact {
+  font-size: 12px;
+}
+
 .national-sidebar__group-trigger:hover,
 .national-sidebar__subnav a:hover {
   color: #ffffff;

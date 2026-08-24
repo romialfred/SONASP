@@ -28,6 +28,11 @@ function renderRoute(path: string) {
       <Routes>
         <Route path="/dashboard" element={<ProtectedRoute><div>Interne SONASP</div></ProtectedRoute>} />
         <Route path="/production/daily" element={<ProtectedRoute allowedRoles={['mine']}><div>Production mine</div></ProtectedRoute>} />
+        <Route path="/stakeholders/depositors/new" element={<ProtectedRoute allowedRoles={['management', 'admin', 'mine']}><div>Nouveau dépositaire</div></ProtectedRoute>} />
+        <Route path="/contrats/nouveau" element={<ProtectedRoute><div>Proposition de contrat</div></ProtectedRoute>} />
+        <Route path="/requisitions/:id" element={<ProtectedRoute><div>Réquisition reçue</div></ProtectedRoute>} />
+        <Route path="/requisitions/nouvelle" element={<ProtectedRoute><div>Émission de réquisition</div></ProtectedRoute>} />
+        <Route path="/achats/reglements/nouveau" element={<ProtectedRoute><div>Création de règlement</div></ProtectedRoute>} />
         <Route path="/production/achats-mines" element={<ProtectedRoute><div>Achats SONASP</div></ProtectedRoute>} />
         <Route path="/portail-mine" element={<div>Portail société</div>} />
         <Route path="/portail-direction" element={<div>Portail Direction</div>} />
@@ -50,6 +55,34 @@ describe('ProtectedRoute — frontières de portail', () => {
     mockedUseAuth.mockReturnValue(auth({ ...baseUser, mining_company_id: 'mine-1' }));
     renderRoute('/production/daily');
     expect(screen.getByText('Production mine')).toBeInTheDocument();
+  });
+
+  it('autorise un compte société à créer un dépositaire dans son périmètre', () => {
+    mockedUseAuth.mockReturnValue(auth({ ...baseUser, mining_company_id: 'mine-1' }));
+    renderRoute('/stakeholders/depositors/new');
+    expect(screen.getByText('Nouveau dépositaire')).toBeInTheDocument();
+  });
+
+  it('autorise une société à proposer un contrat et consulter une réquisition reçue', () => {
+    mockedUseAuth.mockReturnValue(auth({ ...baseUser, mining_company_id: 'mine-1' }));
+    const proposition = renderRoute('/contrats/nouveau');
+    expect(screen.getByText('Proposition de contrat')).toBeInTheDocument();
+    proposition.unmount();
+
+    renderRoute('/requisitions/req-1');
+    expect(screen.getByText('Réquisition reçue')).toBeInTheDocument();
+  });
+
+  it('empêche une société d’émettre une réquisition ou son propre règlement', () => {
+    mockedUseAuth.mockReturnValue(auth({ ...baseUser, mining_company_id: 'mine-1' }));
+    const requisition = renderRoute('/requisitions/nouvelle');
+    expect(screen.getByText('Portail société')).toBeInTheDocument();
+    expect(screen.queryByText('Émission de réquisition')).not.toBeInTheDocument();
+    requisition.unmount();
+
+    renderRoute('/achats/reglements/nouveau');
+    expect(screen.getByText('Portail société')).toBeInTheDocument();
+    expect(screen.queryByText('Création de règlement')).not.toBeInTheDocument();
   });
 
   it('refuse explicitement le module Achats aux mines au compte société', () => {

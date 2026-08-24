@@ -13,6 +13,7 @@ import {
   UpdateDepositorInput,
 } from '@/services/depositorService';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
+import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 
 interface MiningCompany {
   id: string;
@@ -23,9 +24,10 @@ export function DepositorFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { showSuccess, showError } = useCustomAlert();
+  const { isMine, companyId } = useMineWorkspace();
   const [depositor, setDepositor] = useState<Depositor | undefined>();
   const [miningCompanies, setMiningCompanies] = useState<MiningCompany[]>([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(companyId || '');
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingDepositors, setExistingDepositors] = useState<Depositor[]>([]);
@@ -70,22 +72,31 @@ export function DepositorFormPage() {
   };
 
   const loadMiningCompanies = async () => {
+    if (isMine && !companyId) {
+      showError('Votre compte n’est rattaché à aucune société minière');
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('mining_companies')
         .select('id, name')
         .eq('is_active', true)
         .order('name');
+      if (isMine && companyId) query = query.eq('id', companyId);
+      const { data, error } = await query;
 
       if (error) throw error;
       setMiningCompanies(data || []);
 
-      if (data && data.length > 0 && !id) {
+      if (isMine && companyId) {
+        setSelectedCompanyId(companyId);
+      } else if (data && data.length > 0 && !id) {
         setSelectedCompanyId(data[0].id);
       }
     } catch (error: any) {
       console.error('Error loading mining companies:', error);
-      showError('Failed to load mining companies');
+      showError('Impossible de charger les sociétés minières');
     }
   };
 
@@ -96,12 +107,17 @@ export function DepositorFormPage() {
 
       if (error) throw error;
       if (data) {
+        if (isMine && companyId && data.mining_company_id !== companyId) {
+          showError('Ce dépositaire n’appartient pas à votre société');
+          navigate('/stakeholders/depositors');
+          return;
+        }
         setDepositor(data);
-        setSelectedCompanyId(data.mining_company_id);
+        setSelectedCompanyId(isMine && companyId ? companyId : data.mining_company_id);
       }
     } catch (error: any) {
       console.error('Error loading depositor:', error);
-      showError('Failed to load depositor');
+      showError('Impossible de charger ce dépositaire');
       navigate('/stakeholders/depositors');
     } finally {
       setLoading(false);
@@ -112,14 +128,9 @@ export function DepositorFormPage() {
     try {
       setIsSubmitting(true);
 
-      console.log('=== DepositorFormPage SUBMIT ===');
-      console.log('selectedCompanyId:', selectedCompanyId);
-      console.log('data received:', data);
-      console.log('isEditMode:', isEditMode);
-
-      // Validate that a company is selected
-      if (!selectedCompanyId) {
-        showError('Please select a mining company');
+      const targetCompanyId = isMine ? companyId : selectedCompanyId;
+      if (!targetCompanyId) {
+        showError('Veuillez sélectionner une société minière');
         setIsSubmitting(false);
         return;
       }
@@ -128,44 +139,44 @@ export function DepositorFormPage() {
         // In edit mode, ensure mining_company_id is included in the update
         const updateData = {
           ...data,
-          mining_company_id: selectedCompanyId,
+          mining_company_id: targetCompanyId,
         };
         const { error } = await depositorService.updateDepositor(id, updateData);
         if (error) {
           // Check if it's a unique constraint violation
           if (error.code === '23505') {
-            showError('This person is already registered for this company with the same category/role. Please check existing records.');
+            showError('Cette personne possède déjà ce rôle dans la société.');
           } else {
             throw error;
           }
           return;
         }
-        showSuccess('Depositor updated successfully');
+        showSuccess('Dépositaire mis à jour');
       } else {
         // In create mode, ensure mining_company_id is set correctly
         const createData = {
           ...data,
-          mining_company_id: selectedCompanyId,
+          mining_company_id: targetCompanyId,
         } as CreateDepositorInput;
 
         const { error } = await depositorService.createDepositor(createData);
         if (error) {
           // Check if it's a unique constraint violation
           if (error.code === '23505') {
-            showError('This person is already registered for this company with the same category/role. Please check existing records.');
+            showError('Cette personne possède déjà ce rôle dans la société.');
           } else {
             throw error;
           }
           return;
         }
-        showSuccess('Depositor created successfully');
+        showSuccess('Dépositaire ajouté');
       }
 
       navigate('/stakeholders/depositors');
     } catch (error: any) {
       console.error('Error saving depositor:', error);
       showError(
-        error.message || `Failed to ${isEditMode ? 'update' : 'create'} depositor`
+        error.message || `Impossible de ${isEditMode ? 'modifier' : 'créer'} le dépositaire`
       );
     } finally {
       setIsSubmitting(false);
@@ -202,12 +213,12 @@ export function DepositorFormPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {isEditMode ? 'Edit Depositor' : 'New Depositor'}
+                {isEditMode ? 'Modifier le dépositaire' : 'Nouveau dépositaire'}
               </h1>
               <p className="text-sm text-gray-600">
                 {isEditMode
-                  ? 'Update depositor contact information'
-                  : 'Add a new depositor contact'}
+                  ? 'Mettez à jour ses coordonnées et sa responsabilité.'
+                  : 'Ajoutez un signataire autorisé pour les expéditions.'}
               </p>
             </div>
           </div>
@@ -216,10 +227,10 @@ export function DepositorFormPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Form */}
           <div className="lg:col-span-2 space-y-6">
-            <Card>
+            {!isMine && <Card>
               <div className="p-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mining Company <span className="text-red-500">*</span>
+                  Société minière <span className="text-red-500">*</span>
                 </label>
                 <Select
                   value={selectedCompanyId}
@@ -227,7 +238,7 @@ export function DepositorFormPage() {
                   required
                   disabled={isSubmitting}
                 >
-                  <option value="">Select a company...</option>
+                  <option value="">Sélectionner une société…</option>
                   {miningCompanies.map((company) => (
                     <option key={company.id} value={company.id}>
                       {company.name}
@@ -236,16 +247,16 @@ export function DepositorFormPage() {
                 </Select>
                 {miningCompanies.length === 0 && (
                   <p className="mt-2 text-sm text-amber-600">
-                    No mining companies found. Please create a mining company first.
+                    Aucune société minière active n’est disponible.
                   </p>
                 )}
                 {isEditMode && (
                   <p className="mt-2 text-sm text-gray-600">
-                    You can change the mining company for this depositor.
+                    La société peut être modifiée pour ce dépositaire.
                   </p>
                 )}
               </div>
-            </Card>
+            </Card>}
 
             {selectedCompanyId && (
               <DepositorForm
@@ -265,12 +276,12 @@ export function DepositorFormPage() {
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-blue-600" />
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Existing Depositors
+                    Dépositaires enregistrés
                   </h3>
                 </div>
                 {selectedCompanyId && (
                   <p className="text-sm text-gray-600 mt-1">
-                    {existingDepositors.length} depositor(s) registered
+                    {existingDepositors.length} contact{existingDepositors.length > 1 ? 's' : ''}
                   </p>
                 )}
               </div>
@@ -280,7 +291,7 @@ export function DepositorFormPage() {
                   <div className="text-center py-8">
                     <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-sm text-gray-500">
-                      Select a mining company to view existing depositors
+                      Sélectionnez une société minière.
                     </p>
                   </div>
                 ) : loadingDepositors ? (
@@ -291,7 +302,7 @@ export function DepositorFormPage() {
                   <div className="text-center py-8">
                     <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-sm text-gray-500">
-                      No depositors registered yet for this company
+                      Aucun dépositaire n’est encore enregistré.
                     </p>
                   </div>
                 ) : (
@@ -326,7 +337,7 @@ export function DepositorFormPage() {
                           </div>
                           {dep.is_primary && (
                             <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full flex-shrink-0">
-                              Primary
+                              Principal
                             </span>
                           )}
                         </div>

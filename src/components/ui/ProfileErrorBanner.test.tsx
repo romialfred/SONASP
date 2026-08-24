@@ -33,13 +33,17 @@ describe('ProfileErrorBanner', () => {
     expect(screen.queryByText('Profile loading issue')).not.toBeInTheDocument();
   });
 
-  it('retries the profile automatically when the connection returns', async () => {
+  it('réactive seulement le bouton au retour du réseau, sans relance automatique', async () => {
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
     render(<ProfileErrorBanner />);
 
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
     fireEvent(window, new Event('online'));
 
+    expect(await screen.findByRole('button', { name: 'Réessayer' })).toBeEnabled();
+    expect(refreshProfile).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
     await waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
   });
 });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { X, RefreshCw, WifiOff, AlertCircle } from 'lucide-react';
+import { browserNetworkState } from '@/lib/pwaUpdate';
 
 /**
  * Non-blocking banner that shows profile loading errors
@@ -11,7 +12,7 @@ export function ProfileErrorBanner() {
   const { profileError, refreshProfile, user } = useAuth();
   const [dismissed, setDismissed] = useState(false);
   const [retrying, setRetrying] = useState(false);
-  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [isOnline, setIsOnline] = useState(() => browserNetworkState() === 'online');
 
   // Reset dismissed state when error changes
   useEffect(() => {
@@ -22,13 +23,7 @@ export function ProfileErrorBanner() {
 
   useEffect(() => {
     const handleOffline = () => setIsOnline(false);
-    const handleOnline = () => {
-      setIsOnline(true);
-
-      if (profileError && user) {
-        void refreshProfile();
-      }
-    };
+    const handleOnline = () => setIsOnline(true);
 
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
@@ -37,7 +32,7 @@ export function ProfileErrorBanner() {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
     };
-  }, [profileError, refreshProfile, user]);
+  }, []);
 
   // Don't show if no error or dismissed
   if (!profileError || dismissed || !user) {
@@ -84,7 +79,7 @@ export function ProfileErrorBanner() {
             <p className="mt-1 text-sm leading-5 text-amber-800">
               {isOnline
                 ? 'Le profil complet n’a pas pu être chargé. Les paramètres de base restent actifs.'
-                : 'Les données en ligne sont inaccessibles. Rétablissez la connexion pour relancer automatiquement le chargement.'}
+                : 'Les données en ligne sont inaccessibles. Rétablissez la connexion, puis relancez le chargement.'}
             </p>
 
             <button

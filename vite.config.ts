@@ -98,18 +98,39 @@ function publicSeoFilesPlugin(publicBaseUrl: string | undefined): Plugin {
   };
 }
 
+/**
+ * Un fichier minuscule, différent à chaque build, entre dans le manifeste
+ * Workbox. Ainsi une livraison qui ne modifie que le portail privé produit tout
+ * de même un nouveau worker et une transition de version unique et atomique.
+ */
+function buildVersionPlugin(buildId: string): Plugin {
+  return {
+    name: 'sonasp-build-version',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'build-version.json',
+        source: `${JSON.stringify({ buildId })}\n`,
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'SONASP_');
   const publicBaseUrl = getPublicBaseUrl(env[PUBLIC_BASE_URL_ENV]);
+  const sourceRevision = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) || 'local';
+  const buildId = `${sourceRevision}-${Date.now().toString(36)}`;
 
   return {
   plugins: [
     react(),
     publicSeoFilesPlugin(publicBaseUrl),
+    buildVersionPlugin(buildId),
     VitePWA({
-      // Aucun changement de version ne recharge automatiquement un onglet actif.
-      // Le nouveau worker s'active toutefois immédiatement : au prochain
-      // rechargement manuel, le navigateur ne reste plus prisonnier de l'ancien.
+      // Une version attend la confirmation explicite de l'utilisateur. Le hook
+      // React `virtual:pwa-register/react` est l'unique point qui demande son
+      // activation ; aucun focus, retour d'onglet ou retour réseau ne recharge.
       registerType: 'prompt',
       includeAssets: [
         'favicon.ico',
@@ -152,13 +173,11 @@ export default defineConfig(({ mode }) => {
         ],
       },
       workbox: {
-        // `skipWaiting: false` laissait le nouveau worker en attente indéfiniment
-        // tant que le tableau de bord restait ouvert. L'ancien index référençait
-        // alors des chunks que Vercel ne servait plus, d'où la boucle d'erreur.
-        // L'activation est immédiate, mais `clientsClaim: false` évite toujours
-        // de reprendre ou recharger de force un onglet en cours d'utilisation.
-        skipWaiting: true,
-        clientsClaim: false,
+        // Le worker reste en attente. Après le clic « Mettre à jour », le hook
+        // lui envoie SKIP_WAITING ; `clientsClaim` déclenche alors l'unique
+        // rechargement explicite prévu par vite-plugin-pwa.
+        skipWaiting: false,
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // Large application bundle and PDF.js library
         // Les images éditoriales et les captures métier ne doivent pas toutes
         // être téléchargées lors de l'installation du service worker.
@@ -167,6 +186,7 @@ export default defineConfig(({ mode }) => {
         // demande ; les précacher annulerait le gain et téléchargerait plusieurs
         // mégaoctets dès la première visite.
         globPatterns: [
+          'build-version.json',
           'assets/Public*.js',
           'assets/public-*.css',
           '**/*.{ico,woff,woff2}',

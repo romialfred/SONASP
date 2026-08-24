@@ -1,6 +1,6 @@
 import { Component, ReactNode, useEffect, useState } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { purgerVersionPwaObsolete } from '@/lib/pwaRecovery';
+import { browserNetworkState, requestPwaUpdateCheck } from '@/lib/pwaUpdate';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -83,8 +83,8 @@ const DYNAMIC_IMPORT_ERROR =
   /ChunkLoadError|Loading chunk .* failed|Failed to fetch dynamically imported module|Importing a module script failed/i;
 
 function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error }) {
-  const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine);
-  const [recuperation, setRecuperation] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => browserNetworkState() === 'online');
+  const [reloading, setReloading] = useState(false);
   const requiresReload = DYNAMIC_IMPORT_ERROR.test(`${error?.name ?? ''} ${error?.message ?? ''}`);
 
   useEffect(() => {
@@ -103,13 +103,16 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
     };
   }, []);
 
-  const handleRetry = async () => {
+  useEffect(() => {
+    if (requiresReload && isOnline) void requestPwaUpdateCheck();
+  }, [isOnline, requiresReload]);
+
+  const handleRetry = () => {
     if (!isOnline) return;
     if (requiresReload) {
-      setRecuperation(true);
-      await purgerVersionPwaObsolete().catch((raison: unknown) => {
-        console.warn('[ErrorBoundary] Nettoyage PWA incomplet.', raison);
-      });
+      setReloading(true);
+      // Uniquement après ce clic. Le shell et la session du même onglet restent
+      // intacts ; aucune purge de sessionStorage ou du niveau MFA n'est faite.
       window.location.reload();
       return;
     }
@@ -119,19 +122,19 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
   const title = !isOnline
     ? 'Connexion Internet interrompue'
     : requiresReload
-      ? 'Mise à jour de la plateforme nécessaire'
+      ? 'Écran temporairement indisponible'
       : 'Une erreur est survenue';
   const description = !isOnline
-    ? 'Le tableau de bord ne peut pas terminer son chargement hors ligne. Rétablissez la connexion Internet, puis rechargez la page.'
+    ? 'Le tableau de bord ne peut pas terminer son chargement hors ligne. Rétablissez la connexion Internet, puis réessayez.'
     : requiresReload
-      ? 'Une ancienne version est restée dans le cache du navigateur. La réparation ci-dessous la retire avant de charger la version actuelle.'
+      ? 'Un fichier de cet écran n’a pas pu être chargé. Une vérification de version a été demandée sans interrompre votre session. Vous pouvez recharger cet écran manuellement.'
       : 'Cette page n’a pas pu être chargée. Vous pouvez réessayer ou ouvrir une autre rubrique.';
-  const actionLabel = recuperation
-    ? 'Réparation en cours…'
+  const actionLabel = reloading
+    ? 'Rechargement…'
     : !isOnline
       ? 'En attente du réseau'
       : requiresReload
-        ? 'Réparer et recharger'
+        ? 'Recharger cet écran'
         : 'Réessayer';
 
   return (
@@ -144,12 +147,12 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
         <p className="text-sm text-gray-600">{description}</p>
         <button
           type="button"
-          onClick={() => void handleRetry()}
-          disabled={!isOnline || recuperation}
-          aria-busy={recuperation}
+          onClick={handleRetry}
+          disabled={!isOnline || reloading}
+          aria-busy={reloading}
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <RefreshCw className={`w-4 h-4 ${recuperation ? 'animate-spin' : ''}`} aria-hidden="true" />
+          <RefreshCw className={`w-4 h-4 ${reloading ? 'animate-spin' : ''}`} aria-hidden="true" />
           {actionLabel}
         </button>
       </div>

@@ -10,10 +10,17 @@ import { Loading } from '@/components/ui/Loading';
 import { FreightStatusBadge } from '@/components/freight/FreightStatusBadge';
 import { freightCustomsService, FreightCustomsOperation, FreightCustomsStatus } from '@/services/freightCustomsService';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  FREIGHT_CAPABILITIES,
+  hasFreightCapability,
+} from '@/lib/freightCustomsAccess';
 
 export default function FreightCustomsDashboard() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
+  const canPrepare = hasFreightCapability(user, FREIGHT_CAPABILITIES.PREPARE);
   const [operations, setOperations] = useState<FreightCustomsOperation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,13 +76,15 @@ export default function FreightCustomsDashboard() {
             Gestion des opérations douanières et transport
           </p>
         </div>
-        <Button
-          onClick={() => navigate('/freight-customs/create')}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nouvelle Opération
-        </Button>
+        {canPrepare && (
+          <Button
+            onClick={() => navigate('/freight-customs/create')}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nouvelle Opération
+          </Button>
+        )}
       </div>
 
       {/* Filtres et Recherche */}
@@ -147,7 +156,7 @@ export default function FreightCustomsDashboard() {
                     <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-sm text-gray-500">Aucune opération trouvée</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      Les expéditions avec statut "Expédié" apparaîtront ici
+                      Les dossiers fret autorisés dans votre périmètre apparaîtront ici
                     </p>
                   </td>
                 </tr>

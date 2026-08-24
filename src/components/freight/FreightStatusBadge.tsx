@@ -34,6 +34,14 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
           textColor: 'text-blue-700',
           borderColor: 'border-blue-200'
         };
+      case 'ready_for_expedition':
+        return {
+          label: 'Prêt pour Expédition',
+          icon: Plane,
+          bgColor: 'bg-indigo-50',
+          textColor: 'text-indigo-700',
+          borderColor: 'border-indigo-200'
+        };
       case 'shipped_to_refinery':
         return {
           label: 'Expédié',

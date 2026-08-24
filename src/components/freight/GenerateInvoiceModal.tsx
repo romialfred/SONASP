@@ -10,6 +10,11 @@ import {
 } from '@/services/freightInvoiceGenerationService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { PAYS_NATIONAL } from '@/constants/site';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  FREIGHT_CAPABILITIES,
+  hasFreightCapability,
+} from '@/lib/freightCustomsAccess';
 
 interface GenerateInvoiceModalProps {
   operation: FreightCustomsOperation;
@@ -19,6 +24,9 @@ interface GenerateInvoiceModalProps {
 
 export function GenerateInvoiceModal({ operation, onClose, onSuccess }: GenerateInvoiceModalProps) {
   const { showNotification } = useNotification();
+  const { user } = useAuth();
+  const canPrepare = hasFreightCapability(user, FREIGHT_CAPABILITIES.PREPARE);
+  const canManageInvoice = hasFreightCapability(user, FREIGHT_CAPABILITIES.INVOICE_MANAGE);
   const [activeTab, setActiveTab] = useState('bullion');
   const [generating, setGenerating] = useState(false);
 
@@ -63,6 +71,10 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
   });
 
   const generateBullionSummary = async () => {
+    if (!canPrepare) {
+      showNotification('error', 'Une session AAL2 avec la capacité de préparation fret est requise.');
+      return;
+    }
     if (!bullionFormData.operatorName || !bullionFormData.financeName) {
       showNotification('error', 'Veuillez remplir les noms pour les signatures');
       return;
@@ -139,6 +151,10 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
   };
 
   const generateExportInvoice = async () => {
+    if (!canManageInvoice || !canPrepare) {
+      showNotification('error', 'Les capacités AAL2 de facturation et de préparation fret sont requises.');
+      return;
+    }
     if (!invoiceFormData.senderName || !invoiceFormData.recipientName) {
       showNotification('error', 'Veuillez remplir les informations expéditeur et destinataire');
       return;
@@ -215,25 +231,15 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
       // Sauvegarder les données de facture
       await freightCustomsService.saveInvoiceData(operation.id, {
-        sender_name: invoiceFormData.senderName,
-        sender_address: invoiceFormData.senderAddress,
-        sender_city: invoiceFormData.senderCity,
-        sender_country: invoiceFormData.senderCountry,
-        sender_nif: invoiceFormData.senderNIF,
-
         recipient_name: invoiceFormData.recipientName,
         recipient_address: invoiceFormData.recipientAddress,
         recipient_city: invoiceFormData.recipientCity,
         recipient_country: invoiceFormData.recipientCountry,
         recipient_phone: invoiceFormData.recipientPhone,
-
-        mine_name: invoiceFormData.mineName,
-        country_of_origin: invoiceFormData.senderCountry,
-
         exchange_rate_fcfa_usd: invoiceFormData.exchangeRateFCFAUSD,
         number_of_boxes: invoiceFormData.numberOfBoxes,
         box_type: invoiceFormData.boxType,
-
+        description: 'Dore: Gold, Silver, ingot packed in boxes',
         metal_price_cfa_per_kg: invoiceFormData.metalPriceCFAPerKg,
         total_value_cfa: estimatedValueCFA,
         total_value_usd: totalValueUSD
@@ -371,7 +377,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
               <div className="flex justify-end pt-4">
                 <Button
                   onClick={generateBullionSummary}
-                  disabled={generating}
+                  disabled={generating || !canPrepare}
                   className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <FileText className="w-4 h-4 mr-2" />
@@ -398,7 +404,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     <Input
                       type="text"
                       value={invoiceFormData.senderName}
-                      onChange={(e) => setInvoiceFormData({ ...invoiceFormData, senderName: e.target.value })}
+                      disabled
                     />
                   </div>
                   <div>
@@ -406,7 +412,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     <Input
                       type="text"
                       value={invoiceFormData.senderNIF}
-                      onChange={(e) => setInvoiceFormData({ ...invoiceFormData, senderNIF: e.target.value })}
+                      disabled
                     />
                   </div>
                   <div className="col-span-2">
@@ -414,7 +420,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     <Input
                       type="text"
                       value={invoiceFormData.senderAddress}
-                      onChange={(e) => setInvoiceFormData({ ...invoiceFormData, senderAddress: e.target.value })}
+                      disabled
                     />
                   </div>
                   <div>
@@ -422,7 +428,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     <Input
                       type="text"
                       value={invoiceFormData.senderCity}
-                      onChange={(e) => setInvoiceFormData({ ...invoiceFormData, senderCity: e.target.value })}
+                      disabled
                       placeholder="Ouagadougou"
                     />
                   </div>
@@ -431,7 +437,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     <Input
                       type="text"
                       value={invoiceFormData.senderCountry}
-                      onChange={(e) => setInvoiceFormData({ ...invoiceFormData, senderCountry: e.target.value })}
+                      disabled
                     />
                   </div>
                 </div>
@@ -485,7 +491,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     <Input
                       type="text"
                       value={invoiceFormData.mineName}
-                      onChange={(e) => setInvoiceFormData({ ...invoiceFormData, mineName: e.target.value })}
+                      disabled
                       placeholder="Nom officiel de la mine"
                     />
                   </div>
@@ -494,7 +500,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     <Input
                       type="text"
                       value={invoiceFormData.mineLocation}
-                      onChange={(e) => setInvoiceFormData({ ...invoiceFormData, mineLocation: e.target.value })}
+                      disabled
                       placeholder="Region"
                     />
                   </div>
@@ -543,7 +549,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
               <div className="flex justify-end pt-4">
                 <Button
                   onClick={generateExportInvoice}
-                  disabled={generating}
+                  disabled={generating || !canManageInvoice || !canPrepare}
                   className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <FileText className="w-4 h-4 mr-2" />

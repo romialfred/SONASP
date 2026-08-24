@@ -10,8 +10,20 @@ import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { PDFViewer } from '@/components/ui/PDFViewer';
 import { FreightStatusBadge } from '@/components/freight/FreightStatusBadge';
-import { freightCustomsService, FreightCustomsOperation, FreightCustomsDocument } from '@/services/freightCustomsService';
+import {
+  freightCustomsService,
+  type FreightCustomsDocument,
+  type FreightCustomsHistoryEntry,
+  type FreightCustomsOperation,
+} from '@/services/freightCustomsService';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  FREIGHT_CAPABILITIES,
+  canReadFreightHistory,
+  getFreightTransitionAccess,
+  hasFreightCapability,
+} from '@/lib/freightCustomsAccess';
 import { AddDocumentModal } from '@/components/freight/AddDocumentModal';
 import { ChangeStatusModal } from '@/components/freight/ChangeStatusModal';
 import { GenerateInvoiceModal } from '@/components/freight/GenerateInvoiceModal';
@@ -20,9 +32,14 @@ export default function FreightCustomsDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
+  const canPrepare = hasFreightCapability(user, FREIGHT_CAPABILITIES.PREPARE);
+  const canManageInvoice = hasFreightCapability(user, FREIGHT_CAPABILITIES.INVOICE_MANAGE);
+  const canReadHistory = canReadFreightHistory(user);
 
   const [operation, setOperation] = useState<FreightCustomsOperation | null>(null);
   const [documents, setDocuments] = useState<FreightCustomsDocument[]>([]);
+  const [history, setHistory] = useState<FreightCustomsHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -50,8 +67,12 @@ export default function FreightCustomsDetails() {
       setOperation(data);
 
       if (data) {
-        const docs = await freightCustomsService.listDocuments(id);
+        const [docs, entries] = await Promise.all([
+          freightCustomsService.listDocuments(id),
+          canReadHistory ? freightCustomsService.getStatusHistory(id) : Promise.resolve([]),
+        ]);
         setDocuments(docs);
+        setHistory(entries);
       }
     } catch (error: any) {
       showNotification('error', 'Erreur lors du chargement: ' + error.message);
@@ -128,6 +149,9 @@ export default function FreightCustomsDetails() {
   }
 
   const shipping = operation.shipping_preparation;
+  const transitionAccess = getFreightTransitionAccess(user, operation);
+  const canDeleteDocument = canPrepare
+    && (operation.status === 'customs_pending' || operation.status === 'ready_for_expedition');
 
   return (
     <MainLayout>
@@ -316,6 +340,34 @@ export default function FreightCustomsDetails() {
               </div>
             </Card>
           )}
+
+          {canReadHistory && (
+            <Card>
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 className="text-lg font-semibold text-gray-900">Historique immuable</h2>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {history.length === 0 ? (
+                  <p className="p-6 text-sm text-gray-500">Aucun changement enregistré.</p>
+                ) : history.map((entry) => (
+                  <div key={entry.id} className="p-4 flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        {entry.old_status && <FreightStatusBadge status={entry.old_status} size="sm" />}
+                        {entry.old_status && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                        <FreightStatusBadge status={entry.new_status} size="sm" />
+                      </div>
+                      {entry.notes && <p className="text-xs text-gray-600 mt-2">{entry.notes}</p>}
+                    </div>
+                    <div className="text-right text-xs text-gray-500">
+                      <p>{new Date(entry.changed_at).toLocaleString('fr-FR')}</p>
+                      <p>{entry.user_name || entry.user_email || 'Système'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Panneau latéral (1/3) */}
@@ -326,29 +378,38 @@ export default function FreightCustomsDetails() {
               <h2 className="text-base font-semibold text-gray-900">Actions</h2>
             </div>
             <div className="p-4 space-y-2">
-              <Button
-                onClick={() => setShowDocumentModal(true)}
-                className="w-full justify-start bg-blue-600 hover:bg-blue-700"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Ajouter un Document
-              </Button>
-              <Button
-                onClick={() => setShowInvoiceModal(true)}
-                variant="outline"
-                className="w-full justify-start border-green-600 text-green-700 hover:bg-green-50"
-              >
-                <FileCheck className="w-4 h-4 mr-2" />
-                Générer Facture
-              </Button>
-              <Button
-                onClick={() => setShowStatusModal(true)}
-                variant="outline"
-                className="w-full justify-start"
-              >
-                <ChevronRight className="w-4 h-4 mr-2" />
-                Changer le Statut
-              </Button>
+              {canPrepare && operation.status !== 'shipped_to_refinery' && (
+                <Button
+                  onClick={() => setShowDocumentModal(true)}
+                  className="w-full justify-start bg-blue-600 hover:bg-blue-700"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Ajouter un Document
+                </Button>
+              )}
+              {canManageInvoice && operation.status !== 'shipped_to_refinery' && (
+                <Button
+                  onClick={() => setShowInvoiceModal(true)}
+                  variant="outline"
+                  className="w-full justify-start border-green-600 text-green-700 hover:bg-green-50"
+                >
+                  <FileCheck className="w-4 h-4 mr-2" />
+                  Générer Facture
+                </Button>
+              )}
+              {transitionAccess.allowed && (
+                <Button
+                  onClick={() => setShowStatusModal(true)}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  <ChevronRight className="w-4 h-4 mr-2" />
+                  Passer à l’étape suivante
+                </Button>
+              )}
+              {!canPrepare && !canManageInvoice && !transitionAccess.allowed && (
+                <p className="text-xs text-gray-500">Aucune action sensible autorisée pour cette session.</p>
+              )}
             </div>
           </Card>
 
@@ -388,15 +449,17 @@ export default function FreightCustomsDetails() {
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteDocument(doc.id)}
-                          className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {canDeleteDocument && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteDocument(doc.id)}
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

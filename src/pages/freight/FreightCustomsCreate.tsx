@@ -7,80 +7,47 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { TextArea } from '@/components/ui/TextArea';
 import { Loading } from '@/components/ui/Loading';
-import { freightCustomsService } from '@/services/freightCustomsService';
+import {
+  freightCustomsService,
+  type AvailableFreightShipment,
+} from '@/services/freightCustomsService';
 import { useNotification } from '@/contexts/NotificationContext';
-import { supabase } from '@/lib/supabase';
-
-interface ShippingPreparation {
-  id: string;
-  reference_number: string;
-  total_weight_grams: number;
-  total_weight_oz: number;
-  mining_company_id: string;
-  status: string;
-  mining_companies?: {
-    id: string;
-    name: string;
-  };
-}
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  FREIGHT_CAPABILITIES,
+  hasFreightCapability,
+} from '@/lib/freightCustomsAccess';
 
 export default function FreightCustomsCreate() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
+  const canPrepare = hasFreightCapability(user, FREIGHT_CAPABILITIES.PREPARE);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [shippedExpeditions, setShippedExpeditions] = useState<ShippingPreparation[]>([]);
+  const [shippedExpeditions, setShippedExpeditions] = useState<AvailableFreightShipment[]>([]);
   const [selectedExpeditionId, setSelectedExpeditionId] = useState('');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    loadShippedExpeditions();
-  }, []);
+    if (canPrepare) {
+      void loadShippedExpeditions();
+    } else {
+      setLoading(false);
+    }
+  }, [canPrepare]);
 
   const loadShippedExpeditions = async () => {
     try {
       setLoading(true);
 
-      // Charger les expéditions avec statut "shipped"
-      const { data, error } = await supabase
-        .from('shipping_preparations')
-        .select(`
-          id,
-          reference_number,
-          total_weight_grams,
-          total_weight_oz,
-          mining_company_id,
-          status,
-          mining_companies:mining_company_id (
-            id,
-            name
-          )
-        `)
-        .eq('status', 'shipped')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Filtrer celles qui n'ont pas déjà d'opération freight customs
-      const expeditionsWithoutOperation: ShippingPreparation[] = [];
-
-      for (const expedition of data || []) {
-        const { data: existingOp } = await supabase
-          .from('freight_customs_operations')
-          .select('id')
-          .eq('shipping_preparation_id', expedition.id)
-          .single();
-
-        if (!existingOp) {
-          expeditionsWithoutOperation.push(expedition as ShippingPreparation);
-        }
-      }
+      const expeditionsWithoutOperation = await freightCustomsService.getAvailableShipments();
 
       setShippedExpeditions(expeditionsWithoutOperation);
 
       if (expeditionsWithoutOperation.length === 0) {
-        showNotification('info', 'Aucune expédition disponible. Toutes les expéditions "Expédié" ont déjà une opération douanière.');
+        showNotification('info', 'Aucune expédition prête sans opération douanière associée.');
       }
     } catch (error: any) {
       console.error('Erreur lors du chargement des expéditions:', error);
@@ -97,14 +64,30 @@ export default function FreightCustomsCreate() {
       showNotification('error', 'Veuillez sélectionner une expédition');
       return;
     }
+    if (!canPrepare) {
+      showNotification('error', 'Une session AAL2 avec la capacité de préparation fret est requise.');
+      return;
+    }
 
     try {
       setSubmitting(true);
 
-      const operation = await freightCustomsService.createOperation({
-        shipping_preparation_id: selectedExpeditionId,
-        notes: notes || undefined,
-      });
+      let operation = await freightCustomsService.createOperation(selectedExpeditionId);
+      if (notes.trim()) {
+        try {
+          operation = await freightCustomsService.updateOperation(
+            operation.id,
+            operation.updated_at,
+            { notes: notes.trim() },
+          );
+        } catch (noteError) {
+          console.error('Opération créée mais note non enregistrée:', noteError);
+          showNotification(
+            'warning',
+            `L’opération ${operation.reference_number} a été créée, mais la note n’a pas été enregistrée.`,
+          );
+        }
+      }
 
       showNotification('success', `Opération ${operation.reference_number} créée avec succès`);
       navigate(`/freight-customs/${operation.id}`);
@@ -122,6 +105,29 @@ export default function FreightCustomsCreate() {
     return (
       <MainLayout>
         <Loading />
+      </MainLayout>
+    );
+  }
+
+  if (!canPrepare) {
+    return (
+      <MainLayout>
+        <div className="p-6">
+          <Card className="p-8 border-l-4 border-l-red-500 bg-red-50">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-700 mt-0.5" />
+              <div>
+                <h1 className="font-semibold text-red-900">Création non autorisée</h1>
+                <p className="text-sm text-red-800 mt-1">
+                  Une session AAL2 avec la capacité de préparation fret est requise.
+                </p>
+                <Button className="mt-4" variant="outline" onClick={() => navigate('/freight-customs')}>
+                  Retour aux opérations
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
       </MainLayout>
     );
   }
@@ -155,8 +161,8 @@ export default function FreightCustomsCreate() {
               <div>
                 <h3 className="font-semibold text-yellow-900 mb-1">Aucune expédition disponible</h3>
                 <p className="text-sm text-yellow-800">
-                  Toutes les expéditions avec le statut "Expédié" ont déjà une opération douanière associée.
-                  Créez une nouvelle expédition ou attendez qu'une expédition soit marquée comme "Expédié".
+                  Toutes les expéditions prêtes ont déjà une opération douanière associée.
+                  Préparez une nouvelle expédition jusqu’au statut « Prête pour expédition ».
                 </p>
               </div>
             </div>
@@ -187,7 +193,7 @@ export default function FreightCustomsCreate() {
                   ))}
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Seules les expéditions avec statut "Expédié" sont disponibles
+                  Seules les expéditions « Prêtes pour expédition » du périmètre autorisé sont disponibles
                 </p>
               </div>
 

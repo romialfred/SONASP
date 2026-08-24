@@ -108,16 +108,10 @@ if (!urlSupabase || !cleService) {
     },
 
     async consumeToken(token, nowIso): Promise<ResultatConsommation | null> {
-      // UPDATE conditionnel : un seul appel concurrent peut passer used_at IS NULL.
-      // Le rôle de service est présent uniquement dans cette fonction Edge.
+      // La RPC transactionnelle est exécutable uniquement par service_role.
+      // Le jeton ne transite ainsi jamais dans un filtre URL PostgREST.
       const { data, error } = await admin
-        .from('user_activation_tokens')
-        .update({ used_at: nowIso })
-        .eq('token', token)
-        .is('used_at', null)
-        .gt('expires_at', nowIso)
-        .in('token_type', ['activation', 'password_reset'])
-        .select('user_id, token_type')
+        .rpc('consume_activation_token', { p_token: token, p_now: nowIso })
         .maybeSingle();
       if (error) throw new Error('activation_token_consume_failed');
       if (!data) return null;

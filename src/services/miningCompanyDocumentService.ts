@@ -4,6 +4,8 @@ import {
   PRIVATE_STORAGE_BUCKETS,
   requireStorageObjectPath,
 } from '@/lib/privateStorage';
+import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
+import { uploadSensitiveFile } from '@/services/sensitiveUploadGateway';
 
 const BUCKET = PRIVATE_STORAGE_BUCKETS.miningCompanyDocuments;
 
@@ -28,6 +30,43 @@ export const MINING_COMPANY_DOC_TYPES = [
   { value: 'autre', label: 'Autre document' },
 ] as const;
 
+const DOCUMENT_TYPES = new Set(MINING_COMPANY_DOC_TYPES.map(({ value }) => value));
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUploadedDocument(
+  value: unknown,
+  expected: {
+    companyId: string;
+    docType: string;
+    extension: string;
+    fileSize: number;
+    mimeType: string;
+  },
+): value is MiningCompanyDocument {
+  if (!value || typeof value !== 'object') return false;
+  const document = value as Partial<MiningCompanyDocument>;
+  const escapedCompanyId = expected.companyId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedExtension = expected.extension.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const expectedPath = new RegExp(
+    `^${escapedCompanyId}/format-validated/[0-9]{4}/(?:0[1-9]|1[0-2])/[0-9a-f-]{36}\\.${escapedExtension}$`,
+    'i',
+  );
+  return typeof document.id === 'string'
+    && UUID.test(document.id)
+    && document.mining_company_id === expected.companyId
+    && document.doc_type === expected.docType
+    && typeof document.file_name === 'string'
+    && !/[\\/\u0000-\u001f\u007f]/u.test(document.file_name)
+    && typeof document.file_path === 'string'
+    && expectedPath.test(document.file_path)
+    && document.file_size === expected.fileSize
+    && document.mime_type === expected.mimeType
+    && typeof document.uploaded_by === 'string'
+    && UUID.test(document.uploaded_by)
+    && typeof document.created_at === 'string'
+    && Number.isFinite(Date.parse(document.created_at));
+}
+
 export const miningCompanyDocumentService = {
   async list(companyId: string): Promise<MiningCompanyDocument[]> {
     const { data, error } = await supabase
@@ -40,30 +79,26 @@ export const miningCompanyDocumentService = {
   },
 
   async upload(companyId: string, file: File, docType: string): Promise<MiningCompanyDocument> {
-    const { data: userData } = await supabase.auth.getUser();
-    const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-    const path = `${companyId}/${Date.now()}_${safeName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, file, { cacheControl: '3600', upsert: false });
-    if (uploadError) throw uploadError;
-
-    const { data, error } = await supabase
-      .from('mining_company_documents')
-      .insert({
-        mining_company_id: companyId,
-        doc_type: docType || null,
-        file_name: file.name,
-        file_path: path,
-        file_size: file.size,
-        mime_type: file.type || null,
-        uploaded_by: userData.user?.id ?? null,
-      })
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    if (!UUID.test(companyId) || !DOCUMENT_TYPES.has(docType as typeof MINING_COMPANY_DOC_TYPES[number]['value'])) {
+      throw new Error('Le dossier de destination ou le type de document est invalide.');
+    }
+    const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.mineDocument);
+    const resource = await uploadSensitiveFile(
+      'mining-company-document',
+      file,
+      { companyId, documentType: docType, fileName: file.name },
+      { mimeType: validatedFile.mimeType },
+    );
+    if (!isUploadedDocument(resource, {
+      companyId,
+      docType,
+      extension: validatedFile.extension,
+      fileSize: file.size,
+      mimeType: validatedFile.mimeType,
+    })) {
+      throw new Error('La confirmation du dépôt est invalide.');
+    }
+    return resource;
   },
 
   async remove(doc: Pick<MiningCompanyDocument, 'id' | 'file_path'>): Promise<void> {

@@ -421,7 +421,7 @@ export function MiningCompanyForm() {
                     <label className="inline-flex h-[42px] cursor-pointer items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
                       <Upload className="h-4 w-4" /> Joindre un fichier
                       <input type="file" className="hidden" onChange={onPickFile}
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+                        accept=".pdf,.jpg,.jpeg,.png,.docx" />
                     </label>
                   </div>
 

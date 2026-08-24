@@ -48,7 +48,7 @@ export function entetesCors(req: Request): HeadersInit {
   return {
     ...(origine ? { 'Access-Control-Allow-Origin': origine } : {}),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
+    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, x-upload-metadata',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   };

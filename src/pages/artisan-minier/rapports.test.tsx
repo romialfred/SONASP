@@ -32,6 +32,14 @@ vi.mock('react-router-dom', () => ({
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
+// Ces tests valident les rapports nationaux. Le composant consulte désormais
+// le profil courant pour adapter le fil d'Ariane du portail Collecteur ; fournir
+// explicitement un utilisateur national évite de masquer ce contrat derrière
+// un AuthProvider complet sans rapport avec les calculs testés ici.
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: null }),
+}));
+
 vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));

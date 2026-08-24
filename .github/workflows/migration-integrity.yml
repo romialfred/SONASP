@@ -6,7 +6,7 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/migrations.catalogue*.json'
       - 'scripts/check-migration-integrity.mjs'
-      - 'tests/migrations/migration-integrity.test.mjs'
+      - 'tests/migrations/migration-integrity.node.mjs'
       - '.github/workflows/migration-integrity.yml'
   push:
     branches: [main]
@@ -14,7 +14,7 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/migrations.catalogue*.json'
       - 'scripts/check-migration-integrity.mjs'
-      - 'tests/migrations/migration-integrity.test.mjs'
+      - 'tests/migrations/migration-integrity.node.mjs'
       - '.github/workflows/migration-integrity.yml'
 
 permissions:
@@ -34,6 +34,6 @@ jobs:
         with:
           node-version: '20'
       - name: Unit tests
-        run: node --test tests/migrations/migration-integrity.test.mjs
+        run: node --test tests/migrations/migration-integrity.node.mjs
       - name: Verify immutable migration catalogue
         run: node scripts/check-migration-integrity.mjs verify

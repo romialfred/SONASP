@@ -76,7 +76,7 @@ Cette commande retourne un code non nul tant qu'il reste un doublon, un fichier 
 ### Tests unitaires
 
 ```powershell
-node --test tests/migrations/migration-integrity.test.mjs
+node --test tests/migrations/migration-integrity.node.mjs
 ```
 
 Les tests couvrent timestamps impossibles, doublons, ordre ambigu, déterminisme, équivalence LF/CRLF, altération d'un octet significatif, ajout, suppression, falsification du catalogue et divergence avec un manifeste distant.

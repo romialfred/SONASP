@@ -1,11 +1,16 @@
 import { supabase } from './supabase';
+import {
+  SESSION_ACTIVITY_HEARTBEAT_MS,
+  SESSION_INACTIVITY_TIMEOUT_MS,
+  SESSION_WARNING_BEFORE_TIMEOUT_MS,
+} from './sessionPolicy';
 
-export const SESSION_INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
-export const SESSION_WARNING_BEFORE_TIMEOUT_MS = 60 * 1000;
+export { SESSION_INACTIVITY_TIMEOUT_MS, SESSION_WARNING_BEFORE_TIMEOUT_MS } from './sessionPolicy';
 export const SESSION_LAST_ACTIVITY_KEY = 'sonasp-session-last-activity';
 
 export type SessionWarningCallback = (remainingSeconds: number) => void;
-export type SessionTimeoutCallback = () => void;
+export type SessionTimeoutCallback = () => void | Promise<void>;
+export type SessionActivitySyncCallback = () => void | Promise<void>;
 
 function storedLastActivity(): number | null {
   const raw = window.sessionStorage.getItem(SESSION_LAST_ACTIVITY_KEY);
@@ -30,6 +35,9 @@ export class SessionManager {
 
   private onWarning: SessionWarningCallback | null = null;
   private onTimeout: SessionTimeoutCallback | null = null;
+  private onActivitySync: SessionActivitySyncCallback | null = null;
+  private lastActivitySyncTime = 0;
+  private activitySyncInFlight: Promise<void> | null = null;
 
   private readonly activityEvents = [
     'mousedown',
@@ -91,6 +99,19 @@ export class SessionManager {
 
     this.lastActivityTime = Date.now();
     beginSessionActivity(this.lastActivityTime);
+    this.requestActivitySync();
+  }
+
+  private requestActivitySync(force = false) {
+    if (!this.onActivitySync || this.activitySyncInFlight) return;
+    const now = Date.now();
+    if (!force && now - this.lastActivitySyncTime < SESSION_ACTIVITY_HEARTBEAT_MS) return;
+    this.lastActivitySyncTime = now;
+    this.activitySyncInFlight = Promise.resolve(this.onActivitySync())
+      .catch(() => undefined)
+      .finally(() => {
+        this.activitySyncInFlight = null;
+      });
   }
 
   private startInactivityCheck() {
@@ -116,7 +137,7 @@ export class SessionManager {
   private async handleTimeout() {
     this.stop();
     if (this.onTimeout) {
-      this.onTimeout();
+      await this.onTimeout();
     }
     await this.logout();
   }
@@ -150,6 +171,7 @@ export class SessionManager {
     this.warningShown = false;
     this.lastActivityTime = Date.now();
     beginSessionActivity(this.lastActivityTime);
+    this.requestActivitySync(true);
   }
 
   public setOnWarning(callback: SessionWarningCallback) {
@@ -159,52 +181,8 @@ export class SessionManager {
   public setOnTimeout(callback: SessionTimeoutCallback) {
     this.onTimeout = callback;
   }
-}
 
-export async function createSessionRecord(userId: string, sessionToken: string) {
-  try {
-    const expiresAt = new Date(Date.now() + SESSION_INACTIVITY_TIMEOUT_MS);
-
-    await supabase.from('user_sessions').insert({
-      user_id: userId,
-      session_token: sessionToken,
-      ip_address: null,
-      user_agent: navigator.userAgent,
-      expires_at: expiresAt.toISOString(),
-    });
-  } catch (error) {
-    console.error('Failed to create session record:', error);
-  }
-}
-
-export async function invalidateSession(sessionToken: string) {
-  try {
-    await supabase
-      .from('user_sessions')
-      .delete()
-      .eq('session_token', sessionToken);
-  } catch (error) {
-    console.error('Failed to invalidate session:', error);
-  }
-}
-
-export async function cleanupExpiredSessions() {
-  try {
-    await supabase
-      .from('user_sessions')
-      .delete()
-      .lt('expires_at', new Date().toISOString());
-  } catch (error) {
-    console.error('Failed to cleanup expired sessions:', error);
-  }
-}
-
-export async function invalidateAllSessions() {
-  try {
-    console.log('[SessionManager] Invalidating all sessions (deployment cleanup)');
-    await supabase.from('user_sessions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    console.log('[SessionManager] All sessions invalidated');
-  } catch (error) {
-    console.error('Failed to invalidate all sessions:', error);
+  public setOnActivitySync(callback: SessionActivitySyncCallback) {
+    this.onActivitySync = callback;
   }
 }

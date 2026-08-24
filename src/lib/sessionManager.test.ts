@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ signOut: vi.fn() }));
+const mocks = vi.hoisted(() => ({ signOut: vi.fn(), from: vi.fn() }));
 
 vi.mock('./supabase', () => ({
   supabase: {
     auth: { signOut: mocks.signOut },
-    from: vi.fn(() => ({ insert: vi.fn(), delete: vi.fn(() => ({ eq: vi.fn(), neq: vi.fn(), lt: vi.fn() })) })),
+    from: mocks.from,
   },
 }));
 
@@ -16,6 +16,7 @@ import {
   SESSION_INACTIVITY_TIMEOUT_MS,
   SESSION_WARNING_BEFORE_TIMEOUT_MS,
 } from './sessionManager';
+import { SESSION_ACTIVITY_HEARTBEAT_MS } from './sessionPolicy';
 
 describe('SessionManager', () => {
   beforeEach(() => {
@@ -23,6 +24,7 @@ describe('SessionManager', () => {
     vi.setSystemTime(new Date('2026-08-22T12:00:00Z'));
     window.sessionStorage.clear();
     mocks.signOut.mockReset().mockResolvedValue({ error: null });
+    mocks.from.mockReset();
   });
 
   afterEach(() => {
@@ -74,5 +76,56 @@ describe('SessionManager', () => {
 
     await vi.advanceTimersByTimeAsync(0);
     expect(timeout).toHaveBeenCalledTimes(1);
+  });
+
+  it('ne persiste ni ne supprime de jeton dans user_sessions', async () => {
+    beginSessionActivity(Date.now() - SESSION_INACTIVITY_TIMEOUT_MS);
+    const manager = new SessionManager();
+    manager.start();
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('coalesce la synchronisation serveur de l’activité à trente secondes', async () => {
+    beginSessionActivity();
+    const synchronize = vi.fn().mockResolvedValue(undefined);
+    const manager = new SessionManager();
+    manager.setOnActivitySync(synchronize);
+    manager.start();
+
+    document.dispatchEvent(new MouseEvent('click'));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(synchronize).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(SESSION_ACTIVITY_HEARTBEAT_MS - 1);
+    document.dispatchEvent(new MouseEvent('click'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(synchronize).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    document.dispatchEvent(new MouseEvent('click'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(synchronize).toHaveBeenCalledTimes(2);
+    manager.stop();
+  });
+
+  it('synchronise explicitement la prolongation après l’avertissement', async () => {
+    beginSessionActivity();
+    const synchronize = vi.fn().mockResolvedValue(undefined);
+    const manager = new SessionManager();
+    manager.setOnActivitySync(synchronize);
+    manager.start();
+
+    await vi.advanceTimersByTimeAsync(
+      SESSION_INACTIVITY_TIMEOUT_MS - SESSION_WARNING_BEFORE_TIMEOUT_MS,
+    );
+    manager.extendSession();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(synchronize).toHaveBeenCalledTimes(1);
+    expect(manager.getRemainingTime()).toBe(SESSION_INACTIVITY_TIMEOUT_MS);
+    manager.stop();
   });
 });

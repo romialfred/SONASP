@@ -1,45 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Monitor, Smartphone, Tablet, X, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { userLoginService } from '@/services/userLoginService';
+import type { UserSessionSummary } from '@/services/userSessionService';
 
 interface SessionsTabProps {
   userId: string;
 }
 
-interface Session {
-  id: string;
-  user_id: string;
-  session_token: string;
-  ip_address: string | null;
-  user_agent: string | null;
-  device_type: string | null;
-  browser: string | null;
-  location_country: string | null;
-  last_activity_at: string;
-  expires_at: string;
-  is_active: boolean;
-  created_at: string;
-}
-
 export default function SessionsTab({ userId }: SessionsTabProps) {
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessions, setSessions] = useState<UserSessionSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const requestVersion = useRef(0);
 
   useEffect(() => {
-    fetchSessions();
+    setSessions([]);
+    setError(null);
+    void fetchSessions();
+    return () => {
+      requestVersion.current += 1;
+    };
   }, [userId]);
 
   const fetchSessions = async () => {
+    const version = ++requestVersion.current;
     try {
       setLoading(true);
+      setError(null);
       const data = await userLoginService.getActiveSessions(userId);
+      if (version !== requestVersion.current) return;
       setSessions(data);
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
+    } catch {
+      if (version !== requestVersion.current) return;
+      // Fail closed : ne jamais conserver une liste active potentiellement
+      // obsolète après une erreur réseau, RLS ou de validation de réponse.
+      setSessions([]);
+      setError('Les sessions ne peuvent pas être vérifiées pour le moment.');
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   };
 
@@ -47,11 +48,15 @@ export default function SessionsTab({ userId }: SessionsTabProps) {
     if (!confirm('Êtes-vous sûr de vouloir terminer cette session?')) return;
 
     try {
+      setActionInProgress(sessionId);
+      setError(null);
       await userLoginService.terminateSession(sessionId);
       await fetchSessions();
-    } catch (error) {
-      console.error('Error terminating session:', error);
-      alert('Erreur lors de la terminaison de la session');
+    } catch {
+      setSessions([]);
+      setError('La révocation n’a pas pu être confirmée. Actualisez avant toute autre action.');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
@@ -59,11 +64,15 @@ export default function SessionsTab({ userId }: SessionsTabProps) {
     if (!confirm('Êtes-vous sûr de vouloir terminer toutes les sessions? L\'utilisateur devra se reconnecter.')) return;
 
     try {
+      setActionInProgress('all');
+      setError(null);
       await userLoginService.terminateAllSessions(userId);
       await fetchSessions();
-    } catch (error) {
-      console.error('Error terminating all sessions:', error);
-      alert('Erreur lors de la terminaison des sessions');
+    } catch {
+      setSessions([]);
+      setError('La révocation globale n’a pas pu être confirmée. Actualisez avant toute autre action.');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
@@ -114,6 +123,11 @@ export default function SessionsTab({ userId }: SessionsTabProps) {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <Card className="border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+          {error}
+        </Card>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">
@@ -127,6 +141,7 @@ export default function SessionsTab({ userId }: SessionsTabProps) {
           <Button
             variant="secondary"
             onClick={fetchSessions}
+            disabled={actionInProgress !== null}
             className="flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
@@ -136,6 +151,7 @@ export default function SessionsTab({ userId }: SessionsTabProps) {
             <Button
               variant="secondary"
               onClick={handleTerminateAll}
+              disabled={actionInProgress !== null}
               className="flex items-center gap-2 text-red-600 hover:bg-red-50"
             >
               <X className="w-4 h-4" />
@@ -167,12 +183,16 @@ export default function SessionsTab({ userId }: SessionsTabProps) {
                     <p className="text-xs text-slate-500">
                       {session.browser || 'Navigateur inconnu'}
                     </p>
+                    {session.is_current && (
+                      <p className="mt-1 text-xs font-medium text-blue-700">Session courante</p>
+                    )}
                   </div>
                 </div>
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => handleTerminateSession(session.id)}
+                  disabled={actionInProgress !== null}
                   className="text-red-600 hover:bg-red-50"
                   title="Terminer cette session"
                 >

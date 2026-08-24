@@ -5,6 +5,10 @@ import { UserProfile, AuthState } from '@/types/auth';
 import { beginSessionActivity, clearSessionActivity, SessionManager } from '@/lib/sessionManager';
 import { withTimeout, withRetry } from '@/lib/withTimeout';
 import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
+import {
+  isTerminalCurrentSessionError,
+  userSessionService,
+} from '@/services/userSessionService';
 
 interface AuthContextType extends AuthState {
   signIn: (
@@ -41,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const stateRef = useRef(state);
   stateRef.current = state;
   const sessionManagerRef = useRef<SessionManager | null>(null);
+  const serverSessionIdRef = useRef<string | null>(null);
+  const serverSessionRegistrationRef = useRef<Promise<boolean> | null>(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const [warningRemainingSeconds, setWarningRemainingSeconds] = useState(60);
 
@@ -51,8 +57,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setWarningRemainingSeconds(remainingSeconds);
       setShowTimeoutWarning(true);
     });
-    manager.setOnTimeout(() => {
+    manager.setOnTimeout(async () => {
       setShowTimeoutWarning(false);
+      const sessionId = serverSessionIdRef.current;
+      serverSessionIdRef.current = null;
+      if (sessionId) {
+        try {
+          await userSessionService.revoke(sessionId, 'Expiration après dix minutes d’inactivité');
+        } catch {
+          // La fermeture locale reste obligatoire même si le réseau est perdu.
+        }
+      }
+    });
+    manager.setOnActivitySync(async () => {
+      try {
+        await userSessionService.reportActivity();
+      } catch (error) {
+        if (isTerminalCurrentSessionError(error)) await closeRejectedSession('local');
+      }
     });
     manager.start();
     sessionManagerRef.current = manager;
@@ -219,7 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const closeRejectedSession = async () => {
+  const closeRejectedSession = async (scope: 'global' | 'local' = 'global') => {
     if (sessionManagerRef.current) {
       sessionManagerRef.current.stop();
       sessionManagerRef.current = null;
@@ -227,7 +249,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       clearSessionActivity();
-      await supabase.auth.signOut();
+      serverSessionIdRef.current = null;
+      serverSessionRegistrationRef.current = null;
+      await supabase.auth.signOut({ scope });
     } finally {
       setState({
         user: null,
@@ -237,6 +261,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileLoading: false,
         profileError: null,
       });
+    }
+  };
+
+  const registerServerSession = async (): Promise<boolean> => {
+    if (serverSessionIdRef.current) return true;
+    if (serverSessionRegistrationRef.current) return serverSessionRegistrationRef.current;
+
+    const registration = (async () => {
+      try {
+        const registered = await userSessionService.registerCurrentSession();
+        serverSessionIdRef.current = registered.id;
+        return true;
+      } catch {
+        // Sans enregistrement serveur, la révocation et la borne d'inactivité ne
+        // sont pas démontrables. Une nouvelle session échoue donc fermée.
+        await closeRejectedSession('local');
+        return false;
+      }
+    })();
+    serverSessionRegistrationRef.current = registration;
+    try {
+      return await registration;
+    } finally {
+      if (serverSessionRegistrationRef.current === registration) {
+        serverSessionRegistrationRef.current = null;
+      }
     }
   };
 
@@ -280,6 +330,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: 'ACCOUNT_NOT_AUTHORIZED' };
         }
 
+        if (!(await registerServerSession())) {
+          return { error: 'SESSION_SECURITY_UNAVAILABLE' };
+        }
+
         // Ces écritures de suivi ne conditionnent pas l'autorisation. Les
         // lancer en arrière-plan évite d'ajouter deux allers-retours réseau au
         // délai perçu entre la validation et l'ouverture du tableau de bord.
@@ -315,6 +369,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       clearSessionActivity();
+
+      const serverSessionId = serverSessionIdRef.current;
+      serverSessionIdRef.current = null;
+      serverSessionRegistrationRef.current = null;
+      if (serverSessionId) {
+        try {
+          await userSessionService.revoke(serverSessionId, 'Déconnexion volontaire de la session courante');
+        } catch {
+          // La déconnexion Supabase ne doit jamais être bloquée par l'audit.
+        }
+      }
 
       // Now call Supabase signOut
       console.log('[Auth] Calling supabase.auth.signOut()');
@@ -461,6 +526,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const { data: { session: currentSession } } = await supabase.auth.getSession();
               if (currentSession?.user.id !== session.user.id) return;
               const { profile: resolvedProfile, error } = resolveProfileResult(profile);
+              if (!resolvedProfile) {
+                setState(prev => ({
+                  ...prev,
+                  user: null,
+                  profileLoading: false,
+                  profileError: error,
+                }));
+                return;
+              }
+              if (!(await registerServerSession())) return;
               setState(prev => ({
                 ...prev,
                 user: resolvedProfile,
@@ -581,6 +656,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const { data: { session: currentSession } } = await supabase.auth.getSession();
               if (currentSession?.user.id !== session.user.id) return;
               const { profile: resolvedProfile, error } = resolveProfileResult(profile);
+              if (!resolvedProfile) {
+                setState(prev => ({
+                  ...prev,
+                  user: null,
+                  profileLoading: false,
+                  profileError: error,
+                }));
+                return;
+              }
+              if (!(await registerServerSession())) return;
               setState(prev => ({
                 ...prev,
                 user: resolvedProfile,
@@ -605,6 +690,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionManagerRef.current = null;
           }
           clearSessionActivity();
+          serverSessionIdRef.current = null;
+          serverSessionRegistrationRef.current = null;
           setShowTimeoutWarning(false);
           setState({
             user: null,

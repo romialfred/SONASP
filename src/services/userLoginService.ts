@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { userSessionService, type UserSessionSummary } from '@/services/userSessionService';
 
 export interface LogLoginParams {
   userId?: string;
@@ -234,57 +235,22 @@ export const userLoginService = {
   /**
    * Get all active sessions for a user
    */
-  async getActiveSessions(userId: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .from('user_sessions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('[userLoginService] Error fetching active sessions:', error);
-      throw error;
-    }
-
-    return data || [];
+  async getActiveSessions(userId: string): Promise<UserSessionSummary[]> {
+    return userSessionService.list(userId, true);
   },
 
   /**
    * Terminate a session
    */
-  async terminateSession(sessionId: string): Promise<void> {
-    const { error } = await supabase
-      .from('user_sessions')
-      .update({ is_active: false })
-      .eq('id', sessionId);
-
-    if (error) {
-      console.error('[userLoginService] Error terminating session:', error);
-      throw error;
-    }
+  async terminateSession(sessionId: string): Promise<UserSessionSummary> {
+    return userSessionService.revoke(sessionId);
   },
 
   /**
    * Terminate all sessions for a user (except current)
    */
-  async terminateAllSessions(userId: string, exceptSessionId?: string): Promise<void> {
-    let query = supabase
-      .from('user_sessions')
-      .update({ is_active: false })
-      .eq('user_id', userId);
-
-    if (exceptSessionId) {
-      query = query.neq('id', exceptSessionId);
-    }
-
-    const { error } = await query;
-
-    if (error) {
-      console.error('[userLoginService] Error terminating all sessions:', error);
-      throw error;
-    }
+  async terminateAllSessions(userId: string): Promise<number> {
+    return userSessionService.revokeAll(userId, true);
   },
 
   /**

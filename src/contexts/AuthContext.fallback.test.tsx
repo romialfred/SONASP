@@ -9,6 +9,11 @@ const authMocks = vi.hoisted(() => ({
   signOut: vi.fn(),
   rpc: vi.fn(),
   configureAuthPersistence: vi.fn(),
+  registerCurrentSession: vi.fn(),
+  reportActivity: vi.fn(),
+  revokeSession: vi.fn(),
+  isTerminalSessionError: vi.fn(),
+  sessionActivityCallback: null as (() => Promise<void>) | null,
   profileResult: null as Record<string, unknown> | null,
   authStateCallback: null as ((event: string, session: unknown) => Promise<void>) | null,
   profileFetch: vi.fn(() => Promise.resolve(null as Record<string, unknown> | null)),
@@ -42,9 +47,21 @@ vi.mock('@/lib/sessionManager', () => ({
   SessionManager: class {
     setOnWarning() {}
     setOnTimeout() {}
+    setOnActivitySync(callback: () => Promise<void>) {
+      authMocks.sessionActivityCallback = callback;
+    }
     start() {}
     stop() {}
     extendSession() {}
+  },
+}));
+
+vi.mock('@/services/userSessionService', () => ({
+  isTerminalCurrentSessionError: authMocks.isTerminalSessionError,
+  userSessionService: {
+    registerCurrentSession: authMocks.registerCurrentSession,
+    reportActivity: authMocks.reportActivity,
+    revoke: authMocks.revokeSession,
   },
 }));
 
@@ -90,12 +107,19 @@ describe('AuthProvider profile fallback', () => {
     vi.clearAllMocks();
     authMocks.profileResult = null;
     authMocks.authStateCallback = null;
+    authMocks.sessionActivityCallback = null;
     authMocks.profileFetch.mockImplementation(() => Promise.resolve(authMocks.profileResult));
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     authMocks.signOut.mockResolvedValue({ error: null });
     authMocks.rpc.mockResolvedValue({ error: null });
+    authMocks.registerCurrentSession.mockResolvedValue({
+      id: '33333333-3333-4333-8333-333333333333',
+    });
+    authMocks.reportActivity.mockResolvedValue(undefined);
+    authMocks.revokeSession.mockResolvedValue(undefined);
+    authMocks.isTerminalSessionError.mockReturnValue(false);
   });
 
   it('refuse tout accès privé quand le profil autoritatif est indisponible', async () => {
@@ -226,6 +250,7 @@ describe('AuthProvider profile fallback', () => {
     const state = await screen.findByTestId('auth-state');
     await waitFor(() => expect(state).toHaveAttribute('data-user-id', 'stable-user'));
     expect(authMocks.profileFetch).toHaveBeenCalledTimes(1);
+    expect(authMocks.registerCurrentSession).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       await authMocks.authStateCallback?.('SIGNED_IN', session);
@@ -234,6 +259,7 @@ describe('AuthProvider profile fallback', () => {
     expect(state).toHaveAttribute('data-user-id', 'stable-user');
     expect(state).toHaveAttribute('data-profile-error', '');
     expect(authMocks.profileFetch).toHaveBeenCalledTimes(1);
+    expect(authMocks.registerCurrentSession).toHaveBeenCalledTimes(1);
   });
 
   it('ferme la session et refuse explicitement un profil désactivé', async () => {
@@ -288,5 +314,58 @@ describe('AuthProvider profile fallback', () => {
 
     await waitFor(() => expect(screen.getByTestId('sign-in-result')).toHaveTextContent('ok'));
     expect(authMocks.rpc).toHaveBeenCalledWith('snp_enregistrer_connexion');
+  });
+
+  it('échoue fermé si la session serveur ne peut pas être enregistrée', async () => {
+    authMocks.profileResult = {
+      id: 'active-123',
+      email: 'agent@sonasp.bf',
+      full_name: 'Agent actif',
+      role: 'management',
+      is_active: true,
+    };
+    authMocks.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    authMocks.signInWithPassword.mockResolvedValue({
+      data: { user: { id: 'active-123' } },
+      error: null,
+    });
+    authMocks.registerCurrentSession.mockRejectedValue(new Error('network'));
+
+    render(<AuthProvider><SignInProbe /></AuthProvider>);
+    const button = await screen.findByRole('button', { name: 'Connexion test' });
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+
+    await waitFor(() => expect(screen.getByTestId('sign-in-result'))
+      .toHaveTextContent('SESSION_SECURITY_UNAVAILABLE'));
+    expect(authMocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+
+  it('ferme localement une session que le heartbeat serveur déclare révoquée', async () => {
+    authMocks.profileResult = {
+      id: 'active-123',
+      email: 'agent@sonasp.bf',
+      full_name: 'Agent actif',
+      role: 'management',
+      is_active: true,
+    };
+    authMocks.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'active-123' } } },
+      error: null,
+    });
+
+    render(<AuthProvider><AuthStateProbe /></AuthProvider>);
+    await waitFor(() => expect(screen.getByTestId('auth-state'))
+      .toHaveAttribute('data-user-id', 'active-123'));
+    expect(authMocks.sessionActivityCallback).not.toBeNull();
+
+    authMocks.reportActivity.mockRejectedValue(new Error('revoked'));
+    authMocks.isTerminalSessionError.mockReturnValue(true);
+    await act(async () => {
+      await authMocks.sessionActivityCallback?.();
+    });
+
+    expect(authMocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
+    expect(screen.getByTestId('auth-state')).toHaveAttribute('data-user-id', '');
   });
 });

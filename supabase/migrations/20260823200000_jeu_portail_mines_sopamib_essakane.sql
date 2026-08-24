@@ -85,7 +85,8 @@ WITH productions(code, jour, once, titre_or, titre_argent) AS (
     ('ESK', DATE '2026-07-16', 3690::numeric, 92.80::numeric, 3.90::numeric),
     ('ESK', DATE '2026-08-19', 3775::numeric, 92.50::numeric, 4.00::numeric)
 ), calculees AS (
-  SELECT mc.id AS mine_id, mc.code, mc.abbreviation, p.*,
+  SELECT mc.id AS mine_id, mc.code AS company_code, mc.abbreviation,
+    p.jour, p.once, p.titre_or, p.titre_argent,
     round(p.once * 31.1034768, 3) AS or_fin_g,
     round((p.once * 31.1034768) / (p.titre_or / 100), 3) AS dore_g
   FROM productions p
@@ -98,13 +99,13 @@ INSERT INTO public.daily_production (
 )
 SELECT c.jour, c.mine_id, c.dore_g, c.titre_or, c.or_fin_g, c.once,
   c.titre_or, c.titre_argent, round(c.dore_g * c.titre_argent / 100, 3),
-  coalesce(c.abbreviation, c.code) || '-P' || to_char(c.jour, 'MM'),
+  coalesce(c.abbreviation, c.company_code) || '-P' || to_char(c.jour, 'MM'),
   'ready_for_customs', 'burkina_faso', 'Jeu portail Mine — validation locale'
 FROM calculees c
 WHERE NOT EXISTS (
   SELECT 1 FROM public.daily_production dp
   WHERE dp.mining_company_id = c.mine_id
-    AND dp.bar_reference = coalesce(c.abbreviation, c.code) || '-P' || to_char(c.jour, 'MM')
+    AND dp.bar_reference = coalesce(c.abbreviation, c.company_code) || '-P' || to_char(c.jour, 'MM')
 );
 
 -- Un achat SONASP par mine, volontairement limité à une fraction de la

@@ -102,7 +102,7 @@ INSERT INTO public.depositors (
 )
 SELECT
   sopamib.id,
-  contacts.category,
+  contacts.category::public.depositor_category,
   contacts.full_name,
   contacts.job_title,
   contacts.email,

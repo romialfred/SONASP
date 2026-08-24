@@ -25,6 +25,7 @@ import {
 import type { UserProfile } from '@/types/auth';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isMineScopedUser } from '@/lib/mineAccess';
+import { canAccessSonaspComptoirInbox } from '@/lib/sonaspComptoirAccess';
 
 export type NavigationItem = {
   label: string;
@@ -377,10 +378,25 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
   },
 ];
 
+export const SONASP_COMPTOIR_NAVIGATION_SECTION: NavigationSection = {
+  id: 'relations-comptoirs',
+  title: 'Relations avec les comptoirs',
+  groups: [
+    {
+      id: 'sonasp-cessions-comptoirs',
+      label: 'Cessions comptoirs',
+      path: '/sonasp/cessions-comptoirs',
+      icon: Building2,
+      color: '#9a5a3a',
+    },
+  ],
+};
+
 /** Tous les groupes, toutes sections confondues. */
 export const ALL_GROUPS: NavigationGroup[] = [
   ...NAVIGATION_SECTIONS,
   ...COMPTOIR_NAVIGATION_SECTIONS,
+  SONASP_COMPTOIR_NAVIGATION_SECTION,
 ].flatMap((section) => section.groups);
 
 const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
@@ -419,7 +435,11 @@ const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
 /** Navigation unique, projetée selon le périmètre autoritatif du compte. */
 export function getNavigationSectionsForUser(user: UserProfile | null): NavigationSection[] {
   if (isComptoirScopedUser(user)) return COMPTOIR_NAVIGATION_SECTIONS;
-  if (!isMineScopedUser(user)) return NAVIGATION_SECTIONS;
+  if (!isMineScopedUser(user)) {
+    return canAccessSonaspComptoirInbox(user)
+      ? [...NAVIGATION_SECTIONS, SONASP_COMPTOIR_NAVIGATION_SECTION]
+      : NAVIGATION_SECTIONS;
+  }
 
   const industrial = NAVIGATION_SECTIONS.find((section) => section.id === 'industrielles');
   if (!industrial) return [];

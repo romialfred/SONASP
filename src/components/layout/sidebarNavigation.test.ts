@@ -202,3 +202,27 @@ describe('navigation', () => {
     expect(routes).not.toContain('/production/licenses');
   });
 });
+
+describe('navigation de la boîte Comptoir → SONASP', () => {
+  const profile = (capabilities: string[]): UserProfile => ({
+    id: 'sonasp-user', email: 'agent@sonasp.bf', full_name: 'Agent SONASP', phone: null,
+    role: 'management', mining_company_id: null, site_ids: [], is_active: true,
+    capabilities, is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+    email_notifications: true, batch_notifications: true, approval_notifications: true,
+    created_at: '2026-01-01', updated_at: '2026-01-01',
+  });
+  const paths = (user: UserProfile) => getNavigationSectionsForUser(user)
+    .flatMap((section) => section.groups.map((group) => group.path));
+
+  it('affiche la boîte aux agents SONASP opérationnels uniquement', () => {
+    expect(paths(profile(['sonasp.prepare']))).toContain('/sonasp/cessions-comptoirs');
+    expect(paths(profile(['reports.read']))).not.toContain('/sonasp/cessions-comptoirs');
+  });
+
+  it('ne remplace jamais le menu dédié du comptoir', () => {
+    const comptoir = profile(['comptoir.manage', 'sonasp.approve']);
+    comptoir.role = 'customer';
+    expect(paths(comptoir)).toContain('/portail-comptoir/ventes-sonasp');
+    expect(paths(comptoir)).not.toContain('/sonasp/cessions-comptoirs');
+  });
+});

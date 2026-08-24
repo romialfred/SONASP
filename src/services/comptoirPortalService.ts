@@ -23,10 +23,35 @@ export interface ComptoirSonaspSale {
   id: string;
   reference: string;
   date: string;
+  comptoirId?: string;
+  comptoirCode?: string;
+  comptoirName?: string;
   quantityGrams: number;
   unitPriceFcfa: number;
   totalFcfa: number;
   status: 'submitted' | 'accepted' | 'rejected' | 'paid' | 'cancelled';
+  notes?: string | null;
+  reviewedAt?: string | null;
+  paidAt?: string | null;
+  createdAt?: string;
+}
+
+export interface ComptoirStockSummary {
+  physicalGrams: number;
+  reservedGrams: number;
+  availableGrams: number;
+}
+
+export interface ComptoirSaleHistoryEvent {
+  id: string;
+  saleId: string;
+  action: string;
+  statusBefore: string | null;
+  statusAfter: string | null;
+  actorRole: string | null;
+  capabilityCode: string | null;
+  reason: string | null;
+  occurredAt: string;
 }
 
 export interface ComptoirTrendPoint {
@@ -54,6 +79,75 @@ export interface ComptoirDashboardData {
 
 const client = supabase as any;
 const numberValue = (value: unknown) => Number(value || 0);
+
+export class ComptoirStockConflictError extends Error {
+  constructor(message = 'Le stock libre a changé. Actualisez les données avant de réessayer.') {
+    super(message);
+    this.name = 'ComptoirStockConflictError';
+  }
+}
+
+export class ComptoirSaleTransitionConflictError extends Error {
+  constructor(message = 'La cession a déjà changé d’état. Actualisez la file avant de réessayer.') {
+    super(message);
+    this.name = 'ComptoirSaleTransitionConflictError';
+  }
+}
+
+export function computeComptoirStockSummary(
+  movements: ComptoirStockMovement[],
+  sales: ComptoirSonaspSale[],
+): ComptoirStockSummary {
+  const physicalGrams = movements.reduce(
+    (sum, movement) => sum + (movement.direction === 'in' ? 1 : -1) * movement.quantityGrams,
+    0,
+  );
+  const reservedGrams = sales
+    .filter((sale) => sale.status === 'submitted')
+    .reduce((sum, sale) => sum + sale.quantityGrams, 0);
+
+  return {
+    physicalGrams,
+    reservedGrams,
+    availableGrams: Math.max(0, physicalGrams - reservedGrams),
+  };
+}
+
+function saleFromRow(row: any): ComptoirSonaspSale {
+  const organization = Array.isArray(row.comptoir) ? row.comptoir[0] : row.comptoir;
+  return {
+    id: row.id,
+    reference: row.reference_vente,
+    date: row.date_vente,
+    comptoirId: row.comptoir_organization_id,
+    comptoirCode: organization?.code || undefined,
+    comptoirName: organization?.name || organization?.legal_name || undefined,
+    quantityGrams: numberValue(row.quantity_grams),
+    unitPriceFcfa: numberValue(row.unit_price_fcfa),
+    totalFcfa: numberValue(row.total_fcfa),
+    status: row.status,
+    notes: row.notes,
+    reviewedAt: row.reviewed_at,
+    paidAt: row.paid_at,
+    createdAt: row.created_at,
+  };
+}
+
+function errorText(error: any): string {
+  return [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
+}
+
+function isStockConflict(error: any): boolean {
+  const message = errorText(error);
+  return error?.code === '23514' && message.includes('Stock disponible insuffisant');
+}
+
+function isTransitionConflict(error: any): boolean {
+  const message = errorText(error);
+  return error?.code === '40001'
+    || message.includes('Conflit optimiste')
+    || (error?.code === '22023' && message.includes('Seule une cession'));
+}
 
 function artisanName(artisan: any): string {
   return artisan?.raison_sociale
@@ -201,18 +295,41 @@ export const comptoirPortalService = {
   async getSalesToSonasp(organizationId: string): Promise<ComptoirSonaspSale[]> {
     const rows = await requiredRows(
       client.from('snp_comptoir_ventes_sonasp')
-        .select('id, reference_vente, date_vente, quantity_grams, unit_price_fcfa, total_fcfa, status')
+        .select('id, comptoir_organization_id, reference_vente, date_vente, quantity_grams, unit_price_fcfa, total_fcfa, status, notes, reviewed_at, paid_at, created_at')
         .eq('comptoir_organization_id', organizationId)
         .order('date_vente', { ascending: false }),
     );
+    return rows.map(saleFromRow);
+  },
+
+  async getSonaspSalesInbox(): Promise<ComptoirSonaspSale[]> {
+    const rows = await requiredRows(
+      client.from('snp_comptoir_ventes_sonasp')
+        .select('id, comptoir_organization_id, reference_vente, date_vente, quantity_grams, unit_price_fcfa, total_fcfa, status, notes, reviewed_at, paid_at, created_at, comptoir:snp_organizations!snp_comptoir_ventes_sonasp_comptoir_organization_id_fkey(code, name)')
+        .order('created_at', { ascending: false }),
+    );
+    return rows.map(saleFromRow);
+  },
+
+  async getSonaspSaleHistory(saleIds: string[]): Promise<ComptoirSaleHistoryEvent[]> {
+    if (saleIds.length === 0) return [];
+    const rows = await requiredRows(
+      client.from('snp_workflow_audit')
+        .select('id, aggregate_id, action, status_before, status_after, actor_role, capability_code, reason, occurred_at')
+        .eq('aggregate_type', 'comptoir-sale')
+        .in('aggregate_id', saleIds)
+        .order('occurred_at', { ascending: false }),
+    );
     return rows.map((row) => ({
-      id: row.id,
-      reference: row.reference_vente,
-      date: row.date_vente,
-      quantityGrams: numberValue(row.quantity_grams),
-      unitPriceFcfa: numberValue(row.unit_price_fcfa),
-      totalFcfa: numberValue(row.total_fcfa),
-      status: row.status,
+      id: String(row.id),
+      saleId: row.aggregate_id,
+      action: row.action,
+      statusBefore: row.status_before,
+      statusAfter: row.status_after,
+      actorRole: row.actor_role,
+      capabilityCode: row.capability_code,
+      reason: row.reason,
+      occurredAt: row.occurred_at,
     }));
   },
 
@@ -222,7 +339,26 @@ export const comptoirPortalService = {
       p_unit_price_fcfa: input.unitPriceFcfa,
       p_notes: input.notes?.trim() || null,
     });
-    if (error) throw error;
+    if (error) {
+      if (isStockConflict(error)) throw new ComptoirStockConflictError(error.message);
+      throw error;
+    }
     return data as string;
+  },
+
+  async transitionSaleToSonasp(
+    saleId: string,
+    targetStatus: 'accepted' | 'rejected' | 'paid',
+    notes?: string,
+  ): Promise<void> {
+    const { error } = await client.rpc('snp_transition_comptoir_sale_to_sonasp', {
+      p_sale_id: saleId,
+      p_target_status: targetStatus,
+      p_notes: notes?.trim() || null,
+    });
+    if (error) {
+      if (isTransitionConflict(error)) throw new ComptoirSaleTransitionConflictError();
+      throw error;
+    }
   },
 };

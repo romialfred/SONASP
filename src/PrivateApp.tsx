@@ -11,9 +11,11 @@ import { MandatoryMfaGate } from './components/auth/MandatoryMfaGate';
 import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
 import { PERMISSIONS } from './lib/permissions';
+import { SONASP_COMPTOIR_INBOX_CAPABILITIES } from './lib/sonaspComptoirAccess';
 import { AppErrorBoundary, RouteErrorBoundary } from './components/common/ErrorBoundary';
 import { RouteFallback } from './components/common/RouteFallback';
 import { NationalDashboardChrome } from './components/layout/NationalDashboardLayout';
+import { LegacyShippingPreparationEditRedirect } from './components/shipping/LegacyShippingPreparationEditRedirect';
 
 function lazyNamed<TModule, TKey extends keyof TModule>(
   loader: () => Promise<TModule>,
@@ -146,6 +148,7 @@ const MinePortalPage = lazy(() => import('./pages/mine/MinePortalPage'));
 const ComptoirPortalPage = lazy(() => import('./pages/comptoir/ComptoirPortalPage'));
 const ComptoirStockPage = lazy(() => import('./pages/comptoir/ComptoirStockPage'));
 const ComptoirSonaspSalesPage = lazy(() => import('./pages/comptoir/ComptoirSonaspSalesPage'));
+const SonaspComptoirSalesInboxPage = lazy(() => import('./pages/comptoir/SonaspComptoirSalesInboxPage'));
 const ManagerPortalPage = lazy(() => import('./pages/manager/ManagerPortalPage'));
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
 const UpdatePassword = lazy(() => import('./pages/auth/UpdatePassword'));
@@ -238,6 +241,14 @@ function AppRoutes() {
                 <ComptoirPortalGuard>
                   <ComptoirSonaspSalesPage />
                 </ComptoirPortalGuard>
+              }
+            />
+            <Route
+              path="/sonasp/cessions-comptoirs"
+              element={
+                <ProtectedRoute requiredAnyCapabilities={SONASP_COMPTOIR_INBOX_CAPABILITIES}>
+                  <SonaspComptoirSalesInboxPage />
+                </ProtectedRoute>
               }
             />
             <Route
@@ -873,7 +884,7 @@ function AppRoutes() {
               path="/shipping/preparation/edit/:id"
               element={
                 <ProtectedRoute>
-                  <ShippingPreparationNew />
+                  <LegacyShippingPreparationEditRedirect />
                 </ProtectedRoute>
               }
             />

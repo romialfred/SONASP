@@ -11,11 +11,13 @@ import {
 import { PlatformLoading } from '@/components/common/PlatformLoading';
 import { isComptoirRouteAllowed, isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isMineRouteAllowed, isMineScopedUser } from '@/lib/mineAccess';
+import { hasAnyCapability, type CapabilityCode } from '@/lib/capabilities';
 
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles?: UserRole[];
   requiredPermission?: string;
+  requiredAnyCapabilities?: CapabilityCode[];
   fallbackPath?: string;
 }
 
@@ -37,6 +39,7 @@ export function ProtectedRoute({
   children,
   allowedRoles,
   requiredPermission,
+  requiredAnyCapabilities,
   fallbackPath = '/login',
 }: ProtectedRouteProps) {
   const {
@@ -183,7 +186,13 @@ export function ProtectedRoute({
     );
   }
 
-  if (requiredPermission && !hasPermission(user, requiredPermission)) {
+  const missingPermission = Boolean(requiredPermission && !hasPermission(user, requiredPermission));
+  const missingCapability = Boolean(
+    requiredAnyCapabilities?.length
+    && !hasAnyCapability(user, requiredAnyCapabilities),
+  );
+
+  if (missingPermission || missingCapability) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">

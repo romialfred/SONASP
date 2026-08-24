@@ -3,6 +3,7 @@ import {
   ErreurValidationUploadServeur,
   POLITIQUE_CERTIFICAT_ANALYSE,
   POLITIQUE_DOCUMENT_EXPEDITION,
+  POLITIQUE_DOCUMENT_FRET,
   POLITIQUE_DOCUMENT_PRODUCTION,
   POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
   signatureCorrespond,
@@ -136,5 +137,12 @@ describe('secure-upload', () => {
       'pdf', 'jpeg', 'png', 'docx',
     ]);
     expect(POLITIQUE_DOCUMENT_EXPEDITION.formats.flatMap((format) => format.extensions)).not.toContain('doc');
+  });
+
+  it('aligne la politique fret sur la RPC 4F', () => {
+    expect(POLITIQUE_DOCUMENT_FRET.maxBytes).toBe(20 * 1024 * 1024);
+    expect(POLITIQUE_DOCUMENT_FRET.formats.map((format) => format.signature)).toEqual([
+      'pdf', 'jpeg', 'png',
+    ]);
   });
 });

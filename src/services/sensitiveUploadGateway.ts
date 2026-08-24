@@ -4,7 +4,8 @@ export type SensitiveUploadProfile =
   | 'mining-company-document'
   | 'assay-certificate'
   | 'shipping-document'
-  | 'production-document';
+  | 'production-document'
+  | 'freight-customs-document';
 
 export class SensitiveUploadGatewayError extends Error {
   constructor() {
@@ -74,4 +75,27 @@ export async function uploadSensitiveFile(
     || !payload.resource
   ) throw new SensitiveUploadGatewayError();
   return payload.resource;
+}
+
+export async function deleteSensitiveResource(
+  profile: 'freight-customs-document',
+  resourceId: string,
+): Promise<void> {
+  const { data } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token;
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const anonymousKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!accessToken || !baseUrl || !anonymousKey) throw new SensitiveUploadGatewayError();
+  try {
+    const response = await fetch(
+      `${baseUrl.replace(/\/$/, '')}/functions/v1/sensitive-upload?profile=${encodeURIComponent(profile)}&resourceId=${encodeURIComponent(resourceId)}`,
+      {
+        method: 'DELETE', cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer',
+        headers: { Authorization: `Bearer ${accessToken}`, apikey: anonymousKey },
+      },
+    );
+    if (!response.ok) throw new SensitiveUploadGatewayError();
+  } catch {
+    throw new SensitiveUploadGatewayError();
+  }
 }

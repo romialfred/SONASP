@@ -27,6 +27,8 @@ export interface ContextePersistanceUpload {
   metadata: MetadonneesUpload;
   file: UploadServeurValide;
   bytes: Uint8Array;
+  /** JWT déjà vérifié, réservé aux RPC métier exécutées sous identité acteur. */
+  token: string;
 }
 
 export interface DependancesGatewayUpload {
@@ -37,6 +39,7 @@ export interface DependancesGatewayUpload {
     metadata: MetadonneesUpload;
   }): Promise<ResultatAutorisationUpload>;
   persist(input: ContextePersistanceUpload): Promise<unknown>;
+  remove?(input: { profileId: string; resourceId: string; token: string }): Promise<void>;
 }
 
 function reponseSecurisee(req: Request, corps: unknown, statut: number): Response {
@@ -115,11 +118,33 @@ export function createSensitiveUploadHandler(dependances: DependancesGatewayUplo
     if (!origineAutorisee(req)) {
       return reponseSecurisee(req, { success: false, error: 'Requête non autorisée.' }, 403);
     }
-    if (req.method !== 'POST') {
+    if (req.method !== 'POST' && req.method !== 'DELETE') {
       return reponseSecurisee(req, { success: false, error: 'Méthode non autorisée.' }, 405);
     }
 
     const url = new URL(req.url);
+    if (req.method === 'DELETE') {
+      const cles = Array.from(url.searchParams.keys());
+      const profileId = url.searchParams.get('profile') ?? '';
+      const resourceId = url.searchParams.get('resourceId') ?? '';
+      const token = extraireJeton(req);
+      if (
+        cles.length !== 2 || !cles.every((cle) => cle === 'profile' || cle === 'resourceId')
+        || url.searchParams.getAll('profile').length !== 1
+        || url.searchParams.getAll('resourceId').length !== 1
+        || !dependances.profiles[profileId]
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(resourceId)
+        || !token || !dependances.remove
+        || (req.headers.get('Content-Length') !== null && req.headers.get('Content-Length') !== '0')
+      ) return reponseSecurisee(req, { success: false, error: 'Requête de suppression invalide.' }, 400);
+      try {
+        await dependances.remove({ profileId, resourceId, token });
+        return reponseSecurisee(req, { success: true }, 200);
+      } catch {
+        return reponseSecurisee(req, { success: false, error: 'Le document n’a pas pu être supprimé.' }, 503);
+      }
+    }
+
     if (
       Array.from(url.searchParams.keys()).some((cle) => cle !== 'profile')
       || url.searchParams.getAll('profile').length !== 1
@@ -194,6 +219,7 @@ export function createSensitiveUploadHandler(dependances: DependancesGatewayUplo
         metadata,
         file: fichier,
         bytes: octets,
+        token,
       });
       return reponseSecurisee(req, {
         success: true,

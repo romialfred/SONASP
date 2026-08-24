@@ -119,6 +119,7 @@ describe('sensitive-upload handler', () => {
       actorId: 'actor-1',
       tenantId: COMPANY_ID,
       file: expect.objectContaining({ mimeType: 'application/pdf', extension: 'pdf' }),
+      token: TOKEN,
     }));
     expect(response.headers.get('Cache-Control')).toContain('no-store');
     expect(await new Response(JSON.stringify(payload)).text()).not.toContain(TOKEN);
@@ -133,5 +134,20 @@ describe('sensitive-upload handler', () => {
     expect(response.status).toBe(503);
     expect(text).not.toContain('bucket SQL path secret detail');
     expect(text).not.toContain(TOKEN);
+  });
+
+  it('route une suppression stricte sans corps ni paramètres libres', async () => {
+    const dependencies = deps();
+    dependencies.remove = vi.fn().mockResolvedValue(undefined);
+    const resourceId = 'ac585840-4d30-4a67-9e66-8d1fd77279ee';
+    const response = await createSensitiveUploadHandler(dependencies)(new Request(
+      `https://project.supabase.co/functions/v1/sensitive-upload?profile=mining-company-document&resourceId=${resourceId}`,
+      { method: 'DELETE', headers: { Origin: ORIGIN, Authorization: `Bearer ${TOKEN}` } },
+    ));
+    expect(response.status).toBe(200);
+    expect(dependencies.remove).toHaveBeenCalledWith({
+      profileId: 'mining-company-document', resourceId, token: TOKEN,
+    });
+    expect(await response.text()).not.toContain(TOKEN);
   });
 });

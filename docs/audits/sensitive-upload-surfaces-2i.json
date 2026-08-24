@@ -7,6 +7,7 @@
       "bucket": "shipping-documents",
       "callers": ["src/components/shipping/DocumentUploadSection.tsx", "src/pages/shipping/ShippingPreparationNew.tsx"],
       "profile": "shipping-document",
+      "gatewayCall": "uploadSensitiveFile(",
       "status": "gateway-enforced-private-signed",
       "directClientUpload": false,
       "getPublicUrl": false
@@ -16,22 +17,23 @@
       "bucket": "production-documents",
       "callers": ["src/components/production/DailyProductionFormEnhanced.tsx", "src/pages/production/ProductionDetails.tsx"],
       "profile": "production-document",
-      "status": "gateway-client-migrated-private-signed-storage-policies-still-global",
-      "remainingRisk": "P1: historical storage.objects SELECT/INSERT/UPDATE/DELETE policies remain broad for authenticated users, so the gateway can still be bypassed through the Storage API; requires DB-owned policy replacement before release",
+      "gatewayCall": "uploadSensitiveFile(",
+      "status": "gateway-enforced-private-signed-4g-storage-policy",
+      "directClientUpload": false,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/services/freightCustomsService.ts",
+      "bucket": "freight-customs-documents",
+      "callers": ["src/components/freight/AddDocumentModal.tsx", "src/components/freight/GenerateInvoiceModal.tsx"],
+      "profile": "freight-customs-document",
+      "gatewayCall": "uploadFreightCustomsBinary(",
+      "status": "gateway-rpc-4f-private-signed-compensated-delete-4g-storage-policy",
       "directClientUpload": false,
       "getPublicUrl": false
     }
   ],
   "residual": [
-    {
-      "file": "src/services/freightCustomsService.ts",
-      "bucket": "freight-customs-documents",
-      "callers": ["src/components/freight/AddDocumentModal.tsx", "src/components/freight/GenerateInvoiceModal.tsx"],
-      "priority": "P1",
-      "status": "db-parent-rpc-now-available-but-private-bucket-and-storage-policy-not-provisioned",
-      "directClientUpload": true,
-      "getPublicUrl": true
-    },
     {
       "file": "src/services/freightDocumentService.ts",
       "bucket": "freight-documents",
@@ -46,7 +48,8 @@
       "bucket": "documents",
       "callers": [],
       "priority": "P1",
-      "status": "exported-proof-upload-no-active-caller-found-capability-contract-ambiguous",
+      "status": "not-started-no-active-caller-no-authoritative-attachment-rpc-and-documents-bucket-not-private",
+      "requiredContract": "Create a server RPC that locks payments.id, derives its sale/tenant, requires sonasp.finance.execute under AAL2, validates mutable payment state, and atomically stores a canonical private object path; then provision a dedicated private bucket with metadata-backed SELECT and no authenticated writes.",
       "directClientUpload": true,
       "getPublicUrl": true
     },

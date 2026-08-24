@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  deleteSensitiveResource,
   SensitiveUploadGatewayError,
   uploadSensitiveFile,
 } from './sensitiveUploadGateway';
@@ -102,6 +103,10 @@ describe('sensitiveUploadGateway', () => {
   it.each([
     ['shipping-document', { shippingPreparationId: '9b3fcaaa-9367-4c91-a82d-788f043f33f1', title: 'Packing', fileName: 'doc.pdf' }],
     ['production-document', { productionId: '9b3fcaaa-9367-4c91-a82d-788f043f33f1', documentName: 'Rapport', fileName: 'doc.pdf' }],
+    ['freight-customs-document', {
+      operationId: '9b3fcaaa-9367-4c91-a82d-788f043f33f1', documentType: 'other',
+      title: 'Document fret', description: null, fileName: 'doc.pdf',
+    }],
   ] as const)('route le profil fermé %s sans paramètre de bucket', async (profile, metadata) => {
     const file = new File(['%PDF-1.7\n%%EOF'], 'doc.pdf', { type: 'application/pdf' });
     mocks.fetch.mockResolvedValue(new Response(JSON.stringify({
@@ -132,5 +137,17 @@ describe('sensitiveUploadGateway', () => {
     await expect(operation).rejects.not.toEqual(expect.objectContaining({
       message: expect.stringContaining('bucket path'),
     }));
+  });
+
+  it('supprime une ressource fret via Edge sans corps', async () => {
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    }));
+    const id = 'ac585840-4d30-4a67-9e66-8d1fd77279ee';
+    await expect(deleteSensitiveResource('freight-customs-document', id)).resolves.toBeUndefined();
+    const [url, options] = mocks.fetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain(`profile=freight-customs-document&resourceId=${id}`);
+    expect(options.method).toBe('DELETE');
+    expect(options.body).toBeUndefined();
   });
 });

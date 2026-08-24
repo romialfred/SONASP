@@ -6,6 +6,7 @@ interface Surface {
   file: string;
   directClientUpload: boolean;
   getPublicUrl: boolean;
+  gatewayCall?: string;
 }
 
 const root = process.cwd();
@@ -50,6 +51,6 @@ describe('inventaire machine-vérifiable des uploads sensibles', () => {
     const source = readFileSync(resolve(root, entry.file), 'utf8');
     expect(source).not.toMatch(/supabase\.storage[\s\S]{0,180}?\.upload\(/u);
     expect(source).not.toContain('.getPublicUrl(');
-    expect(source).toContain('uploadSensitiveFile(');
+    expect(source).toContain(entry.gatewayCall ?? 'uploadSensitiveFile(');
   });
 });

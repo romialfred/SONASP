@@ -36,4 +36,22 @@ describe('contrat d’intégration sensitive-upload', () => {
     expect(source).toContain("bucket: BUCKET_DOCUMENT_EXPEDITION");
     expect(source).toContain("bucket: BUCKET_DOCUMENT_PRODUCTION");
   });
+
+  it('lie le binaire fret au contrat RPC acteur 4F avec nettoyage compensatoire', () => {
+    expect(source).toContain("const PROFILE_DOCUMENT_FRET = 'freight-customs-document'");
+    expect(source).toContain("p_capability_code: 'freight.prepare'");
+    expect(source).toContain("clientActeur.rpc('snp_fret_peut_consulter_tenant'");
+    expect(source).toContain("clientActeur.rpc('snp_fret_ajouter_document'");
+    expect(source).toContain("p_file_path: chemin");
+    expect(source).toContain("bucket: BUCKET_DOCUMENT_FRET");
+    expect(source).toContain("remove([chemin])");
+    expect(source).not.toContain("from('freight_customs_documents').insert");
+  });
+
+  it('compense la suppression fret si la RPC metadata échoue', () => {
+    expect(source).toContain("clientActeur.rpc('snp_fret_supprimer_document'");
+    expect(source).toContain("download(chemin)");
+    expect(source).toContain("upload(chemin, octets");
+    expect(source).toContain("event_type: 'sensitive_upload_deleted'");
+  });
 });

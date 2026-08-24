@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { createPrivateSignedUrl, PRIVATE_STORAGE_BUCKETS } from '@/lib/privateStorage';
 
 export interface PaymentDocument {
   id: string;
@@ -106,46 +107,58 @@ export async function collectPaymentDocuments(paymentId: string): Promise<Paymen
     if (assayCerts) {
       for (const cert of assayCerts) {
         if (cert.certificate_url) {
-          documents.push({
-            id: cert.id,
-            name: `Assay Certificate ${cert.certificate_number || ''}`,
-            type: 'assay_certificate',
-            url: cert.certificate_url,
-            uploadedAt: cert.created_at,
-            metadata: {
-              certificateNumber: cert.certificate_number,
-              description: `Assay certificate ${cert.certificate_number}`,
-            },
-          });
+          try {
+            const signedUrl = await createPrivateSignedUrl(
+              PRIVATE_STORAGE_BUCKETS.assayCertificates,
+              cert.certificate_url,
+            );
+            documents.push({
+              id: cert.id,
+              name: `Assay Certificate ${cert.certificate_number || ''}`,
+              type: 'assay_certificate',
+              url: signedUrl,
+              uploadedAt: cert.created_at,
+              metadata: {
+                certificateNumber: cert.certificate_number,
+                description: `Assay certificate ${cert.certificate_number}`,
+              },
+            });
+          } catch {
+            // Une référence privée invalide ne doit jamais redevenir une URL publique.
+          }
         }
       }
     }
 
-    // 5. Get shipping documents from Supabase Storage
+    // 5. Get shipping documents through the RLS-protected metadata table.
+    // The database stores canonical object paths (and can still contain legacy
+    // public URLs); both forms are normalized before a short-lived URL is signed.
     const { data: shippingFiles } = await supabase
-      .storage
-      .from('shipping-documents')
-      .list('', { limit: 100 });
+      .from('shipping_documents')
+      .select('id, title, file_name, document_url, file_size, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (shippingFiles) {
       for (const file of shippingFiles) {
-        const { data: urlData } = supabase
-          .storage
-          .from('shipping-documents')
-          .getPublicUrl(file.name);
-
-        if (urlData) {
+        try {
+          const signedUrl = await createPrivateSignedUrl(
+            PRIVATE_STORAGE_BUCKETS.shippingDocuments,
+            file.document_url,
+          );
           documents.push({
             id: `shipping-${file.id}`,
-            name: file.name,
+            name: file.title || file.file_name,
             type: 'shipping',
-            url: urlData.publicUrl,
+            url: signedUrl,
             uploadedAt: file.created_at,
-            size: file.metadata?.size,
+            size: file.file_size,
             metadata: {
               description: 'Shipping documentation',
             },
           });
+        } catch {
+          // Ignore les références historiques invalides plutôt que de les ouvrir.
         }
       }
     }

@@ -13,9 +13,9 @@ import { ShippingStatusWorkflowEnhanced } from '@/components/shipping/ShippingSt
 import { ShippingStatusHistory } from '@/components/shipping/ShippingStatusHistory';
 import { ShippingStatus } from '@/constants/shippingStatuses';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
 import { useDialog } from '@/contexts/DialogContext';
-import { getShippingCertificates, AssayCertificate } from '@/services/assayCertificateService';
+import { getCertificateUrl, getShippingCertificates, AssayCertificate } from '@/services/assayCertificateService';
+import { shippingStatusService } from '@/services/shippingStatusService';
 
 interface ShippingStatusHistoryEntry {
   id: string;
@@ -75,7 +75,6 @@ const getDocumentType = (title: string): { type: string; order: number; icon: an
 export function ShippingPreparationDetailsEnhanced() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { showConfirm, showSuccess, showError: showErrorDialog } = useDialog();
 
   const [preparation, setPreparation] = useState<ShippingPreparation | null>(null);
@@ -91,6 +90,7 @@ export function ShippingPreparationDetailsEnhanced() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ title: string; message: string } | null>(null);
   const [activeTab, setActiveTab] = useState('details');
+  const [openingDocumentId, setOpeningDocumentId] = useState<string | null>(null);
 
   const handleBack = () => {
     navigate(-1);
@@ -206,16 +206,7 @@ export function ShippingPreparationDetailsEnhanced() {
     try {
       const result = await getShippingCertificates(id);
       if (result.success && result.data && Array.isArray(result.data)) {
-        const certsWithUrls = result.data.map(cert => {
-          const { data } = supabase.storage
-            .from('ASSAY-CERTIFICATES')
-            .getPublicUrl(cert.file_path);
-          return {
-            ...cert,
-            public_url: data.publicUrl
-          };
-        });
-        setCertificates(certsWithUrls as any);
+        setCertificates(result.data);
       } else {
         console.warn('Failed to load certificates:', result.error);
         setCertificates([]);
@@ -223,6 +214,31 @@ export function ShippingPreparationDetailsEnhanced() {
     } catch (error) {
       console.warn('Could not load certificates:', error);
       setCertificates([]);
+    }
+  };
+
+  const openPrivateDocument = async (
+    documentId: string,
+    reference: string,
+    certificate: boolean,
+  ) => {
+    const popup = window.open('about:blank', '_blank');
+    if (popup) popup.opener = null;
+    setOpeningDocumentId(documentId);
+    try {
+      const signedUrl = certificate
+        ? await getCertificateUrl(reference)
+        : await shippingPreparationService.getDocumentUrl(reference);
+      if (!popup) throw new Error('Autorisez les fenêtres contextuelles pour ouvrir le document.');
+      popup.location.replace(signedUrl);
+    } catch (reason) {
+      popup?.close();
+      showErrorDialog(
+        'Document inaccessible',
+        reason instanceof Error ? reason.message : 'Le document privé ne peut pas être ouvert.',
+      );
+    } finally {
+      setOpeningDocumentId(null);
     }
   };
 
@@ -327,24 +343,11 @@ export function ShippingPreparationDetailsEnhanced() {
         try {
           setLoading(true);
 
-          const { error: updateError } = await supabase
-            .from('shipping_preparations')
-            .update({ status: newStatus })
-            .eq('id', id);
-
-          if (updateError) throw updateError;
-
-          await supabase
-            .from('unified_status_history')
-            .insert({
-              entity_type: 'shipping',
-              entity_id: id,
-              old_status: preparation.status,
-              new_status: newStatus,
-              change_context: 'shipping_management',
-              changed_by: user?.id,
-              action_description: `Status changé: ${preparation.status} → ${newStatus}`,
-            });
+          await shippingStatusService.changeStatus(
+            id,
+            preparation.status,
+            newStatus,
+          );
 
           await loadShippingDetails(true);
           showSuccess('Succès', `Le statut a été changé avec succès vers "${newStatus}"`);
@@ -693,12 +696,12 @@ export function ShippingPreparationDetailsEnhanced() {
 
               if (activeTab === 'documents') {
                 const allDocs = [
-                  ...(documents || []).map(doc => ({ ...doc, isDocument: true })),
+                  ...(documents || []).map(doc => ({ ...doc, isDocument: true, isCertificate: false })),
                   ...(certificates || []).map(cert => ({
                     id: cert.id,
                     title: `Certificat d'Essai - ${cert.certificate_number || cert.file_name || 'N/A'}`,
                     file_name: cert.file_name || 'certificate.pdf',
-                    document_url: (cert as any).public_url || '',
+                    document_url: cert.file_path,
                     isDocument: false,
                     isCertificate: true
                   }))
@@ -741,7 +744,12 @@ export function ShippingPreparationDetailsEnhanced() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => window.open(doc.document_url, '_blank')}
+                                  onClick={() => void openPrivateDocument(
+                                    doc.id,
+                                    doc.document_url,
+                                    doc.isCertificate,
+                                  )}
+                                  disabled={openingDocumentId === doc.id}
                                 >
                                   Voir
                                 </Button>

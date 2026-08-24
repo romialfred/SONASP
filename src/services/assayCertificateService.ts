@@ -1,5 +1,13 @@
 import { supabase } from '@/lib/supabase';
+import {
+  createPrivateSignedUrl,
+  PRIVATE_STORAGE_BUCKETS,
+  requireStorageObjectPath,
+} from '@/lib/privateStorage';
+import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import { extractTextFromPDF, extractAssayData } from './pdfParsingService';
+
+const ASSAY_CERTIFICATES_BUCKET = PRIVATE_STORAGE_BUCKETS.assayCertificates;
 
 export interface AssayCertificate {
   id: string;
@@ -75,15 +83,15 @@ export async function uploadAssayCertificate(
   userId: string
 ): Promise<{ success: boolean; data?: AssayCertificate; error?: string }> {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${shippingPreparationId}_${Date.now()}.${fileExt}`;
+    const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.assayCertificate);
+    const fileName = `${shippingPreparationId}_${Date.now()}.${validatedFile.extension}`;
     const filePath = `${shippingPreparationId}/${fileName}`;
 
     // Upload file to storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('ASSAY-CERTIFICATES')
+      .from(ASSAY_CERTIFICATES_BUCKET)
       .upload(filePath, file, {
-        contentType: file.type,
+        contentType: validatedFile.mimeType,
         upsert: false,
       });
 
@@ -99,7 +107,7 @@ export async function uploadAssayCertificate(
         file_path: uploadData.path,
         file_name: file.name,
         file_size: file.size,
-        mime_type: file.type,
+        mime_type: validatedFile.mimeType,
         uploaded_by: userId,
         parsing_status: 'pending',
         approval_status: 'pending',
@@ -118,14 +126,10 @@ export async function uploadAssayCertificate(
 }
 
 /**
- * Get public URL for certificate PDF
+ * Produit une URL courte et signée, y compris depuis une ancienne URL publique.
  */
 export async function getCertificateUrl(filePath: string): Promise<string> {
-  const { data } = supabase.storage
-    .from('ASSAY-CERTIFICATES')
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
+  return createPrivateSignedUrl(ASSAY_CERTIFICATES_BUCKET, filePath, 300);
 }
 
 /**
@@ -136,15 +140,8 @@ export async function getCertificateSignedUrl(
   expiresIn: number = 3600
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
-    const { data, error } = await supabase.storage
-      .from('ASSAY-CERTIFICATES')
-      .createSignedUrl(filePath, expiresIn);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, url: data.signedUrl };
+    const url = await createPrivateSignedUrl(ASSAY_CERTIFICATES_BUCKET, filePath, expiresIn);
+    return { success: true, url };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -649,8 +646,11 @@ export async function deleteCertificate(
       .single();
 
     if (certificate?.file_path) {
-      // Delete file from storage
-      await supabase.storage.from('ASSAY-CERTIFICATES').remove([certificate.file_path]);
+      const objectPath = requireStorageObjectPath(certificate.file_path, ASSAY_CERTIFICATES_BUCKET);
+      const { error: storageError } = await supabase.storage
+        .from(ASSAY_CERTIFICATES_BUCKET)
+        .remove([objectPath]);
+      if (storageError) return { success: false, error: storageError.message };
     }
 
     // Delete certificate record (cascade will delete related data)

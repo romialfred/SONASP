@@ -583,19 +583,16 @@ export default function ShippingPreparationNew() {
       const pdfFile = new File([pdfBlob], `Packing-List-${expeditionLotNumber}.pdf`, { type: 'application/pdf' });
 
       // Upload to Supabase
-      await shippingPreparationService.uploadDocument(
+      const packingListDocument = await shippingPreparationService.uploadDocument(
         preparationId,
         pdfFile,
         `Packing List - ${expeditionLotNumber}`
       );
 
-      // Update the preparation with packing list URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('shipping-documents')
-        .getPublicUrl(`${preparationId}/${pdfFile.name}`);
-
+      // Les colonnes legacy conservent désormais la référence privée canonique.
       await shippingPreparationService.updatePreparation(preparationId, {
-        packing_list_url: publicUrl,
+        packing_list_url: packingListDocument.document_url,
+        packing_list_document_id: packingListDocument.id,
       });
 
       // Cleanup
@@ -686,13 +683,11 @@ export default function ShippingPreparationNew() {
         total_gross_weight_grams: totalGrossWeightGrams,
         total_weight_oz: totalNetWeightOz,
         total_boxes: totalBoxes,
-        status: 'waiting_for_customs_approval' as const,  // Statut initial du workflow
         prepared_at: new Date().toISOString(),
       };
 
       // DEBUG: Vérifier les données avant envoi
       console.log('=== DEBUG SHIPPING PREPARATION ===');
-      console.log('prepData.status:', prepData.status);
       console.log('Full prepData:', JSON.stringify(prepData, null, 2));
       console.log('==================================');
 
@@ -705,7 +700,10 @@ export default function ShippingPreparationNew() {
         prepId = preparation.id;
       } else {
         console.log('CREATE MODE - Nouvelle préparation');
-        const newPrep = await shippingPreparationService.createPreparation(prepData);
+        const newPrep = await shippingPreparationService.createPreparation({
+          ...prepData,
+          status: 'waiting_for_customs_approval',
+        });
         prepId = newPrep.id;
         setPreparation(newPrep);
       }

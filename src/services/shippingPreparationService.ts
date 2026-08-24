@@ -1,5 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import { ShippingStatus } from '@/constants/shippingStatuses';
+import {
+  createPrivateSignedUrl,
+  PRIVATE_STORAGE_BUCKETS,
+  requireStorageObjectPath,
+} from '@/lib/privateStorage';
+import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
+
+const SHIPPING_DOCUMENTS_BUCKET = PRIVATE_STORAGE_BUCKETS.shippingDocuments;
 
 export interface ShippingPreparation {
   id: string;
@@ -34,6 +42,11 @@ export interface ShippingPreparation {
   mining_company_name?: string | null;
   mining_companies?: { name: string } | null;
 }
+
+export type ShippingPreparationUpdate = Partial<Omit<
+  ShippingPreparation,
+  'id' | 'status' | 'created_at' | 'created_by'
+>>;
 
 export interface ShippingProductionItem {
   id: string;
@@ -114,16 +127,12 @@ class ShippingPreparationService {
   async createPreparation(preparation: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // CRITICAL FIX: Ensure status is valid enum value from shipping_preparation_status
-    // Source: supabase/migrations/20251114_009_fix_shipping_workflow_statuses.sql
-    // Workflow: waiting_for_customs_approval → approved_by_customs → ready_for_expedition
-    const validStatuses: ShippingStatus[] = ['waiting_for_customs_approval', 'approved_by_customs', 'ready_for_expedition'];
-    const cleanPreparation = { ...preparation };
-
-    if (!cleanPreparation.status || !validStatuses.includes(cleanPreparation.status as ShippingStatus)) {
-      cleanPreparation.status = 'waiting_for_customs_approval';
-      console.warn('Invalid or missing status, defaulting to: waiting_for_customs_approval');
-    }
+    // Une préparation entre toujours au premier état du workflow. Les transitions
+    // suivantes passent exclusivement par shippingStatusService.
+    const cleanPreparation = {
+      ...preparation,
+      status: 'waiting_for_customs_approval' as const,
+    };
 
     // REGRESSION FIX: Convert empty strings to null for foreign key fields
     // This prevents foreign key constraint violations
@@ -156,16 +165,13 @@ class ShippingPreparationService {
     return data;
   }
 
-  async updatePreparation(id: string, updates: Partial<ShippingPreparation>): Promise<ShippingPreparation> {
-    // CRITICAL FIX: Validate status before UPDATE using enum shipping_preparation_status
-    // Workflow: waiting_for_customs_approval → approved_by_customs → ready_for_expedition
-    const validStatuses: ShippingStatus[] = ['waiting_for_customs_approval', 'approved_by_customs', 'ready_for_expedition'];
-    const cleanUpdates = { ...updates };
-
-    if (cleanUpdates.status && !validStatuses.includes(cleanUpdates.status as ShippingStatus)) {
-      cleanUpdates.status = 'waiting_for_customs_approval';
-      console.warn('Invalid status in UPDATE, defaulting to: waiting_for_customs_approval');
+  async updatePreparation(id: string, updates: ShippingPreparationUpdate): Promise<ShippingPreparation> {
+    // Défense runtime pour les appelants JavaScript/non typés : une mise à jour
+    // générale ne doit jamais devenir un second chemin de transition de statut.
+    if ('status' in updates) {
+      throw new Error('Le statut doit être modifié depuis le workflow d’expédition.');
     }
+    const cleanUpdates = { ...updates };
 
     const { data, error } = await supabase
       .from('shipping_preparations')
@@ -340,49 +346,52 @@ class ShippingPreparationService {
 
   async uploadDocument(preparationId: string, file: File, title: string): Promise<ShippingDocument> {
     const { data: { user } } = await supabase.auth.getUser();
+    const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.shippingDocument);
 
-    // Upload file to storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${preparationId}/${Date.now()}.${fileExt}`;
+    const fileName = `${preparationId}/${crypto.randomUUID()}.${validatedFile.extension}`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('shipping-documents')
-      .upload(fileName, file);
+      .from(SHIPPING_DOCUMENTS_BUCKET)
+      .upload(fileName, file, {
+        contentType: validatedFile.mimeType,
+        upsert: false,
+      });
 
     if (uploadError) throw uploadError;
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('shipping-documents')
-      .getPublicUrl(fileName);
-
-    // Create document record
     const { data, error } = await supabase
       .from('shipping_documents')
       .insert({
         shipping_preparation_id: preparationId,
         title,
-        document_url: publicUrl,
+        // Colonne legacy : elle contient désormais le chemin objet privé.
+        document_url: uploadData.path,
         file_name: file.name,
         file_size: file.size,
-        mime_type: file.type,
+        mime_type: validatedFile.mimeType,
         uploaded_by: user?.id,
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      await supabase.storage.from(SHIPPING_DOCUMENTS_BUCKET).remove([uploadData.path]);
+      throw error;
+    }
     return data;
   }
 
-  async deleteDocument(id: string, documentUrl: string): Promise<void> {
-    // Delete from storage
-    const fileName = documentUrl.split('/').slice(-2).join('/');
-    await supabase.storage
-      .from('shipping-documents')
-      .remove([fileName]);
+  async getDocumentUrl(documentReference: string, expiresInSeconds = 300): Promise<string> {
+    return createPrivateSignedUrl(SHIPPING_DOCUMENTS_BUCKET, documentReference, expiresInSeconds);
+  }
 
-    // Delete record
+  async deleteDocument(id: string, documentUrl: string): Promise<void> {
+    const fileName = requireStorageObjectPath(documentUrl, SHIPPING_DOCUMENTS_BUCKET);
+    const { error: storageError } = await supabase.storage
+      .from(SHIPPING_DOCUMENTS_BUCKET)
+      .remove([fileName]);
+    if (storageError) throw storageError;
+
     const { error } = await supabase
       .from('shipping_documents')
       .delete()
@@ -413,103 +422,25 @@ class ShippingPreparationService {
   }
 
   /**
-   * Release quota from an export license (in case of cancellation)
+   * Libère la réservation d'une expédition. La base dérive la licence, le
+   * poids et l'acteur depuis l'expédition et le JWT courant.
    */
   async releaseLicenseQuota(
-    licenseId: string,
-    quantity: number
+    shippingId: string,
+    reason: string,
   ): Promise<boolean> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const normalizedReason = reason.trim();
+    if (normalizedReason.length < 10) {
+      throw new Error('Le motif de libération doit contenir au moins 10 caractères.');
+    }
 
-    const { data, error } = await supabase.rpc('release_license_quota', {
-      p_license_id: licenseId,
-      p_quantity: quantity,
-      p_user_id: user?.id || null,
+    const { data, error } = await supabase.rpc('snp_release_shipping_license_quota', {
+      p_shipping_id: shippingId,
+      p_reason: normalizedReason,
     });
 
     if (error) throw error;
     return data as boolean;
-  }
-
-  /**
-   * Update shipping preparation status
-   */
-  async updateStatus(
-    preparationId: string,
-    newStatus: ShippingPreparation['status'],
-    notes?: string
-  ): Promise<ShippingPreparation> {
-    // Get current preparation to get old status
-    const { data: currentPrep } = await supabase
-      .from('shipping_preparations')
-      .select('status')
-      .eq('id', preparationId)
-      .single();
-
-    const oldStatus = currentPrep?.status;
-
-    const updateData: any = { status: newStatus };
-
-    // Update prepared_at timestamp when status changes to waiting_for_customs_approval
-    if (newStatus === 'waiting_for_customs_approval') {
-      updateData.prepared_at = new Date().toISOString();
-    }
-
-    // Update shipped_at timestamp when status changes to ready_for_expedition
-    if (newStatus === 'ready_for_expedition') {
-      updateData.shipped_at = new Date().toISOString();
-    }
-
-    // Append notes with status change log
-    if (notes) {
-      const { data: current } = await supabase
-        .from('shipping_preparations')
-        .select('notes')
-        .eq('id', preparationId)
-        .maybeSingle();
-
-      const statusNote = `[${new Date().toLocaleString('fr-FR')}] Statut changé vers ${newStatus}${notes ? ': ' + notes : ''}`;
-      updateData.notes = current?.notes
-        ? `${current.notes}\n\n${statusNote}`
-        : statusNote;
-    }
-
-    // Update shipping preparation
-    const { data, error } = await supabase
-      .from('shipping_preparations')
-      .update(updateData)
-      .eq('id', preparationId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating shipping status:', error);
-      throw error;
-    }
-
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // Create entry in unified_status_history
-    if (oldStatus !== newStatus) {
-      const { error: historyError } = await supabase
-        .from('unified_status_history')
-        .insert({
-          entity_type: 'shipping',
-          entity_id: preparationId,
-          old_status: oldStatus,
-          new_status: newStatus,
-          changed_by: user?.id,
-          notes: notes || null,
-          changed_at: new Date().toISOString()
-        });
-
-      if (historyError) {
-        console.error('Error creating status history:', historyError);
-      }
-    }
-
-    return data;
   }
 
   private formatBusinessError(error: any): Error {

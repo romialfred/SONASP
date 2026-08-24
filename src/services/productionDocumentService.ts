@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 
 export interface ProductionDocument {
   id: string;
@@ -22,14 +23,14 @@ class ProductionDocumentService {
     documentName: string
   ): Promise<ProductionDocument> {
     try {
+      const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.productionDocument);
       const timestamp = Date.now();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${productionId}/${timestamp}.${fileExt}`;
+      const fileName = `${productionId}/${timestamp}.${validatedFile.extension}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(this.BUCKET_NAME)
         .upload(fileName, file, {
-          contentType: file.type,
+          contentType: validatedFile.mimeType,
           cacheControl: '3600',
           upsert: false
         });
@@ -48,7 +49,7 @@ class ProductionDocumentService {
             file_name: file.name,
             file_path: uploadData.path,
             file_size: file.size,
-            file_type: file.type,
+            file_type: validatedFile.mimeType,
             uploaded_by: user.user.id
           }
         ])

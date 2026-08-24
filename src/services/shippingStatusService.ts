@@ -1,5 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import { ShippingStatus } from '@/constants/shippingStatuses';
+import {
+  validateTransition,
+  WorkflowModule,
+} from '@/services/statusTransitionControlService';
 
 export interface ShippingStatusHistoryEntry {
   id: string;
@@ -10,6 +14,41 @@ export interface ShippingStatusHistoryEntry {
   changed_at: string;
   notes: string | null;
   user_email?: string;
+}
+
+export class ShippingStatusConflictError extends Error {
+  constructor() {
+    super('Le statut de cette expédition a changé entre-temps. Actualisez la page avant de réessayer.');
+    this.name = 'ShippingStatusConflictError';
+  }
+}
+
+interface ShippingStatusTransitionResult {
+  status: ShippingStatus;
+  previous_status: ShippingStatus;
+}
+
+interface ShippingStatusRpcError {
+  code?: string;
+  message?: string;
+}
+
+const shippingRpcClient = supabase as unknown as {
+  rpc(
+    functionName: 'snp_transition_shipping_preparation',
+    parameters: {
+      p_shipping_id: string;
+      p_expected_status: ShippingStatus;
+      p_new_status: ShippingStatus;
+    },
+  ): PromiseLike<{
+    data: ShippingStatusTransitionResult | null;
+    error: ShippingStatusRpcError | null;
+  }>;
+};
+
+function isOptimisticConflict(error: ShippingStatusRpcError): boolean {
+  return error.code === '40001' || error.message?.includes('Conflit optimiste') === true;
 }
 
 class ShippingStatusService {
@@ -36,39 +75,37 @@ class ShippingStatusService {
 
   async changeStatus(
     shippingId: string,
-    oldStatus: ShippingStatus | null,
+    oldStatus: ShippingStatus,
     newStatus: ShippingStatus,
-    userId: string,
-    notes?: string
-  ): Promise<void> {
-    const { error: updateError } = await supabase
-      .from('shipping_preparations')
-      .update({
-        status: newStatus,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', shippingId);
+  ): Promise<ShippingStatus> {
+    validateTransition(
+      WorkflowModule.SHIPPING_PREPARATION,
+      oldStatus,
+      newStatus,
+    );
 
-    if (updateError) {
-      console.error('Error updating shipping status:', updateError);
-      throw updateError;
+    const { data, error: transitionError } = await shippingRpcClient.rpc(
+      'snp_transition_shipping_preparation',
+      {
+        p_shipping_id: shippingId,
+        p_expected_status: oldStatus,
+        p_new_status: newStatus,
+      },
+    );
+
+    if (transitionError) {
+      if (isOptimisticConflict(transitionError)) {
+        throw new ShippingStatusConflictError();
+      }
+      console.error('Error transitioning shipping status:', transitionError);
+      throw transitionError;
     }
 
-    const { error: historyError } = await supabase
-      .from('shipping_status_history')
-      .insert({
-        shipping_preparation_id: shippingId,
-        old_status: oldStatus,
-        new_status: newStatus,
-        changed_by: userId,
-        notes: notes || null,
-        changed_at: new Date().toISOString(),
-      });
-
-    if (historyError) {
-      console.error('Error creating shipping status history:', historyError);
-      throw historyError;
+    if (!data?.status) {
+      throw new Error('Le serveur n’a pas confirmé le nouveau statut de l’expédition.');
     }
+
+    return data.status;
   }
 
   async getCurrentStatus(shippingId: string): Promise<ShippingStatus | null> {

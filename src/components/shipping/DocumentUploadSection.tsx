@@ -3,8 +3,11 @@ import { Upload, FileText, Download, Eye, Trash2, Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Card } from '../ui/Card';
-import { supabase } from '@/lib/supabase';
-import { secureRandomId } from '@/lib/secureRandom';
+import {
+  UPLOAD_POLICIES,
+  validateUploadFile,
+} from '@/lib/uploadValidation';
+import { shippingPreparationService } from '@/services/shippingPreparationService';
 
 interface Document {
   id: string;
@@ -33,12 +36,20 @@ export function DocumentUploadSection({
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [accessingDocumentId, setAccessingDocumentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setError(null);
+      try {
+        validateUploadFile(e.target.files[0], UPLOAD_POLICIES.shippingDocument);
+        setFile(e.target.files[0]);
+        setError(null);
+      } catch (reason) {
+        setFile(null);
+        setError(reason instanceof Error ? reason.message : 'Ce fichier ne peut pas être téléversé.');
+        e.target.value = '';
+      }
     }
   };
 
@@ -52,32 +63,7 @@ export function DocumentUploadSection({
       setUploading(true);
       setError(null);
 
-      const fileExt = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
-      const fileName = `${shippingId}/${secureRandomId()}.${fileExt}`;
-      const filePath = `shipping-documents/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('shipping-documents')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('shipping-documents')
-        .getPublicUrl(filePath);
-
-      const { error: dbError } = await supabase
-        .from('shipping_documents')
-        .insert({
-          shipping_preparation_id: shippingId,
-          title: title.trim(),
-          document_url: urlData.publicUrl,
-          file_name: file.name,
-          file_size: file.size,
-          mime_type: file.type
-        });
-
-      if (dbError) throw dbError;
+      await shippingPreparationService.uploadDocument(shippingId, file, title.trim());
 
       setShowUploadModal(false);
       setTitle('');
@@ -95,22 +81,45 @@ export function DocumentUploadSection({
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return;
 
     try {
-      const filePath = documentUrl.split('/shipping-documents/')[1];
-      if (filePath) {
-        await supabase.storage
-          .from('shipping-documents')
-          .remove([`shipping-documents/${filePath}`]);
-      }
-
-      await supabase
-        .from('shipping_documents')
-        .delete()
-        .eq('id', docId);
-
+      await shippingPreparationService.deleteDocument(docId, documentUrl);
       onDocumentDeleted(docId);
     } catch (err) {
       console.error('Error deleting document:', err);
       alert('Erreur lors de la suppression du document');
+    }
+  };
+
+  const handleOpen = async (doc: Document) => {
+    const popup = window.open('about:blank', '_blank');
+    if (popup) popup.opener = null;
+    setAccessingDocumentId(doc.id);
+    setError(null);
+    try {
+      const signedUrl = await shippingPreparationService.getDocumentUrl(doc.document_url);
+      if (!popup) throw new Error('Autorisez les fenêtres contextuelles pour ouvrir le document.');
+      popup.location.replace(signedUrl);
+    } catch (reason) {
+      popup?.close();
+      setError(reason instanceof Error ? reason.message : 'Le document ne peut pas être ouvert.');
+    } finally {
+      setAccessingDocumentId(null);
+    }
+  };
+
+  const handleDownload = async (doc: Document) => {
+    setAccessingDocumentId(doc.id);
+    setError(null);
+    try {
+      const signedUrl = await shippingPreparationService.getDocumentUrl(doc.document_url);
+      const link = document.createElement('a');
+      link.href = signedUrl;
+      link.download = doc.file_name;
+      link.rel = 'noopener noreferrer';
+      link.click();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Le document ne peut pas être téléchargé.');
+    } finally {
+      setAccessingDocumentId(null);
     }
   };
 
@@ -145,7 +154,10 @@ export function DocumentUploadSection({
             </div>
           </div>
           <Button
-            onClick={() => setShowUploadModal(true)}
+            onClick={() => {
+              setError(null);
+              setShowUploadModal(true);
+            }}
             className="flex items-center gap-2"
             size="sm"
           >
@@ -153,6 +165,12 @@ export function DocumentUploadSection({
             Ajouter
           </Button>
         </div>
+
+        {error && !showUploadModal && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         {documents.length === 0 ? (
           <div className="text-center py-12 text-slate-400">
@@ -185,7 +203,8 @@ export function DocumentUploadSection({
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => window.open(doc.document_url, '_blank')}
+                    onClick={() => void handleOpen(doc)}
+                    disabled={accessingDocumentId === doc.id}
                     className="flex items-center gap-1"
                   >
                     <Eye className="w-4 h-4" />
@@ -193,12 +212,8 @@ export function DocumentUploadSection({
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => {
-                      const a = document.createElement('a');
-                      a.href = doc.document_url;
-                      a.download = doc.file_name;
-                      a.click();
-                    }}
+                    onClick={() => void handleDownload(doc)}
+                    disabled={accessingDocumentId === doc.id}
                     className="flex items-center gap-1"
                   >
                     <Download className="w-4 h-4" />
@@ -252,6 +267,7 @@ export function DocumentUploadSection({
               <input
                 type="file"
                 onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
                 className="hidden"
                 id="document-upload"
               />
@@ -264,7 +280,7 @@ export function DocumentUploadSection({
                     <>
                       Cliquez pour sélectionner ou glissez un fichier
                       <br />
-                      <span className="text-xs text-slate-500">PDF, DOCX, XLSX, PNG, JPG (max 10MB)</span>
+                      <span className="text-xs text-slate-500">PDF, DOC/DOCX, PNG, JPG (max 10 Mo)</span>
                     </>
                   )}
                 </p>

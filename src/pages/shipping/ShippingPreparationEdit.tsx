@@ -11,9 +11,10 @@ import { TextArea } from '@/components/ui/TextArea';
 import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { SuccessDialog } from '@/components/ui/SuccessDialog';
-import { shippingPreparationService, ShippingPreparation } from '@/services/shippingPreparationService';
-import { ShippingStatus } from '@/constants/shippingStatuses';
+import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
+import { shippingPreparationService, type ShippingPreparation } from '@/services/shippingPreparationService';
 import { supabase } from '@/lib/supabase';
+import { shippingPreparationDetailsPath } from '@/lib/shippingRoutes';
 
 interface Refinery {
   id: string;
@@ -46,7 +47,6 @@ export default function ShippingPreparationEdit() {
   const [selectedFreightCompanyId, setSelectedFreightCompanyId] = useState('');
   const [shippedToCountry, setShippedToCountry] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<ShippingStatus>('waiting_for_customs_approval');
 
   useEffect(() => {
     loadData();
@@ -71,7 +71,6 @@ export default function ShippingPreparationEdit() {
       setSelectedFreightCompanyId(prep.shipped_to_company || '');
       setShippedToCountry(prep.shipped_to_country || '');
       setNotes(prep.notes || '');
-      setStatus(prep.status);
 
       // Load refineries
       const { data: refineriesData } = await supabase
@@ -116,19 +115,13 @@ export default function ShippingPreparationEdit() {
         shipped_to_company: selectedFreightCompanyId || null,
         shipped_to_country: shippedToCountry.trim() || null,
         notes: notes.trim() || null,
-        status,
       };
 
-      const { error } = await supabase
-        .from('shipping_preparations')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
+      await shippingPreparationService.updatePreparation(id!, updates);
 
       setShowSuccess(true);
       setTimeout(() => {
-        navigate(`/shipping/preparations/${id}/details`);
+        navigate(shippingPreparationDetailsPath(id!));
       }, 1500);
 
     } catch (error: any) {
@@ -174,7 +167,7 @@ export default function ShippingPreparationEdit() {
           <div className="flex items-center justify-between bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center gap-4">
               <Button
-                onClick={() => navigate(`/shipping/preparations/${id}/details`)}
+                onClick={() => navigate(shippingPreparationDetailsPath(id!))}
                 variant="outline"
                 size="sm"
                 className="gap-2"
@@ -228,15 +221,12 @@ export default function ShippingPreparationEdit() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Statut
                   </label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as ShippingStatus)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="waiting_for_customs_approval">En Attente Douane</option>
-                    <option value="approved_by_customs">Douane Approuvée</option>
-                    <option value="ready_for_expedition">Prêt pour Expédition</option>
-                  </select>
+                  <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                    <ShippingStatusBadge status={preparation.status} />
+                    <span className="text-sm text-gray-600">
+                      Le statut se modifie uniquement depuis le workflow de la page de détails.
+                    </span>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -335,7 +325,7 @@ export default function ShippingPreparationEdit() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(`/shipping/preparations/${id}/details`)}
+                onClick={() => navigate(shippingPreparationDetailsPath(id!))}
               >
                 Annuler
               </Button>

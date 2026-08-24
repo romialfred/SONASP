@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import { genererNumeroCarte } from './carteNumberService';
 
 export interface ArtisanMinier {
@@ -187,13 +188,13 @@ export const artisanMinierService = {
   },
 
   async uploadPhoto(artisanId: string, file: File) {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${artisanId}-${Date.now()}.${fileExt}`;
+    const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.artisanPhoto);
+    const fileName = `${artisanId}-${crypto.randomUUID()}.${validatedFile.extension}`;
     const filePath = `artisans-photos/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('artisan-documents')
-      .upload(filePath, file);
+      .upload(filePath, file, { contentType: validatedFile.mimeType, upsert: false });
 
     if (uploadError) throw uploadError;
 
@@ -207,13 +208,16 @@ export const artisanMinierService = {
   },
 
   async uploadDocument(artisanId: string, file: File, documentType: string) {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${artisanId}-${documentType}-${Date.now()}.${fileExt}`;
+    const policy = documentType === 'photo'
+      ? UPLOAD_POLICIES.artisanPhoto
+      : UPLOAD_POLICIES.artisanDocument;
+    const validatedFile = validateUploadFile(file, policy);
+    const fileName = `${artisanId}-${crypto.randomUUID()}.${validatedFile.extension}`;
     const filePath = `artisans-documents/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('artisan-documents')
-      .upload(filePath, file);
+      .upload(filePath, file, { contentType: validatedFile.mimeType, upsert: false });
 
     if (uploadError) throw uploadError;
 
@@ -231,7 +235,7 @@ export const artisanMinierService = {
           type_document: documentType,
           nom_document: file.name,
           document_url: publicUrl,
-          document_type: file.type,
+          document_type: validatedFile.mimeType,
           document_size: file.size,
           uploaded_by: user?.id
         }

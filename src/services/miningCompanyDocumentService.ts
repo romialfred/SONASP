@@ -1,6 +1,11 @@
 import { supabase } from '@/lib/supabase';
+import {
+  createPrivateSignedUrl,
+  PRIVATE_STORAGE_BUCKETS,
+  requireStorageObjectPath,
+} from '@/lib/privateStorage';
 
-const BUCKET = 'mining-company-documents';
+const BUCKET = PRIVATE_STORAGE_BUCKETS.miningCompanyDocuments;
 
 export interface MiningCompanyDocument {
   id: string;
@@ -62,18 +67,20 @@ export const miningCompanyDocumentService = {
   },
 
   async remove(doc: Pick<MiningCompanyDocument, 'id' | 'file_path'>): Promise<void> {
-    await supabase.storage.from(BUCKET).remove([doc.file_path]);
+    const path = requireStorageObjectPath(doc.file_path, BUCKET);
+    const { error: storageError } = await supabase.storage.from(BUCKET).remove([path]);
+    if (storageError) throw storageError;
     const { error } = await supabase.from('mining_company_documents').delete().eq('id', doc.id);
     if (error) throw error;
   },
 
   /** URL signée (bucket privé) valable 1h pour consulter/télécharger un document. */
   async getSignedUrl(filePath: string): Promise<string | null> {
-    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(filePath, 3600);
-    if (error) {
+    try {
+      return await createPrivateSignedUrl(BUCKET, filePath, 3600);
+    } catch (error) {
       console.error('[miningCompanyDocumentService] signed url failed:', error);
       return null;
     }
-    return data?.signedUrl ?? null;
   },
 };

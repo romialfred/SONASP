@@ -133,6 +133,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('[Profile] Site assignments fetch failed (non-fatal):', error);
         }
 
+        // La liste vient de la fonction SECURITY DEFINER qui applique compte
+        // actif, overrides, périmètre et AAL2. En cas de migration non encore
+        // disponible, `undefined` conserve seulement la matrice de compatibilité
+        // locale ; une réponse vide explicite reste en revanche un refus total.
+        let capabilities: string[] | undefined;
+        try {
+          const { data, error } = await withTimeout(
+            (supabase as any).rpc('snp_actor_capabilities'),
+            2500,
+            'Actor-Capabilities'
+          );
+          if (error) throw error;
+          capabilities = (data ?? [])
+            .map((row: { capability_code?: unknown }) => row.capability_code)
+            .filter((code: unknown): code is string => typeof code === 'string');
+        } catch (error) {
+          console.warn('[Profile] Actor capabilities unavailable; compatibility mode enabled:', error);
+        }
+
         return {
           id: profile.id,
           email: profile.email,
@@ -142,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           mining_company_id: profile.mining_company_id ?? null,
           site_ids: siteIds,
           is_active: profile.is_active,
+          capabilities,
           is_sales_approver: profile.is_sales_approver ?? false,
           two_factor_enabled: profile.two_factor_enabled,
           language: profile.language,

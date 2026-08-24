@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { AlertTriangle, ArrowLeft, Loader2, Printer, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BadgeCheck, FileCheck2, Loader2, Printer, Save, ShieldAlert } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
-import { Infobulle, Note, PageHeader } from '@/components/ui/sn';
+import { Field, Infobulle, Note, PageHeader, Section } from '@/components/ui/sn';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanMinierService } from '@/services/artisanMinierService';
 import { artisanFullName } from '@/utils/artisanIdentity';
 import { errorMessage } from '@/lib/errorMessage';
 import { composerFacture, type Facture, type PartieFacture } from '@/services/factureVenteService';
+import artisanPaiementsService, { type FactureDefinitive } from '@/services/artisanPaiementsService';
+import { useAuth } from '@/contexts/AuthContext';
+import { CAPABILITIES, hasCapability } from '@/lib/capabilities';
+import { isComptoirScopedUser } from '@/lib/comptoirAccess';
+import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
 import './facture-vente.css';
 
 const fcfa = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -33,12 +38,19 @@ export const formatDate = (valeur: string | null) => {
 export function FactureVente() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { workspace } = useComptoirWorkspace();
+  const isComptoir = isComptoirScopedUser(user);
 
   const [vente, setVente] = useState<ArtisanGoldSale | null>(null);
   const [client, setClient] = useState<PartieFacture | null>(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
+  const [factureDefinitive, setFactureDefinitive] = useState<FactureDefinitive | null>(null);
+  const [referenceDgi, setReferenceDgi] = useState('');
+  const [documentDgi, setDocumentDgi] = useState('');
+  const [certificationEnCours, setCertificationEnCours] = useState(false);
   const qrRef = useRef<string | null>(null);
 
   const charger = useCallback(async () => {
@@ -48,6 +60,18 @@ export function FactureVente() {
     try {
       const donnees = await artisanGoldSalesService.getById(id);
       setVente(donnees);
+      try {
+        const definitive = await artisanPaiementsService.getFactureByVenteId(id);
+        setFactureDefinitive(definitive);
+        setReferenceDgi(definitive?.dgi_reference || '');
+        setDocumentDgi(definitive?.dgi_document_path || '');
+      } catch {
+        // La compatibilité avec un environnement qui n'a pas encore reçu la
+        // migration DGI ne doit pas empêcher la consultation du spécimen.
+        setFactureDefinitive(null);
+        setReferenceDgi('');
+        setDocumentDgi('');
+      }
 
       if (donnees?.artisan_id) {
         try {
@@ -75,6 +99,31 @@ export function FactureVente() {
     }
   }, [id]);
 
+  const certifierDgi = async () => {
+    if (!factureDefinitive?.id) {
+      setErreur('Émettez d’abord la facture définitive avant de renseigner sa certification DGI.');
+      return;
+    }
+    if (referenceDgi.trim().length < 5 || documentDgi.trim().length < 5) {
+      setErreur('La référence DGI et le chemin du justificatif sont obligatoires.');
+      return;
+    }
+    setCertificationEnCours(true);
+    setErreur(null);
+    try {
+      await artisanPaiementsService.certifierFactureDgi(
+        factureDefinitive.id,
+        referenceDgi,
+        documentDgi,
+      );
+      await charger();
+    } catch (raison) {
+      setErreur(errorMessage(raison, 'La certification DGI a été refusée.'));
+    } finally {
+      setCertificationEnCours(false);
+    }
+  };
+
   useEffect(() => {
     void charger();
   }, [charger]);
@@ -82,10 +131,14 @@ export function FactureVente() {
   const facture: Facture | null = useMemo(() => {
     if (!vente) return null;
     return composerFacture(vente, {
-      vendeur: VENDEUR_SONASP,
-      client: client || { raisonSociale: 'Artisan minier non identifié' },
+      vendeur: isComptoir
+        ? client || { raisonSociale: 'Orpailleur non identifié' }
+        : VENDEUR_SONASP,
+      client: isComptoir
+        ? { raisonSociale: workspace?.name || 'Comptoir d’or', adresse: 'Burkina Faso' }
+        : client || { raisonSociale: 'Artisan minier non identifié' },
     });
-  }, [vente, client]);
+  }, [vente, client, isComptoir, workspace?.name]);
 
   useEffect(() => {
     if (!facture) return;
@@ -102,10 +155,12 @@ export function FactureVente() {
       <div className="sn-page facture-page">
         <PageHeader
           icon={ShieldAlert}
-          title="Facture de vente"
-          subtitle="Pièce de démonstration : la certification DGI n’est pas raccordée."
+          title={isComptoir ? "Facture DGI de l’achat" : 'Facture de vente'}
+          subtitle={factureDefinitive?.certification_dgi_status === 'certified'
+            ? `Certification DGI enregistrée — ${factureDefinitive.dgi_reference}`
+            : 'Spécimen contrôlé tant que la certification DGI officielle n’est pas enregistrée.'}
           breadcrumb={[
-            { label: 'Ventes d’or', to: '/artisan-minier/ventes-or' },
+            { label: isComptoir ? 'Achats d’or' : 'Ventes d’or', to: '/artisan-minier/ventes-or' },
             { label: 'Facture' },
           ]}
           actions={
@@ -124,21 +179,63 @@ export function FactureVente() {
           }
         />
 
-        {/* Avertissement en tête, hors impression : la pièce elle-même porte son
-            propre filigrane et son propre bandeau. */}
-        {/* L'avertissement reste entier sur sa première phrase : remettre cette
-            pièce à un client ou à l'administration exposerait à une sanction. Le
-            détail technique, lui, se replie derrière l'icône. */}
-        <Note tone="danger" icon={AlertTriangle}>
-          <strong>Spécimen sans valeur fiscale.</strong> Ni remise à un client, ni présentée à
-          l’administration.
-          <Infobulle titre="Pourquoi ce spécimen n’est pas une facture">
-            Les éléments de certification (code SECeF, NIM MCF, ISF, compteurs, QR code) sont
-            produits par le Module de Contrôle de Facturation, que la plateforme n’interroge pas
-            encore ; la plateforme doit elle-même être homologuée comme système de facturation
-            d’entreprise.
-          </Infobulle>
-        </Note>
+        {factureDefinitive?.certification_dgi_status === 'certified' ? (
+          <Note tone="success" icon={BadgeCheck}>
+            Certification DGI enregistrée sous la référence <strong>{factureDefinitive.dgi_reference}</strong>.
+            Le justificatif DGI associé demeure la pièce fiscale de référence.
+          </Note>
+        ) : (
+          <Note tone="danger" icon={AlertTriangle}>
+            <strong>Spécimen sans valeur fiscale.</strong> Ni remise à un client, ni présentée à
+            l’administration.
+            <Infobulle titre="Pourquoi ce spécimen n’est pas une facture">
+              Les éléments de certification (code SECeF, NIM MCF, ISF, compteurs, QR code) sont
+              produits par le Module de Contrôle de Facturation, que la plateforme n’interroge pas
+              encore ; la plateforme doit elle-même être homologuée comme système de facturation
+              d’entreprise.
+            </Infobulle>
+          </Note>
+        )}
+
+        {factureDefinitive
+          && factureDefinitive.certification_dgi_status !== 'certified'
+          && hasCapability(user, CAPABILITIES.COMPTOIR_MANAGE) && (
+          <Section
+            id="certification-dgi"
+            icon={FileCheck2}
+            tone="emerald"
+            title="Enregistrer la certification DGI"
+            description="Renseignez uniquement les références d’une certification réellement obtenue auprès du dispositif fiscal."
+          >
+            <div className="facture-page__dgi-fields">
+              <Field label="Référence DGI" required htmlFor="reference-dgi">
+                <input
+                  id="reference-dgi"
+                  value={referenceDgi}
+                  onChange={(event) => setReferenceDgi(event.target.value)}
+                  placeholder="DGI-2026-…"
+                />
+              </Field>
+              <Field label="Chemin du justificatif" required htmlFor="document-dgi">
+                <input
+                  id="document-dgi"
+                  value={documentDgi}
+                  onChange={(event) => setDocumentDgi(event.target.value)}
+                  placeholder="dgi/2026/facture-certifiee.pdf"
+                />
+              </Field>
+            </div>
+            <button
+              type="button"
+              className="sn-btn sn-btn--primary"
+              disabled={certificationEnCours}
+              onClick={() => void certifierDgi()}
+            >
+              {certificationEnCours ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+              Enregistrer et verrouiller
+            </button>
+          </Section>
+        )}
 
         {erreur && (
           <Note tone="danger" icon={AlertTriangle}>
@@ -158,15 +255,19 @@ export function FactureVente() {
           <article className="facture" aria-label={`Facture spécimen ${facture.numero}`}>
             {/* Le texte du filigrane vient de la feuille de style : il tourne dans un
                 pseudo-element, sinon sa boite debordait de la facture. */}
-            <div className="facture__filigrane" aria-hidden="true" />
+            {factureDefinitive?.certification_dgi_status !== 'certified' && (
+              <div className="facture__filigrane" aria-hidden="true" />
+            )}
 
             <p className="facture__bandeau">
-              SPÉCIMEN — FACTURE NON CERTIFIÉE — SANS VALEUR FISCALE
+              {factureDefinitive?.certification_dgi_status === 'certified'
+                ? `FACTURE CERTIFIÉE DGI — ${factureDefinitive.dgi_reference}`
+                : 'SPÉCIMEN — FACTURE NON CERTIFIÉE — SANS VALEUR FISCALE'}
             </p>
 
             <header className="facture__tete">
               <div className="facture__emetteur">
-                <img src="/sonasp_logo.png" alt="SONASP" />
+                {!isComptoir && <img src="/sonasp_logo.png" alt="SONASP" />}
                 <div>
                   <strong>{facture.vendeur.raisonSociale}</strong>
                   <span>{facture.vendeur.adresse}</span>
@@ -197,12 +298,12 @@ export function FactureVente() {
               </div>
             </header>
 
-            <section className="facture__client" aria-label="Client">
-              <h3>Doit</h3>
+            <section className="facture__client" aria-label="Acheteur">
+              <h3>Acheteur</h3>
               <p className="facture__client-nom">{facture.client.raisonSociale}</p>
               <p>{facture.client.adresse || 'Adresse non renseignée'}</p>
               <p>
-                Carte professionnelle : {facture.client.ifu || '—'}
+                {isComptoir ? 'Établissement : ' : 'Carte professionnelle : '}{facture.client.ifu || workspace?.code || '—'}
                 {facture.client.telephone ? ` · ${facture.client.telephone}` : ''}
               </p>
               <p className="facture__objet">

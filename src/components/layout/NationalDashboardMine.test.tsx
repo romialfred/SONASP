@@ -32,8 +32,6 @@ vi.mock('@/hooks/useMineWorkspace', () => ({
 }));
 
 vi.mock('@/components/ui/ProfileErrorBanner', () => ({ ProfileErrorBanner: () => null }));
-vi.mock('./OwnerMineSwitcher', () => ({ OwnerMineSwitcher: () => null }));
-
 describe('NationalDashboardLayout — espace Mine', () => {
   it('affiche la mine et réordonne les modules dans le shell ivoire dédié', () => {
     const { container } = render(
@@ -43,10 +41,14 @@ describe('NationalDashboardLayout — espace Mine', () => {
     );
 
     expect(container.querySelector('.national-shell')).toHaveClass('is-mine');
-    expect(screen.getByRole('heading', { name: 'Burkina Mining SA' })).toBeInTheDocument();
-    expect(screen.getByText(/Mon espace sécurisé · BMSA/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'BMSA' })).toHaveAttribute('title', 'Burkina Mining SA');
+    expect(screen.getByText('Espace société minière')).toBeInTheDocument();
+    expect(within(screen.getAllByRole('complementary', { name: 'Navigation principale' })[0]).getByText('BMSA')).toBeInTheDocument();
 
     const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
+    expect(within(sidebar).getByRole('link', { name: 'Accueil' })).toHaveAttribute('href', '/portail-mine');
+    expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveAttribute('href', '/portail-mine?vue=tableau-de-bord');
+    expect(within(sidebar).getByRole('link', { name: 'Accueil' })).toHaveClass('is-active');
     expect(within(sidebar).getByRole('region', { name: 'Mon espace' })).toBeInTheDocument();
     expect(within(sidebar).queryByRole('region', { name: 'Mines industrielles' })).not.toBeInTheDocument();
 
@@ -62,5 +64,17 @@ describe('NationalDashboardLayout — espace Mine', () => {
     expect(stocks).toBeGreaterThan(production);
     expect(expeditions).toBeGreaterThan(stocks);
     expect(ventes).toBeGreaterThan(expeditions);
+  });
+
+  it('distingue visuellement le tableau de bord de l’accueil', () => {
+    render(
+      <MemoryRouter initialEntries={['/portail-mine?vue=tableau-de-bord']}>
+        <NationalDashboardLayout><div>Contenu Mine</div></NationalDashboardLayout>
+      </MemoryRouter>
+    );
+
+    const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
+    expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveClass('is-active');
+    expect(within(sidebar).getByRole('link', { name: 'Accueil' })).not.toHaveClass('is-active');
   });
 });

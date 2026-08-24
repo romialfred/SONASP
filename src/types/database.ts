@@ -5962,9 +5962,15 @@ export type Database = {
       snp_artisan_factures_definitives: {
         Row: {
           artisan_id: string
+          certification_dgi_status: string
+          comptoir_organization_id: string | null
           created_at: string | null
           date_echeance: string | null
           date_emission: string | null
+          dgi_certified_at: string | null
+          dgi_certified_by: string | null
+          dgi_document_path: string | null
+          dgi_reference: string | null
           emise_par: string | null
           id: string
           montant_autres_taxes: number | null
@@ -5984,9 +5990,15 @@ export type Database = {
         }
         Insert: {
           artisan_id: string
+          certification_dgi_status?: string
+          comptoir_organization_id?: string | null
           created_at?: string | null
           date_echeance?: string | null
           date_emission?: string | null
+          dgi_certified_at?: string | null
+          dgi_certified_by?: string | null
+          dgi_document_path?: string | null
+          dgi_reference?: string | null
           emise_par?: string | null
           id?: string
           montant_autres_taxes?: number | null
@@ -6006,9 +6018,15 @@ export type Database = {
         }
         Update: {
           artisan_id?: string
+          certification_dgi_status?: string
+          comptoir_organization_id?: string | null
           created_at?: string | null
           date_echeance?: string | null
           date_emission?: string | null
+          dgi_certified_at?: string | null
+          dgi_certified_by?: string | null
+          dgi_document_path?: string | null
+          dgi_reference?: string | null
           emise_par?: string | null
           id?: string
           montant_autres_taxes?: number | null
@@ -6117,6 +6135,7 @@ export type Database = {
       snp_artisan_paiements: {
         Row: {
           artisan_id: string
+          comptoir_organization_id: string | null
           created_at: string | null
           date_completion: string | null
           date_paiement: string | null
@@ -6141,6 +6160,7 @@ export type Database = {
         }
         Insert: {
           artisan_id: string
+          comptoir_organization_id?: string | null
           created_at?: string | null
           date_completion?: string | null
           date_paiement?: string | null
@@ -6165,6 +6185,7 @@ export type Database = {
         }
         Update: {
           artisan_id?: string
+          comptoir_organization_id?: string | null
           created_at?: string | null
           date_completion?: string | null
           date_paiement?: string | null
@@ -6221,6 +6242,7 @@ export type Database = {
       snp_artisan_taxes_retenues: {
         Row: {
           artisan_id: string
+          comptoir_organization_id: string | null
           compte_comptable: string | null
           created_at: string | null
           date_reversement: string | null
@@ -6241,6 +6263,7 @@ export type Database = {
         }
         Insert: {
           artisan_id: string
+          comptoir_organization_id?: string | null
           compte_comptable?: string | null
           created_at?: string | null
           date_reversement?: string | null
@@ -6261,6 +6284,7 @@ export type Database = {
         }
         Update: {
           artisan_id?: string
+          comptoir_organization_id?: string | null
           compte_comptable?: string | null
           created_at?: string | null
           date_reversement?: string | null
@@ -6374,8 +6398,10 @@ export type Database = {
       }
       snp_artisan_ventes_or: {
         Row: {
+          acheteur_comptoir_organization_id: string | null
           acheteur_id: string | null
           artisan_id: string
+          comptoir_organization_id: string | null
           created_at: string
           created_by: string | null
           date_vente: string
@@ -6401,8 +6427,10 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          acheteur_comptoir_organization_id?: string | null
           acheteur_id?: string | null
           artisan_id: string
+          comptoir_organization_id?: string | null
           created_at?: string
           created_by?: string | null
           date_vente?: string
@@ -6428,8 +6456,10 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          acheteur_comptoir_organization_id?: string | null
           acheteur_id?: string | null
           artisan_id?: string
+          comptoir_organization_id?: string | null
           created_at?: string
           created_by?: string | null
           date_vente?: string

@@ -6,6 +6,7 @@ import { DialogProvider } from './contexts/DialogContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MinePortalGuard } from './components/auth/MinePortalGuard';
+import { ComptoirPortalGuard } from './components/auth/ComptoirPortalGuard';
 import { MandatoryMfaGate } from './components/auth/MandatoryMfaGate';
 import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
@@ -140,6 +141,9 @@ const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/Artisa
 const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
 const ApprobateursPage = lazy(() => import('./pages/stakeholders/ApprobateursPage'));
 const MinePortalPage = lazy(() => import('./pages/mine/MinePortalPage'));
+const ComptoirPortalPage = lazy(() => import('./pages/comptoir/ComptoirPortalPage'));
+const ComptoirStockPage = lazy(() => import('./pages/comptoir/ComptoirStockPage'));
+const ComptoirSonaspSalesPage = lazy(() => import('./pages/comptoir/ComptoirSonaspSalesPage'));
 const ManagerPortalPage = lazy(() => import('./pages/manager/ManagerPortalPage'));
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
 const UpdatePassword = lazy(() => import('./pages/auth/UpdatePassword'));
@@ -210,6 +214,30 @@ function AppRoutes() {
           <Route path="/settings" element={<Navigate to="/parameters" replace />} />
 
           <Route element={<NationalDashboardChrome />}>
+            <Route
+              path="/portail-comptoir"
+              element={
+                <ComptoirPortalGuard>
+                  <ComptoirPortalPage />
+                </ComptoirPortalGuard>
+              }
+            />
+            <Route
+              path="/portail-comptoir/stock"
+              element={
+                <ComptoirPortalGuard>
+                  <ComptoirStockPage />
+                </ComptoirPortalGuard>
+              }
+            />
+            <Route
+              path="/portail-comptoir/ventes-sonasp"
+              element={
+                <ComptoirPortalGuard>
+                  <ComptoirSonaspSalesPage />
+                </ComptoirPortalGuard>
+              }
+            />
             <Route
               path="/portail-mine"
               element={

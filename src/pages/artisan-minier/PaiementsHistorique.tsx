@@ -8,7 +8,10 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
+  Loader2,
+  PlayCircle,
   RefreshCw,
+  ShieldCheck,
   Wallet,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
@@ -25,7 +28,11 @@ import {
 } from '@/components/ui/sn';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
-import artisanPaiementsService, { type PaiementArtisan } from '@/services/artisanPaiementsService';
+import artisanPaiementsService, {
+  type FactureDefinitive,
+  type PaiementArtisan,
+} from '@/services/artisanPaiementsService';
+import { useAuth } from '@/contexts/AuthContext';
 import './paiements-ventes.css';
 
 type Statut = PaiementArtisan['statut'];
@@ -33,6 +40,7 @@ type TypePaiement = PaiementArtisan['type_paiement'];
 
 interface PaiementRow extends PaiementArtisan {
   artisan?: { nom?: string; prenoms?: string; raison_sociale?: string; numero_carte?: string } | null;
+  facture?: FactureDefinitive | null;
 }
 
 const STATUT_LABELS: Record<Statut, string> = {
@@ -127,10 +135,13 @@ export function filterPaiements(paiements: PaiementRow[], filters: HistoriqueFil
 
 export default function PaiementsHistorique() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [paiements, setPaiements] = useState<PaiementRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<HistoriqueFilters>(EMPTY_HISTORIQUE_FILTERS);
-  const { alertState, showError, closeAlert } = useCustomAlert();
+  const [transitioning, setTransitioning] = useState<string | null>(null);
+  const [preuves, setPreuves] = useState<Record<string, string>>({});
+  const { alertState, showError, showSuccess, closeAlert } = useCustomAlert();
 
   const chargerHistorique = async () => {
     setLoading(true);
@@ -174,6 +185,27 @@ export default function PaiementsHistorique() {
       ),
     [paiements]
   );
+
+  const changerStatut = async (paiement: PaiementRow, statut: Statut) => {
+    if (!paiement.id) return;
+    const preuve = preuves[paiement.id] || '';
+    if (statut === 'complete' && preuve.trim().length < 5) {
+      showError('Joignez le chemin ou l’URL de la preuve bancaire avant la clôture.');
+      return;
+    }
+    setTransitioning(paiement.id);
+    try {
+      await artisanPaiementsService.updatePaiementStatut(paiement.id, statut, {
+        preuvePaiementUrl: statut === 'complete' ? preuve : undefined,
+      });
+      showSuccess('La transition a été enregistrée et auditée.');
+      await chargerHistorique();
+    } catch (reason) {
+      showError(reason instanceof Error ? reason.message : 'La transition a été refusée.');
+    } finally {
+      setTransitioning(null);
+    }
+  };
 
 
   const columns: Column<PaiementRow & { id?: string }>[] = [
@@ -231,6 +263,54 @@ export default function PaiementsHistorique() {
         ) : (
           <span className="paiements__muted">Aucun</span>
         ),
+    },
+    {
+      key: 'workflow',
+      header: 'Traitement',
+      render: (paiement) => {
+        const busy = transitioning === paiement.id;
+        if (paiement.statut === 'en_attente') {
+          return (
+            <button type="button" className="sn-btn sn-btn--sm" disabled={busy} onClick={() => void changerStatut(paiement, 'en_traitement')}>
+              {busy ? <Loader2 className="sn-spin" aria-hidden="true" /> : <PlayCircle aria-hidden="true" />} Prendre en charge
+            </button>
+          );
+        }
+        if (paiement.statut === 'en_traitement') {
+          if (paiement.traite_par === user?.id) {
+            return <small className="paiements__muted">Validation par un autre agent</small>;
+          }
+          return (
+            <button type="button" className="sn-btn sn-btn--sm" disabled={busy} onClick={() => void changerStatut(paiement, 'valide')}>
+              {busy ? <Loader2 className="sn-spin" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />} Valider
+            </button>
+          );
+        }
+        if (paiement.statut === 'valide') {
+          const certified = paiement.facture?.certification_dgi_status === 'certified';
+          return (
+            <span className="paiements__workflow-action">
+              <input
+                value={paiement.id ? preuves[paiement.id] || '' : ''}
+                onChange={(event) => paiement.id && setPreuves((current) => ({ ...current, [paiement.id!]: event.target.value }))}
+                placeholder="URL ou chemin de la preuve"
+                aria-label={`Preuve du paiement ${paiement.reference_paiement}`}
+                disabled={!certified || busy}
+              />
+              <button
+                type="button"
+                className="sn-btn sn-btn--sm sn-btn--primary"
+                disabled={!certified || busy}
+                title={certified ? undefined : 'Certification DGI requise'}
+                onClick={() => void changerStatut(paiement, 'complete')}
+              >
+                {busy ? <Loader2 className="sn-spin" aria-hidden="true" /> : <BadgeCheck aria-hidden="true" />} Clôturer
+              </button>
+            </span>
+          );
+        }
+        return <span className="paiements__muted">—</span>;
+      },
     },
   ];
 

@@ -7,6 +7,7 @@ import type { PaiementArtisan } from '@/services/artisanPaiementsService';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   getAllPaiements: vi.fn(),
+  updatePaiementStatut: vi.fn(),
   showSuccess: vi.fn(),
   showError: vi.fn(),
 }));
@@ -30,9 +31,13 @@ vi.mock('@/hooks/useCustomAlert', () => ({
 }));
 
 vi.mock('@/components/ui/CustomAlert', () => ({ CustomAlert: () => null }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'validator-id' } }) }));
 
 vi.mock('@/services/artisanPaiementsService', () => ({
-  default: { getAllPaiements: mocks.getAllPaiements },
+  default: {
+    getAllPaiements: mocks.getAllPaiements,
+    updatePaiementStatut: mocks.updatePaiementStatut,
+  },
 }));
 
 type Row = PaiementArtisan & { artisan?: { nom?: string; prenoms?: string; numero_carte?: string } };
@@ -80,6 +85,7 @@ describe('PaiementsHistorique', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAllPaiements.mockResolvedValue(paiements);
+    mocks.updatePaiementStatut.mockResolvedValue(undefined);
   });
 
   it('affiche les indicateurs et les règlements', async () => {
@@ -102,6 +108,17 @@ describe('PaiementsHistorique', () => {
 
     expect(screen.getByText('PAY-003')).toBeInTheDocument();
     expect(screen.queryByText('PAY-001')).not.toBeInTheDocument();
+  });
+
+  it('demande au serveur de valider un paiement préparé par un autre agent', async () => {
+    render(<PaiementsHistorique />);
+    await waitFor(() => expect(screen.getByText('PAY-002')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Valider' }));
+
+    await waitFor(() => expect(mocks.updatePaiementStatut).toHaveBeenCalledWith('p2', 'valide', {
+      preuvePaiementUrl: undefined,
+    }));
   });
 
   it('signale un historique indisponible', async () => {

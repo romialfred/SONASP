@@ -20,6 +20,8 @@ import {
 import { genererNumeroRecu } from '@/services/venteRecuNumberService';
 import { ecartAuCours, useCoursOr } from '@/hooks/useCoursOr';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import {
   Badge,
   Field,
@@ -102,6 +104,8 @@ export const artisanDisplayName = (artisan: ArtisanMinier) => {
 
 export default function VenteOrForm() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isComptoir = isComptoirScopedUser(user);
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const { prixGrammeFcfa, chargement: coursEnCours, erreur: coursErreur } = useCoursOr();
@@ -323,12 +327,14 @@ export default function VenteOrForm() {
 
         <PageHeader
           icon={Coins}
-          title={isEditMode ? 'Modifier la vente d’or' : 'Enregistrer une vente d’or'}
-          subtitle="Déclaration d’une collecte auprès d’un artisan minier, taxes calculées automatiquement."
+          title={isEditMode
+            ? `Modifier ${isComptoir ? 'l’achat' : 'la vente'} d’or`
+            : `Enregistrer ${isComptoir ? 'un achat' : 'une vente'} d’or`}
+          subtitle="Collecte auprès d’un orpailleur rattaché, taxes calculées automatiquement."
           breadcrumb={[
-            { label: 'Artisans miniers', to: '/artisan-minier' },
-            { label: "Ventes d'or", to: '/artisan-minier/ventes-or' },
-            { label: isEditMode ? 'Modification' : 'Nouvelle vente' },
+            { label: isComptoir ? 'Comptoir' : 'Artisans miniers', to: isComptoir ? '/portail-comptoir' : '/artisan-minier' },
+            { label: isComptoir ? "Achats d'or" : "Ventes d'or", to: '/artisan-minier/ventes-or' },
+            { label: isEditMode ? 'Modification' : isComptoir ? 'Nouvel achat' : 'Nouvelle vente' },
           ]}
           actions={
             <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/ventes-or')}>

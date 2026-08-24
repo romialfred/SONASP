@@ -141,4 +141,30 @@ describe('navigation', () => {
     expect(routes).not.toContain('/production/achats-mines');
     expect(routes).not.toContain('/inventory/add');
   });
+
+  it('projette pour un comptoir uniquement collecte, DGI, taxes, stock et SONASP', () => {
+    const comptoir = {
+      id: 'counter-user', email: 'counter@example.bf', full_name: 'Comptoir Exemple', phone: null,
+      role: 'customer', mining_company_id: null, site_ids: [], is_active: true,
+      capabilities: ['customer.operate', 'comptoir.manage'],
+      is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+      email_notifications: true, batch_notifications: true, approval_notifications: true,
+      created_at: '2026-01-01', updated_at: '2026-01-01',
+    } satisfies UserProfile;
+    const sections = getNavigationSectionsForUser(comptoir);
+    const routes = sections.flatMap((section) => section.groups.flatMap((group) =>
+      group.children?.map((item) => item.path) || [group.path]
+    ));
+
+    expect(sections.map((section) => section.id)).toEqual([
+      'comptoir-collecte', 'comptoir-conformite', 'comptoir-stock', 'comptoir-analyses',
+    ]);
+    expect(routes).toContain('/artisan-minier/ventes-or');
+    expect(routes).toContain('/artisan-minier/rapports/taxes');
+    expect(routes).toContain('/portail-comptoir/stock');
+    expect(routes).toContain('/portail-comptoir/ventes-sonasp');
+    expect(routes).not.toContain('/sales');
+    expect(routes).not.toContain('/gold-prices');
+    expect(routes).not.toContain('/production/licenses');
+  });
 });

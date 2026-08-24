@@ -21,6 +21,12 @@ export interface FactureDefinitive {
   emise_par?: string;
   created_at?: string;
   updated_at?: string;
+  certification_dgi_status?: 'pending' | 'certified' | 'rejected' | 'cancelled';
+  dgi_reference?: string | null;
+  dgi_document_path?: string | null;
+  dgi_certified_at?: string | null;
+  dgi_certified_by?: string | null;
+  comptoir_organization_id?: string | null;
 }
 
 export interface PaiementArtisan {
@@ -48,6 +54,7 @@ export interface PaiementArtisan {
   numero_facture?: string;
   created_at?: string;
   updated_at?: string;
+  comptoir_organization_id?: string | null;
 }
 
 export interface TaxeRetenue {
@@ -84,6 +91,7 @@ export interface VenteEnAttentePaiement {
   montant_net_a_payer: number | null;
   date_facture: string | null;
   statut_paiement: string;
+  certification_dgi_status: FactureDefinitive['certification_dgi_status'] | null;
   jours_attente: number | null;
 }
 
@@ -193,6 +201,19 @@ const artisanPaiementsService = {
     }
   },
 
+  async certifierFactureDgi(
+    factureId: string,
+    dgiReference: string,
+    documentPath: string,
+  ): Promise<void> {
+    const { error } = await (supabase as any).rpc('snp_certify_artisan_invoice', {
+      p_facture_id: factureId,
+      p_dgi_reference: dgiReference.trim(),
+      p_document_path: documentPath.trim(),
+    });
+    if (error) throw error;
+  },
+
   async getVentesEnAttentePaiement(): Promise<VenteEnAttentePaiement[]> {
     try {
       const { data, error } = await supabase
@@ -224,7 +245,7 @@ const artisanPaiementsService = {
           if (vente.facture_definitive_id) {
             const { data: factureData } = await supabase
               .from('snp_artisan_factures_definitives')
-              .select('id, numero_facture, montant_net_a_payer, date_emission, statut')
+              .select('id, numero_facture, montant_net_a_payer, date_emission, statut, certification_dgi_status')
               .eq('id', vente.facture_definitive_id)
               .maybeSingle();
 
@@ -252,6 +273,7 @@ const artisanPaiementsService = {
             montant_net_a_payer: facture?.montant_net_a_payer || vente.montant_total_fcfa,
             date_facture: facture?.date_emission || null,
             statut_paiement: facture ? (facture.statut === 'payee' ? 'paye' : 'facture_emise') : 'non_paye',
+            certification_dgi_status: facture?.certification_dgi_status || null,
             jours_attente: joursAttente
           };
         })
@@ -288,17 +310,16 @@ const artisanPaiementsService = {
   async updatePaiementStatut(
     paiementId: string,
     statut: PaiementArtisan['statut'],
-    userId?: string
+    options: { preuvePaiementUrl?: string; notes?: string } = {},
   ): Promise<void> {
     try {
-      const updateData: any = { statut };
-
-      if (statut === 'valide') {
-        updateData.date_validation = new Date().toISOString();
-        updateData.valide_par = userId;
-      } else if (statut === 'complete') {
-        updateData.date_completion = new Date().toISOString();
-      }
+      // Les acteurs et dates sont fixés par le trigger serveur depuis auth.uid().
+      // Le navigateur ne fournit que la transition demandée et sa preuve.
+      const updateData: any = {
+        statut,
+        ...(options.preuvePaiementUrl ? { preuve_paiement_url: options.preuvePaiementUrl.trim() } : {}),
+        ...(options.notes ? { notes: options.notes.trim() } : {}),
+      };
 
       const { error } = await supabase
         .from('snp_artisan_paiements')

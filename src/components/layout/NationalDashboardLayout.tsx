@@ -24,6 +24,7 @@ import {
   HelpCircle,
   ChevronDown,
   Languages,
+  Home,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -40,8 +41,8 @@ import { ProfileErrorBanner } from '@/components/ui/ProfileErrorBanner';
 import { cn } from '@/utils/cn';
 import { RouteFallback } from '@/components/common/RouteFallback';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
+import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
 import { getNavigationSectionsForUser, type NavigationSection } from './sidebarNavigation';
-import { OwnerMineSwitcher } from './OwnerMineSwitcher';
 import './national-dashboard-layout.css';
 
 interface NationalDashboardLayoutProps {
@@ -114,6 +115,12 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   const navigate = useNavigate();
   const location = useLocation();
   const { isMine, companyName, companyCode } = useMineWorkspace();
+  const {
+    isComptoir,
+    workspace: comptoirWorkspace,
+    displayName: comptoirDisplayName,
+  } = useComptoirWorkspace();
+  const mineDisplayName = companyCode || companyName;
   const navigationSections = useMemo(() => {
     const sections = getNavigationSectionsForUser(user);
     if (!isMine) return sections;
@@ -153,9 +160,12 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     () => navigationSections.flatMap((section) => section.groups),
     [navigationSections]
   );
-  const dashboardPath = user && user.role !== 'owner' && user.mining_company_id
-    ? '/portail-mine'
-    : '/dashboard';
+  const mineHomePath = '/portail-mine';
+  const mineDashboardPath = '/portail-mine?vue=tableau-de-bord';
+  const dashboardPath = isComptoir ? '/portail-comptoir' : isMine ? mineDashboardPath : '/dashboard';
+  const mineDashboardActive = isMine
+    && location.pathname === mineHomePath
+    && new URLSearchParams(location.search).get('vue') === 'tableau-de-bord';
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
     localStorage.getItem('sidebar:collapsed') === 'true'
@@ -232,6 +242,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   }, [openGroup]);
 
   const navRef = useRef<HTMLElement | null>(null);
+  const headerActionsRef = useRef<HTMLDivElement | null>(null);
   /** Ligne a maintenir en place pendant le repli d'un groupe situe plus haut. */
   const ancrage = useRef<{ element: HTMLElement; haut: number } | null>(null);
 
@@ -288,11 +299,53 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     return user?.email?.split('@')[0] || 'Utilisateur';
   }, [user?.email, user?.full_name]);
 
-  const closeMenus = () => {
+  const closeMenus = useCallback(() => {
     setLanguageOpen(false);
     setNotificationsOpen(false);
     setProfileOpen(false);
+  }, []);
+
+  const toggleLanguageMenu = () => {
+    setNotificationsOpen(false);
+    setProfileOpen(false);
+    setLanguageOpen((open) => !open);
   };
+
+  const toggleNotificationsMenu = () => {
+    setLanguageOpen(false);
+    setProfileOpen(false);
+    setNotificationsOpen((open) => {
+      const next = !open;
+      if (next) void chargerNotifications();
+      return next;
+    });
+  };
+
+  const toggleProfileMenu = () => {
+    setLanguageOpen(false);
+    setNotificationsOpen(false);
+    setProfileOpen((open) => !open);
+  };
+
+  useEffect(() => {
+    if (!languageOpen && !notificationsOpen && !profileOpen) return;
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Node && !headerActionsRef.current?.contains(event.target)) {
+        closeMenus();
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeMenus();
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [closeMenus, languageOpen, notificationsOpen, profileOpen]);
 
   const changeLanguage = async (language: 'fr' | 'en') => {
     await i18n.changeLanguage(language);
@@ -325,12 +378,20 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   };
 
   const sidebar = (
-    <aside className={cn('national-sidebar', isMine && 'is-mine', sidebarCollapsed && 'is-collapsed')} aria-label="Navigation principale">
+    <aside className={cn(
+      'national-sidebar',
+      isMine && 'is-mine',
+      isComptoir && 'is-comptoir',
+      sidebarCollapsed && 'is-collapsed',
+    )} aria-label="Navigation principale">
       <div className="national-sidebar__brand">
         <img src="/sonasp_logo.png" alt="SONASP" />
-        {isMine && !sidebarCollapsed && (
-          <span className="national-sidebar__mine-name" title={companyName || undefined}>
-            {companyName}
+        {(isMine || isComptoir) && !sidebarCollapsed && (
+          <span
+            className="national-sidebar__mine-name"
+            title={(isComptoir ? comptoirWorkspace?.name : companyName) || undefined}
+          >
+            {isComptoir ? comptoirDisplayName : mineDisplayName}
           </span>
         )}
       </div>
@@ -349,11 +410,24 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       </div>
 
       <nav className="national-sidebar__navigation" ref={rattacherNavigation} onScroll={memoriserDefilement}>
-        {/* Seul intitule « Tableau de bord » de la barre : la vue nationale consolidee.
-            Les vues propres a un module s'appellent « Vue d'ensemble ». */}
+        {isMine && (
+          <Link
+            to={mineHomePath}
+            className={cn('national-sidebar__dashboard-link', !mineDashboardActive && 'is-active')}
+            onClick={() => setMobileOpen(false)}
+          >
+            <span className="national-sidebar__icon" style={{ color: '#0f8b62' }}>
+              <Home aria-hidden="true" />
+            </span>
+            <span>Accueil</span>
+          </Link>
+        )}
         <Link
           to={dashboardPath}
-          className={cn('national-sidebar__dashboard-link', isActive(dashboardPath) && 'is-active')}
+          className={cn(
+            'national-sidebar__dashboard-link',
+            isMine ? mineDashboardActive && 'is-active' : isActive(dashboardPath) && 'is-active'
+          )}
           onClick={() => setMobileOpen(false)}
         >
           <span className="national-sidebar__icon" style={{ color: '#e2a100' }}>
@@ -435,7 +509,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
 
   return (
-    <div className={cn('national-shell', isMine && 'is-mine')}>
+    <div className={cn('national-shell', isMine && 'is-mine', isComptoir && 'is-comptoir')}>
       <ProfileErrorBanner />
       <div className={cn('national-shell__desktop-sidebar', sidebarCollapsed && 'is-collapsed')}>{sidebar}</div>
       {mobileOpen && (
@@ -463,48 +537,43 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
 
           <div className="national-header__identity">
             <div>
-              {isMine && <p className="national-header__eyebrow">Mon espace sécurisé{companyCode ? ` · ${companyCode}` : ''}</p>}
-              <h1>
-                {isMine
-                  ? companyName
-                  : 'Système National de Collecte et du Suivi de la Traçabilité de l’Or'}
-              </h1>
+              {isComptoir ? (
+                <>
+                  <p className="national-header__eyebrow">Espace comptoir d’or</p>
+                  <h1 title={comptoirWorkspace?.name}>{comptoirDisplayName}</h1>
+                </>
+              ) : isMine ? (
+                <>
+                  <p className="national-header__eyebrow">Espace société minière</p>
+                  <h1 title={companyName || undefined}>{mineDisplayName}</h1>
+                </>
+              ) : (
+                <>
+                  <h1>Plateforme SONASP</h1>
+                  <p>Collecte, traçabilité et valorisation de l’or</p>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="national-header__actions">
-            <OwnerMineSwitcher />
-
-            {/* Le centre d'aide n'etait relie qu'a `Header.tsx`, composant mort
-                qu'aucun ecran n'importe : la page etait inatteignable. */}
-            <button
-              type="button"
-              className="national-header__aide"
-              onClick={() => navigate('/help')}
-              aria-label="Centre d’aide"
-              title="Centre d’aide"
-            >
-              <HelpCircle aria-hidden="true" />
-            </button>
-
+          <div className="national-header__actions" ref={headerActionsRef}>
             <div className="national-header__popover">
               <button
                 type="button"
                 className="national-header__language"
-                onClick={() => {
-                  closeMenus();
-                  setLanguageOpen((open) => !open);
-                }}
+                onClick={toggleLanguageMenu}
                 aria-expanded={languageOpen}
+                aria-haspopup="menu"
+                aria-controls="language-menu"
               >
                 <Languages aria-hidden="true" />
                 <span>{i18n.language?.startsWith('en') ? 'EN' : 'FR'}</span>
                 <ChevronDown aria-hidden="true" />
               </button>
               {languageOpen && (
-                <div className="national-header__menu national-header__language-menu">
-                  <button type="button" onClick={() => changeLanguage('fr')}>Français</button>
-                  <button type="button" onClick={() => changeLanguage('en')}>English</button>
+                <div id="language-menu" role="menu" className="national-header__menu national-header__language-menu">
+                  <button role="menuitem" type="button" onClick={() => changeLanguage('fr')}>Français</button>
+                  <button role="menuitem" type="button" onClick={() => changeLanguage('en')}>English</button>
                 </div>
               )}
             </div>
@@ -514,14 +583,10 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 type="button"
                 className="national-header__icon-button"
                 aria-label="Afficher les notifications"
-                onClick={() => {
-                  closeMenus();
-                  setNotificationsOpen((open) => {
-                    if (!open) void chargerNotifications();
-                    return !open;
-                  });
-                }}
+                onClick={toggleNotificationsMenu}
                 aria-expanded={notificationsOpen}
+                aria-haspopup="menu"
+                aria-controls="notifications-menu"
               >
                 <Bell aria-hidden="true" />
                 {resumeNotifications.non_lues > 0 && (
@@ -534,7 +599,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 )}
               </button>
               {notificationsOpen && (
-                <div className="national-header__menu national-header__notifications">
+                <div id="notifications-menu" role="menu" className="national-header__menu national-header__notifications">
                   <header>
                     <strong>Notifications</strong>
                     {resumeNotifications.non_lues > 0 && (
@@ -590,23 +655,25 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
               <button
                 type="button"
                 className="national-header__profile"
-                onClick={() => {
-                  closeMenus();
-                  setProfileOpen((open) => !open);
-                }}
+                onClick={toggleProfileMenu}
+                aria-label="Ouvrir le menu utilisateur"
                 aria-expanded={profileOpen}
+                aria-haspopup="menu"
+                aria-controls="profile-menu"
               >
                 <span className="national-header__avatar"><UserRound aria-hidden="true" /></span>
                 <span className="national-header__profile-copy">
                   <strong>{displayName}</strong>
-                  <small>{getRoleLabel(user?.role)}</small>
+                  <small>{isComptoir ? 'Comptoir d’or' : getRoleLabel(user?.role)}</small>
                 </span>
                 <ChevronDown aria-hidden="true" />
               </button>
               {profileOpen && (
-                <div className="national-header__menu national-header__profile-menu">
-                  <Link to="/profile" onClick={() => setProfileOpen(false)}><Settings aria-hidden="true" /> Mon profil</Link>
+                <div id="profile-menu" role="menu" className="national-header__menu national-header__profile-menu">
+                  <Link role="menuitem" to="/profile" onClick={() => setProfileOpen(false)}><Settings aria-hidden="true" /> Mon profil</Link>
+                  <Link role="menuitem" to="/help" onClick={() => setProfileOpen(false)}><HelpCircle aria-hidden="true" /> Documentation</Link>
                   <button
+                    role="menuitem"
                     type="button"
                     onClick={async () => {
                       await signOut();

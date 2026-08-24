@@ -36,6 +36,9 @@ describe('NationalDashboardLayout', () => {
     );
 
     expect(screen.getByRole('img', { name: 'SONASP' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Plateforme SONASP' })).toBeInTheDocument();
+    expect(screen.getByText('Collecte, traçabilité et valorisation de l’or')).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /société minière/i })).not.toBeInTheDocument();
     // La barre laterale n'affiche que le logo : la raison sociale appartient au pied de page.
     const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
     expect(within(sidebar).queryByText(/Société Nationale/i)).not.toBeInTheDocument();
@@ -190,5 +193,45 @@ describe('NationalDashboardLayout', () => {
     // d'un dépliage, donc rien qui saute.
     expect(screen.getByRole('button', { name: "Collecte de l'or" })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'Or en coffre' })).toBeInTheDocument();
+  });
+
+  it('ferme réellement le menu utilisateur et y expose la documentation', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <NationalDashboardLayout><div>Contenu</div></NationalDashboardLayout>
+      </MemoryRouter>
+    );
+
+    const profile = screen.getByRole('button', { name: 'Ouvrir le menu utilisateur' });
+    await user.click(profile);
+
+    expect(profile).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('menuitem', { name: 'Documentation' })).toHaveAttribute('href', '/help');
+
+    await user.click(profile);
+    expect(profile).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('menuitem', { name: 'Documentation' })).not.toBeInTheDocument();
+
+    await user.click(profile);
+    await user.keyboard('{Escape}');
+    expect(profile).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('n’ouvre jamais deux menus d’en-tête simultanément', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <NationalDashboardLayout><div>Contenu</div></NationalDashboardLayout>
+      </MemoryRouter>
+    );
+
+    const language = screen.getByRole('button', { name: /FR/i });
+    await user.click(language);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Ouvrir le menu utilisateur' }));
+    expect(language).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
   });
 });

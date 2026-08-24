@@ -52,3 +52,24 @@
 }
 
 .paiements__muted { color: var(--sn-faint); font-size: 11px; }
+
+.paiements__workflow-action {
+  display: inline-flex;
+  min-width: 280px;
+  align-items: center;
+  gap: 6px;
+}
+
+.paiements__workflow-action input {
+  min-width: 170px;
+  height: var(--sn-control-h-sm);
+  padding: 0 9px;
+  border: 1px solid var(--sn-field-line);
+  border-radius: 7px;
+  color: var(--sn-ink);
+  background: var(--sn-surface);
+  font: inherit;
+  font-size: 11px;
+}
+
+.paiements__workflow-action input:disabled { background: #f3f6f5; cursor: not-allowed; }

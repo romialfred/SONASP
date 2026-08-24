@@ -342,8 +342,8 @@
   z-index: 30;
   display: flex;
   align-items: center;
-  height: 83px;
-  flex: 0 0 83px;
+  height: 76px;
+  flex: 0 0 76px;
   padding: 0 25px 0 29px;
   border-bottom: 1px solid #dfe6ed;
   background: rgb(255 255 255 / 96%);
@@ -395,66 +395,6 @@
 
 .national-header__popover {
   position: relative;
-}
-
-.national-header__mine-switcher {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-width: 220px;
-  height: 42px;
-  padding: 0 34px 0 12px;
-  gap: 9px;
-  border: 1px solid #cfdcd6;
-  color: #123c30;
-  background: #f8fbf9;
-  border-radius: 10px;
-  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
-}
-
-.national-header__mine-switcher:hover {
-  border-color: #8fb4a6;
-  background: #fff;
-}
-
-.national-header__mine-switcher:focus-within {
-  border-color: #0f7a56;
-  box-shadow: 0 0 0 3px rgb(15 122 86 / 12%);
-}
-
-.national-header__mine-switcher > svg:first-child {
-  width: 17px;
-  height: 17px;
-  flex: 0 0 auto;
-  color: #0f7a56;
-}
-
-.national-header__mine-switcher > svg:last-child {
-  position: absolute;
-  right: 11px;
-  width: 15px;
-  height: 15px;
-  color: #60738c;
-  pointer-events: none;
-}
-
-.national-header__mine-switcher select {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  color: inherit;
-  background: transparent;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 650;
-  appearance: none;
-  cursor: pointer;
-}
-
-.national-header__mine-switcher select:disabled {
-  color: #7d8b98;
-  cursor: wait;
 }
 
 .national-header button {
@@ -601,6 +541,7 @@
   background: #fff;
   border-radius: 9px;
   box-shadow: 0 12px 32px rgb(16 36 62 / 14%);
+  z-index: 60;
 }
 
 .national-header__menu button,
@@ -623,6 +564,12 @@
 .national-header__menu button:hover,
 .national-header__menu a:hover {
   background: #f3f7f5;
+}
+
+.national-header__menu button:focus-visible,
+.national-header__menu a:focus-visible {
+  outline: 2px solid #0f8b62;
+  outline-offset: -1px;
 }
 
 .national-header__menu svg {
@@ -736,28 +683,6 @@
     min-width: 150px;
   }
 
-  .national-header__mine-switcher {
-    min-width: 184px;
-  }
-}
-
-@media (max-width: 1180px) {
-  .national-header__mine-switcher {
-    width: 44px;
-    min-width: 44px;
-    padding: 0;
-    justify-content: center;
-  }
-
-  .national-header__mine-switcher select {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-  }
-
-  .national-header__mine-switcher > svg:last-child {
-    display: none;
-  }
 }
 
 @media (max-width: 1023px) {
@@ -1021,6 +946,95 @@
   white-space: nowrap;
 }
 
+/* Les formulaires métier conservent leur logique et leurs validations, mais
+   partagent une densité plus calme dans l'espace Mine. Cette couche évite de
+   réécrire chaque écran avec un second formulaire divergent. */
+.national-shell.is-mine .site-form {
+  padding-top: 14px;
+}
+
+.national-shell.is-mine .site-form__intro {
+  gap: 11px;
+}
+
+.national-shell.is-mine .site-form__intro-icon {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+  border-radius: 11px;
+}
+
+.national-shell.is-mine .site-form__intro h2 {
+  font-size: 19px;
+}
+
+.national-shell.is-mine .site-form__subtitle {
+  max-width: 760px;
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.national-shell.is-mine .site-form__layout {
+  margin-top: 12px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 14px;
+}
+
+.national-shell.is-mine .site-form__section-head {
+  min-height: 54px;
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+.national-shell.is-mine .site-form__section-icon {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
+  border-radius: 9px;
+}
+
+.national-shell.is-mine .site-form__section-head h3 {
+  font-size: 13px;
+}
+
+.national-shell.is-mine .site-form__section-head p {
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.national-shell.is-mine .site-form__section-body {
+  padding: 15px;
+}
+
+.national-shell.is-mine .site-form input,
+.national-shell.is-mine .site-form select,
+.national-shell.is-mine .site-form textarea,
+.national-shell.is-mine .sn-page form input,
+.national-shell.is-mine .sn-page form select,
+.national-shell.is-mine .sn-page form textarea {
+  border-color: #d5dfda;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.national-shell.is-mine .site-form input:focus,
+.national-shell.is-mine .site-form select:focus,
+.national-shell.is-mine .site-form textarea:focus,
+.national-shell.is-mine .sn-page form input:focus,
+.national-shell.is-mine .sn-page form select:focus,
+.national-shell.is-mine .sn-page form textarea:focus {
+  border-color: #4b9b7e;
+  outline: 3px solid rgb(15 139 98 / 12%);
+  outline-offset: 0;
+}
+
 .national-shell.is-mine {
   background: #f4f5f1;
 }
@@ -1157,6 +1171,132 @@
   background: #f8f8f4;
 }
 
+/* Identité Comptoir : aubergine profonde, cuivre et ivoire. Elle distingue
+   immédiatement l'espace sans concurrencer le vert institutionnel SONASP. */
+.national-shell.is-comptoir {
+  background: #f7f3ee;
+}
+
+.national-shell.is-comptoir .national-sidebar {
+  border-right-color: #5b3b53;
+  color: #fffaf4;
+  background: linear-gradient(180deg, #332337 0%, #261b2d 100%);
+  box-shadow: 10px 0 30px rgb(46 25 43 / 18%);
+}
+
+.national-shell.is-comptoir .national-sidebar__brand {
+  height: 84px;
+  flex-basis: 84px;
+  flex-direction: column;
+  padding: 8px 14px 7px;
+  gap: 2px;
+  border-bottom-color: #e5d8ce;
+  background: #fffaf4;
+}
+
+.national-shell.is-comptoir .national-sidebar__brand img {
+  height: 53px;
+  max-width: 164px;
+}
+
+.national-shell.is-comptoir .national-sidebar__mine-name {
+  color: #5b2e4c;
+}
+
+.national-shell.is-comptoir .national-sidebar.is-collapsed .national-sidebar__brand {
+  height: 64px;
+  flex-basis: 64px;
+  padding: 8px 6px;
+}
+
+.national-shell.is-comptoir .national-sidebar__section-title {
+  color: rgb(255 235 218 / 70%);
+}
+
+.national-shell.is-comptoir .national-sidebar__collapse {
+  border: 1px solid rgb(255 235 218 / 16%);
+  color: #f5d9c0;
+  background: rgb(255 255 255 / 7%);
+}
+
+.national-shell.is-comptoir .national-sidebar__dashboard-link,
+.national-shell.is-comptoir .national-sidebar__group-trigger {
+  color: rgb(255 250 244 / 88%);
+}
+
+.national-shell.is-comptoir .national-sidebar__dashboard-link:hover,
+.national-shell.is-comptoir .national-sidebar__group-trigger:hover,
+.national-shell.is-comptoir .national-sidebar__subnav a:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+}
+
+.national-shell.is-comptoir .national-sidebar__dashboard-link.is-active,
+.national-shell.is-comptoir .national-sidebar__group-trigger.is-current {
+  color: #fff;
+  background: #59394f;
+  box-shadow: inset 0 0 0 1px rgb(220 154 100 / 18%);
+}
+
+.national-shell.is-comptoir .national-sidebar__dashboard-link.is-active::before {
+  background: #d89358;
+}
+
+.national-shell.is-comptoir .national-sidebar__section-heading {
+  color: #edb985;
+}
+
+.national-shell.is-comptoir .national-sidebar__section-heading::before {
+  background: #d89358;
+}
+
+.national-shell.is-comptoir .national-sidebar__section-heading::after,
+.national-shell.is-comptoir .national-sidebar__subnav::before {
+  background: rgb(245 217 192 / 24%);
+}
+
+.national-shell.is-comptoir .national-sidebar__subnav a {
+  color: rgb(255 250 244 / 66%);
+}
+
+.national-shell.is-comptoir .national-sidebar__subnav a.is-current {
+  color: #fff;
+  background: rgb(216 147 88 / 16%);
+}
+
+.national-shell.is-comptoir .national-sidebar__puce {
+  background: #bf9ead;
+}
+
+.national-shell.is-comptoir .national-sidebar__subnav a.is-current .national-sidebar__puce {
+  background: #f0b779;
+}
+
+.national-shell.is-comptoir .national-header {
+  height: 72px;
+  flex-basis: 72px;
+  border-bottom-color: #e8ddd3;
+  background: rgb(255 252 247 / 97%);
+}
+
+.national-shell.is-comptoir .national-header__eyebrow {
+  color: #9a5b2f;
+}
+
+.national-shell.is-comptoir .national-header__identity h1 {
+  color: #4c2941;
+  font-size: 18px;
+}
+
+.national-shell.is-comptoir .national-shell__content {
+  background: #f8f5f1;
+}
+
+.national-shell.is-comptoir .national-shell__footer {
+  border-top-color: #e7ddd4;
+  background: #fffaf4;
+}
+
 @media (max-width: 1023px) {
   .national-shell.is-mine .national-shell__mobile-sidebar .national-sidebar__brand {
     height: 86px;
@@ -1177,5 +1317,11 @@
   .national-shell.is-mine .national-header__identity h1 {
     max-width: 40vw;
     font-size: 14px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .national-shell.is-mine .site-form__layout {
+    grid-template-columns: 1fr;
   }
 }

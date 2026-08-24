@@ -13,6 +13,8 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import {
   Badge,
   DataTable,
@@ -85,6 +87,8 @@ export function filterVentes(
 
 export default function PaiementsVentesDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isComptoir = isComptoirScopedUser(user);
   const [ventes, setVentes] = useState<VenteEnAttentePaiement[]>([]);
   const [stats, setStats] = useState({
     total_ventes_en_attente: 0,
@@ -142,7 +146,11 @@ export default function PaiementsVentesDashboard() {
    */
   const handleProcederPaiement = async (vente: VenteEnAttentePaiement) => {
     if (vente.facture_id) {
-      navigate(`/artisan-minier/paiements/${vente.vente_id}/nouveau`);
+      navigate(
+        isComptoir && vente.certification_dgi_status !== 'certified'
+          ? `/artisan-minier/ventes-or/${vente.vente_id}/facture`
+          : `/artisan-minier/paiements/${vente.vente_id}/nouveau`,
+      );
       return;
     }
 
@@ -166,7 +174,11 @@ export default function PaiementsVentesDashboard() {
         statut: 'emise',
       });
 
-      navigate(`/artisan-minier/paiements/${vente.vente_id}/nouveau`);
+      navigate(
+        isComptoir
+          ? `/artisan-minier/ventes-or/${vente.vente_id}/facture`
+          : `/artisan-minier/paiements/${vente.vente_id}/nouveau`,
+      );
     } catch {
       showError("L'émission de la facture définitive a échoué. Le paiement n'a pas été ouvert.");
     } finally {
@@ -247,7 +259,9 @@ export default function PaiementsVentesDashboard() {
             ) : (
               <FileText aria-hidden="true" />
             )}
-            {vente.facture_id ? 'Payer' : 'Émettre et payer'}
+            {vente.facture_id
+              ? isComptoir && vente.certification_dgi_status !== 'certified' ? 'Certifier DGI' : 'Payer'
+              : isComptoir ? 'Émettre la facture' : 'Émettre et payer'}
           </button>
         </span>
       ),
@@ -261,11 +275,13 @@ export default function PaiementsVentesDashboard() {
 
         <PageHeader
           icon={Banknote}
-          title="Paiements des ventes d’or"
-          subtitle="Dossiers en attente de facturation ou de règlement auprès des artisans miniers."
+          title={isComptoir ? 'Factures DGI et paiements' : 'Paiements des ventes d’or'}
+          subtitle={isComptoir
+            ? 'Certification fiscale, règlement des orpailleurs et suivi des taxes.'
+            : 'Dossiers en attente de facturation ou de règlement auprès des artisans miniers.'}
           breadcrumb={[
-            { label: 'Artisans miniers', to: '/artisan-minier' },
-            { label: 'Paiements des ventes' },
+            { label: isComptoir ? 'Comptoir' : 'Artisans miniers', to: isComptoir ? '/portail-comptoir' : '/artisan-minier' },
+            { label: isComptoir ? 'DGI et paiements' : 'Paiements des ventes' },
           ]}
           actions={
             <>
@@ -287,7 +303,7 @@ export default function PaiementsVentesDashboard() {
           <StatGrid
             ariaLabel="Indicateurs des paiements"
             items={[
-              { label: 'Ventes en attente', value: integer.format(stats.total_ventes_en_attente), icon: Hourglass, tone: 'gold' },
+              { label: isComptoir ? 'Achats à traiter' : 'Ventes en attente', value: integer.format(stats.total_ventes_en_attente), icon: Hourglass, tone: 'gold' },
               { label: 'Montant à payer', value: formatFcfa(stats.montant_total_a_payer), icon: Banknote, tone: 'blue' },
               { label: 'Paiements en cours', value: integer.format(stats.paiements_en_cours), icon: Clock3, tone: 'violet' },
               { label: 'Paiements finalisés', value: integer.format(stats.paiements_completes), icon: BadgeCheck, tone: 'green' },

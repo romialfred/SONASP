@@ -17,6 +17,8 @@ import {
   X,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import {
   Badge,
   DataTable,
@@ -124,6 +126,8 @@ export function sortSales(sales: ArtisanGoldSale[], key: SortKey): ArtisanGoldSa
 
 export default function VentesOr() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isComptoir = isComptoirScopedUser(user);
   const [sales, setSales] = useState<ArtisanGoldSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -281,11 +285,13 @@ export default function VentesOr() {
 
         <PageHeader
           icon={Coins}
-          title="Ventes d’or des artisans"
-          subtitle="Registre des collectes déclarées par les artisans miniers, taxes incluses."
+          title={isComptoir ? "Achats d’or" : "Ventes d’or des artisans"}
+          subtitle={isComptoir
+            ? 'Achats auprès de vos orpailleurs rattachés, avec taxes calculées.'
+            : 'Registre des collectes déclarées par les artisans miniers, taxes incluses.'}
           breadcrumb={[
-            { label: 'Artisans miniers', to: '/artisan-minier' },
-            { label: "Ventes d'or" },
+            { label: isComptoir ? 'Comptoir' : 'Artisans miniers', to: isComptoir ? '/portail-comptoir' : '/artisan-minier' },
+            { label: isComptoir ? "Achats d'or" : "Ventes d'or" },
           ]}
           actions={
             <>
@@ -305,7 +311,7 @@ export default function VentesOr() {
                 className="sn-btn sn-btn--primary"
                 onClick={() => navigate('/artisan-minier/ventes-or/nouvelle')}
               >
-                <Plus aria-hidden="true" /> Nouvelle vente
+                <Plus aria-hidden="true" /> {isComptoir ? 'Nouvel achat' : 'Nouvelle vente'}
               </button>
             </>
           }
@@ -328,7 +334,7 @@ export default function VentesOr() {
               <StatGrid
                 ariaLabel="Indicateurs des ventes d’or"
                 items={[
-                  { label: 'Ventes filtrées', value: integer.format(stats.total), hint: `${integer.format(stats.enAttente)} en attente`, icon: Coins, tone: 'gold' },
+                  { label: isComptoir ? 'Achats filtrés' : 'Ventes filtrées', value: integer.format(stats.total), hint: `${integer.format(stats.enAttente)} en attente`, icon: Coins, tone: 'gold' },
                   { label: 'Quantité collectée', value: `${decimal.format(stats.quantite)} g`, icon: Scale, tone: 'green' },
                   { label: 'Montant déclaré', value: formatFcfa(stats.montant), icon: Wallet, tone: 'blue' },
                   { label: 'Taxes et redevances', value: formatFcfa(stats.taxes), hint: 'TVA + taxe de développement', icon: TrendingUp, tone: 'violet' },
@@ -446,7 +452,7 @@ export default function VentesOr() {
               <div className="sn-card__head">
                 <div>
                   <h3>
-                    Registre des ventes <span className="sn-count">{integer.format(results.length)}</span>
+                    Registre des {isComptoir ? 'achats' : 'ventes'} <span className="sn-count">{integer.format(results.length)}</span>
                   </h3>
                   <p className="sn-card__hint">Cliquez sur une ligne pour ouvrir le détail de la vente.</p>
                 </div>
@@ -454,15 +460,15 @@ export default function VentesOr() {
 
               {!loading && sales.length === 0 ? (
                 <EmptyState
-                  title="Aucune vente enregistrée"
-                  description="Enregistrez la première collecte déclarée par un artisan minier."
+                  title={isComptoir ? 'Aucun achat enregistré' : 'Aucune vente enregistrée'}
+                  description="Enregistrez la première collecte déclarée par un orpailleur rattaché."
                   action={
                     <button
                       type="button"
                       className="sn-btn sn-btn--primary"
                       onClick={() => navigate('/artisan-minier/ventes-or/nouvelle')}
                     >
-                      <Plus aria-hidden="true" /> Nouvelle vente
+                      <Plus aria-hidden="true" /> {isComptoir ? 'Nouvel achat' : 'Nouvelle vente'}
                     </button>
                   }
                 />

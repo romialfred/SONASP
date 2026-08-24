@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { UserProfile } from '@/types/auth';
+import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isMineScopedUser } from '@/lib/mineAccess';
 
 export type NavigationItem = {
@@ -282,14 +283,105 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         label: 'Performance nationale',
         path: '/analytics',
         icon: TrendingUp,
-        color: '#8b5cf6',
+        color: '#087956',
+      },
+    ],
+  },
+];
+
+/**
+ * Le comptoir réutilise les écrans éprouvés du marché artisanal, mais son menu
+ * exprime son vrai cycle de travail. Aucune route d'export ou de négoce
+ * international n'est exposée dans ce périmètre.
+ */
+export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
+  {
+    id: 'comptoir-collecte',
+    title: 'Collecte',
+    groups: [
+      {
+        id: 'comptoir-achats',
+        label: "Achats d’or",
+        path: '/artisan-minier/ventes-or',
+        icon: CircleDollarSign,
+        color: '#c47a3b',
+        children: [
+          { label: 'Registre des achats', path: '/artisan-minier/ventes-or', icon: FileText, color: '#c47a3b' },
+          { label: 'Nouvel achat', path: '/artisan-minier/ventes-or/nouvelle', icon: CircleDollarSign, color: '#7b3f61' },
+        ],
+      },
+      {
+        id: 'comptoir-orpailleurs',
+        label: 'Orpailleurs rattachés',
+        path: '/artisan-minier/liste',
+        icon: Users,
+        color: '#2f7d6d',
+      },
+    ],
+  },
+  {
+    id: 'comptoir-conformite',
+    title: 'Conformité et finances',
+    groups: [
+      {
+        id: 'comptoir-factures',
+        label: 'DGI et paiements',
+        path: '/artisan-minier/paiements',
+        icon: FileSignature,
+        color: '#7b3f61',
+        children: [
+          { label: 'Factures à traiter', path: '/artisan-minier/paiements', icon: FileSignature, color: '#7b3f61' },
+          { label: 'Historique des paiements', path: '/artisan-minier/paiements/historique', icon: CircleDollarSign, color: '#2f7d6d' },
+          { label: 'Taxes collectées', path: '/artisan-minier/rapports/taxes', icon: BarChart3, color: '#c47a3b' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'comptoir-stock',
+    title: 'Stock et SONASP',
+    groups: [
+      {
+        id: 'comptoir-stock-or',
+        label: "Stock d’or",
+        path: '/portail-comptoir/stock',
+        icon: Layers,
+        color: '#2f7d6d',
+      },
+      {
+        id: 'comptoir-cessions',
+        label: 'Cessions à la SONASP',
+        path: '/portail-comptoir/ventes-sonasp',
+        icon: Building2,
+        color: '#c47a3b',
+      },
+    ],
+  },
+  {
+    id: 'comptoir-analyses',
+    title: 'Pilotage',
+    groups: [
+      {
+        id: 'comptoir-rapports',
+        label: 'Rapports et analyses',
+        path: '/artisan-minier/rapports',
+        icon: BarChart3,
+        color: '#7b3f61',
+        children: [
+          { label: "Vue d’ensemble", path: '/artisan-minier/rapports', icon: Grid2X2, color: '#7b3f61' },
+          { label: 'Volumes collectés', path: '/artisan-minier/rapports/quantites', icon: BarChart3, color: '#2f7d6d' },
+          { label: "Chiffre d’affaires", path: '/artisan-minier/rapports/chiffre-affaires', icon: TrendingUp, color: '#c47a3b' },
+        ],
       },
     ],
   },
 ];
 
 /** Tous les groupes, toutes sections confondues. */
-export const ALL_GROUPS: NavigationGroup[] = NAVIGATION_SECTIONS.flatMap((section) => section.groups);
+export const ALL_GROUPS: NavigationGroup[] = [
+  ...NAVIGATION_SECTIONS,
+  ...COMPTOIR_NAVIGATION_SECTIONS,
+].flatMap((section) => section.groups);
 
 const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
   production: new Set([
@@ -324,6 +416,7 @@ const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
 
 /** Navigation unique, projetée selon le périmètre autoritatif du compte. */
 export function getNavigationSectionsForUser(user: UserProfile | null): NavigationSection[] {
+  if (isComptoirScopedUser(user)) return COMPTOIR_NAVIGATION_SECTIONS;
   if (!isMineScopedUser(user)) return NAVIGATION_SECTIONS;
 
   const industrial = NAVIGATION_SECTIONS.find((section) => section.id === 'industrielles');

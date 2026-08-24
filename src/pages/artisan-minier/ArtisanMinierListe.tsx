@@ -29,6 +29,8 @@ import {
   X,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { PageHeader } from '@/components/ui/sn';
 import { ArtisanMinierForm } from '@/components/artisan/ArtisanMinierForm';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
@@ -151,6 +153,8 @@ function timeUntilExpiration(expiration?: string, created?: string) {
 
 export default function ArtisanMinierListe() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isComptoir = isComptoirScopedUser(user);
   const [artisans, setArtisans] = useState<ArtisanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -277,7 +281,7 @@ export default function ArtisanMinierListe() {
     setApplied((current) => ({ ...current, type }));
   };
 
-  if (showForm) {
+  if (showForm && !isComptoir) {
     return (
       <NationalDashboardLayout>
         <div className="sn-page artisan-list">
@@ -313,21 +317,25 @@ export default function ArtisanMinierListe() {
     <NationalDashboardLayout>
       <div className="artisan-list">
         <nav className="artisan-list__breadcrumb" aria-label="Fil d’Ariane">
-          <Link to="/artisan-minier">Artisans miniers</Link>
+          <Link to={isComptoir ? '/portail-comptoir' : '/artisan-minier'}>
+            {isComptoir ? 'Comptoir' : 'Artisans miniers'}
+          </Link>
           <span aria-hidden="true">/</span>
           <strong aria-current="page">Liste</strong>
         </nav>
 
         <header className="artisan-list__intro">
           <div>
-            <h2>Artisans miniers</h2>
-            <p>{integer.format(artisans.length)} artisans enregistrés</p>
+            <h2>{isComptoir ? 'Mes orpailleurs' : 'Artisans miniers'}</h2>
+            <p>
+              {integer.format(artisans.length)} {isComptoir ? 'orpailleurs rattachés' : 'artisans enregistrés'}
+            </p>
           </div>
-          <div className="artisan-list__actions">
+          {!isComptoir && <div className="artisan-list__actions">
             <button type="button" className="artisan-list__button is-primary" onClick={() => setShowForm(true)}>
               <Plus aria-hidden="true" /> Nouvel artisan
             </button>
-          </div>
+          </div>}
         </header>
 
         <section className="artisan-filters" aria-label="Filtres">
@@ -548,7 +556,7 @@ export default function ArtisanMinierListe() {
                     <button type="button" onClick={() => navigate(`/artisan-minier/${artisan.id}`)}>
                       <FileText aria-hidden="true" /> Voir le dossier
                     </button>
-                    <div className="artisan-card__menu">
+                    {!isComptoir && <div className="artisan-card__menu">
                       <button
                         type="button"
                         aria-label={`Actions pour ${displayName(artisan)}`}
@@ -564,7 +572,7 @@ export default function ArtisanMinierListe() {
                           <button type="button" onClick={() => navigate('/artisan-minier/cartes/suivi')}>Suivi de la carte</button>
                         </div>
                       )}
-                    </div>
+                    </div>}
                   </footer>
                 </article>
               );

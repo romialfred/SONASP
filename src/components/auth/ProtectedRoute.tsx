@@ -9,6 +9,7 @@ import {
   isReadOnlyManager,
 } from '@/lib/permissions';
 import { PlatformLoading } from '@/components/common/PlatformLoading';
+import { isComptoirRouteAllowed, isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isMineRouteAllowed, isMineScopedUser } from '@/lib/mineAccess';
 
 interface ProtectedRouteProps {
@@ -95,6 +96,13 @@ export function ProtectedRoute({
         </div>
       </div>
     );
+  }
+
+  // Le comptoir partage certains écrans artisanaux avec la SONASP, mais pas son
+  // périmètre. Cette allowlist bloque les routes nationales et internationales,
+  // y compris lorsqu'elles sont saisies directement dans la barre d'adresse.
+  if (isComptoirScopedUser(user) && !isComptoirRouteAllowed(location.pathname)) {
+    return <Navigate to="/portail-comptoir" replace />;
   }
 
   // Une mine utilise désormais les vrais modules industriels. L'allowlist

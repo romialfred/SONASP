@@ -12,6 +12,8 @@ export interface UserProfile {
   mining_company_id: string | null;
   site_ids: string[];
   is_active: boolean;
+  /** Capacités effectives calculées côté serveur pour cette session et son AAL. */
+  capabilities?: string[];
   /** Habilité à approuver les ventes (or artisanal & international) avant facturation/paiement. */
   is_sales_approver: boolean;
   two_factor_enabled: boolean;

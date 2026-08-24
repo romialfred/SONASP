@@ -6,8 +6,10 @@ import {
   requireStorageObjectPath,
 } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
+import { uploadSensitiveFile } from './sensitiveUploadGateway';
 
 const SHIPPING_DOCUMENTS_BUCKET = PRIVATE_STORAGE_BUCKETS.shippingDocuments;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export interface ShippingPreparation {
   id: string;
@@ -99,6 +101,32 @@ export interface ShippingDocument {
   mime_type: string | null;
   uploaded_by: string | null;
   created_at: string;
+}
+
+function isUploadedShippingDocument(
+  value: unknown,
+  expected: { shippingId: string; title: string; fileSize: number; mimeType: string; extension: string },
+): value is ShippingDocument {
+  if (!value || typeof value !== 'object') return false;
+  const document = value as Partial<ShippingDocument>;
+  const path = typeof document.document_url === 'string' ? document.document_url.split('/') : [];
+  return typeof document.id === 'string' && UUID.test(document.id)
+    && document.shipping_preparation_id === expected.shippingId
+    && document.title === expected.title
+    && document.file_size === expected.fileSize
+    && document.mime_type === expected.mimeType
+    && typeof document.file_name === 'string'
+    && document.file_name.toLowerCase().endsWith(`.${expected.extension}`)
+    && !/[\\/\u0000-\u001f\u007f]/u.test(document.file_name)
+    && path.length === 5
+    && path[0] === expected.shippingId
+    && path[1] === 'format-validated'
+    && /^\d{4}$/u.test(path[2] ?? '')
+    && /^(?:0[1-9]|1[0-2])$/u.test(path[3] ?? '')
+    && UUID.test((path[4] ?? '').split('.')[0] ?? '')
+    && (path[4] ?? '').toLowerCase().endsWith(`.${expected.extension}`)
+    && typeof document.uploaded_by === 'string' && UUID.test(document.uploaded_by)
+    && typeof document.created_at === 'string' && Number.isFinite(Date.parse(document.created_at));
 }
 
 class ShippingPreparationService {
@@ -345,40 +373,24 @@ class ShippingPreparationService {
   }
 
   async uploadDocument(preparationId: string, file: File, title: string): Promise<ShippingDocument> {
-    const { data: { user } } = await supabase.auth.getUser();
-    const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.shippingDocument);
-
-    const fileName = `${preparationId}/${crypto.randomUUID()}.${validatedFile.extension}`;
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(SHIPPING_DOCUMENTS_BUCKET)
-      .upload(fileName, file, {
-        contentType: validatedFile.mimeType,
-        upsert: false,
-      });
-
-    if (uploadError) throw uploadError;
-
-    const { data, error } = await supabase
-      .from('shipping_documents')
-      .insert({
-        shipping_preparation_id: preparationId,
-        title,
-        // Colonne legacy : elle contient désormais le chemin objet privé.
-        document_url: uploadData.path,
-        file_name: file.name,
-        file_size: file.size,
-        mime_type: validatedFile.mimeType,
-        uploaded_by: user?.id,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      await supabase.storage.from(SHIPPING_DOCUMENTS_BUCKET).remove([uploadData.path]);
-      throw error;
+    if (!UUID.test(preparationId) || title.trim() !== title || title.length === 0 || title.length > 200) {
+      throw new Error('Les informations du document d’expédition sont invalides.');
     }
-    return data;
+    const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.shippingDocument);
+    const resource = await uploadSensitiveFile(
+      'shipping-document',
+      file,
+      { shippingPreparationId: preparationId, title, fileName: file.name },
+      { mimeType: validatedFile.mimeType },
+    );
+    if (!isUploadedShippingDocument(resource, {
+      shippingId: preparationId,
+      title,
+      fileSize: file.size,
+      mimeType: validatedFile.mimeType,
+      extension: validatedFile.extension,
+    })) throw new Error('La confirmation du dépôt est invalide.');
+    return resource;
   }
 
   async getDocumentUrl(documentReference: string, expiresInSeconds = 300): Promise<string> {

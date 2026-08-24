@@ -1,0 +1,126 @@
+{
+  "generatedAt": "2026-08-24",
+  "scope": "src services/pages containing Supabase Storage uploads or public URL generation",
+  "remediated": [
+    {
+      "file": "src/services/shippingPreparationService.ts",
+      "bucket": "shipping-documents",
+      "callers": ["src/components/shipping/DocumentUploadSection.tsx", "src/pages/shipping/ShippingPreparationNew.tsx"],
+      "profile": "shipping-document",
+      "status": "gateway-enforced-private-signed",
+      "directClientUpload": false,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/services/productionDocumentService.ts",
+      "bucket": "production-documents",
+      "callers": ["src/components/production/DailyProductionFormEnhanced.tsx", "src/pages/production/ProductionDetails.tsx"],
+      "profile": "production-document",
+      "status": "gateway-client-migrated-private-signed-storage-policies-still-global",
+      "remainingRisk": "P1: historical storage.objects SELECT/INSERT/UPDATE/DELETE policies remain broad for authenticated users, so the gateway can still be bypassed through the Storage API; requires DB-owned policy replacement before release",
+      "directClientUpload": false,
+      "getPublicUrl": false
+    }
+  ],
+  "residual": [
+    {
+      "file": "src/services/freightCustomsService.ts",
+      "bucket": "freight-customs-documents",
+      "callers": ["src/components/freight/AddDocumentModal.tsx", "src/components/freight/GenerateInvoiceModal.tsx"],
+      "priority": "P1",
+      "status": "db-parent-rpc-now-available-but-private-bucket-and-storage-policy-not-provisioned",
+      "directClientUpload": true,
+      "getPublicUrl": true
+    },
+    {
+      "file": "src/services/freightDocumentService.ts",
+      "bucket": "freight-documents",
+      "callers": ["src/pages/freight/FreightShipmentDetails.tsx"],
+      "priority": "P2",
+      "status": "generated-pdf-but-public-url-and-private-bucket-not-provisioned",
+      "directClientUpload": true,
+      "getPublicUrl": true
+    },
+    {
+      "file": "src/services/paymentService.ts",
+      "bucket": "documents",
+      "callers": [],
+      "priority": "P1",
+      "status": "exported-proof-upload-no-active-caller-found-capability-contract-ambiguous",
+      "directClientUpload": true,
+      "getPublicUrl": true
+    },
+    {
+      "file": "src/services/artisanMinierService.ts",
+      "bucket": "artisan-documents",
+      "callers": ["src/components/artisan/ArtisanMinierForm.tsx"],
+      "priority": "P1",
+      "status": "public-url-schema-and-all-image-consumers-require-atomic-signed-url-migration",
+      "directClientUpload": true,
+      "getPublicUrl": true
+    },
+    {
+      "file": "src/services/artisanInfractionsService.ts",
+      "bucket": "snp-infraction-documents",
+      "callers": ["src/pages/artisan-minier/InfractionForm.tsx"],
+      "priority": "P1",
+      "status": "no-server-validation-private-bucket-or-final-parent-storage-policy",
+      "directClientUpload": true,
+      "getPublicUrl": true
+    },
+    {
+      "file": "src/services/minePortalService.ts",
+      "bucket": "mining-company-documents",
+      "callers": [],
+      "priority": "P1",
+      "status": "private-and-rpc-parent-bound-but-bypasses-server-magic-byte-gateway",
+      "directClientUpload": true,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/pages/production/ExportLicenseForm.tsx",
+      "bucket": "export-license-documents",
+      "callers": ["route:/production/licenses/new", "route:/production/licenses/edit/:id"],
+      "priority": "P1",
+      "status": "page-local-public-upload-private-bucket-and-parent-contract-not-provisioned",
+      "directClientUpload": true,
+      "getPublicUrl": true
+    },
+    {
+      "file": "src/services/piecesContractuellesService.ts",
+      "bucket": "contrats-documents",
+      "callers": [],
+      "priority": "P2",
+      "status": "client-validated-and-signed-read-but-upload-still-direct",
+      "directClientUpload": true,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/services/carteProfessionnelleGeneratorService.ts",
+      "bucket": "cartes-professionnelles",
+      "callers": [],
+      "priority": "P2",
+      "status": "generated-pdf-png-public-identification-assets",
+      "directClientUpload": true,
+      "getPublicUrl": true
+    },
+    {
+      "file": "src/services/saleInvoiceService.ts",
+      "bucket": "sale-documents",
+      "callers": [],
+      "priority": "P2",
+      "status": "generated-pdf-public-url-excluded-from-lot-sales-files",
+      "directClientUpload": true,
+      "getPublicUrl": true
+    },
+    {
+      "file": "src/services/sitePhotoService.ts",
+      "bucket": "artisanal-sites",
+      "callers": [],
+      "priority": "P3",
+      "status": "browser-reencoded-jpeg-private-signed-read-but-upload-still-direct",
+      "directClientUpload": true,
+      "getPublicUrl": false
+    }
+  ]
+}

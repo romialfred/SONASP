@@ -24,4 +24,16 @@ describe('contrat d’intégration sensitive-upload', () => {
     expect(source).toContain("remove([chemin])");
     expect(source).not.toContain('getPublicUrl');
   });
+
+  it('lie Shipping et Production à leur parent, tenant, AAL2 et capability', () => {
+    expect(source).toContain("const PROFILE_DOCUMENT_EXPEDITION = 'shipping-document'");
+    expect(source).toContain("const PROFILE_DOCUMENT_PRODUCTION = 'production-document'");
+    expect(source).toContain("clientActeur.rpc('snp_sec_can_prepare_shipping'");
+    expect(source).toContain("clientActeur.rpc('snp_peut_consulter_production'");
+    expect(source).toContain("p_capability_code: 'mine.operate'");
+    expect(source).toContain("p_capability_code: 'sonasp.prepare'");
+    expect(source).toContain("niveauAssurance(token) === 'aal2'");
+    expect(source).toContain("bucket: BUCKET_DOCUMENT_EXPEDITION");
+    expect(source).toContain("bucket: BUCKET_DOCUMENT_PRODUCTION");
+  });
 });

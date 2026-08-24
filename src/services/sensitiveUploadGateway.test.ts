@@ -99,6 +99,22 @@ describe('sensitiveUploadGateway', () => {
     );
   });
 
+  it.each([
+    ['shipping-document', { shippingPreparationId: '9b3fcaaa-9367-4c91-a82d-788f043f33f1', title: 'Packing', fileName: 'doc.pdf' }],
+    ['production-document', { productionId: '9b3fcaaa-9367-4c91-a82d-788f043f33f1', documentName: 'Rapport', fileName: 'doc.pdf' }],
+  ] as const)('route le profil fermé %s sans paramètre de bucket', async (profile, metadata) => {
+    const file = new File(['%PDF-1.7\n%%EOF'], 'doc.pdf', { type: 'application/pdf' });
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({
+      success: true, validationStatus: 'format_validated', resource: { id: 'document-1' },
+    }), { status: 201, headers: { 'Content-Type': 'application/json' } }));
+
+    await uploadSensitiveFile(profile, file, metadata, { mimeType: 'application/pdf' });
+
+    const [url, options] = mocks.fetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain(`profile=${profile}`);
+    expect(decodeURIComponent(new Headers(options.headers).get('X-Upload-Metadata') ?? '')).not.toContain('bucket');
+  });
+
   it('ne propage pas les détails techniques renvoyés par le serveur', async () => {
     const file = new File(['x'], 'preuve.pdf', { type: 'application/pdf' });
     mocks.fetch.mockResolvedValue(new Response(JSON.stringify({

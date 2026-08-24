@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   ErreurValidationUploadServeur,
   POLITIQUE_CERTIFICAT_ANALYSE,
+  POLITIQUE_DOCUMENT_EXPEDITION,
+  POLITIQUE_DOCUMENT_PRODUCTION,
   POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
   signatureCorrespond,
   validerUploadServeur,
@@ -126,5 +128,13 @@ describe('secure-upload', () => {
     }, POLITIQUE_CERTIFICAT_ANALYSE)).toThrowError(
       expect.objectContaining({ code: 'extension' }),
     );
+  });
+
+  it('ferme Production au PDF et Shipping aux formats avec signature vérifiable', () => {
+    expect(POLITIQUE_DOCUMENT_PRODUCTION.formats.map((format) => format.signature)).toEqual(['pdf']);
+    expect(POLITIQUE_DOCUMENT_EXPEDITION.formats.map((format) => format.signature)).toEqual([
+      'pdf', 'jpeg', 'png', 'docx',
+    ]);
+    expect(POLITIQUE_DOCUMENT_EXPEDITION.formats.flatMap((format) => format.extensions)).not.toContain('doc');
   });
 });

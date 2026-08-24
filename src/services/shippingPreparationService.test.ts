@@ -14,7 +14,14 @@ const storageMocks = vi.hoisted(() => ({
   createSignedUrl: vi.fn(),
 }));
 
+const uploadMocks = vi.hoisted(() => ({ uploadSensitiveFile: vi.fn() }));
+
 vi.mock('@/lib/supabase', () => ({ supabase: supabaseMock }));
+vi.mock('./sensitiveUploadGateway', () => uploadMocks);
+
+const SHIPPING_ID = '9b3fcaaa-9367-4c91-a82d-788f043f33f1';
+const DOCUMENT_ID = 'ac585840-4d30-4a67-9e66-8d1fd77279ee';
+const ACTOR_ID = '01c34df2-98a3-44c3-87aa-35cd62dd8228';
 
 describe('shippingPreparationService — frontières du workflow', () => {
   beforeEach(() => {
@@ -92,35 +99,36 @@ describe('shippingPreparationService — frontières du workflow', () => {
   });
 
   it('stocke le chemin objet privé canonique après un upload validé', async () => {
-    storageMocks.upload.mockResolvedValue({
-      data: { path: 'shipping-1/random.pdf' },
-      error: null,
+    uploadMocks.uploadSensitiveFile.mockResolvedValue({
+      id: DOCUMENT_ID,
+      shipping_preparation_id: SHIPPING_ID,
+      title: 'Packing list',
+      document_url: `${SHIPPING_ID}/format-validated/2026/08/${DOCUMENT_ID}.pdf`,
+      file_name: 'packing.pdf',
+      file_size: 3,
+      mime_type: 'application/pdf',
+      uploaded_by: ACTOR_ID,
+      created_at: '2026-08-24T10:00:00.000Z',
     });
-    const single = vi.fn().mockResolvedValue({
-      data: {
-        id: 'doc-1',
-        shipping_preparation_id: 'shipping-1',
-        document_url: 'shipping-1/random.pdf',
-      },
-      error: null,
-    });
-    const select = vi.fn(() => ({ single }));
-    const insert = vi.fn(() => ({ select }));
-    supabaseMock.from.mockReturnValue({ insert });
     const file = new File(['PDF'], 'packing.pdf', { type: 'application/pdf' });
 
-    await expect(shippingPreparationService.uploadDocument('shipping-1', file, 'Packing list'))
-      .resolves.toEqual(expect.objectContaining({ document_url: 'shipping-1/random.pdf' }));
+    await expect(shippingPreparationService.uploadDocument(SHIPPING_ID, file, 'Packing list'))
+      .resolves.toEqual(expect.objectContaining({ document_url: expect.stringContaining('/format-validated/') }));
 
-    expect(storageMocks.upload).toHaveBeenCalledWith(
-      expect.stringMatching(/^shipping-1\/[0-9a-f-]+\.pdf$/u),
+    expect(uploadMocks.uploadSensitiveFile).toHaveBeenCalledWith(
+      'shipping-document',
       file,
-      { contentType: 'application/pdf', upsert: false },
+      { shippingPreparationId: SHIPPING_ID, title: 'Packing list', fileName: 'packing.pdf' },
+      { mimeType: 'application/pdf' },
     );
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      document_url: 'shipping-1/random.pdf',
-      mime_type: 'application/pdf',
-    }));
+    expect(storageMocks.upload).not.toHaveBeenCalled();
+  });
+
+  it('rejette une confirmation gateway hors tenant avant de l’afficher', async () => {
+    uploadMocks.uploadSensitiveFile.mockResolvedValue({ id: DOCUMENT_ID, shipping_preparation_id: SHIPPING_ID });
+    const file = new File(['PDF'], 'packing.pdf', { type: 'application/pdf' });
+    await expect(shippingPreparationService.uploadDocument(SHIPPING_ID, file, 'Packing list'))
+      .rejects.toThrow('confirmation');
   });
 
   it('signe une ancienne URL publique sans la rappeler', async () => {

@@ -67,4 +67,11 @@ describe('validation de sécurité des téléversements', () => {
       UPLOAD_POLICIES.mineDocument,
     )).toThrow(/ne correspondent pas/);
   });
+
+  it('refuse le DOC binaire Shipping non vérifiable côté serveur', () => {
+    expect(() => validateUploadFile(
+      fichier('ancien.doc', 'application/msword'),
+      UPLOAD_POLICIES.shippingDocument,
+    )).toThrow(/ne correspondent pas/);
+  });
 });

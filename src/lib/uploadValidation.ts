@@ -49,12 +49,6 @@ const PNG: UploadFormat = {
   canonicalMimeType: 'image/png',
 };
 
-const DOC: UploadFormat = {
-  extensions: ['doc'],
-  mimeTypes: ['application/msword'],
-  canonicalMimeType: 'application/msword',
-};
-
 const DOCX: UploadFormat = {
   extensions: ['docx'],
   mimeTypes: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
@@ -96,8 +90,10 @@ export const UPLOAD_POLICIES = {
   },
   shippingDocument: {
     maxBytes: 10 * MEBIBYTE,
-    formats: [PDF, JPEG, PNG, DOC, DOCX],
-    acceptedLabel: 'un PDF, une image JPEG/PNG ou un document DOC/DOCX',
+    // Le format DOC binaire n'est pas suffisamment vérifiable sans parseur
+    // spécialisé côté serveur. DOCX reste accepté après contrôle ZIP fermé.
+    formats: [PDF, JPEG, PNG, DOCX],
+    acceptedLabel: 'un PDF, une image JPEG/PNG ou un document DOCX',
   },
 } as const satisfies Record<string, UploadPolicy>;
 

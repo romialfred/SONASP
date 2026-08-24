@@ -149,12 +149,30 @@ describe('registre contractuel des routes privées', () => {
     expect(evaluatePrivateRouteAccess(mine, '/contrats/123e4567-e89b-42d3-a456-426614174000/modifier').allowed).toBe(false);
     expect(evaluatePrivateRouteAccess(mine, '/requisitions/nouvelle').allowed).toBe(false);
     expect(evaluatePrivateRouteAccess(mine, '/production/achats-mines').allowed).toBe(false);
+    expect(evaluatePrivateRouteAccess(mine, '/production/licenses/requests').allowed).toBe(false);
+  });
+
+  it('réserve la boîte des demandes de licences au périmètre national SONASP approbateur', () => {
+    const approver = profile('management', [CAPABILITIES.SONASP_APPROVE]);
+    const preparer = profile('management', [CAPABILITIES.SONASP_PREPARE]);
+    const injectedMine = profile('mine', [CAPABILITIES.MINE_OPERATE, CAPABILITIES.SONASP_APPROVE], 'mine-1');
+    const policy = routePolicyFor('/production/licenses/requests');
+
+    expect(evaluatePrivateRouteAccess(approver, '/production/licenses/requests').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(preparer, '/production/licenses/requests')).toMatchObject({
+      allowed: false,
+      reason: 'capability',
+    });
+    expect(evaluatePrivateRouteAccess(injectedMine, '/production/licenses/requests').allowed).toBe(false);
+    expect(policy).toMatchObject({ accountTypes: ['sonasp'], national: true, readOnly: false });
   });
 
   it('résout le pattern le plus spécifique avant un paramètre générique', () => {
     expect(routePolicyFor('/artisan-minier/ventes-or/nouvelle')?.readOnly).toBe(false);
     expect(routePolicyFor('/production/licenses/edit/123e4567-e89b-42d3-a456-426614174000')?.accountTypes)
       .toEqual(['sonasp']);
+    expect(routePolicyFor('/production/licenses/requests')?.capabilities)
+      .toEqual([CAPABILITIES.SONASP_APPROVE]);
   });
 
   it('refuse une capability SONASP injectée dans un compte partenaire', () => {

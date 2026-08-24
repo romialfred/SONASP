@@ -255,6 +255,30 @@ describe('navigation de la boîte Comptoir → SONASP', () => {
   });
 });
 
+describe('navigation de la boîte Mine → SONASP', () => {
+  const profile = (capabilities: string[] | undefined): UserProfile => ({
+    id: 'sonasp-license-user', email: 'licences@sonasp.bf', full_name: 'Agent licences', phone: null,
+    role: 'management', mining_company_id: null, site_ids: [], is_active: true,
+    capabilities, is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+    email_notifications: true, batch_notifications: true, approval_notifications: true,
+    created_at: '2026-01-01', updated_at: '2026-01-01',
+  });
+  const paths = (user: UserProfile) => getNavigationSectionsForUser(user)
+    .flatMap((section) => section.groups.flatMap((group) => [
+      group.path,
+      ...(group.children?.map((item) => item.path) || []),
+    ]));
+
+  it('affiche la boîte uniquement avec la capability AAL2 autoritative', () => {
+    expect(paths(profile([CAPABILITIES.SONASP_APPROVE])))
+      .toContain('/production/licenses/requests');
+    expect(paths(profile([CAPABILITIES.SONASP_PREPARE])))
+      .not.toContain('/production/licenses/requests');
+    expect(paths(profile(undefined)))
+      .not.toContain('/production/licenses/requests');
+  });
+});
+
 describe('navigation des profils partenaires', () => {
   const partner = (
     role: UserProfile['role'],

@@ -70,6 +70,25 @@ export interface MineExportLicenseRequestInput {
   comment?: string;
 }
 
+export interface SonaspExportLicenseDecisionInput {
+  requestId: string;
+  decision: 'approved' | 'rejected';
+  licenseNumber?: string;
+  startDate?: string;
+  endDate?: string;
+  issuingInstitution?: string;
+  authorizedQuantityGrams?: number;
+  decisionReason?: string;
+  comments?: string;
+}
+
+export type MineExportLicenseRequestStatus =
+  | 'submitted'
+  | 'under_review'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled';
+
 export interface MineExportLicenseRequest {
   id: string;
   mining_company_id: string;
@@ -78,7 +97,7 @@ export interface MineExportLicenseRequest {
   destination: string;
   reason: string;
   comment: string | null;
-  status: string;
+  status: MineExportLicenseRequestStatus;
   submitted_by: string;
   submitted_at: string;
   created_at: string;
@@ -87,6 +106,48 @@ export interface MineExportLicenseRequest {
   reviewed_at: string | null;
   decision_reason: string | null;
   license_id: string | null;
+  mining_company?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
+}
+
+const EXPORT_LICENSE_REQUEST_STATUSES = new Set<MineExportLicenseRequestStatus>([
+  'submitted', 'under_review', 'approved', 'rejected', 'cancelled',
+]);
+
+function normalizeMineExportLicenseRequest(value: unknown): MineExportLicenseRequest {
+  if (!value || typeof value !== 'object') {
+    throw new ExportLicenseWorkflowUnavailableError(
+      'Le service sécurisé des demandes de licence a renvoyé une réponse inexploitable.',
+    );
+  }
+  const row = value as Record<string, unknown>;
+  const quantity = Number(row.requested_quantity_grams);
+  if (
+    typeof row.id !== 'string'
+    || typeof row.mining_company_id !== 'string'
+    || !Number.isFinite(quantity)
+    || quantity <= 0
+    || typeof row.desired_export_date !== 'string'
+    || typeof row.destination !== 'string'
+    || typeof row.reason !== 'string'
+    || typeof row.submitted_by !== 'string'
+    || typeof row.submitted_at !== 'string'
+    || typeof row.created_at !== 'string'
+    || typeof row.updated_at !== 'string'
+    || typeof row.status !== 'string'
+    || !EXPORT_LICENSE_REQUEST_STATUSES.has(row.status as MineExportLicenseRequestStatus)
+  ) {
+    throw new ExportLicenseWorkflowUnavailableError(
+      'Le service sécurisé des demandes de licence a renvoyé un dossier incomplet.',
+    );
+  }
+  return {
+    ...(row as unknown as MineExportLicenseRequest),
+    requested_quantity_grams: quantity,
+  };
 }
 
 /**
@@ -332,6 +393,43 @@ class ExportLicenseService {
     };
   }
 
+  /**
+   * Boîte nationale SONASP. La RLS reste autoritative et aucune liste locale,
+   * mutation PostgREST ou valeur de repli ne masque une indisponibilité.
+   */
+  async getSonaspLicenseRequests(): Promise<MineExportLicenseRequest[]> {
+    const { data, error } = await (supabase as any)
+      .from('snp_export_license_requests')
+      .select(`
+        id,
+        mining_company_id,
+        requested_quantity_grams,
+        desired_export_date,
+        destination,
+        reason,
+        comment,
+        status,
+        submitted_by,
+        submitted_at,
+        created_at,
+        updated_at,
+        reviewed_by,
+        reviewed_at,
+        decision_reason,
+        license_id,
+        mining_company:mining_companies(id, name, code)
+      `)
+      .order('submitted_at', { ascending: false });
+
+    if (error) throw error;
+    if (!Array.isArray(data)) {
+      throw new ExportLicenseWorkflowUnavailableError(
+        'La boîte sécurisée des demandes de licence n’est pas disponible.',
+      );
+    }
+    return data.map(normalizeMineExportLicenseRequest);
+  }
+
   /** Soumet une demande ; le tenant, l’auteur et le statut sont dérivés en base. */
   async submitMineLicenseRequest(
     input: MineExportLicenseRequestInput,
@@ -373,7 +471,75 @@ class ExportLicenseService {
         'La demande n’a pas pu être confirmée par le service sécurisé.',
       );
     }
-    return data as MineExportLicenseRequest;
+    return normalizeMineExportLicenseRequest(data);
+  }
+
+  /**
+   * Décide une demande côté autorité. La RPC dérive le décideur, contrôle
+   * sonasp.approve/AAL2 et crée atomiquement la licence en cas d'accord.
+   */
+  async decideMineLicenseRequest(
+    input: SonaspExportLicenseDecisionInput,
+  ): Promise<MineExportLicenseRequest> {
+    const requestId = input.requestId.trim();
+    const licenseNumber = input.licenseNumber?.trim() || null;
+    const issuingInstitution = input.issuingInstitution?.trim() || null;
+    const decisionReason = input.decisionReason?.trim() || null;
+    const comments = input.comments?.trim() || null;
+
+    if (!requestId) throw new Error('La demande de licence est obligatoire.');
+    if (input.decision !== 'approved' && input.decision !== 'rejected') {
+      throw new Error('La décision doit être approved ou rejected.');
+    }
+    if (input.decision === 'rejected' && (!decisionReason || decisionReason.length < 10)) {
+      throw new Error('Le rejet exige un motif d’au moins 10 caractères.');
+    }
+    if (input.decision === 'approved') {
+      if (!licenseNumber || licenseNumber.length < 4) {
+        throw new Error('Le numéro de licence doit contenir au moins 4 caractères.');
+      }
+      if (!input.startDate || !input.endDate || input.endDate < input.startDate) {
+        throw new Error('La période de validité de la licence est invalide.');
+      }
+      if (!issuingInstitution || issuingInstitution.length < 3) {
+        throw new Error('L’institution émettrice est obligatoire.');
+      }
+      if (!Number.isFinite(input.authorizedQuantityGrams)
+        || Number(input.authorizedQuantityGrams) <= 0) {
+        throw new Error('La quantité autorisée doit être strictement positive.');
+      }
+    }
+
+    const approved = input.decision === 'approved';
+    const { data, error } = await supabase.rpc(
+      'snp_sonasp_decider_demande_licence_export',
+      {
+        p_demande_id: requestId,
+        p_decision: input.decision,
+        p_numero_licence: approved ? licenseNumber : null,
+        p_date_debut: approved ? input.startDate : null,
+        p_date_fin: approved ? input.endDate : null,
+        p_institution_emettrice: approved ? issuingInstitution : null,
+        p_quantite_autorisee_grammes: approved ? input.authorizedQuantityGrams : null,
+        p_motif_decision: decisionReason,
+        p_commentaires: comments,
+      },
+    );
+    if (error) {
+      const message = String(error.message || '');
+      if (error.code === '42883' || /does not exist|schema cache|function/i.test(message)) {
+        throw new ExportLicenseWorkflowUnavailableError(
+          'Le service sécurisé de décision des licences n’est pas disponible. Aucune décision n’a été enregistrée.',
+        );
+      }
+      throw error;
+    }
+    if (!data || typeof data !== 'object') {
+      throw new ExportLicenseWorkflowUnavailableError(
+        'La décision n’a pas pu être confirmée par le service sécurisé.',
+      );
+    }
+    return normalizeMineExportLicenseRequest(data);
   }
 
   /**

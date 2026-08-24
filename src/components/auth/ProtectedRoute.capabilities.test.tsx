@@ -35,6 +35,24 @@ function renderRoute() {
   );
 }
 
+function renderLicenseRequestsRoute() {
+  return render(
+    <MemoryRouter initialEntries={['/production/licenses/requests']}>
+      <Routes>
+        <Route path="/production/licenses/requests" element={
+          <ProtectedRoute
+            allowedRoles={['management']}
+            requiredSensitiveCapability={CAPABILITIES.SONASP_APPROVE}
+          >
+            <div>Demandes de licences autorisées</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/portail-mine" element={<div>Portail Mine</div>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 describe('ProtectedRoute — capacités de la boîte Comptoir → SONASP', () => {
   beforeEach(() => vi.mocked(useAuth).mockReset());
 
@@ -57,5 +75,33 @@ describe('ProtectedRoute — capacités de la boîte Comptoir → SONASP', () =>
     });
     renderRoute();
     expect(screen.getByText('Portail Comptoir')).toBeInTheDocument();
+  });
+});
+
+describe('ProtectedRoute — décision sensible des licences Mine', () => {
+  beforeEach(() => vi.mocked(useAuth).mockReset());
+
+  it('autorise la capability explicite issue du contrat AAL2', () => {
+    authWith({
+      id: 'approver', role: 'management', is_active: true,
+      capabilities: [CAPABILITIES.SONASP_APPROVE],
+    });
+    renderLicenseRequestsRoute();
+    expect(screen.getByText('Demandes de licences autorisées')).toBeInTheDocument();
+  });
+
+  it('refuse le repli historique de rôle quand la liste autoritative est absente', () => {
+    authWith({ id: 'legacy-management', role: 'management', is_active: true, capabilities: undefined });
+    renderLicenseRequestsRoute();
+    expect(screen.getByText('Habilitations insuffisantes')).toBeInTheDocument();
+  });
+
+  it('cloisonne une Mine même si son profil contient une capability SONASP injectée', () => {
+    authWith({
+      id: 'mine', role: 'mine', is_active: true, mining_company_id: 'mine-1',
+      capabilities: [CAPABILITIES.MINE_OPERATE, CAPABILITIES.SONASP_APPROVE],
+    });
+    renderLicenseRequestsRoute();
+    expect(screen.getByText('Portail Mine')).toBeInTheDocument();
   });
 });

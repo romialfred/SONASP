@@ -5,6 +5,7 @@ import {
   isExportLicenseSelectable,
   normalizeExportLicenseQuota,
   type ExportLicense,
+  type MineExportLicenseRequest,
 } from './exportLicenseService';
 
 const mocks = vi.hoisted(() => ({
@@ -41,6 +42,27 @@ const license = (overrides: Partial<ExportLicense> = {}): ExportLicense => ({
   updated_at: '2026-08-24T06:03:20Z',
   created_by: null,
   updated_by: null,
+  ...overrides,
+});
+
+const request = (overrides: Partial<MineExportLicenseRequest> = {}): MineExportLicenseRequest => ({
+  id: 'request-1',
+  mining_company_id: 'mine-1',
+  requested_quantity_grams: 120_000,
+  desired_export_date: '2026-09-30',
+  destination: 'Suisse',
+  reason: 'Export planifié trimestriel',
+  comment: 'Dossier complet',
+  status: 'submitted',
+  submitted_by: 'mine-user',
+  submitted_at: '2026-08-24T12:00:00Z',
+  created_at: '2026-08-24T12:00:00Z',
+  updated_at: '2026-08-24T12:00:00Z',
+  reviewed_by: null,
+  reviewed_at: null,
+  decision_reason: null,
+  license_id: null,
+  mining_company: { id: 'mine-1', name: 'Mine Exemple', code: 'MEX' },
   ...overrides,
 });
 
@@ -154,7 +176,7 @@ describe('exportLicenseService sécurisé', () => {
 
   it('soumet la demande Mine par la signature RPC sans tenant ni statut client', async () => {
     mocks.rpc.mockResolvedValueOnce({
-      data: { id: 'request-1', status: 'soumis' },
+      data: request(),
       error: null,
     });
 
@@ -176,6 +198,100 @@ describe('exportLicenseService sécurisé', () => {
         p_commentaire: 'Traitement prioritaire',
       },
     );
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('autorise une demande exclusivement par la RPC SONASP sans acteur ni tenant client', async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: request({ status: 'approved', license_id: 'license-1' }),
+      error: null,
+    });
+
+    await expect(exportLicenseService.decideMineLicenseRequest({
+      requestId: ' request-1 ',
+      decision: 'approved',
+      licenseNumber: ' EXP-2026-001 ',
+      startDate: '2026-08-24',
+      endDate: '2027-08-23',
+      issuingInstitution: ' SONASP ',
+      authorizedQuantityGrams: 100_000,
+      decisionReason: ' Autorisation conforme ',
+      comments: ' Dossier complet ',
+    })).resolves.toMatchObject({ status: 'approved', license_id: 'license-1' });
+
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      'snp_sonasp_decider_demande_licence_export',
+      {
+        p_demande_id: 'request-1',
+        p_decision: 'approved',
+        p_numero_licence: 'EXP-2026-001',
+        p_date_debut: '2026-08-24',
+        p_date_fin: '2027-08-23',
+        p_institution_emettrice: 'SONASP',
+        p_quantite_autorisee_grammes: 100_000,
+        p_motif_decision: 'Autorisation conforme',
+        p_commentaires: 'Dossier complet',
+      },
+    );
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('charge la boîte SONASP en lecture seule et normalise les quantités numériques', async () => {
+    const order = vi.fn().mockResolvedValue({
+      data: [request({ requested_quantity_grams: '120000' as unknown as number })],
+      error: null,
+    });
+    const select = vi.fn(() => ({ order }));
+    mocks.from.mockReturnValueOnce({ select });
+
+    await expect(exportLicenseService.getSonaspLicenseRequests())
+      .resolves.toEqual([expect.objectContaining({ id: 'request-1', requested_quantity_grams: 120_000 })]);
+
+    expect(mocks.from).toHaveBeenCalledWith('snp_export_license_requests');
+    expect(select).toHaveBeenCalledWith(expect.stringContaining('mining_company:mining_companies'));
+    expect(order).toHaveBeenCalledWith('submitted_at', { ascending: false });
+    const query = mocks.from.mock.results.at(-1)?.value as Record<string, unknown>;
+    expect(query).not.toHaveProperty('insert');
+    expect(query).not.toHaveProperty('update');
+    expect(query).not.toHaveProperty('delete');
+  });
+
+  it('échoue fermé quand la boîte SONASP ne renvoie pas une liste exploitable', async () => {
+    const order = vi.fn().mockResolvedValue({ data: null, error: null });
+    mocks.from.mockReturnValueOnce({ select: vi.fn(() => ({ order })) });
+
+    await expect(exportLicenseService.getSonaspLicenseRequests())
+      .rejects.toBeInstanceOf(ExportLicenseWorkflowUnavailableError);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it('bloque un rejet sans motif suffisant avant tout appel réseau', async () => {
+    await expect(exportLicenseService.decideMineLicenseRequest({
+      requestId: 'request-1',
+      decision: 'rejected',
+      decisionReason: 'Incomplet',
+    })).rejects.toThrow('au moins 10 caractères');
+
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('signale une RPC de décision absente sans fallback DML', async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: '42883', message: 'function does not exist' },
+    });
+
+    await expect(exportLicenseService.decideMineLicenseRequest({
+      requestId: 'request-1',
+      decision: 'approved',
+      licenseNumber: 'EXP-2026-001',
+      startDate: '2026-08-24',
+      endDate: '2027-08-23',
+      issuingInstitution: 'SONASP',
+      authorizedQuantityGrams: 100_000,
+    })).rejects.toBeInstanceOf(ExportLicenseWorkflowUnavailableError);
+
     expect(mocks.from).not.toHaveBeenCalled();
   });
 

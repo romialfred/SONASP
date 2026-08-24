@@ -117,6 +117,7 @@ const ProductionDetails = lazyNamed(() => import('./pages/production/ProductionD
 const ProductionInSafe = lazyNamed(() => import('./pages/production/ProductionInSafe'), 'ProductionInSafe');
 const BudgetManagementPage = lazyNamed(() => import('./pages/production/BudgetManagementPage'), 'BudgetManagementPage');
 const ExportLicensesPage = lazyNamed(() => import('./pages/production/ExportLicensesPage'), 'ExportLicensesPage');
+const ExportLicenseRequestsInboxPage = lazy(() => import('./pages/production/ExportLicenseRequestsInboxPage'));
 const ExportLicenseForm = lazyNamed(() => import('./pages/production/ExportLicenseForm'), 'ExportLicenseForm');
 const ExportLicenseDetails = lazyNamed(() => import('./pages/production/ExportLicenseDetails'), 'ExportLicenseDetails');
 const ShippingDashboard = lazy(() => import('./pages/shipping/ShippingDashboard'));
@@ -773,6 +774,18 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management', 'mine']}>
                   <ExportLicensesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/production/licenses/requests"
+              element={
+                <ProtectedRoute
+                  allowedRoles={['management']}
+                  requiredSensitiveCapability={CAPABILITIES.SONASP_APPROVE}
+                >
+                  <ExportLicenseRequestsInboxPage />
                 </ProtectedRoute>
               }
             />

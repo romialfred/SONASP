@@ -1,0 +1,71 @@
+.license-requests { --license-request-accent: #0f7a56; }
+
+.license-requests__success {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 11px 14px;
+  gap: 8px;
+  border: 1px solid rgb(15 122 86 / 22%);
+  color: #075c40;
+  background: #ecf9f3;
+  border-radius: var(--sn-radius-md);
+  font-size: 12.5px;
+}
+
+.license-requests__success svg { width: 17px; }
+.license-requests__toolbar { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+.license-requests__toolbar label { display: grid; gap: 5px; color: var(--sn-muted); font-size: 11.5px; font-weight: 650; }
+.license-requests__toolbar select { min-width: 190px; height: 38px; padding: 0 34px 0 11px; border: 1px solid var(--sn-line); color: var(--sn-ink); background: var(--sn-surface); border-radius: var(--sn-radius-sm); }
+.license-requests__loading { display: flex; align-items: center; justify-content: center; margin: 0; padding: 30px; gap: 8px; color: var(--sn-muted); font-size: 12.5px; }
+.license-requests__loading svg { width: 17px; }
+
+.license-requests__table-wrap { overflow-x: auto; border: 1px solid var(--sn-line); border-radius: var(--sn-radius-md); }
+.license-requests__table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.license-requests__table th { padding: 10px 12px; border-bottom: 1px solid var(--sn-line); color: var(--sn-muted); background: var(--sn-surface-alt); font-size: 11px; text-align: left; }
+.license-requests__table td { padding: 12px; border-bottom: 1px solid var(--sn-line-soft); color: var(--sn-ink); vertical-align: middle; }
+.license-requests__table tr:last-child td { border-bottom: 0; }
+.license-requests__table td strong { display: block; color: var(--sn-navy); }
+.license-requests__table td small { display: block; margin-top: 3px; color: var(--sn-muted); }
+.license-requests__table .is-number { text-align: right; font-variant-numeric: tabular-nums; }
+.license-requests__actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; white-space: nowrap; }
+
+.license-requests__dossier { display: grid; margin: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid var(--sn-line); border-radius: var(--sn-radius-md); }
+.license-requests__dossier > div { padding: 13px 15px; border-bottom: 1px solid var(--sn-line-soft); }
+.license-requests__dossier > div:nth-child(odd):not(.is-wide) { border-right: 1px solid var(--sn-line-soft); }
+.license-requests__dossier .is-wide { grid-column: 1 / -1; }
+.license-requests__dossier dt { color: var(--sn-muted); font-size: 11px; font-weight: 650; }
+.license-requests__dossier dd { margin: 5px 0 0; color: var(--sn-ink); font-size: 12.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.license-requests__dossier-actions { display: flex; justify-content: flex-end; margin-top: 14px; gap: 8px; }
+
+.license-request-dialog-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; padding: 20px; background: rgb(11 28 39 / 56%); place-items: center; }
+.license-request-dialog { width: min(680px, 100%); max-height: calc(100vh - 40px); overflow: auto; border: 1px solid var(--sn-line); background: var(--sn-surface); border-radius: var(--sn-radius-lg); box-shadow: 0 30px 80px rgb(11 28 39 / 28%); }
+.license-request-dialog > header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--sn-line); }
+.license-request-dialog > header span { color: var(--license-request-accent); font-size: 10px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+.license-request-dialog > header h2 { margin: 3px 0 0; color: var(--sn-navy); font-size: 19px; }
+.license-request-dialog > header button { display: grid; width: 40px; height: 40px; border: 0; color: var(--sn-muted); background: transparent; border-radius: var(--sn-radius-sm); cursor: pointer; place-items: center; }
+.license-request-dialog > header button:hover { background: var(--sn-surface-alt); }
+.license-request-dialog form { display: grid; padding: 18px; gap: 14px; }
+.license-request-dialog__summary { display: flex; align-items: center; margin: 0; padding: 11px 13px; gap: 7px; color: var(--sn-ink); background: var(--sn-surface-alt); border-radius: var(--sn-radius-sm); font-size: 12.5px; }
+.license-request-dialog__summary svg { width: 17px; color: var(--license-request-accent); }
+.license-request-dialog__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.license-request-dialog label { display: grid; gap: 6px; color: var(--sn-ink-soft); font-size: 11.5px; font-weight: 700; }
+.license-request-dialog label.is-wide { grid-column: 1 / -1; }
+.license-request-dialog label small { color: var(--sn-muted); font-weight: 500; }
+.license-request-dialog input, .license-request-dialog textarea { width: 100%; min-height: 40px; padding: 9px 10px; border: 1px solid var(--sn-line); color: var(--sn-ink); background: #fff; border-radius: var(--sn-radius-sm); font: inherit; }
+.license-request-dialog textarea { resize: vertical; }
+.license-request-dialog input:focus-visible, .license-request-dialog textarea:focus-visible { outline: 2px solid var(--sn-green); outline-offset: 2px; }
+.license-request-dialog__error { margin: 0; color: var(--sn-danger); font-size: 12px; }
+.license-request-dialog footer { display: flex; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 760px) {
+  .license-requests__dossier, .license-request-dialog__grid { grid-template-columns: 1fr; }
+  .license-requests__dossier > div:nth-child(odd):not(.is-wide) { border-right: 0; }
+  .license-requests__dossier .is-wide { grid-column: auto; }
+  .license-requests__actions { align-items: stretch; flex-direction: column; }
+  .license-request-dialog-backdrop { padding: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .license-requests *, .license-request-dialog * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

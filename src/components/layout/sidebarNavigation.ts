@@ -6,6 +6,7 @@ import {
   Building2,
   CheckCircle2,
   CircleDollarSign,
+  ClipboardCheck,
   FileSignature,
   FileText,
   FlaskConical,
@@ -23,6 +24,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { UserProfile } from '@/types/auth';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { isMineScopedUser } from '@/lib/mineAccess';
@@ -118,6 +120,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: 'Achats aux mines', path: '/production/achats-mines', icon: CircleDollarSign, color: '#d79a00' },
           { label: 'Or en coffre', path: '/production/in-safe', icon: PackageCheck, color: '#d79a00' },
           { label: "Licences d'exportation", path: '/production/licenses', icon: FileText, color: '#2f6fec' },
+          { label: 'Demandes de licences', path: '/production/licenses/requests', icon: ClipboardCheck, color: '#0f7a56' },
           { label: 'Prévisions & Forecast', path: '/performance/budgets', icon: TrendingUp, color: '#14b8a6' },
         ],
       },
@@ -479,12 +482,17 @@ function filterNavigationSections(
   sections: NavigationSection[],
   user: UserProfile,
 ): NavigationSection[] {
+  const canNavigate = (path: string) => (
+    path !== '/production/licenses/requests'
+    || hasSensitiveCapability(user, CAPABILITIES.SONASP_APPROVE)
+  ) && canAccessPrivateRoute(user, path);
+
   return sections.flatMap((section) => {
     const groups = section.groups.flatMap((group) => {
-      const groupAllowed = canAccessPrivateRoute(user, group.path);
+      const groupAllowed = canNavigate(group.path);
       if (!group.children?.length) return groupAllowed ? [group] : [];
 
-      const children = group.children.filter((item) => canAccessPrivateRoute(user, item.path));
+      const children = group.children.filter((item) => canNavigate(item.path));
       if (children.length === 0) return groupAllowed ? [{ ...group, children: undefined }] : [];
       return [{
         ...group,

@@ -12,7 +12,11 @@ import { PlatformLoading } from '@/components/common/PlatformLoading';
 import { isComptoirRouteAllowed, isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isCollectorRouteAllowed, isCollectorScopedUser } from '@/lib/collectorAccess';
 import { isMineRouteAllowed, isMineScopedUser, isMineTenantProfile } from '@/lib/mineAccess';
-import { hasAnyCapability, type CapabilityCode } from '@/lib/capabilities';
+import {
+  hasAnyCapability,
+  hasSensitiveCapability,
+  type CapabilityCode,
+} from '@/lib/capabilities';
 import { evaluatePrivateRouteAccess } from '@/lib/routeAccessRegistry';
 
 interface ProtectedRouteProps {
@@ -20,6 +24,8 @@ interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
   requiredPermission?: string;
   requiredAnyCapabilities?: CapabilityCode[];
+  /** Capability issue du contrat autoritatif (AAL2), sans repli par rôle. */
+  requiredSensitiveCapability?: CapabilityCode;
   fallbackPath?: string;
 }
 
@@ -42,6 +48,7 @@ export function ProtectedRoute({
   allowedRoles,
   requiredPermission,
   requiredAnyCapabilities,
+  requiredSensitiveCapability,
   fallbackPath = '/login',
 }: ProtectedRouteProps) {
   const {
@@ -258,6 +265,10 @@ export function ProtectedRoute({
     || (
       requiredAnyCapabilities?.length
       && !hasAnyCapability(user, requiredAnyCapabilities)
+    )
+    || Boolean(
+      requiredSensitiveCapability
+      && !hasSensitiveCapability(user, requiredSensitiveCapability)
     ),
   );
 

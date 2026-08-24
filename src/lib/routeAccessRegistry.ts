@@ -82,7 +82,7 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   }),
   ...policies(['/portail-collecteur', '/portail-collecteur/stock', '/portail-collecteur/documents'], {
     roles: ['customer'], accountTypes: ['collector'], capabilities: [CAPABILITIES.COLLECTOR_OPERATE],
-    readOnly: false, national: false,
+    readOnly: true, national: false,
   }),
   ...policies(['/portail-comptoir', '/portail-comptoir/stock', '/portail-comptoir/ventes-sonasp'], {
     roles: ['customer'], accountTypes: ['comptoir'], capabilities: [CAPABILITIES.COMPTOIR_MANAGE],
@@ -230,6 +230,10 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     roles: ['management', 'mine', 'customer'], accountTypes: ['sonasp', 'mine'],
     capabilities: [CAPABILITIES.SONASP_PREPARE, CAPABILITIES.SONASP_WORKFLOW_READ, CAPABILITIES.MINE_OPERATE],
     readOnly: false, national: false,
+  }),
+  ...policies(['/production/licenses/requests'], {
+    roles: ['management'], accountTypes: ['sonasp'], capabilities: [CAPABILITIES.SONASP_APPROVE],
+    readOnly: false, national: true,
   }),
   ...policies(['/production/licenses/edit/:id'], {
     roles: ['management'], accountTypes: ['sonasp'], capabilities: [CAPABILITIES.SONASP_PREPARE],

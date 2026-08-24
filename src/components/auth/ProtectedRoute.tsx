@@ -10,6 +10,7 @@ import {
 } from '@/lib/permissions';
 import { PlatformLoading } from '@/components/common/PlatformLoading';
 import { isComptoirRouteAllowed, isComptoirScopedUser } from '@/lib/comptoirAccess';
+import { isCollectorRouteAllowed, isCollectorScopedUser } from '@/lib/collectorAccess';
 import { isMineRouteAllowed, isMineScopedUser } from '@/lib/mineAccess';
 import { hasAnyCapability, type CapabilityCode } from '@/lib/capabilities';
 
@@ -113,6 +114,13 @@ export function ProtectedRoute({
         </div>
       </div>
     );
+  }
+
+  // Le collecteur dispose du périmètre le plus étroit. Ce contrôle précède celui
+  // du comptoir afin qu'un compte cumulant les deux capabilities ne puisse pas
+  // hériter des fonctions de cession ou de création du comptoir.
+  if (isCollectorScopedUser(user) && !isCollectorRouteAllowed(location.pathname)) {
+    return <Navigate to="/portail-collecteur" replace />;
   }
 
   // Le comptoir partage certains écrans artisanaux avec la SONASP, mais pas son

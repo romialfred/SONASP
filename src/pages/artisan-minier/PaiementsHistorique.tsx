@@ -19,6 +19,7 @@ import {
   Badge,
   DataTable,
   EmptyState,
+  Note,
   PageHeader,
   SearchInput,
   SelectControl,
@@ -33,6 +34,8 @@ import artisanPaiementsService, {
   type PaiementArtisan,
 } from '@/services/artisanPaiementsService';
 import { useAuth } from '@/contexts/AuthContext';
+import { isCollectorScopedUser } from '@/lib/collectorAccess';
+import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
 import './paiements-ventes.css';
 
 type Statut = PaiementArtisan['statut'];
@@ -136,6 +139,8 @@ export function filterPaiements(paiements: PaiementRow[], filters: HistoriqueFil
 export default function PaiementsHistorique() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isCollector = isCollectorScopedUser(user);
+  const { workspace: collectorWorkspace } = useCollectorWorkspace();
   const [paiements, setPaiements] = useState<PaiementRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<HistoriqueFilters>(EMPTY_HISTORIQUE_FILTERS);
@@ -160,30 +165,36 @@ export default function PaiementsHistorique() {
     void chargerHistorique();
   }, []);
 
-  const results = useMemo(() => filterPaiements(paiements, filters), [filters, paiements]);
+  const visiblePaiements = useMemo(() => {
+    if (!isCollector) return paiements;
+    const assigned = new Set(collectorWorkspace?.assignedArtisanIds || []);
+    return paiements.filter((paiement) => assigned.has(paiement.artisan_id));
+  }, [collectorWorkspace?.assignedArtisanIds, isCollector, paiements]);
+
+  const results = useMemo(() => filterPaiements(visiblePaiements, filters), [filters, visiblePaiements]);
 
   const stats = useMemo(
     () => ({
-      total: paiements.length,
-      completes: paiements.filter((p) => p.statut === 'complete').length,
-      enCours: paiements.filter((p) => STATUTS_EN_COURS.includes(p.statut)).length,
-      montantRegle: paiements
+      total: visiblePaiements.length,
+      completes: visiblePaiements.filter((p) => p.statut === 'complete').length,
+      enCours: visiblePaiements.filter((p) => STATUTS_EN_COURS.includes(p.statut)).length,
+      montantRegle: visiblePaiements
         .filter((p) => p.statut === 'complete')
         .reduce((sum, p) => sum + (p.montant_paye || 0), 0),
-      taxesRetenues: paiements
+      taxesRetenues: visiblePaiements
         .filter((p) => p.statut === 'complete')
         .reduce((sum, p) => sum + (p.montant_taxes_retenues || 0), 0),
     }),
-    [paiements]
+    [visiblePaiements]
   );
 
   const countByStatut = useMemo(
     () =>
       STATUT_ORDER.reduce(
-        (counters, key) => ({ ...counters, [key]: paiements.filter((p) => p.statut === key).length }),
+        (counters, key) => ({ ...counters, [key]: visiblePaiements.filter((p) => p.statut === key).length }),
         {} as Record<Statut, number>
       ),
-    [paiements]
+    [visiblePaiements]
   );
 
   const changerStatut = async (paiement: PaiementRow, statut: Statut) => {
@@ -268,6 +279,7 @@ export default function PaiementsHistorique() {
       key: 'workflow',
       header: 'Traitement',
       render: (paiement) => {
+        if (isCollector) return <span className="paiements__muted">Lecture seule</span>;
         const busy = transitioning === paiement.id;
         if (paiement.statut === 'en_attente') {
           return (
@@ -324,21 +336,29 @@ export default function PaiementsHistorique() {
           title="Historique des paiements"
           subtitle="Traçabilité des règlements effectués auprès des artisans miniers."
           breadcrumb={[
-            { label: 'Artisans miniers', to: '/artisan-minier' },
-            { label: 'Paiements des ventes', to: '/artisan-minier/paiements' },
+            { label: isCollector ? 'Collecteur' : 'Artisans miniers', to: isCollector ? '/portail-collecteur' : '/artisan-minier' },
+            ...(isCollector ? [] : [{ label: 'Paiements des ventes', to: '/artisan-minier/paiements' }]),
             { label: 'Historique' },
           ]}
           actions={
             <>
-              <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/paiements')}>
+              {!isCollector && <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/paiements')}>
                 <ArrowLeft aria-hidden="true" /> Dossiers en attente
-              </button>
+              </button>}
               <button type="button" className="sn-btn" onClick={() => void chargerHistorique()}>
                 <RefreshCw aria-hidden="true" /> Actualiser
               </button>
             </>
           }
         />
+
+        {isCollector && (
+          <div style={{ marginTop: 16 }}>
+            <Note tone="info" icon={ShieldCheck}>
+              Les règlements et justificatifs des orpailleurs assignés sont consultables. Les transitions de paiement restent réservées aux agents habilités.
+            </Note>
+          </div>
+        )}
 
         <div style={{ marginTop: 16 }}>
           <StatGrid
@@ -416,7 +436,7 @@ export default function PaiementsHistorique() {
                 className={filters.statut === 'tous' ? 'is-active' : ''}
                 onClick={() => setFilters((current) => ({ ...current, statut: 'tous' }))}
               >
-                Tous <b>({integer.format(paiements.length)})</b>
+                Tous <b>({integer.format(visiblePaiements.length)})</b>
               </button>
               {STATUT_ORDER.map((key) => (
                 <button
@@ -431,7 +451,7 @@ export default function PaiementsHistorique() {
             </div>
           </div>
 
-          {!loading && paiements.length === 0 ? (
+          {!loading && visiblePaiements.length === 0 ? (
             <EmptyState
               title="Aucun paiement enregistré"
               description="L’historique se remplit dès le premier règlement effectué auprès d’un artisan."

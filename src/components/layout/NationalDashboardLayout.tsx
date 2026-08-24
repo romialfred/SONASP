@@ -42,6 +42,7 @@ import { cn } from '@/utils/cn';
 import { RouteFallback } from '@/components/common/RouteFallback';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
+import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
 import { getNavigationSectionsForUser, type NavigationSection } from './sidebarNavigation';
 import './national-dashboard-layout.css';
 
@@ -120,7 +121,9 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     workspace: comptoirWorkspace,
     displayName: comptoirDisplayName,
   } = useComptoirWorkspace();
+  const { isCollector, workspace: collectorWorkspace } = useCollectorWorkspace();
   const mineDisplayName = companyCode || companyName;
+  const collectorDisplayName = collectorWorkspace?.collectorName || 'Collecteur d’or';
   const navigationSections = useMemo(() => {
     const sections = getNavigationSectionsForUser(user);
     if (!isMine) return sections;
@@ -162,7 +165,13 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
   const mineHomePath = '/portail-mine';
   const mineDashboardPath = '/portail-mine?vue=tableau-de-bord';
-  const dashboardPath = isComptoir ? '/portail-comptoir' : isMine ? mineDashboardPath : '/dashboard';
+  const dashboardPath = isCollector
+    ? '/portail-collecteur'
+    : isComptoir
+      ? '/portail-comptoir'
+      : isMine
+        ? mineDashboardPath
+        : '/dashboard';
   const mineDashboardActive = isMine
     && location.pathname === mineHomePath
     && new URLSearchParams(location.search).get('vue') === 'tableau-de-bord';
@@ -382,16 +391,17 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       'national-sidebar',
       isMine && 'is-mine',
       isComptoir && 'is-comptoir',
+      isCollector && 'is-collector',
       sidebarCollapsed && 'is-collapsed',
     )} aria-label="Navigation principale">
       <div className="national-sidebar__brand">
         <img src="/sonasp_logo.png" alt="SONASP" />
-        {(isMine || isComptoir) && !sidebarCollapsed && (
+        {(isMine || isComptoir || isCollector) && !sidebarCollapsed && (
           <span
             className="national-sidebar__mine-name"
-            title={(isComptoir ? comptoirWorkspace?.name : companyName) || undefined}
+            title={(isCollector ? collectorWorkspace?.collectorName : isComptoir ? comptoirWorkspace?.name : companyName) || undefined}
           >
-            {isComptoir ? comptoirDisplayName : mineDisplayName}
+            {isCollector ? collectorDisplayName : isComptoir ? comptoirDisplayName : mineDisplayName}
           </span>
         )}
       </div>
@@ -514,7 +524,12 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
 
   return (
-    <div className={cn('national-shell', isMine && 'is-mine', isComptoir && 'is-comptoir')}>
+    <div className={cn(
+      'national-shell',
+      isMine && 'is-mine',
+      isComptoir && 'is-comptoir',
+      isCollector && 'is-collector',
+    )}>
       <ProfileErrorBanner />
       <div className={cn('national-shell__desktop-sidebar', sidebarCollapsed && 'is-collapsed')}>{sidebar}</div>
       {mobileOpen && (
@@ -542,7 +557,12 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
 
           <div className="national-header__identity">
             <div>
-              {isComptoir ? (
+              {isCollector ? (
+                <>
+                  <p className="national-header__eyebrow">Espace collecteur d’or</p>
+                  <h1 title={collectorWorkspace?.collectorName}>{collectorDisplayName}</h1>
+                </>
+              ) : isComptoir ? (
                 <>
                   <p className="national-header__eyebrow">Espace comptoir d’or</p>
                   <h1 title={comptoirWorkspace?.name}>{comptoirDisplayName}</h1>
@@ -669,7 +689,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 <span className="national-header__avatar"><UserRound aria-hidden="true" /></span>
                 <span className="national-header__profile-copy">
                   <strong>{displayName}</strong>
-                  <small>{isComptoir ? 'Comptoir d’or' : getRoleLabel(user?.role)}</small>
+                  <small>{isCollector ? 'Collecteur d’or' : isComptoir ? 'Comptoir d’or' : getRoleLabel(user?.role)}</small>
                 </span>
                 <ChevronDown aria-hidden="true" />
               </button>

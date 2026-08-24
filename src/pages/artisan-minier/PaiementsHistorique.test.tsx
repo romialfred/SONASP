@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   updatePaiementStatut: vi.fn(),
   showSuccess: vi.fn(),
   showError: vi.fn(),
+  user: { id: 'validator-id' } as Record<string, unknown>,
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -31,7 +32,13 @@ vi.mock('@/hooks/useCustomAlert', () => ({
 }));
 
 vi.mock('@/components/ui/CustomAlert', () => ({ CustomAlert: () => null }));
-vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'validator-id' } }) }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }));
+vi.mock('@/hooks/useCollectorWorkspace', () => ({
+  useCollectorWorkspace: () => ({
+    isCollector: mocks.user.role === 'customer', loading: false,
+    workspace: mocks.user.role === 'customer' ? { assignedArtisanIds: ['a1'] } : null,
+  }),
+}));
 
 vi.mock('@/services/artisanPaiementsService', () => ({
   default: {
@@ -62,7 +69,7 @@ const paiement = (over: Partial<Row>): Row =>
 const paiements = [
   paiement({}),
   paiement({ id: 'p2', reference_paiement: 'PAY-002', type_paiement: 'cash', statut: 'en_traitement', montant_paye: 900_000, date_paiement: '2026-06-20T10:00:00Z', artisan: { nom: 'KONE', prenoms: 'Mamadou', numero_carte: 'CP-0002' } }),
-  paiement({ id: 'p3', reference_paiement: 'PAY-003', type_paiement: 'cheque', statut: 'annule', montant_paye: 400_000, date_paiement: '2026-01-05T10:00:00Z' }),
+  paiement({ id: 'p3', artisan_id: 'a2', reference_paiement: 'PAY-003', type_paiement: 'cheque', statut: 'annule', montant_paye: 400_000, date_paiement: '2026-01-05T10:00:00Z' }),
 ];
 
 describe('filterPaiements', () => {
@@ -84,6 +91,7 @@ describe('filterPaiements', () => {
 describe('PaiementsHistorique', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.user = { id: 'validator-id' };
     mocks.getAllPaiements.mockResolvedValue(paiements);
     mocks.updatePaiementStatut.mockResolvedValue(undefined);
   });
@@ -128,5 +136,20 @@ describe('PaiementsHistorique', () => {
     await waitFor(() =>
       expect(mocks.showError).toHaveBeenCalledWith("Impossible de charger l'historique des paiements")
     );
+  });
+
+  it('présente au Collecteur un historique filtré sans transition de workflow', async () => {
+    mocks.user = {
+      id: 'collector-user', role: 'customer', is_active: true,
+      capabilities: ['collector.operate'],
+    };
+    render(<PaiementsHistorique />);
+
+    await waitFor(() => expect(screen.getByText('PAY-001')).toBeInTheDocument());
+    expect(screen.queryByText('PAY-003')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Lecture seule').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Valider' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Dossiers en attente/ })).not.toBeInTheDocument();
+    expect(mocks.updatePaiementStatut).not.toHaveBeenCalled();
   });
 });

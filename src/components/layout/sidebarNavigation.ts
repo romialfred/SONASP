@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import type { UserProfile } from '@/types/auth';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
+import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { isMineScopedUser } from '@/lib/mineAccess';
 import { canAccessSonaspComptoirInbox } from '@/lib/sonaspComptoirAccess';
 
@@ -378,6 +379,75 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
   },
 ];
 
+/**
+ * Le collecteur ne gère que la collecte locale auprès des orpailleurs qui lui
+ * sont assignés. Aucune création n'est proposée tant qu'un RPC transactionnel
+ * dédié n'existe pas, et aucune route de cession/export n'entre dans ce menu.
+ */
+export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
+  {
+    id: 'collecteur-collecte',
+    title: 'Collecte locale',
+    groups: [
+      {
+        id: 'collecteur-accueil',
+        label: 'Mon espace',
+        path: '/portail-collecteur',
+        icon: Grid2X2,
+        color: '#2f7d6d',
+      },
+      {
+        id: 'collecteur-orpailleurs',
+        label: 'Orpailleurs assignés',
+        path: '/artisan-minier/liste',
+        icon: Users,
+        color: '#2f6fec',
+      },
+      {
+        id: 'collecteur-registre',
+        label: 'Registre des collectes',
+        path: '/artisan-minier/ventes-or',
+        icon: CircleDollarSign,
+        color: '#c47a3b',
+      },
+    ],
+  },
+  {
+    id: 'collecteur-suivi',
+    title: 'Suivi autorisé',
+    groups: [
+      {
+        id: 'collecteur-stock',
+        label: 'Stock du comptoir',
+        path: '/portail-collecteur/stock',
+        icon: Layers,
+        color: '#2f7d6d',
+      },
+      {
+        id: 'collecteur-paiements',
+        label: 'Paiements',
+        path: '/artisan-minier/paiements/historique',
+        icon: CircleDollarSign,
+        color: '#7b3f61',
+      },
+      {
+        id: 'collecteur-taxes',
+        label: 'Taxes et retenues',
+        path: '/artisan-minier/rapports/taxes',
+        icon: BarChart3,
+        color: '#c47a3b',
+      },
+      {
+        id: 'collecteur-documents',
+        label: 'Documents',
+        path: '/portail-collecteur/documents',
+        icon: FileText,
+        color: '#2f6fec',
+      },
+    ],
+  },
+];
+
 export const SONASP_COMPTOIR_NAVIGATION_SECTION: NavigationSection = {
   id: 'relations-comptoirs',
   title: 'Relations avec les comptoirs',
@@ -396,6 +466,7 @@ export const SONASP_COMPTOIR_NAVIGATION_SECTION: NavigationSection = {
 export const ALL_GROUPS: NavigationGroup[] = [
   ...NAVIGATION_SECTIONS,
   ...COMPTOIR_NAVIGATION_SECTIONS,
+  ...COLLECTOR_NAVIGATION_SECTIONS,
   SONASP_COMPTOIR_NAVIGATION_SECTION,
 ].flatMap((section) => section.groups);
 
@@ -434,6 +505,7 @@ const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
 
 /** Navigation unique, projetée selon le périmètre autoritatif du compte. */
 export function getNavigationSectionsForUser(user: UserProfile | null): NavigationSection[] {
+  if (isCollectorScopedUser(user)) return COLLECTOR_NAVIGATION_SECTIONS;
   if (isComptoirScopedUser(user)) return COMPTOIR_NAVIGATION_SECTIONS;
   if (!isMineScopedUser(user)) {
     return canAccessSonaspComptoirInbox(user)

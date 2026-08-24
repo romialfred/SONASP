@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDefaultRoute } from '@/lib/permissions';
 import { Loading } from '@/components/ui/Loading';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
+import { isCollectorRouteAllowed, isCollectorScopedUser } from '@/lib/collectorAccess';
 
 interface PublicRouteProps {
   children: ReactNode;
@@ -26,11 +27,13 @@ export function PublicRoute({ children }: PublicRouteProps) {
     const requestedPath = safeReturnPath((location.state as { from?: { pathname?: unknown } } | null)?.from?.pathname);
     // Un représentant de mine ne revient jamais vers le back-office national à
     // partir d'un ancien `state.from`. Son seul périmètre privé est le portail.
-    const destination = isComptoirScopedUser(user)
-      ? (requestedPath?.startsWith('/portail-comptoir') ? requestedPath : '/portail-comptoir')
-      : user.mining_company_id
-        ? (requestedPath?.startsWith('/portail-mine') ? requestedPath : defaultRoute)
-        : requestedPath || defaultRoute;
+    const destination = isCollectorScopedUser(user)
+      ? (requestedPath && isCollectorRouteAllowed(requestedPath) ? requestedPath : '/portail-collecteur')
+      : isComptoirScopedUser(user)
+        ? (requestedPath?.startsWith('/portail-comptoir') ? requestedPath : '/portail-comptoir')
+        : user.mining_company_id
+          ? (requestedPath?.startsWith('/portail-mine') ? requestedPath : defaultRoute)
+          : requestedPath || defaultRoute;
     return <Navigate to={destination} replace />;
   }
 

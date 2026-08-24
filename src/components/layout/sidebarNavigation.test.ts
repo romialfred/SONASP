@@ -201,6 +201,32 @@ describe('navigation', () => {
     expect(routes).not.toContain('/gold-prices');
     expect(routes).not.toContain('/production/licenses');
   });
+
+  it('projette un menu Collecteur local, consultatif et sans vente internationale', () => {
+    const collector = {
+      id: 'collector-user', email: 'collector@example.bf', full_name: 'Collecteur Exemple', phone: null,
+      role: 'customer', mining_company_id: null, site_ids: [], is_active: true,
+      capabilities: ['collector.operate', 'comptoir.manage'],
+      is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+      email_notifications: true, batch_notifications: true, approval_notifications: true,
+      created_at: '2026-01-01', updated_at: '2026-01-01',
+    } satisfies UserProfile;
+    const sections = getNavigationSectionsForUser(collector);
+    const routes = sections.flatMap((section) => section.groups.flatMap((group) =>
+      group.children?.map((item) => item.path) || [group.path]
+    ));
+
+    expect(sections.map((section) => section.id)).toEqual(['collecteur-collecte', 'collecteur-suivi']);
+    expect(routes).toEqual(expect.arrayContaining([
+      '/portail-collecteur', '/artisan-minier/liste', '/artisan-minier/ventes-or',
+      '/portail-collecteur/stock', '/artisan-minier/paiements/historique',
+      '/artisan-minier/rapports/taxes', '/portail-collecteur/documents',
+    ]));
+    expect(routes).not.toContain('/artisan-minier/ventes-or/nouvelle');
+    expect(routes).not.toContain('/portail-comptoir/ventes-sonasp');
+    expect(routes).not.toContain('/sales');
+    expect(routes).not.toContain('/gold-prices');
+  });
 });
 
 describe('navigation de la boîte Comptoir → SONASP', () => {

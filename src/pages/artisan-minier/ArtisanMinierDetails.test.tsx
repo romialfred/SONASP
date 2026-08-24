@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   getVentes: vi.fn(),
   getInfractions: vi.fn(),
   showError: vi.fn(),
+  user: null as Record<string, unknown> | null,
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -36,6 +37,8 @@ vi.mock('@/hooks/useCustomAlert', () => ({
     closeAlert: vi.fn(),
   }),
 }));
+
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }));
 
 vi.mock('@/services/artisanMinierService', () => ({
   artisanMinierService: { getById: mocks.getArtisan },
@@ -102,6 +105,7 @@ describe('carteActive', () => {
 describe('ArtisanMinierDetails', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.user = null;
     mocks.params.id = 'a1';
     mocks.getArtisan.mockResolvedValue(artisan);
     mocks.getCartes.mockResolvedValue(cartes);
@@ -169,5 +173,20 @@ describe('ArtisanMinierDetails', () => {
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Artisan introuvable' })).toBeInTheDocument());
     expect(mocks.showError).toHaveBeenCalledWith("Impossible de charger le dossier de l'artisan");
+  });
+
+  it('rend le dossier Collecteur consultatif et ne charge pas les infractions', async () => {
+    mocks.user = {
+      id: 'collector-user', role: 'customer', is_active: true,
+      capabilities: ['collector.operate'],
+    };
+    render(<ArtisanMinierDetails />);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'KABORE Awa' })).toBeInTheDocument());
+    expect(screen.getByText(/Dossier en lecture seule/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Modifier le dossier/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Signaler une infraction/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Infractions/ })).not.toBeInTheDocument();
+    expect(mocks.getInfractions).not.toHaveBeenCalled();
   });
 });

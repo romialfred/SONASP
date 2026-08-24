@@ -19,10 +19,13 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
+import { isCollectorScopedUser } from '@/lib/collectorAccess';
+import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
 import {
   Badge,
   DataTable,
   EmptyState,
+  Note,
   PageHeader,
   SearchInput,
   SelectControl,
@@ -128,6 +131,8 @@ export default function VentesOr() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isComptoir = isComptoirScopedUser(user);
+  const isCollector = isCollectorScopedUser(user);
+  const { workspace: collectorWorkspace } = useCollectorWorkspace();
   const [sales, setSales] = useState<ArtisanGoldSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,7 +173,16 @@ export default function VentesOr() {
     void loadSales();
   }, []);
 
-  const results = useMemo(() => sortSales(filterSales(sales, filters), sort), [filters, sales, sort]);
+  const visibleSales = useMemo(() => {
+    if (!isCollector) return sales;
+    const assigned = new Set(collectorWorkspace?.assignedArtisanIds || []);
+    return sales.filter((sale) => assigned.has(sale.artisan_id));
+  }, [collectorWorkspace?.assignedArtisanIds, isCollector, sales]);
+
+  const results = useMemo(
+    () => sortSales(filterSales(visibleSales, filters), sort),
+    [filters, sort, visibleSales],
+  );
 
   const stats = useMemo(
     () => ({
@@ -187,10 +201,10 @@ export default function VentesOr() {
   const countByStatut = useMemo(
     () =>
       STATUT_ORDER.reduce(
-        (counters, statut) => ({ ...counters, [statut]: sales.filter((sale) => sale.statut === statut).length }),
+        (counters, statut) => ({ ...counters, [statut]: visibleSales.filter((sale) => sale.statut === statut).length }),
         {} as Record<Statut, number>
       ),
-    [sales]
+    [visibleSales]
   );
 
   /** Suppression confirmée par le dialogue de la plateforme (plus de `confirm()` natif). */
@@ -249,29 +263,33 @@ export default function VentesOr() {
           >
             <Eye aria-hidden="true" />
           </button>
-          <button
-            type="button"
-            className="sn-btn sn-btn--sm sn-btn--icon"
-            aria-label={`Modifier la vente ${sale.numero_recu || ''}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              navigate(`/artisan-minier/ventes-or/${sale.id}/modifier`);
-            }}
-          >
-            <Pencil aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="sn-btn sn-btn--sm sn-btn--icon sn-btn--danger"
-            aria-label={`Supprimer la vente ${sale.numero_recu || ''}`}
-            disabled={deleting === sale.id}
-            onClick={(event) => {
-              event.stopPropagation();
-              void handleDelete(sale);
-            }}
-          >
-            <Trash2 aria-hidden="true" />
-          </button>
+          {!isCollector && (
+            <>
+              <button
+                type="button"
+                className="sn-btn sn-btn--sm sn-btn--icon"
+                aria-label={`Modifier la vente ${sale.numero_recu || ''}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  navigate(`/artisan-minier/ventes-or/${sale.id}/modifier`);
+                }}
+              >
+                <Pencil aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="sn-btn sn-btn--sm sn-btn--icon sn-btn--danger"
+                aria-label={`Supprimer la vente ${sale.numero_recu || ''}`}
+                disabled={deleting === sale.id}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleDelete(sale);
+                }}
+              >
+                <Trash2 aria-hidden="true" />
+              </button>
+            </>
+          )}
         </span>
       ),
     },
@@ -285,13 +303,15 @@ export default function VentesOr() {
 
         <PageHeader
           icon={Coins}
-          title={isComptoir ? "Achats d’or" : "Ventes d’or des artisans"}
-          subtitle={isComptoir
+          title={isCollector ? "Collectes des orpailleurs assignés" : isComptoir ? "Achats d’or" : "Ventes d’or des artisans"}
+          subtitle={isCollector
+            ? 'Registre en lecture seule des achats locaux entrant dans votre périmètre.'
+            : isComptoir
             ? 'Achats auprès de vos orpailleurs rattachés, avec taxes calculées.'
             : 'Registre des collectes déclarées par les artisans miniers, taxes incluses.'}
           breadcrumb={[
-            { label: isComptoir ? 'Comptoir' : 'Artisans miniers', to: isComptoir ? '/portail-comptoir' : '/artisan-minier' },
-            { label: isComptoir ? "Achats d'or" : "Ventes d'or" },
+            { label: isCollector ? 'Collecteur' : isComptoir ? 'Comptoir' : 'Artisans miniers', to: isCollector ? '/portail-collecteur' : isComptoir ? '/portail-comptoir' : '/artisan-minier' },
+            { label: isCollector ? 'Registre des collectes' : isComptoir ? "Achats d'or" : "Ventes d'or" },
           ]}
           actions={
             <>
@@ -306,16 +326,24 @@ export default function VentesOr() {
               <button type="button" className="sn-btn" onClick={() => void loadSales()}>
                 <RefreshCw aria-hidden="true" /> Actualiser
               </button>
-              <button
+              {!isCollector && <button
                 type="button"
                 className="sn-btn sn-btn--primary"
                 onClick={() => navigate('/artisan-minier/ventes-or/nouvelle')}
               >
                 <Plus aria-hidden="true" /> {isComptoir ? 'Nouvel achat' : 'Nouvelle vente'}
-              </button>
+              </button>}
             </>
           }
         />
+
+        {isCollector && (
+          <div style={{ marginTop: 16 }}>
+            <Note tone="warning" icon={AlertCircle}>
+              Lecture seule : aucun RPC transactionnel dédié à l’enregistrement d’un achat par un collecteur n’est disponible. Aucune écriture directe n’est exposée.
+            </Note>
+          </div>
+        )}
 
         {error ? (
           <div className="sn-card ventes-or__error">
@@ -433,7 +461,7 @@ export default function VentesOr() {
                   className={filters.statut === 'all' ? 'is-active' : ''}
                   onClick={() => setFilters((current) => ({ ...current, statut: 'all' }))}
                 >
-                  Toutes <b>({integer.format(sales.length)})</b>
+                  Toutes <b>({integer.format(visibleSales.length)})</b>
                 </button>
                 {STATUT_ORDER.map((statut) => (
                   <button
@@ -452,17 +480,17 @@ export default function VentesOr() {
               <div className="sn-card__head">
                 <div>
                   <h3>
-                    Registre des {isComptoir ? 'achats' : 'ventes'} <span className="sn-count">{integer.format(results.length)}</span>
+                    Registre des {isCollector ? 'collectes' : isComptoir ? 'achats' : 'ventes'} <span className="sn-count">{integer.format(results.length)}</span>
                   </h3>
                   <p className="sn-card__hint">Cliquez sur une ligne pour ouvrir le détail de la vente.</p>
                 </div>
               </div>
 
-              {!loading && sales.length === 0 ? (
+              {!loading && visibleSales.length === 0 ? (
                 <EmptyState
-                  title={isComptoir ? 'Aucun achat enregistré' : 'Aucune vente enregistrée'}
-                  description="Enregistrez la première collecte déclarée par un orpailleur rattaché."
-                  action={
+                  title={isCollector ? 'Aucune collecte visible' : isComptoir ? 'Aucun achat enregistré' : 'Aucune vente enregistrée'}
+                  description={isCollector ? 'Aucune collecte d’un orpailleur assigné ne vous est actuellement accessible.' : 'Enregistrez la première collecte déclarée par un orpailleur rattaché.'}
+                  action={!isCollector ? (
                     <button
                       type="button"
                       className="sn-btn sn-btn--primary"
@@ -470,7 +498,7 @@ export default function VentesOr() {
                     >
                       <Plus aria-hidden="true" /> {isComptoir ? 'Nouvel achat' : 'Nouvelle vente'}
                     </button>
-                  }
+                  ) : undefined}
                 />
               ) : (
                 <div style={{ padding: '0 16px 16px' }}>

@@ -34,6 +34,7 @@ import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSalesApprover } from '@/lib/permissions';
+import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
@@ -110,6 +111,7 @@ export default function VenteOrDetails() {
   const { alertState, showSuccess, showError, closeAlert } = useCustomAlert();
   const confirmation = useConfirmationDialog();
   const { user } = useAuth();
+  const isCollector = isCollectorScopedUser(user);
   const canApprove = isSalesApprover(user);
 
   const charger = async (venteId: string) => {
@@ -226,7 +228,7 @@ export default function VenteOrDetails() {
           title={vente.numero_recu || 'Vente sans numéro de reçu'}
           subtitle={`Déclarée le ${formatDate(vente.date_vente)} · ${TYPE_OR_LABELS[vente.type_or] || vente.type_or}`}
           breadcrumb={[
-            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: isCollector ? 'Collecteur' : 'Artisans miniers', to: isCollector ? '/portail-collecteur' : '/artisan-minier' },
             { label: "Ventes d'or", to: '/artisan-minier/ventes-or' },
             { label: vente.numero_recu || 'Détail' },
           ]}
@@ -243,14 +245,14 @@ export default function VenteOrDetails() {
               {/* La facture est un specimen : la certification DGI n'est pas raccordee.
                   L'intitule le dit des le bouton, pour qu'on ne la prenne pas pour une
                   piece opposable. */}
-              <button
+              {!isCollector && <button
                 type="button"
                 className="sn-btn"
                 onClick={() => navigate(`/artisan-minier/ventes-or/${vente.id}/facture`)}
               >
                 <FileText aria-hidden="true" /> Facture (spécimen)
-              </button>
-              {actions?.modifier && (
+              </button>}
+              {!isCollector && actions?.modifier && (
                 <button
                   type="button"
                   className="sn-btn"
@@ -259,7 +261,7 @@ export default function VenteOrDetails() {
                   <Pencil aria-hidden="true" /> Modifier
                 </button>
               )}
-              {actions?.valider && canApprove && (
+              {!isCollector && actions?.valider && canApprove && (
                 <button
                   type="button"
                   className="sn-btn sn-btn--primary"
@@ -270,12 +272,12 @@ export default function VenteOrDetails() {
                   Approuver la vente
                 </button>
               )}
-              {actions?.valider && !canApprove && (
+              {!isCollector && actions?.valider && !canApprove && (
                 <Badge tone="warning" icon={Clock}>
                   En attente d’approbation
                 </Badge>
               )}
-              {actions?.payer && (
+              {!isCollector && actions?.payer && (
                 <button
                   type="button"
                   className="sn-btn sn-btn--primary"
@@ -287,6 +289,14 @@ export default function VenteOrDetails() {
             </>
           }
         />
+
+        {isCollector && (
+          <div style={{ marginTop: 16 }}>
+            <Note tone="warning" icon={Clock}>
+              Consultation uniquement : le collecteur ne peut ni modifier, approuver, annuler ou payer cette collecte depuis ce portail.
+            </Note>
+          </div>
+        )}
 
         <div style={{ marginTop: 16 }}>
           <StatGrid
@@ -432,7 +442,7 @@ export default function VenteOrDetails() {
                 </li>
               </ol>
 
-              {actions?.annuler && (
+              {!isCollector && actions?.annuler && (
                 <div className="vente-detail__danger">
                   <button
                     type="button"

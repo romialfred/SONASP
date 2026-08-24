@@ -31,6 +31,8 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
+import { isCollectorScopedUser } from '@/lib/collectorAccess';
+import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
 import { PageHeader } from '@/components/ui/sn';
 import { ArtisanMinierForm } from '@/components/artisan/ArtisanMinierForm';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
@@ -155,6 +157,9 @@ export default function ArtisanMinierListe() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isComptoir = isComptoirScopedUser(user);
+  const isCollector = isCollectorScopedUser(user);
+  const { workspace: collectorWorkspace } = useCollectorWorkspace();
+  const isScopedPartner = isComptoir || isCollector;
   const [artisans, setArtisans] = useState<ArtisanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -198,16 +203,22 @@ export default function ArtisanMinierListe() {
     void loadArtisans();
   }, []);
 
+  const visibleArtisans = useMemo(() => {
+    if (!isCollector) return artisans;
+    const assigned = new Set(collectorWorkspace?.assignedArtisanIds || []);
+    return artisans.filter((artisan) => assigned.has(artisan.id) && artisan.type_artisan !== 'collecteur');
+  }, [artisans, collectorWorkspace?.assignedArtisanIds, isCollector]);
+
   const countsByType = useMemo(
     () =>
       TYPE_ORDER.reduce(
         (counters, type) => ({
           ...counters,
-          [type]: artisans.filter((artisan) => artisan.type_artisan === type).length,
+          [type]: visibleArtisans.filter((artisan) => artisan.type_artisan === type).length,
         }),
         {} as Record<TypeArtisan, number>
       ),
-    [artisans]
+    [visibleArtisans]
   );
 
   const provinceOptions = useMemo(
@@ -220,7 +231,7 @@ export default function ArtisanMinierListe() {
 
   const results = useMemo(() => {
     const query = applied.search.trim().toLocaleLowerCase('fr');
-    const rows = artisans.filter((artisan) => {
+    const rows = visibleArtisans.filter((artisan) => {
       if (applied.type !== 'all' && artisan.type_artisan !== applied.type) return false;
       if (applied.region && artisan.region !== applied.region) return false;
       if (applied.province && artisan.province !== applied.province) return false;
@@ -240,7 +251,7 @@ export default function ArtisanMinierListe() {
       if (sort === 'revenue') return (b.chiffre_affaires_fcfa || 0) - (a.chiffre_affaires_fcfa || 0);
       return (b.created_at || '').localeCompare(a.created_at || '');
     });
-  }, [applied, artisans, sort]);
+  }, [applied, visibleArtisans, sort]);
 
   const pagesTotal = Math.max(1, Math.ceil(results.length / TAILLE_PAGE));
   const pageCourante = Math.min(page, pagesTotal);
@@ -281,7 +292,7 @@ export default function ArtisanMinierListe() {
     setApplied((current) => ({ ...current, type }));
   };
 
-  if (showForm && !isComptoir) {
+  if (showForm && !isScopedPartner) {
     return (
       <NationalDashboardLayout>
         <div className="sn-page artisan-list">
@@ -317,8 +328,8 @@ export default function ArtisanMinierListe() {
     <NationalDashboardLayout>
       <div className="artisan-list">
         <nav className="artisan-list__breadcrumb" aria-label="Fil d’Ariane">
-          <Link to={isComptoir ? '/portail-comptoir' : '/artisan-minier'}>
-            {isComptoir ? 'Comptoir' : 'Artisans miniers'}
+          <Link to={isCollector ? '/portail-collecteur' : isComptoir ? '/portail-comptoir' : '/artisan-minier'}>
+            {isCollector ? 'Collecteur' : isComptoir ? 'Comptoir' : 'Artisans miniers'}
           </Link>
           <span aria-hidden="true">/</span>
           <strong aria-current="page">Liste</strong>
@@ -326,12 +337,12 @@ export default function ArtisanMinierListe() {
 
         <header className="artisan-list__intro">
           <div>
-            <h2>{isComptoir ? 'Mes orpailleurs' : 'Artisans miniers'}</h2>
+            <h2>{isCollector ? 'Mes orpailleurs assignés' : isComptoir ? 'Mes orpailleurs' : 'Artisans miniers'}</h2>
             <p>
-              {integer.format(artisans.length)} {isComptoir ? 'orpailleurs rattachés' : 'artisans enregistrés'}
+              {integer.format(visibleArtisans.length)} {isCollector ? 'orpailleurs assignés' : isComptoir ? 'orpailleurs rattachés' : 'artisans enregistrés'}
             </p>
           </div>
-          {!isComptoir && <div className="artisan-list__actions">
+          {!isScopedPartner && <div className="artisan-list__actions">
             <button type="button" className="artisan-list__button is-primary" onClick={() => setShowForm(true)}>
               <Plus aria-hidden="true" /> Nouvel artisan
             </button>
@@ -380,7 +391,7 @@ export default function ArtisanMinierListe() {
                   value={applied.type}
                   onChange={(event) => selectType(event.target.value as TypeArtisan | 'all')}
                 >
-                  <option value="all">Tous les types ({integer.format(artisans.length)})</option>
+                  <option value="all">Tous les types ({integer.format(visibleArtisans.length)})</option>
                   {TYPE_ORDER.map((type) => (
                     <option key={type} value={type}>
                       {TYPE_LABELS[type]} ({integer.format(countsByType[type] || 0)})
@@ -556,7 +567,7 @@ export default function ArtisanMinierListe() {
                     <button type="button" onClick={() => navigate(`/artisan-minier/${artisan.id}`)}>
                       <FileText aria-hidden="true" /> Voir le dossier
                     </button>
-                    {!isComptoir && <div className="artisan-card__menu">
+                    {!isScopedPartner && <div className="artisan-card__menu">
                       <button
                         type="button"
                         aria-label={`Actions pour ${displayName(artisan)}`}

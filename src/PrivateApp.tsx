@@ -7,6 +7,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MinePortalGuard } from './components/auth/MinePortalGuard';
 import { ComptoirPortalGuard } from './components/auth/ComptoirPortalGuard';
+import { CollectorPortalGuard } from './components/auth/CollectorPortalGuard';
 import { MandatoryMfaGate } from './components/auth/MandatoryMfaGate';
 import { ProfileGuard } from './components/auth/ProfileGuard';
 import { PublicRoute } from './components/auth/PublicRoute';
@@ -148,6 +149,9 @@ const MinePortalPage = lazy(() => import('./pages/mine/MinePortalPage'));
 const ComptoirPortalPage = lazy(() => import('./pages/comptoir/ComptoirPortalPage'));
 const ComptoirStockPage = lazy(() => import('./pages/comptoir/ComptoirStockPage'));
 const ComptoirSonaspSalesPage = lazy(() => import('./pages/comptoir/ComptoirSonaspSalesPage'));
+const CollectorPortalPage = lazy(() => import('./pages/collector/CollectorPortalPage'));
+const CollectorStockPage = lazy(() => import('./pages/collector/CollectorStockPage'));
+const CollectorDocumentsPage = lazy(() => import('./pages/collector/CollectorDocumentsPage'));
 const SonaspComptoirSalesInboxPage = lazy(() => import('./pages/comptoir/SonaspComptoirSalesInboxPage'));
 const ManagerPortalPage = lazy(() => import('./pages/manager/ManagerPortalPage'));
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
@@ -219,6 +223,30 @@ function AppRoutes() {
           <Route path="/settings" element={<Navigate to="/parameters" replace />} />
 
           <Route element={<NationalDashboardChrome />}>
+            <Route
+              path="/portail-collecteur"
+              element={
+                <CollectorPortalGuard>
+                  <CollectorPortalPage />
+                </CollectorPortalGuard>
+              }
+            />
+            <Route
+              path="/portail-collecteur/stock"
+              element={
+                <CollectorPortalGuard>
+                  <CollectorStockPage />
+                </CollectorPortalGuard>
+              }
+            />
+            <Route
+              path="/portail-collecteur/documents"
+              element={
+                <CollectorPortalGuard>
+                  <CollectorDocumentsPage />
+                </CollectorPortalGuard>
+              }
+            />
             <Route
               path="/portail-comptoir"
               element={

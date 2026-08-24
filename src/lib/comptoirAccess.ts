@@ -25,7 +25,8 @@ export function isComptoirScopedUser(user: UserProfile | null | undefined): bool
   return Boolean(
     user?.is_active
       && user.role === 'customer'
-      && hasCapability(user, CAPABILITIES.COMPTOIR_MANAGE),
+      && hasCapability(user, CAPABILITIES.COMPTOIR_MANAGE)
+      && !hasCapability(user, CAPABILITIES.COLLECTOR_OPERATE),
   );
 }
 

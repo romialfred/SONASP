@@ -40,6 +40,8 @@ import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMini
 import { carteProfessionnelleService, type CarteProfessionnelle } from '@/services/carteProfessionnelleService';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanInfractionsService, type ArtisanInfraction } from '@/services/artisanInfractionsService';
+import { useAuth } from '@/contexts/AuthContext';
+import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import './artisan-details.css';
 
 type Onglet = 'informations' | 'carte' | 'transactions' | 'infractions';
@@ -109,6 +111,8 @@ export function carteActive(cartes: CarteProfessionnelle[]): CarteProfessionnell
 export default function ArtisanMinierDetails() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const isCollector = isCollectorScopedUser(user);
 
   const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);
   const [cartes, setCartes] = useState<CarteProfessionnelle[]>([]);
@@ -132,7 +136,7 @@ export default function ArtisanMinierDetails() {
         artisanMinierService.getById(id),
         carteProfessionnelleService.getByArtisanId(id),
         artisanGoldSalesService.getByArtisan(id),
-        artisanInfractionsService.getByArtisanId(id),
+        isCollector ? Promise.resolve([]) : artisanInfractionsService.getByArtisanId(id),
       ]);
       if (!mounted) return;
 
@@ -155,7 +159,7 @@ export default function ArtisanMinierDetails() {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, isCollector]);
 
   const carte = useMemo(() => carteActive(cartes), [cartes]);
 
@@ -256,7 +260,7 @@ export default function ArtisanMinierDetails() {
             title="Artisan introuvable"
             subtitle="Ce dossier n’existe pas ou a été supprimé."
             breadcrumb={[
-              { label: 'Artisans miniers', to: '/artisan-minier' },
+              { label: isCollector ? 'Collecteur' : 'Artisans miniers', to: isCollector ? '/portail-collecteur' : '/artisan-minier' },
               { label: 'Liste des artisans', to: '/artisan-minier/liste' },
               { label: 'Dossier' },
             ]}
@@ -285,7 +289,7 @@ export default function ArtisanMinierDetails() {
           title={artisanFullName(artisan)}
           subtitle={`${artisan.type_artisan || 'Artisan'} · ${artisan.numero_carte || 'Carte non attribuée'}`}
           breadcrumb={[
-            { label: 'Artisans miniers', to: '/artisan-minier' },
+            { label: isCollector ? 'Collecteur' : 'Artisans miniers', to: isCollector ? '/portail-collecteur' : '/artisan-minier' },
             { label: 'Liste des artisans', to: '/artisan-minier/liste' },
             { label: artisanFullName(artisan) },
           ]}
@@ -294,7 +298,7 @@ export default function ArtisanMinierDetails() {
               <Badge tone={artisan.actif === false ? 'danger' : 'success'}>
                 {artisan.actif === false ? 'Inactif' : 'Actif'}
               </Badge>
-              {totaux.infractionsOuvertes > 0 && (
+              {!isCollector && totaux.infractionsOuvertes > 0 && (
                 <Badge tone="warning" icon={AlertTriangle}>
                   {integer.format(totaux.infractionsOuvertes)} infraction(s) en cours
                 </Badge>
@@ -306,20 +310,20 @@ export default function ArtisanMinierDetails() {
               <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/liste')}>
                 <ArrowLeft aria-hidden="true" /> Liste
               </button>
-              <button
+              {!isCollector && <button
                 type="button"
                 className="sn-btn"
                 onClick={() => navigate(`/artisan-minier/${artisan.id}/infractions/nouvelle`)}
               >
                 <ShieldAlert aria-hidden="true" /> Signaler une infraction
-              </button>
-              <button
+              </button>}
+              {!isCollector && <button
                 type="button"
                 className="sn-btn sn-btn--primary"
                 onClick={() => navigate(`/artisan-minier/${artisan.id}/edit`)}
               >
                 <Pencil aria-hidden="true" /> Modifier le dossier
-              </button>
+              </button>}
             </>
           }
         />
@@ -331,13 +335,21 @@ export default function ArtisanMinierDetails() {
               { label: 'Ventes déclarées', value: integer.format(ventes.length), icon: Coins, tone: 'gold' },
               { label: 'Quantité collectée', value: `${decimal.format(totaux.quantite)} g`, icon: Scale, tone: 'green' },
               { label: "Chiffre d'affaires", value: formatFcfa(totaux.montant), icon: Banknote, tone: 'blue' },
-              { label: 'Infractions', value: integer.format(infractions.length), hint: `${integer.format(totaux.infractionsOuvertes)} en cours`, icon: AlertTriangle, tone: totaux.infractionsOuvertes > 0 ? 'red' : 'violet' },
+              ...(isCollector ? [] : [{ label: 'Infractions', value: integer.format(infractions.length), hint: `${integer.format(totaux.infractionsOuvertes)} en cours`, icon: AlertTriangle, tone: (totaux.infractionsOuvertes > 0 ? 'red' : 'violet') as const }]),
             ]}
           />
         </div>
 
+        {isCollector && (
+          <div style={{ marginTop: 16 }}>
+            <Note tone="info" icon={Eye}>
+              Dossier en lecture seule. Les modifications, validations, signalements et créations restent hors du périmètre du collecteur.
+            </Note>
+          </div>
+        )}
+
         <nav className="artisan-detail__tabs" role="tablist" aria-label="Sections du dossier">
-          {ONGLETS.map((item) => (
+          {ONGLETS.filter((item) => !isCollector || item.id !== 'infractions').map((item) => (
             <button
               key={item.id}
               type="button"
@@ -437,7 +449,7 @@ export default function ArtisanMinierDetails() {
               <EmptyState
                 title="Aucune carte délivrée"
                 description="La carte est générée après validation du dossier par la direction."
-                action={
+                action={!isCollector ? (
                   <button
                     type="button"
                     className="sn-btn"
@@ -445,7 +457,7 @@ export default function ArtisanMinierDetails() {
                   >
                     <BadgeCheck aria-hidden="true" /> Ouvrir la validation des cartes
                   </button>
-                }
+                ) : undefined}
               />
             ) : (
               <>
@@ -515,13 +527,13 @@ export default function ArtisanMinierDetails() {
                 onChange={setRechercheVente}
                 placeholder="Rechercher par reçu, type d’or ou observation"
               />
-              <button
+              {!isCollector && <button
                 type="button"
                 className="sn-btn sn-btn--primary"
                 onClick={() => navigate('/artisan-minier/ventes-or/nouvelle')}
               >
                 <Plus aria-hidden="true" /> Nouvelle vente
-              </button>
+              </button>}
             </div>
             {ventes.length === 0 ? (
               <EmptyState
@@ -540,7 +552,7 @@ export default function ArtisanMinierDetails() {
           </Section>
         )}
 
-        {onglet === 'infractions' && (
+        {!isCollector && onglet === 'infractions' && (
           <Section
             id="infractions"
             icon={ShieldAlert}

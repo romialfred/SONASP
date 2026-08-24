@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   showSuccess: vi.fn(),
   showError: vi.fn(),
   openConfirm: vi.fn(),
+  user: null as Record<string, unknown> | null,
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -22,7 +23,13 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }));
+vi.mock('@/hooks/useCollectorWorkspace', () => ({
+  useCollectorWorkspace: () => ({
+    isCollector: Boolean(mocks.user), loading: false,
+    workspace: mocks.user ? { assignedArtisanIds: ['a1'] } : null,
+  }),
+}));
 
 vi.mock('@/hooks/useCustomAlert', () => ({
   useCustomAlert: () => ({
@@ -69,7 +76,7 @@ const sale = (over: Partial<ArtisanGoldSale>): ArtisanGoldSale =>
 const sales = [
   sale({}),
   sale({ id: 's2', numero_recu: 'REC-002', statut: 'payee', type_or: 'lingot', date_vente: '2026-06-01', quantite_grammes: 400, montant_total_fcfa: 19_000_000 }),
-  sale({ id: 's3', numero_recu: 'REC-003', statut: 'validee', type_or: 'pepites', date_vente: '2026-01-20', quantite_grammes: 55, montant_total_fcfa: 2_100_000 }),
+  sale({ id: 's3', artisan_id: 'a2', numero_recu: 'REC-003', statut: 'validee', type_or: 'pepites', date_vente: '2026-01-20', quantite_grammes: 55, montant_total_fcfa: 2_100_000 }),
 ];
 
 describe('filterSales / sortSales', () => {
@@ -94,6 +101,7 @@ describe('filterSales / sortSales', () => {
 describe('VentesOr', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.user = null;
     mocks.getAll.mockResolvedValue(sales);
     mocks.remove.mockResolvedValue(undefined);
     mocks.openConfirm.mockResolvedValue(true);
@@ -214,6 +222,21 @@ describe('VentesOr', () => {
     // Les statuts servent de navigation rapide : ils ne sont pas dans le volet.
     const bande = screen.getByRole('group', { name: 'Statut de la vente' });
     expect(within(bande).getByRole('button', { name: /Toutes/ })).toBeInTheDocument();
+  });
+
+  it('limite le Collecteur à ses affectations et masque toutes les mutations', async () => {
+    mocks.user = {
+      id: 'collector-user', role: 'customer', is_active: true,
+      capabilities: ['collector.operate', 'comptoir.manage'],
+    };
+    render(<VentesOr />);
+
+    await waitFor(() => expect(screen.getByText('REC-001')).toBeInTheDocument());
+    expect(screen.queryByText('REC-003')).not.toBeInTheDocument();
+    expect(screen.getByText(/Lecture seule : aucun RPC transactionnel/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Nouvel achat|Nouvelle vente/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Modifier la vente/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Supprimer la vente/ })).not.toBeInTheDocument();
   });
 });
 

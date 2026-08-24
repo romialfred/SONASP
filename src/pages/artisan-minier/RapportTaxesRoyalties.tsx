@@ -16,6 +16,8 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { artisanAnalyticsService, type RapportTaxesRoyalties as LigneTaxes } from '@/services/artisanAnalyticsService';
+import { useAuth } from '@/contexts/AuthContext';
+import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import {
   defaultPeriode,
   formatMontant,
@@ -72,6 +74,8 @@ export function totauxTaxes(lignes: LigneTaxes[]): TotauxTaxes {
 
 export default function RapportTaxesRoyalties() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isCollector = isCollectorScopedUser(user);
   const periodeInitiale = defaultPeriode();
 
   const [debut, setDebut] = useState(periodeInitiale.debut);
@@ -119,14 +123,14 @@ export default function RapportTaxesRoyalties() {
           title="Rapport taxes et royalties"
           subtitle="TVA, retenue à la source et taxe de développement communal issues des factures émises."
           breadcrumb={[
-            { label: 'Artisans miniers', to: '/artisan-minier' },
-            { label: 'Rapports', to: '/artisan-minier/rapports' },
+            { label: isCollector ? 'Collecteur' : 'Artisans miniers', to: isCollector ? '/portail-collecteur' : '/artisan-minier' },
+            ...(isCollector ? [] : [{ label: 'Rapports', to: '/artisan-minier/rapports' }]),
             { label: 'Taxes et royalties' },
           ]}
           actions={
             <>
-              <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/rapports')}>
-                <ArrowLeft aria-hidden="true" /> Centre de rapports
+              <button type="button" className="sn-btn" onClick={() => navigate(isCollector ? '/portail-collecteur' : '/artisan-minier/rapports')}>
+                <ArrowLeft aria-hidden="true" /> {isCollector ? 'Espace collecteur' : 'Centre de rapports'}
               </button>
               <button
                 type="button"
@@ -139,6 +143,14 @@ export default function RapportTaxesRoyalties() {
             </>
           }
         />
+
+        {isCollector && (
+          <div style={{ marginTop: 16 }}>
+            <Note tone="info">
+              Ce rapport en lecture seule est limité par les politiques RLS aux factures des orpailleurs qui vous sont assignés.
+            </Note>
+          </div>
+        )}
 
         <section className="sn-card rapports__filtres" aria-label="Paramètres du rapport">
           <label className="sn-field">

@@ -2,6 +2,7 @@ import type { UserProfile, UserRole } from '@/types/auth';
 
 export const CAPABILITIES = {
   ACCOUNTS_MANAGE: 'accounts.manage',
+  EMAIL_SETTINGS_MANAGE: 'email.settings.manage',
   REFERENTIALS_MANAGE: 'referentials.manage',
   SUPPORT_READ: 'support.read',
   REPORTS_READ: 'reports.read',
@@ -93,6 +94,7 @@ const ROLE_CAPABILITY_FALLBACK: Record<UserRole, CapabilityCode[]> = {
   owner: Object.values(CAPABILITIES),
   admin: [
     CAPABILITIES.ACCOUNTS_MANAGE,
+    CAPABILITIES.EMAIL_SETTINGS_MANAGE,
     CAPABILITIES.REFERENTIALS_MANAGE,
     CAPABILITIES.SUPPORT_READ,
     CAPABILITIES.REPORTS_READ,

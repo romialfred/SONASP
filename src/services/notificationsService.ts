@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { CAPABILITIES } from '@/lib/capabilities';
 
 /**
  * Notifications de la plateforme.
@@ -77,6 +78,16 @@ export interface ResumeNotifications {
   urgentes: number;
   hautes: number;
   plus_ancienne: string | null;
+}
+
+async function exigerGestionConfigurationCourriel(): Promise<void> {
+  const { data, error } = await supabase.rpc('snp_actor_has_capability', {
+    p_capability_code: CAPABILITIES.EMAIL_SETTINGS_MANAGE,
+  });
+  if (error) throw error;
+  if (data !== true) {
+    throw new Error('Vous ne disposez pas du droit de gérer la configuration de messagerie.');
+  }
 }
 
 export interface LivraisonNotification {
@@ -318,6 +329,7 @@ export const notificationsService = {
 
   /** Éprouve la configuration et rend l'erreur SMTP telle quelle. */
   async testerMessagerie(destinataire?: string): Promise<{ envoye: boolean; erreur?: string }> {
+    await exigerGestionConfigurationCourriel();
     const { data, error } = await supabase.functions.invoke('envoyer-courriel', {
       body: { action: 'test', to: destinataire },
     });
@@ -334,6 +346,7 @@ export const notificationsService = {
 
   /** Les jeux enregistrés, du plus récent au plus ancien, sans les secrets. */
   async configurations(): Promise<ConfigurationCourriel[]> {
+    await exigerGestionConfigurationCourriel();
     const reponse = await supabase.rpc('snp_configurations_courriel');
     return (lancerSiErreur(reponse) || []) as ConfigurationCourriel[];
   },
@@ -345,6 +358,7 @@ export const notificationsService = {
   async creerConfiguration(
     entree: SaisieConfigurationCourriel & { activer?: boolean },
   ): Promise<string> {
+    await exigerGestionConfigurationCourriel();
     const reponse = await supabase.rpc('snp_creer_configuration_courriel', {
       p_libelle: entree.libelle,
       p_hote: entree.hote,
@@ -364,6 +378,7 @@ export const notificationsService = {
    * un serveur ou un expéditeur sans avoir à ressaisir le secret.
    */
   async modifierConfiguration(uid: string, entree: SaisieConfigurationCourriel): Promise<void> {
+    await exigerGestionConfigurationCourriel();
     const reponse = await supabase.rpc('snp_modifier_configuration_courriel', {
       p_uid: uid,
       p_libelle: entree.libelle,
@@ -380,16 +395,19 @@ export const notificationsService = {
 
   /** Rend ce jeu actif, et désactive l'autre dans la même transaction. */
   async activerConfiguration(uid: string): Promise<void> {
+    await exigerGestionConfigurationCourriel();
     lancerSiErreur(await supabase.rpc('snp_activer_configuration_courriel', { p_uid: uid }));
   },
 
   /** Coupe la messagerie : plus aucun courriel ne part tant qu'aucun jeu n'est actif. */
   async desactiverConfiguration(uid: string): Promise<void> {
+    await exigerGestionConfigurationCourriel();
     lancerSiErreur(await supabase.rpc('snp_desactiver_configuration_courriel', { p_uid: uid }));
   },
 
   /** Retire un jeu. La base refuse de retirer celui qui sert. */
   async supprimerConfiguration(uid: string): Promise<void> {
+    await exigerGestionConfigurationCourriel();
     lancerSiErreur(await supabase.rpc('snp_supprimer_configuration_courriel', { p_uid: uid }));
   },
 };

@@ -2,9 +2,12 @@ import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 import { niveauAssurance } from '../_shared/assurance.ts';
 import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
 import { urlModificationMotDePasse, urlRecuperationCompte } from '../_shared/application-url.ts';
+import {
+  ACCOUNT_MANAGEMENT_CAPABILITY,
+  canManageAccountTarget,
+} from '../_shared/account-role-policy.ts';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const ROLES_ADMINISTRATION = new Set(['owner', 'admin', 'management']);
 
 class ErreurPublique extends Error {
   constructor(public statut: number, message: string) {
@@ -25,7 +28,8 @@ Deno.serve(async (req: Request) => {
 
   const urlSupabase = Deno.env.get('SUPABASE_URL');
   const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!urlSupabase || !cleService) {
+  const cleAnon = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!urlSupabase || !cleService || !cleAnon) {
     return reponseJson(req, { success: false, error: 'Le service de récupération est indisponible.' }, 503);
   }
 
@@ -44,6 +48,13 @@ Deno.serve(async (req: Request) => {
       throw new ErreurPublique(401, 'Votre session n’est plus valide. Reconnectez-vous.');
     }
 
+    // Les RPC doivent recevoir le JWT utilisateur et non la clé de service :
+    // `auth.uid()` reste ainsi l'autorité pour la capacité et la hiérarchie.
+    const clientActeur = createClient(urlSupabase, cleAnon, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: autorisation } },
+    });
+
     const { data: profilActeur, error: erreurProfil } = await admin
       .from('user_profiles')
       .select('role, is_active, mining_company_id, mfa_enrolled_at')
@@ -52,10 +63,19 @@ Deno.serve(async (req: Request) => {
     const habilite = !erreurProfil
       && profilActeur?.is_active
       && profilActeur.mining_company_id === null
-      && ROLES_ADMINISTRATION.has(String(profilActeur.role).toLowerCase())
       && Boolean(profilActeur.mfa_enrolled_at)
       && niveauAssurance(jeton) === 'aal2';
     if (!habilite) {
+      throw new ErreurPublique(403, 'Vous ne disposez pas du droit de réinitialiser ce compte.');
+    }
+
+    const { data: possedeCapacite, error: erreurCapacite } = await clientActeur
+      .rpc('snp_actor_has_capability', { p_capability_code: ACCOUNT_MANAGEMENT_CAPABILITY });
+    if (erreurCapacite) {
+      console.error('[reset-user-password] Capacité indisponible.', erreurCapacite.message);
+      throw new ErreurPublique(503, 'La vérification de vos habilitations est indisponible.');
+    }
+    if (possedeCapacite !== true) {
       throw new ErreurPublique(403, 'Vous ne disposez pas du droit de réinitialiser ce compte.');
     }
 
@@ -68,9 +88,19 @@ Deno.serve(async (req: Request) => {
       throw new ErreurPublique(400, 'Utilisez la procédure « Mot de passe oublié » pour votre propre compte.');
     }
 
+    const { data: cibleAdministrable, error: erreurHierarchie } = await clientActeur
+      .rpc('snp_peut_administrer_compte', { p_target_id: utilisateurId });
+    if (erreurHierarchie) {
+      console.error('[reset-user-password] Hiérarchie indisponible.', erreurHierarchie.message);
+      throw new ErreurPublique(503, 'La vérification de la hiérarchie des comptes est indisponible.');
+    }
+    if (cibleAdministrable !== true) {
+      throw new ErreurPublique(403, 'Vous ne pouvez pas administrer ce compte.');
+    }
+
     const { data: cible, error: erreurCible } = await admin
       .from('user_profiles')
-      .select('id, email, full_name, is_active')
+      .select('id, email, full_name, role, is_active')
       .eq('id', utilisateurId)
       .maybeSingle();
     if (erreurCible || !cible?.email) {
@@ -78,6 +108,14 @@ Deno.serve(async (req: Request) => {
     }
     if (!cible.is_active) {
       throw new ErreurPublique(409, 'Réactivez le compte avant d’ouvrir une récupération de mot de passe.');
+    }
+    if (!canManageAccountTarget({
+      actorId: acteur.id,
+      actorRole: String(profilActeur.role),
+      targetId: cible.id,
+      targetRole: String(cible.role),
+    })) {
+      throw new ErreurPublique(403, 'Vous ne pouvez pas administrer ce compte.');
     }
 
     const { data: lien, error: erreurLien } = await admin.auth.admin.generateLink({

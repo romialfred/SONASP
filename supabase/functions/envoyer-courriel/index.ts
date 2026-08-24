@@ -4,6 +4,10 @@ import { coquille, echapper, faits as bloqueFaits, bouton, paragraphe } from './
 import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
 import { niveauAssurance } from '../_shared/assurance.ts';
 import { origineApplication } from '../_shared/application-url.ts';
+import {
+  normalizeMailAction,
+  requiredCapabilityForMailAction,
+} from '../_shared/mail-action-policy.ts';
 
 /**
  * Envoi des courriels de la plateforme SONASP.
@@ -176,6 +180,10 @@ Deno.serve(async (req: Request) => {
   try {
     const urlSupabase = Deno.env.get('SUPABASE_URL')!;
     const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const cleAnon = Deno.env.get('SUPABASE_ANON_KEY');
+    if (!urlSupabase || !cleService || !cleAnon) {
+      return json({ erreur: 'Le service de messagerie est indisponible.' }, 503);
+    }
     const admin = createClient(urlSupabase, cleService);
 
     // L'appelant doit être un agent habilité. Sans ce contrôle, n'importe qui
@@ -187,18 +195,34 @@ Deno.serve(async (req: Request) => {
     const { data: utilisateur } = await admin.auth.getUser(jeton);
     if (!utilisateur?.user) return json({ erreur: 'Session invalide.' }, 401);
 
+    const requete = await req.json().catch(() => ({}));
+    const action = normalizeMailAction(requete?.action);
+    if (!action) return json({ erreur: 'Action de messagerie inconnue.' }, 400);
+
     const { data: profil } = await admin
       .from('user_profiles')
-      .select('role, is_active, mining_company_id, mfa_enrolled_at')
+      .select('is_active, mining_company_id, mfa_enrolled_at')
       .eq('id', utilisateur.user.id)
       .maybeSingle();
 
     const habilite = profil?.is_active
       && profil?.mining_company_id === null
-      && ['owner', 'admin', 'management'].includes(String(profil?.role))
       && Boolean(profil?.mfa_enrolled_at)
       && niveauAssurance(jeton) === 'aal2';
     if (!habilite) return json({ erreur: 'Habilitation insuffisante.' }, 403);
+
+    const clientActeur = createClient(urlSupabase, cleAnon, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: autorisation } },
+    });
+    const capaciteRequise = requiredCapabilityForMailAction(action);
+    const { data: possedeCapacite, error: erreurCapacite } = await clientActeur
+      .rpc('snp_actor_has_capability', { p_capability_code: capaciteRequise });
+    if (erreurCapacite) {
+      console.error('[envoyer-courriel] Capacité indisponible.', erreurCapacite.message);
+      return json({ erreur: 'La vérification des habilitations est indisponible.' }, 503);
+    }
+    if (possedeCapacite !== true) return json({ erreur: 'Habilitation insuffisante.' }, 403);
 
     const cfg = await chargerConfiguration(admin);
     if (!cfg) {
@@ -206,9 +230,6 @@ Deno.serve(async (req: Request) => {
         erreur: 'La messagerie n’est pas configurée : serveur, identifiant ou mot de passe manquant.',
       }, 400);
     }
-
-    const requete = await req.json().catch(() => ({}));
-    const action = requete?.action ?? 'file';
 
     /* --------------------------------------------------------- Bienvenue -- */
     if (action === 'bienvenue') {

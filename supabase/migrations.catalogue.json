@@ -1430,6 +1430,16 @@
       "sha256": "7cafdcf505d92db27dd12d10d5edfd5eb9b313f6a994cd2ef7bfe3b49364d299"
     },
     {
+      "path": "supabase/migrations/20260825210000_moteur_conciliation.sql",
+      "version": "20260825210000",
+      "description": "moteur_conciliation",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 14800,
+      "sha256": "1b0f13def30d6e8fb8055e9a248e8e973d02258e68090aa52440b74e909b6abe"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2403,10 +2413,10 @@
       },
       {
         "digits": 14,
-        "count": 46
+        "count": 47
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "af42c79d6775d0253f2c05764d7f9c438b37e8b0b2d01f4d5cede1115cf948ec"
+  "catalogueSha256": "6d0e9d263b887317ec6c2629028e2169511d8cd37a710b5528b268154a750dcd"
 }

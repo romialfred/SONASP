@@ -96,10 +96,24 @@ a été déployée dans le même mouvement — la révocation de session était 
 Restent non déployées faute de secrets : `fetch-daily-lbma-prices`,
 `activate-account`, `public-assistance`, `scheduled-tasks`. Détail en R-11.
 
-### Incrément 4 — Moteur de conciliation · à faire
+### Incrément 4 — Moteur de conciliation · **structure TERMINÉE**
 
-`snp_conciliations`, versions, écarts, machine à états, RPC transactionnelle de
-validation.
+Objets : `snp_conciliations`, `snp_conciliations_versions`,
+`snp_conciliations_ecarts`, `snp_numeroter_conciliation()`.
+
+Éprouvé : référence `REC-2026-0001` attribuée automatiquement sous verrou
+consultatif ; deuxième dossier vivant sur la même vente refusé ; source d'analyse
+incohérente refusée ; sortie de l'attente d'analyse sans source refusée ;
+auto-validation refusée par la contrainte de séparation, validation par acteurs
+distincts acceptée ; écart au-delà du seuil sans justification refusé ; ligne de
+taxe sans code refusée ; version au motif trop court refusée.
+
+En production : tables vides, unicité par vente garantie en base, 3 déclencheurs,
+aucun droit d'écriture depuis l'API.
+
+**Reste à faire** : la RPC transactionnelle de validation, qui produira en une
+fois l'instantané, l'écriture commerciale, les écritures fiscales, la facture
+définitive et l'audit.
 
 ### Incréments 5 à 9
 

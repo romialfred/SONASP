@@ -1270,6 +1270,36 @@
       "sha256": "6c183bbf94e543c6b8c6de439ebb781f8ce4550de28b30da434e90b0b2344b9f"
     },
     {
+      "path": "supabase/migrations/20260825000000_lot_4f_fret_douane_et_historique_immuable.sql",
+      "version": "20260825000000",
+      "description": "lot_4f_fret_douane_et_historique_immuable",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 54519,
+      "sha256": "9913a2e264c39235f05e2982d05fa674b6ac0ede52f2b5e582119e45e5404e05"
+    },
+    {
+      "path": "supabase/migrations/20260825000001_lot_5e_transition_production_atomique.sql",
+      "version": "20260825000001",
+      "description": "lot_5e_transition_production_atomique",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 9855,
+      "sha256": "26ecae955e4c832d6ca752430abb3fde36b97d41d470190a0139899c3a36ca0e"
+    },
+    {
+      "path": "supabase/migrations/20260825000002_lot_4g_storage_prive_et_compatibilite_5e.sql",
+      "version": "20260825000002",
+      "description": "lot_4g_storage_prive_et_compatibilite_5e",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 22069,
+      "sha256": "73a542f5eb95e0ff788098ad995df9fb3986fbefb14d76cfd1421e6a8ab1b1d5"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2238,10 +2268,10 @@
       },
       {
         "digits": 14,
-        "count": 30
+        "count": 33
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "69b032d312130764fc9bbf188da1c85ad23bcb124dc2b4f0d57be654fe17d061"
+  "catalogueSha256": "85439e206561659aa713db8c8b8813b66ec1f2eeda6704dd92902a4c989adf99"
 }

@@ -67,7 +67,27 @@ BEGIN
 END;
 $drop_legacy_freight_storage_policies$;
 
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- `storage.objects` appartient au rôle interne `supabase_storage_admin` sur
+-- les projets hébergés. Le rôle de migration ne doit donc pas tenter de
+-- modifier ce réglage, même si cette commande fonctionne dans le conteneur
+-- local où `postgres` est propriétaire. Supabase active déjà RLS sur cette
+-- table ; on vérifie explicitement cette précondition et on échoue fermé si
+-- elle n'est plus respectée.
+DO $assert_storage_objects_rls$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'storage'
+      AND c.relname = 'objects'
+      AND c.relrowsecurity
+  ) THEN
+    RAISE EXCEPTION 'LOT 2K: RLS doit être actif sur storage.objects.'
+      USING ERRCODE = '55000';
+  END IF;
+END;
+$assert_storage_objects_rls$;
 
 DO $assert_fail_closed$
 BEGIN

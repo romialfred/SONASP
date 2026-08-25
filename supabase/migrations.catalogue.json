@@ -1326,8 +1326,8 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 3123,
-      "sha256": "b5194fcf3a79658d90e09863f84c71fa46e22280aeb6fd1be96b18e55aba53d0"
+      "normalizedBytes": 3879,
+      "sha256": "1da2375278f806a58bc18c5bfe546de09a72542fb5b7249c7af1d7551965e0a7"
     },
     {
       "path": "supabase/migrations/20260825000005_lot_4i_paiements_artisans_atomiques.sql",
@@ -2338,5 +2338,5 @@
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "52075c172deb6abcb081aeb3093c08a574d824214020db3a77a35e890bdb86d1"
+  "catalogueSha256": "349498e733457d59b21fccb97676e145b4cfdc91288461405e218b804f6c08be"
 }

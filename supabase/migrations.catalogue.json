@@ -1380,6 +1380,36 @@
       "sha256": "4aceb4bb50b8b01279fad9dee2903a5dae3ad361b74e5fb87d22e98969c87f5d"
     },
     {
+      "path": "supabase/migrations/20260825170000_retirer_extension_http_de_l_api.sql",
+      "version": "20260825170000",
+      "description": "retirer_extension_http_de_l_api",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3002,
+      "sha256": "68409d225482f9c8e1308cd101951103aeda8c4abfaf6148c27b35e2b280d981"
+    },
+    {
+      "path": "supabase/migrations/20260825170100_verrouiller_role_et_tenant_du_profil.sql",
+      "version": "20260825170100",
+      "description": "verrouiller_role_et_tenant_du_profil",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 4977,
+      "sha256": "3f6c696fae7691291c13faa85a662f763bc303f24cf67e546b5a2618766cee13"
+    },
+    {
+      "path": "supabase/migrations/20260825170200_retirer_privileges_hors_rls.sql",
+      "version": "20260825170200",
+      "description": "retirer_privileges_hors_rls",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3071,
+      "sha256": "f5b31387c09ed8f1cfe29444565774be21c6b7e6c3736f3e27f1a5a9cf628384"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2353,10 +2383,10 @@
       },
       {
         "digits": 14,
-        "count": 41
+        "count": 44
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "19e7d7a10e4b437fbaec6d68da52342f9a66a46d026aa0e3f5f1752908012558"
+  "catalogueSha256": "17430eb018b8e9c71eea0d553a3d79d36ddaf89e99233638d6b290b7e54448ca"
 }

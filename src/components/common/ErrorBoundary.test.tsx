@@ -20,6 +20,11 @@ function BrokenApiRoute(): never {
   throw new TypeError('Failed to fetch');
 }
 
+/** Reproduit un champ nul formaté pendant le rendu, indépendant du réseau. */
+function BrokenRenderRoute(): never {
+  throw new TypeError("Cannot read properties of null (reading 'toLocaleString')");
+}
+
 describe('RouteErrorBoundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,6 +70,19 @@ describe('RouteErrorBoundary', () => {
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeEnabled();
     expect(screen.queryByText(/Connexion Internet interrompue/i)).not.toBeInTheDocument();
     expect(pwaMocks.requestPwaUpdateCheck).not.toHaveBeenCalled();
+  });
+
+  it('hors ligne, ne présente pas une erreur de rendu comme une coupure Internet', () => {
+    render(
+      <RouteErrorBoundary>
+        <BrokenRenderRoute />
+      </RouteErrorBoundary>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Une erreur est survenue' })).toBeInTheDocument();
+    expect(screen.queryByText(/Connexion Internet interrompue/i)).not.toBeInTheDocument();
+    // Rétablir le réseau ne corrigerait pas un champ nul : l'action reste offerte.
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeEnabled();
   });
 
   it('retire le service worker et uniquement les caches applicatifs obsolètes', async () => {

@@ -29,7 +29,7 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
     if (!acc[companyName]) {
       acc[companyName] = 0;
     }
-    acc[companyName] += p.estimated_oz;
+    acc[companyName] += p.estimated_oz ?? 0;
     return acc;
   }, {} as Record<string, number>);
 

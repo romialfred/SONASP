@@ -72,9 +72,9 @@ class PerformanceService {
       new Date(p.production_date) >= startOfYear
     );
 
-    const wtdActual = wtdData.reduce((sum, p) => sum + p.estimated_oz, 0);
-    const mtdActual = mtdData.reduce((sum, p) => sum + p.estimated_oz, 0);
-    const ytdActual = ytdData.reduce((sum, p) => sum + p.estimated_oz, 0);
+    const wtdActual = wtdData.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0);
+    const mtdActual = mtdData.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0);
+    const ytdActual = ytdData.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0);
 
     const wtdBudget = this.calculateWeeklyBudget(monthlyBudgets, currentMonth, now);
     const mtdBudget = this.getMonthlyBudget(monthlyBudgets, currentMonth);

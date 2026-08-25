@@ -108,7 +108,7 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
   }, [isOnline, requiresReload]);
 
   const handleRetry = () => {
-    if (!isOnline) return;
+    if (!isOnline && requiresReload) return;
     if (requiresReload) {
       setReloading(true);
       // Uniquement après ce clic. Le shell et la session du même onglet restent
@@ -119,19 +119,27 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
     reset();
   };
 
-  const title = !isOnline
+  /**
+   * L'absence de réseau n'explique l'erreur que si celle-ci vient d'un
+   * chargement. Une erreur survenue pendant le rendu — un champ nul formaté,
+   * par exemple — reste identique une fois la connexion rétablie : l'annoncer
+   * comme une coupure Internet désigne une cause fausse et, le bouton étant
+   * alors désactivé, laisse l'utilisateur attendre un réseau sans rapport.
+   */
+  const offlineExplique = !isOnline && requiresReload;
+  const title = offlineExplique
     ? 'Connexion Internet interrompue'
     : requiresReload
       ? 'Écran temporairement indisponible'
       : 'Une erreur est survenue';
-  const description = !isOnline
+  const description = offlineExplique
     ? 'Le tableau de bord ne peut pas terminer son chargement hors ligne. Rétablissez la connexion Internet, puis réessayez.'
     : requiresReload
       ? 'Un fichier de cet écran n’a pas pu être chargé. Une vérification de version a été demandée sans interrompre votre session. Vous pouvez recharger cet écran manuellement.'
       : 'Cette page n’a pas pu être chargée. Vous pouvez réessayer ou ouvrir une autre rubrique.';
   const actionLabel = reloading
     ? 'Rechargement…'
-    : !isOnline
+    : offlineExplique
       ? 'En attente du réseau'
       : requiresReload
         ? 'Recharger cet écran'
@@ -148,7 +156,7 @@ function RouteErrorFallback({ reset, error }: { reset: () => void; error?: Error
         <button
           type="button"
           onClick={handleRetry}
-          disabled={!isOnline || reloading}
+          disabled={offlineExplique || reloading}
           aria-busy={reloading}
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         >

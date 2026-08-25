@@ -112,10 +112,12 @@ export function ProductionTable({
               </td>
               <td className="px-3 py-3 whitespace-nowrap text-right">
                 <span className="text-xs text-yellow-700">
-                  {production.pure_gold_grams.toLocaleString('fr-FR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })}
+                  {production.pure_gold_grams === null
+                    ? '-'
+                    : production.pure_gold_grams.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}
                 </span>
               </td>
               <td className="px-3 py-3 whitespace-nowrap text-right">
@@ -128,10 +130,12 @@ export function ProductionTable({
               </td>
               <td className="px-3 py-3 whitespace-nowrap text-right">
                 <span className="text-xs font-medium text-emerald-700">
-                  {production.estimated_oz.toLocaleString('fr-FR', {
-                    minimumFractionDigits: 4,
-                    maximumFractionDigits: 4
-                  })}
+                  {production.estimated_oz === null
+                    ? '-'
+                    : production.estimated_oz.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 4,
+                        maximumFractionDigits: 4
+                      })}
                 </span>
               </td>
               <td className="px-3 py-3 whitespace-nowrap">
@@ -201,7 +205,7 @@ export function ProductionTable({
               })()}%
             </td>
             <td className="px-3 py-2.5 text-right text-xs text-white">
-              {productions.reduce((sum, p) => sum + p.pure_gold_grams, 0).toLocaleString('fr-FR', {
+              {productions.reduce((sum, p) => sum + (p.pure_gold_grams ?? 0), 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
@@ -213,7 +217,7 @@ export function ProductionTable({
               })}
             </td>
             <td className="px-3 py-2.5 text-right text-xs text-white">
-              {productions.reduce((sum, p) => sum + p.estimated_oz, 0).toLocaleString('fr-FR', {
+              {productions.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0).toLocaleString('fr-FR', {
                 minimumFractionDigits: 4,
                 maximumFractionDigits: 4
               })}
@@ -223,7 +227,7 @@ export function ProductionTable({
               <td className="px-3 py-2.5 text-white"></td>
             )}
             <td colSpan={2} className="px-3 py-2.5 text-xs text-white">
-              {productions.length} barres · {productions.reduce((sum, p) => sum + p.estimated_oz, 0).toFixed(2)} oz total
+              {productions.length} barres · {productions.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0).toFixed(2)} oz total
             </td>
           </tr>
         </tfoot>

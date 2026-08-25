@@ -11,11 +11,17 @@ export interface DailyProduction {
   production_date: string;
   bullion_grams: number;
   estimated_fineness_pct: number;
-  estimated_gold_pct?: number;
-  estimated_silver_pct?: number;
-  silver_content_grams?: number;
-  pure_gold_grams: number;
-  estimated_oz: number;
+  estimated_gold_pct?: number | null;
+  estimated_silver_pct?: number | null;
+  silver_content_grams?: number | null;
+  /**
+   * `pure_gold_grams` et `estimated_oz` sont calculés après la saisie du lingot :
+   * la table les déclare nullables et des enregistrements réels portent `null`.
+   * Les typer non nullables rendait le compilateur aveugle aux accès directs
+   * (`valeur.toLocaleString()`), qui font tomber l'écran entier au rendu.
+   */
+  pure_gold_grams: number | null;
+  estimated_oz: number | null;
   bar_reference: string | null;
   notes: string | null;
   site_id: string;
@@ -349,7 +355,7 @@ class DailyProductionService {
     });
 
     return {
-      total_oz: productions.reduce((sum, p) => sum + p.estimated_oz, 0),
+      total_oz: productions.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0),
       total_grams: productions.reduce((sum, p) => sum + p.bullion_grams, 0),
       count: productions.length
     };
@@ -366,7 +372,7 @@ class DailyProductionService {
     });
 
     return {
-      total_oz: productions.reduce((sum, p) => sum + p.estimated_oz, 0),
+      total_oz: productions.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0),
       total_grams: productions.reduce((sum, p) => sum + p.bullion_grams, 0),
       avg_fineness: productions.length > 0
         ? productions.reduce((sum, p) => sum + p.estimated_fineness_pct, 0) / productions.length

@@ -65,11 +65,11 @@ export function ProductionChart({ productions, groupByCompany = false, miningCom
       date: new Date(p.production_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
       fullDate: p.production_date,
       bullion: parseFloat(p.bullion_grams.toFixed(2)),
-      pureGold: parseFloat(p.pure_gold_grams.toFixed(2)),
-      oz: parseFloat(p.estimated_oz.toFixed(4)),
+      pureGold: parseFloat((p.pure_gold_grams ?? 0).toFixed(2)),
+      oz: parseFloat((p.estimated_oz ?? 0).toFixed(4)),
     }));
 
-  const totalOz = productions.reduce((sum, p) => sum + p.estimated_oz, 0);
+  const totalOz = productions.reduce((sum, p) => sum + (p.estimated_oz ?? 0), 0);
   const avgDaily = chartData.length > 0 ? totalOz / chartData.length : 0;
   const maxOz = Math.max(...chartData.map(d => d.oz));
 

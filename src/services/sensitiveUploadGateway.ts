@@ -7,9 +7,10 @@ export type SensitiveUploadProfile =
   | 'assay-certificate'
   | 'shipping-document'
   | 'production-document'
-  | 'freight-customs-document';
+  | 'freight-customs-document'
+  | 'international-payment-proof';
 
-export type SensitiveDeleteProfile = SensitiveUploadProfile;
+export type SensitiveDeleteProfile = Exclude<SensitiveUploadProfile, 'international-payment-proof'>;
 
 export class SensitiveUploadGatewayError extends Error {
   constructor() {

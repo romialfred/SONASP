@@ -6,6 +6,7 @@ export const PRIVATE_STORAGE_BUCKETS = {
   miningCompanyDocuments: 'mining-company-documents',
   productionDocuments: 'production-documents',
   freightCustomsDocuments: 'freight-customs-documents',
+  paymentProofs: 'payment-proofs',
 } as const;
 
 const STORAGE_ACCESS_VARIANTS = new Set(['public', 'sign', 'authenticated']);

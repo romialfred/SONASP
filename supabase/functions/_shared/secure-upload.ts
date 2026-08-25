@@ -86,6 +86,11 @@ export const POLITIQUE_DOCUMENT_FRET: PolitiqueUploadServeur = {
   formats: [PDF, JPEG, PNG],
 };
 
+export const POLITIQUE_PREUVE_PAIEMENT: PolitiqueUploadServeur = {
+  maxBytes: 10 * 1024 * 1024,
+  formats: [PDF, JPEG, PNG],
+};
+
 function commencePar(octets: Uint8Array, signature: readonly number[], position = 0): boolean {
   return signature.every((octet, index) => octets[position + index] === octet);
 }

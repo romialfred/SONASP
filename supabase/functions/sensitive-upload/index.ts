@@ -21,11 +21,18 @@ import {
   type MetadonneesDocumentFret,
 } from '../_shared/freight-customs-upload-policy.ts';
 import {
+  autoriserPreuvePaiement,
+  confirmerPersistancePreuvePaiement,
+  parseMetadonneesPreuvePaiement,
+  type MetadonneesPreuvePaiement,
+} from '../_shared/payment-proof-upload-policy.ts';
+import {
   POLITIQUE_CERTIFICAT_ANALYSE,
   POLITIQUE_DOCUMENT_EXPEDITION,
   POLITIQUE_DOCUMENT_FRET,
   POLITIQUE_DOCUMENT_PRODUCTION,
   POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
+  POLITIQUE_PREUVE_PAIEMENT,
   validerUploadServeur,
 } from '../_shared/secure-upload.ts';
 import {
@@ -48,11 +55,13 @@ const BUCKET_CERTIFICAT_ANALYSE = 'ASSAY-CERTIFICATES';
 const BUCKET_DOCUMENT_EXPEDITION = 'shipping-documents';
 const BUCKET_DOCUMENT_PRODUCTION = 'production-documents';
 const BUCKET_DOCUMENT_FRET = 'freight-customs-documents';
+const BUCKET_PREUVE_PAIEMENT = 'payment-proofs';
 const PROFILE_DOCUMENT_SOCIETE = 'mining-company-document';
 const PROFILE_CERTIFICAT_ANALYSE = 'assay-certificate';
 const PROFILE_DOCUMENT_EXPEDITION = 'shipping-document';
 const PROFILE_DOCUMENT_PRODUCTION = 'production-document';
 const PROFILE_DOCUMENT_FRET = 'freight-customs-document';
+const PROFILE_PREUVE_PAIEMENT = 'international-payment-proof';
 const PROFILS_SUPPRESSION_DOCUMENTAIRE = new Set([
   PROFILE_DOCUMENT_SOCIETE,
   PROFILE_CERTIFICAT_ANALYSE,
@@ -82,7 +91,16 @@ const profiles: Record<string, ProfilGatewayUpload> = {
     policy: POLITIQUE_DOCUMENT_FRET,
     parseMetadata: parseMetadonneesDocumentFret,
   },
+  [PROFILE_PREUVE_PAIEMENT]: {
+    policy: POLITIQUE_PREUVE_PAIEMENT,
+    parseMetadata: parseMetadonneesPreuvePaiement,
+  },
 };
+
+async function sha256Hex(octets: Uint8Array): Promise<string> {
+  const empreinte = await crypto.subtle.digest('SHA-256', octets);
+  return Array.from(new Uint8Array(empreinte), (octet) => octet.toString(16).padStart(2, '0')).join('');
+}
 
 const urlSupabase = Deno.env.get('SUPABASE_URL');
 const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -288,6 +306,63 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
           : { allowed: false, status: 403 };
       }
 
+      if (profileId === PROFILE_PREUVE_PAIEMENT) {
+        const preuve = metadata as MetadonneesPreuvePaiement;
+        const [session, capacite, paiement] = await Promise.all([
+          clientActeur.rpc('snp_session_signaler_activite'),
+          clientActeur.rpc('snp_actor_has_capability', {
+            p_capability_code: 'sonasp.finance.execute',
+          }),
+          admin.from('payments')
+            .select('id, sale_id, customer_id, status, executed_by')
+            .eq('id', preuve.paymentId)
+            .maybeSingle(),
+        ]);
+        if (session.error || capacite.error || paiement.error) {
+          return { allowed: false, status: 503 };
+        }
+        if (!paiement.data) return { allowed: false, status: 403 };
+
+        const vente = await admin.from('sales')
+          .select('id, customer_id, seller_id, seller_type, status')
+          .eq('id', paiement.data.sale_id)
+          .maybeSingle();
+        if (vente.error) return { allowed: false, status: 503 };
+        if (!vente.data) return { allowed: false, status: 403 };
+        const [lecture, vendeur] = await Promise.all([
+          clientActeur.rpc('snp_peut_consulter_vente', { p_sale_id: vente.data.id }),
+          admin.from('mining_companies')
+            .select('id, code, is_active')
+            .eq('id', vente.data.seller_id)
+            .maybeSingle(),
+        ]);
+        if (lecture.error || vendeur.error) return { allowed: false, status: 503 };
+
+        const autorisation = autoriserPreuvePaiement({
+          actorId: utilisateur.id,
+          paymentId: preuve.paymentId,
+          saleId: vente.data.id,
+          tenantId: vente.data.customer_id ?? '',
+          activeSession: (session.data as { is_active?: unknown } | null)?.is_active === true,
+          aal2: niveauAssurance(token) === 'aal2',
+          canExecuteFinance: capacite.data === true,
+          canReadSale: lecture.data === true,
+          paymentExists: paiement.data.id === preuve.paymentId,
+          paymentProcessing: paiement.data.status === 'processing',
+          saleVirtualPayment: vente.data.status === 'virtual_payment',
+          actorExecutedPayment: paiement.data.executed_by === utilisateur.id,
+          paymentMatchesSaleAndTenant: paiement.data.sale_id === vente.data.id
+            && paiement.data.customer_id === vente.data.customer_id,
+          sellerIsActiveSonasp: vente.data.seller_type === 'sonasp'
+            && vendeur.data?.id === vente.data.seller_id
+            && vendeur.data.is_active === true
+            && vendeur.data.code?.toUpperCase() === 'SONASP',
+        });
+        return autorisation
+          ? { allowed: true, ...autorisation }
+          : { allowed: false, status: 403 };
+      }
+
       return { allowed: false, status: 403 };
     },
 
@@ -303,10 +378,15 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
       const operationFretId = input.profileId === PROFILE_DOCUMENT_FRET
         ? (input.metadata as MetadonneesDocumentFret).operationId
         : null;
+      const preuvePaiement = input.profileId === PROFILE_PREUVE_PAIEMENT
+        ? input.metadata as MetadonneesPreuvePaiement
+        : null;
       // Le premier segment reste l'objet parent : les policies Storage privées
       // existantes en dérivent l'autorisation. Le tenant a été vérifié séparément
       // lors de authorize puis juste avant la persistance.
-      const chemin = operationFretId
+      const chemin = preuvePaiement
+        ? `${preuvePaiement.paymentId}/${preuvePaiement.idempotencyKey}.${input.file.extension}`
+        : operationFretId
         ? `freight-customs/${operationFretId}/${crypto.randomUUID()}.${input.file.extension}`
         : parentId
           ? `${parentId}/format-validated/${annee}/${mois}/${crypto.randomUUID()}.${input.file.extension}`
@@ -337,6 +417,11 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
                   bucket: BUCKET_DOCUMENT_FRET,
                   table: 'rpc:snp_fret_ajouter_document',
                 }
+                : input.profileId === PROFILE_PREUVE_PAIEMENT
+                  ? {
+                    bucket: BUCKET_PREUVE_PAIEMENT,
+                    table: 'rpc:snp_paiement_preuve_rattacher',
+                  }
           : null;
       if (!profilPersistance) throw new Error('unknown_upload_profile');
       if (
@@ -380,17 +465,82 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         ) throw new Error('tenant_mismatch');
       }
 
+      if (input.profileId === PROFILE_PREUVE_PAIEMENT) {
+        const metadata = input.metadata as MetadonneesPreuvePaiement;
+        const paiement = await admin.from('payments')
+          .select('id, sale_id, customer_id, status, executed_by')
+          .eq('id', metadata.paymentId)
+          .maybeSingle();
+        if (paiement.error || !paiement.data) throw new Error('tenant_mismatch');
+        const vente = await admin.from('sales')
+          .select('id, customer_id, status')
+          .eq('id', paiement.data.sale_id)
+          .maybeSingle();
+        if (
+          vente.error || !vente.data
+          || paiement.data.customer_id !== input.tenantId
+          || vente.data.customer_id !== input.tenantId
+          || paiement.data.status !== 'processing'
+          || vente.data.status !== 'virtual_payment'
+          || paiement.data.executed_by !== input.actorId
+        ) throw new Error('tenant_mismatch');
+      }
+
+      const empreinteSha256 = await sha256Hex(input.bytes);
+      const referenceCanonique = input.profileId === PROFILE_PREUVE_PAIEMENT
+        ? `${BUCKET_PREUVE_PAIEMENT}/${chemin}`
+        : chemin;
+      const metadonneesObjet = input.profileId === PROFILE_PREUVE_PAIEMENT
+        ? {
+          sha256: empreinteSha256,
+          safe_file_name: input.file.safeFileName,
+          payment_id: (input.metadata as MetadonneesPreuvePaiement).paymentId,
+          idempotency_key: (input.metadata as MetadonneesPreuvePaiement).idempotencyKey,
+          uploaded_by: input.actorId,
+        }
+        : undefined;
+      let objetCree = false;
       const depot = await admin.storage.from(profilPersistance.bucket).upload(chemin, input.bytes, {
         contentType: input.file.mimeType,
         cacheControl: '0',
         upsert: false,
+        ...(metadonneesObjet ? { metadata: metadonneesObjet } : {}),
       });
-      if (depot.error || depot.data.path !== chemin) {
+      if (!depot.error && depot.data.path === chemin) {
+        objetCree = true;
+      } else if (input.profileId === PROFILE_PREUVE_PAIEMENT) {
+        // Rejeu après une réponse perdue ou après un échec de metadata : le
+        // chemin est déterministe. On ne réutilise l'objet que si son contenu
+        // est strictement identique au binaire à nouveau validé.
+        const existant = await admin.storage.from(profilPersistance.bucket).download(chemin);
+        if (existant.error || !existant.data) throw new Error('storage_write_failed');
+        const octetsExistants = new Uint8Array(await existant.data.arrayBuffer());
+        if (
+          octetsExistants.byteLength !== input.bytes.byteLength
+          || await sha256Hex(octetsExistants) !== empreinteSha256
+        ) throw new Error('idempotency_content_mismatch');
+        // Repose aussi les metadonnees calculees par le serveur. Elles sont la
+        // source de comparaison de la RPC et ne sont jamais fournies librement
+        // par le navigateur.
+        const miseAJour = await admin.storage.from(profilPersistance.bucket).update(
+          chemin,
+          input.bytes,
+          {
+            contentType: input.file.mimeType,
+            cacheControl: '0',
+            metadata: metadonneesObjet,
+          },
+        );
+        if (miseAJour.error || miseAJour.data.path !== chemin) {
+          throw new Error('storage_metadata_write_failed');
+        }
+      } else {
         throw new Error('storage_write_failed');
       }
 
       let ressource: Record<string, unknown> | null = null;
       let erreurRessource: unknown = null;
+      let resultatPersistanceCertain = true;
       try {
         if (input.profileId === PROFILE_DOCUMENT_SOCIETE) {
           const metadata = input.metadata as MetadonneesDocumentSociete;
@@ -468,17 +618,88 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
           });
           ressource = resultat.data as Record<string, unknown> | null;
           erreurRessource = resultat.error;
+        } else if (input.profileId === PROFILE_PREUVE_PAIEMENT) {
+          const metadata = input.metadata as MetadonneesPreuvePaiement;
+          const clientActeur = createClient(urlSupabase, cleAnonyme, {
+            auth: { autoRefreshToken: false, persistSession: false },
+            global: { headers: { Authorization: `Bearer ${input.token}` } },
+          });
+          try {
+            const resultat = await clientActeur.rpc('snp_paiement_preuve_rattacher', {
+              p_payment_id: metadata.paymentId,
+              p_file_path: referenceCanonique,
+              p_file_name: input.file.safeFileName,
+              p_file_size: input.bytes.byteLength,
+              p_mime_type: input.file.mimeType,
+              p_sha256: empreinteSha256,
+              p_idempotency_key: metadata.idempotencyKey,
+            });
+            ressource = resultat.data as Record<string, unknown> | null;
+            erreurRessource = resultat.error;
+          } catch {
+            ressource = null;
+            erreurRessource = new Error('payment_proof_rpc_transport_unknown');
+          }
+          if (
+            ressource
+            && (ressource.payment_id !== metadata.paymentId
+              || ressource.file_path !== referenceCanonique
+              || ressource.idempotency_key !== metadata.idempotencyKey
+              || ressource.sha256 !== empreinteSha256)
+          ) {
+            ressource = null;
+            erreurRessource = new Error('payment_proof_confirmation_mismatch');
+          }
+
+          if (erreurRessource || !ressource) {
+            // Une erreur de transport peut survenir apres COMMIT. La relecture
+            // service-role (SELECT seul, octroye au gateway) distingue un
+            // resultat commite d'un refus certain. En cas d'indisponibilite de
+            // la relecture, l'objet prive est conserve pour reprise/TTL : le
+            // supprimer pourrait casser une metadata deja commitee.
+            resultatPersistanceCertain = false;
+            try {
+              const confirmation = await admin.from('snp_payment_proofs')
+                .select('id,payment_id,sale_id,customer_id,file_path,file_name,file_size,mime_type,sha256,idempotency_key,uploaded_by,created_at')
+                .eq('payment_id', metadata.paymentId)
+                .eq('idempotency_key', metadata.idempotencyKey)
+                .maybeSingle();
+              const resolution = confirmerPersistancePreuvePaiement(
+                confirmation.error
+                  ? undefined
+                  : confirmation.data as Record<string, unknown> | null,
+                {
+                  paymentId: metadata.paymentId,
+                  filePath: referenceCanonique,
+                  idempotencyKey: metadata.idempotencyKey,
+                  sha256: empreinteSha256,
+                  fileName: input.file.safeFileName,
+                  fileSize: input.bytes.byteLength,
+                  mimeType: input.file.mimeType,
+                },
+              );
+              resultatPersistanceCertain = resolution.certain;
+              if (resolution.resource) {
+                ressource = resolution.resource;
+                erreurRessource = null;
+              }
+            } catch {
+              // Resultat inconnu : conservation privee pour reprise/TTL.
+            }
+          }
         }
       } catch {
         erreurRessource = new Error('document_registration_failed');
       }
 
       if (erreurRessource || !ressource) {
-        try {
-          const nettoyage = await admin.storage.from(profilPersistance.bucket).remove([chemin]);
-          if (nettoyage.error) console.error('[sensitive-upload] Nettoyage Storage incomplet.');
-        } catch {
-          console.error('[sensitive-upload] Nettoyage Storage indisponible.');
+        if (objetCree && resultatPersistanceCertain) {
+          try {
+            const nettoyage = await admin.storage.from(profilPersistance.bucket).remove([chemin]);
+            if (nettoyage.error) console.error('[sensitive-upload] Nettoyage Storage incomplet.');
+          } catch {
+            console.error('[sensitive-upload] Nettoyage Storage indisponible.');
+          }
         }
         throw new Error('document_registration_failed');
       }

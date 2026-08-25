@@ -107,6 +107,10 @@ describe('sensitiveUploadGateway', () => {
       operationId: '9b3fcaaa-9367-4c91-a82d-788f043f33f1', documentType: 'other',
       title: 'Document fret', description: null, fileName: 'doc.pdf',
     }],
+    ['international-payment-proof', {
+      paymentId: '9b3fcaaa-9367-4c91-a82d-788f043f33f1',
+      idempotencyKey: '30d25b87-c4bf-4ca6-9582-6a736be3ba8c', fileName: 'doc.pdf',
+    }],
   ] as const)('route le profil fermé %s sans paramètre de bucket', async (profile, metadata) => {
     const file = new File(['%PDF-1.7\n%%EOF'], 'doc.pdf', { type: 'application/pdf' });
     mocks.fetch.mockResolvedValue(new Response(JSON.stringify({

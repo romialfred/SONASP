@@ -48,6 +48,26 @@ describe('contrat d’intégration sensitive-upload', () => {
     expect(source).not.toContain("from('freight_customs_documents').insert");
   });
 
+  it('lie la preuve paiement au parent 4H sans URL libre et avec rejeu binaire vérifié', () => {
+    expect(source).toContain("const PROFILE_PREUVE_PAIEMENT = 'international-payment-proof'");
+    expect(source).toContain("const BUCKET_PREUVE_PAIEMENT = 'payment-proofs'");
+    expect(source).toContain("p_capability_code: 'sonasp.finance.execute'");
+    expect(source).toContain("clientActeur.rpc('snp_peut_consulter_vente'");
+    expect(source).toContain("clientActeur.rpc('snp_paiement_preuve_rattacher'");
+    expect(source).toContain('paymentMatchesSaleAndTenant:');
+    expect(source).toContain('actorExecutedPayment:');
+    expect(source).toContain('sellerIsActiveSonasp:');
+    expect(source).toContain("crypto.subtle.digest('SHA-256'");
+    expect(source).toContain('download(chemin)');
+    expect(source).toContain('metadata: metadonneesObjet');
+    expect(source).toContain('safe_file_name: input.file.safeFileName');
+    expect(source).toContain('uploaded_by: input.actorId');
+    expect(source).toContain("admin.from('snp_payment_proofs')");
+    expect(source).toContain('resultatPersistanceCertain = false');
+    expect(source).toContain('objetCree && resultatPersistanceCertain');
+    expect(source).not.toContain('getPublicUrl');
+  });
+
   it('compense la suppression fret si la RPC metadata échoue', () => {
     expect(source).toContain("clientActeur.rpc('snp_fret_supprimer_document'");
     expect(source).toContain("download(chemin)");

@@ -5,12 +5,18 @@ import {
   createPaymentIdempotencyKey,
   decideInternationalPayment,
   executeInternationalPayment,
+  getPaymentProofResumptions,
+  getPaymentProofUrl,
+  paymentProofIdempotencyKey,
+  uploadPaymentProof,
 } from './paymentService';
 
 const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   from: vi.fn(),
   storageFrom: vi.fn(),
+  uploadSensitiveFile: vi.fn(),
+  createSignedUrl: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase', () => ({
@@ -19,6 +25,11 @@ vi.mock('@/lib/supabase', () => ({
     from: mocks.from,
     storage: { from: mocks.storageFrom },
   },
+}));
+
+vi.mock('@/services/sensitiveUploadGateway', () => ({
+  uploadSensitiveFile: mocks.uploadSensitiveFile,
+  SensitiveUploadGatewayError: class SensitiveUploadGatewayError extends Error {},
 }));
 
 const execution = {
@@ -51,7 +62,10 @@ const executionInput = {
 };
 
 describe('paymentService — frontière RPC 4H', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.storageFrom.mockReturnValue({ createSignedUrl: mocks.createSignedUrl });
+  });
 
   it('exécute le paiement sans DML, acteur, statut, FX ni preuve forgés', async () => {
     mocks.rpc.mockResolvedValue({ data: execution, error: null });
@@ -177,5 +191,134 @@ describe('paymentService — frontière RPC 4H', () => {
     expect(createPaymentIdempotencyKey()).toBe('90000000-0000-4000-8000-000000000001');
     expect(randomUUID).toHaveBeenCalledOnce();
     vi.unstubAllGlobals();
+  });
+
+  it('dépose la preuve par le profil privé fermé sans DML ni URL publique', async () => {
+    const proofKey = '60000000-0000-4000-8000-000000000001';
+    const file = new File(['%PDF-1.7\n%%EOF'], 'preuve.pdf', { type: 'application/pdf' });
+    mocks.uploadSensitiveFile.mockResolvedValue({
+      id: '70000000-0000-4000-8000-000000000001',
+      payment_id: execution.payment_id,
+      sale_id: execution.sale_id,
+      customer_id: '80000000-0000-4000-8000-000000000001',
+      file_path: `payment-proofs/${execution.payment_id}/${proofKey}.pdf`,
+      file_name: 'preuve.pdf',
+      file_size: file.size,
+      mime_type: 'application/pdf',
+      sha256: 'a'.repeat(64),
+      idempotency_key: proofKey,
+      uploaded_by: '90000000-0000-4000-8000-000000000001',
+      created_at: '2026-08-25T00:00:00Z',
+      replayed: false,
+    });
+
+    await expect(uploadPaymentProof(file, execution.payment_id, proofKey))
+      .resolves.toMatchObject({ success: true, data: { payment_id: execution.payment_id } });
+    expect(mocks.uploadSensitiveFile).toHaveBeenCalledWith(
+      'international-payment-proof',
+      file,
+      { fileName: 'preuve.pdf', paymentId: execution.payment_id, idempotencyKey: proofKey },
+      { mimeType: 'application/pdf' },
+    );
+    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.storageFrom).not.toHaveBeenCalled();
+  });
+
+  it('refuse une confirmation gateway qui change le paiement ou le chemin', async () => {
+    const proofKey = '60000000-0000-4000-8000-000000000001';
+    mocks.uploadSensitiveFile.mockResolvedValue({
+      id: '70000000-0000-4000-8000-000000000001',
+      payment_id: '80000000-0000-4000-8000-000000000001',
+      sale_id: execution.sale_id,
+      customer_id: '90000000-0000-4000-8000-000000000001',
+      file_path: 'https://public.example/forged.pdf',
+      file_name: 'preuve.pdf', file_size: 12, mime_type: 'application/pdf',
+      sha256: 'b'.repeat(64), idempotency_key: proofKey,
+      uploaded_by: '90000000-0000-4000-8000-000000000001',
+      created_at: '2026-08-25T00:00:00Z', replayed: false,
+    });
+    const result = await uploadPaymentProof(
+      new File(['%PDF-1.7\n%%EOF'], 'preuve.pdf', { type: 'application/pdf' }),
+      execution.payment_id,
+      proofKey,
+    );
+    expect(result.success).toBe(false);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('ouvre la preuve exclusivement par une URL signée courte du bucket privé', async () => {
+    const path = `payment-proofs/${execution.payment_id}/60000000-0000-4000-8000-000000000001.pdf`;
+    mocks.createSignedUrl.mockResolvedValue({
+      data: { signedUrl: 'https://project.supabase.co/storage/v1/object/sign/payment-proofs/private' },
+      error: null,
+    });
+    await expect(getPaymentProofUrl(path)).resolves.toContain('/object/sign/payment-proofs/');
+    expect(mocks.storageFrom).toHaveBeenCalledWith('payment-proofs');
+    expect(mocks.createSignedUrl).toHaveBeenCalledWith(
+      `${execution.payment_id}/60000000-0000-4000-8000-000000000001.pdf`,
+      300,
+    );
+  });
+
+  it('liste les reprises par RPC sans accepter acteur ni payment_id client', async () => {
+    const proofKey = '60000000-0000-4000-8000-000000000001';
+    mocks.rpc.mockResolvedValue({
+      data: [{
+        payment_id: execution.payment_id,
+        sale_id: execution.sale_id,
+        sale_number: 'VENTE-001',
+        customer_id: '80000000-0000-4000-8000-000000000001',
+        amount: 1_000,
+        currency: 'USD',
+        payment_version: 4,
+        reference_number: 'BANK-001',
+        executed_at: '2026-08-25T00:00:00Z',
+        proof_path: `payment-proofs/${execution.payment_id}/${proofKey}.pdf`,
+        proof_idempotency_key: proofKey,
+        proof_file_name: 'preuve.pdf',
+      }],
+      error: null,
+    });
+
+    await expect(getPaymentProofResumptions()).resolves.toMatchObject({
+      success: true,
+      data: [{ payment_id: execution.payment_id, proof_idempotency_key: proofKey }],
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_paiements_preuve_reprise_lister');
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it('refuse une reprise dont le chemin ne correspond pas au paiement serveur', async () => {
+    mocks.rpc.mockResolvedValue({
+      data: [{
+        payment_id: execution.payment_id,
+        sale_id: execution.sale_id,
+        sale_number: 'VENTE-001',
+        customer_id: '80000000-0000-4000-8000-000000000001',
+        amount: 1_000,
+        currency: 'USD',
+        payment_version: 4,
+        reference_number: null,
+        executed_at: '2026-08-25T00:00:00Z',
+        proof_path: 'https://legacy.invalid/proof.pdf',
+        proof_idempotency_key: '60000000-0000-4000-8000-000000000001',
+        proof_file_name: 'preuve.pdf',
+      }],
+      error: null,
+    });
+    await expect(getPaymentProofResumptions()).resolves.toMatchObject({ success: false });
+  });
+
+  it('extrait une clé seulement d’un chemin canonique lié au paiement attendu', () => {
+    const key = '60000000-0000-4000-8000-000000000001';
+    expect(paymentProofIdempotencyKey(
+      `payment-proofs/${execution.payment_id}/${key}.pdf`,
+      execution.payment_id,
+    )).toBe(key);
+    expect(paymentProofIdempotencyKey(
+      `payment-proofs/ffffffff-ffff-4fff-8fff-ffffffffffff/${key}.pdf`,
+      execution.payment_id,
+    )).toBeNull();
+    expect(paymentProofIdempotencyKey('https://legacy.invalid/proof.pdf', execution.payment_id)).toBeNull();
   });
 });

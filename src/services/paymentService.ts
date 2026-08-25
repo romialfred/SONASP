@@ -1,5 +1,11 @@
 import { supabase } from '@/lib/supabase';
+import { createPrivateSignedUrl, PRIVATE_STORAGE_BUCKETS } from '@/lib/privateStorage';
+import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import { getLatestReferentialFxRate, getReferentialFxRates } from '@/services/fxRateReferential';
+import {
+  SensitiveUploadGatewayError,
+  uploadSensitiveFile,
+} from '@/services/sensitiveUploadGateway';
 
 export type InternationalPaymentStatus =
   | 'pending'
@@ -123,6 +129,57 @@ export interface Payment {
   approved_at?: string;
 }
 
+export interface PrivatePaymentProof {
+  id: string;
+  payment_id: string;
+  sale_id: string;
+  customer_id: string;
+  file_path: string;
+  file_name: string;
+  file_size: number;
+  mime_type: 'application/pdf' | 'image/jpeg' | 'image/png';
+  sha256: string;
+  idempotency_key: string;
+  uploaded_by: string;
+  created_at: string;
+  replayed: boolean;
+}
+
+export interface PaymentProofResumeCandidate {
+  payment_id: string;
+  sale_id: string;
+  sale_number: string;
+  customer_id: string;
+  amount: number;
+  currency: string;
+  payment_version: number;
+  reference_number: string | null;
+  executed_at: string;
+  proof_path: string | null;
+  proof_idempotency_key: string | null;
+  proof_file_name: string | null;
+}
+
+const PAYMENT_PROOF_UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
+const CANONICAL_PAYMENT_PROOF = new RegExp(
+  `^payment-proofs/(${PAYMENT_PROOF_UUID})/(${PAYMENT_PROOF_UUID})\\.(pdf|jpg|jpeg|png)$`,
+  'i',
+);
+
+/**
+ * Retourne la cle de rejeu uniquement pour un chemin prive 2L strictement lie
+ * au paiement attendu. Les anciennes URL et les chemins ambigus restent fermes.
+ */
+export function paymentProofIdempotencyKey(
+  reference: string | null | undefined,
+  expectedPaymentId: string,
+): string | null {
+  const match = reference?.match(CANONICAL_PAYMENT_PROOF);
+  return match && match[1].toLowerCase() === expectedPaymentId.toLowerCase()
+    ? match[2].toLowerCase()
+    : null;
+}
+
 interface PaymentRpcError {
   code?: string;
   message?: string;
@@ -132,6 +189,13 @@ type PaymentRpcName =
   | 'snp_paiement_international_executer'
   | 'snp_paiement_international_decider'
   | 'snp_paiement_international_annuler';
+
+const paymentResumeRpc = supabase as unknown as {
+  rpc(
+    functionName: 'snp_paiements_preuve_reprise_lister',
+    parameters?: Record<string, never>,
+  ): PromiseLike<{ data: unknown; error: PaymentRpcError | null }>;
+};
 
 const paymentRpc = supabase as unknown as {
   rpc(
@@ -210,8 +274,8 @@ export async function executeInternationalPayment(
     p_payment_date: input.paymentDate,
     p_reference_number: input.referenceNumber.trim(),
     p_transaction_id: input.transactionId?.trim() || null,
-    // Aucun chemin/URL libre n'est accepté. Un gateway privé dédié
-    // rattachera ultérieurement la preuve avant le rapprochement positif.
+    // Aucun chemin/URL libre n'est accepté. Après l'exécution, le gateway
+    // privé 2L rattache la preuve au payment_id confirmé par cette RPC.
     p_proof_path: null,
     p_notes: input.notes?.trim() || null,
     p_idempotency_key: input.idempotencyKey,
@@ -306,37 +370,89 @@ export async function getPaymentsBySale(
 
 export async function uploadPaymentProof(
   file: File,
-  paymentId: string
-): Promise<{ success: boolean; url?: string; error?: string }> {
+  paymentId: string,
+  idempotencyKey: string,
+): Promise<{ success: boolean; data?: PrivatePaymentProof; error?: string }> {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${paymentId}-${Date.now()}.${fileExt}`;
-    const filePath = `payment-proofs/${fileName}`;
+    const validated = validateUploadFile(file, UPLOAD_POLICIES.paymentProof);
+    const resource = await uploadSensitiveFile('international-payment-proof', file, {
+      fileName: file.name,
+      paymentId,
+      idempotencyKey,
+    }, { mimeType: validated.mimeType }) as Partial<PrivatePaymentProof>;
+    if (
+      !resource.id || resource.payment_id !== paymentId
+      || !resource.sale_id || !resource.customer_id
+      || resource.file_path !== `payment-proofs/${paymentId}/${idempotencyKey}.${validated.extension}`
+      || typeof resource.file_name !== 'string' || resource.file_name.length < 3
+      || resource.file_size !== file.size
+      || resource.mime_type !== validated.mimeType
+      || typeof resource.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(resource.sha256)
+      || resource.idempotency_key !== idempotencyKey
+      || !resource.uploaded_by || !resource.created_at
+      || typeof resource.replayed !== 'boolean'
+    ) throw new Error('Le serveur n’a pas confirmé la preuve bancaire privée attendue.');
+    return { success: true, data: resource as PrivatePaymentProof };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof SensitiveUploadGatewayError
+        ? 'Le dépôt privé de la preuve bancaire a été refusé ou est momentanément indisponible.'
+        : error instanceof Error
+          ? error.message
+          : 'Le dépôt privé de la preuve bancaire a échoué.',
+    };
+  }
+}
 
-    const { error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(filePath, file);
+export async function getPaymentProofUrl(reference: string): Promise<string> {
+  return createPrivateSignedUrl(PRIVATE_STORAGE_BUCKETS.paymentProofs, reference, 300);
+}
 
-    if (uploadError) {
-      return { success: false, error: uploadError.message };
-    }
+function assertResumeCandidate(value: unknown): PaymentProofResumeCandidate {
+  const row = value as Partial<PaymentProofResumeCandidate> | null;
+  const canonicalKey = typeof row?.payment_id === 'string'
+    ? paymentProofIdempotencyKey(row.proof_path, row.payment_id)
+    : null;
+  if (
+    !row || typeof row.payment_id !== 'string' || typeof row.sale_id !== 'string'
+    || typeof row.sale_number !== 'string' || typeof row.customer_id !== 'string'
+    || typeof row.amount !== 'number' || !Number.isFinite(row.amount) || row.amount <= 0
+    || typeof row.currency !== 'string' || row.currency.length < 3
+    || !Number.isInteger(row.payment_version) || Number(row.payment_version) < 0
+    || typeof row.executed_at !== 'string'
+    || (row.reference_number !== null && typeof row.reference_number !== 'string')
+    || (row.proof_file_name !== null && typeof row.proof_file_name !== 'string')
+    || ((row.proof_path === null) !== (row.proof_idempotency_key === null))
+    || (row.proof_path !== null && canonicalKey !== row.proof_idempotency_key?.toLowerCase())
+  ) {
+    throw new Error('Le serveur a renvoyé une reprise de preuve bancaire invalide.');
+  }
+  return row as PaymentProofResumeCandidate;
+}
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('documents')
-      .getPublicUrl(filePath);
-
-    const { error: updateError } = await supabase
-      .from('payments')
-      .update({ proof_url: publicUrl })
-      .eq('id', paymentId);
-
-    if (updateError) {
-      return { success: false, error: updateError.message };
-    }
-
-    return { success: true, url: publicUrl };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+/**
+ * Aucun acteur ni payment_id n'est accepte. La RPC derive le JWT et ne rend
+ * que les paiements processing de cet executeur dont l'objet prive doit etre
+ * rattache ou restaure.
+ */
+export async function getPaymentProofResumptions(): Promise<{
+  success: boolean;
+  data?: PaymentProofResumeCandidate[];
+  error?: string;
+}> {
+  try {
+    const { data, error } = await paymentResumeRpc.rpc('snp_paiements_preuve_reprise_lister');
+    if (error) throw error;
+    if (!Array.isArray(data)) throw new Error('La liste de reprise bancaire est invalide.');
+    return { success: true, data: data.map(assertResumeCandidate) };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error
+        ? error.message
+        : (error as PaymentRpcError | null)?.message || 'Les reprises de preuve sont indisponibles.',
+    };
   }
 }
 

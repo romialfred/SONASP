@@ -61,6 +61,17 @@
       "directClientUpload": false,
       "directClientDelete": false,
       "getPublicUrl": false
+    },
+    {
+      "file": "src/services/paymentService.ts",
+      "bucket": "payment-proofs",
+      "callers": ["src/pages/payments/PaymentCreate.tsx"],
+      "profile": "international-payment-proof",
+      "gatewayCall": "uploadSensitiveFile(",
+      "status": "gateway-rpc-2l-private-metadata-backed-signed-idempotent",
+      "directClientUpload": false,
+      "directClientDelete": false,
+      "getPublicUrl": false
     }
   ],
   "residual": [
@@ -74,17 +85,6 @@
       "directClientUpload": false,
       "directClientDelete": false,
       "getPublicUrl": false
-    },
-    {
-      "file": "src/services/paymentService.ts",
-      "bucket": "documents",
-      "callers": [],
-      "priority": "P1",
-      "status": "not-started-no-active-caller-no-authoritative-attachment-rpc-and-documents-bucket-not-private",
-      "requiredContract": "Create a server RPC that locks payments.id, derives its sale/tenant, requires sonasp.finance.execute under AAL2, validates mutable payment state, and atomically stores a canonical private object path; then provision a dedicated private bucket with metadata-backed SELECT and no authenticated writes.",
-      "directClientUpload": true,
-      "directClientDelete": false,
-      "getPublicUrl": true
     },
     {
       "file": "src/services/artisanMinierService.ts",

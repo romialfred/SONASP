@@ -49,16 +49,25 @@ export async function collectPaymentDocuments(paymentId: string): Promise<Paymen
 
     // 2. Add payment proof if exists
     if (payment.proof_url) {
-      documents.push({
-        id: `payment-proof-${payment.id}`,
-        name: 'Payment Proof',
-        type: 'payment_proof',
-        url: payment.proof_url,
-        uploadedAt: payment.updated_at || payment.created_at,
-        metadata: {
-          description: 'Payment confirmation document',
-        },
-      });
+      try {
+        const signedUrl = await createPrivateSignedUrl(
+          PRIVATE_STORAGE_BUCKETS.paymentProofs,
+          payment.proof_url,
+          300,
+        );
+        documents.push({
+          id: `payment-proof-${payment.id}`,
+          name: 'Preuve bancaire privée',
+          type: 'payment_proof',
+          url: signedUrl,
+          uploadedAt: payment.updated_at || payment.created_at,
+          metadata: {
+            description: 'Preuve de paiement accessible par URL signée courte',
+          },
+        });
+      } catch {
+        // Une référence invalide ou hors périmètre ne doit pas être exposée.
+      }
     }
 
     const sale = payment.sale;

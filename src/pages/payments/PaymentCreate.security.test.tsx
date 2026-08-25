@@ -10,7 +10,9 @@ const mocks = vi.hoisted(() => ({
   getCustomerBanks: vi.fn(),
   getSellerBanks: vi.fn(),
   getCurrentFx: vi.fn(),
+  getResumptions: vi.fn(),
   execute: vi.fn(),
+  uploadProof: vi.fn(),
   createKey: vi.fn(() => '90000000-0000-4000-8000-000000000001'),
 }));
 
@@ -26,7 +28,9 @@ vi.mock('@/services/paymentService', async (importOriginal) => {
     getCustomerBanks: mocks.getCustomerBanks,
     getSellerBanks: mocks.getSellerBanks,
     getCurrentFXRate: mocks.getCurrentFx,
+    getPaymentProofResumptions: mocks.getResumptions,
     executeInternationalPayment: mocks.execute,
+    uploadPaymentProof: mocks.uploadProof,
     createPaymentIdempotencyKey: mocks.createKey,
   };
 });
@@ -50,6 +54,25 @@ const sale = {
   payment_version: 7,
 };
 
+const privateProof = () => ({
+  success: true,
+  data: {
+    id: 'a0000000-0000-4000-8000-000000000001',
+    payment_id: sale.payment_id,
+    sale_id: sale.id,
+    customer_id: sale.customer_id,
+    file_path: `payment-proofs/${sale.payment_id}/90000000-0000-4000-8000-000000000001.pdf`,
+    file_name: 'preuve.pdf',
+    file_size: 12,
+    mime_type: 'application/pdf',
+    sha256: 'a'.repeat(64),
+    idempotency_key: '90000000-0000-4000-8000-000000000001',
+    uploaded_by: 'finance-executor',
+    created_at: '2026-08-25T00:00:00Z',
+    replayed: false,
+  },
+});
+
 describe('PaymentCreate — exécution internationale sécurisée', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,6 +84,7 @@ describe('PaymentCreate — exécution internationale sécurisée', () => {
       capabilities: ['sonasp.finance.execute'],
     };
     mocks.getSales.mockResolvedValue({ success: true, data: [sale] });
+    mocks.getResumptions.mockResolvedValue({ success: true, data: [] });
     mocks.getCustomerBanks.mockResolvedValue({
       success: true,
       data: [{
@@ -96,6 +120,7 @@ describe('PaymentCreate — exécution internationale sécurisée', () => {
       replayed: false,
       processed_at: '2026-08-25T00:00:00Z',
     });
+    mocks.uploadProof.mockResolvedValue(privateProof());
   });
 
   it('ne charge aucun dossier sans capability sensible explicite', async () => {
@@ -123,7 +148,11 @@ describe('PaymentCreate — exécution internationale sécurisée', () => {
     fireEvent.change(screen.getByLabelText(/Référence bancaire/), {
       target: { value: 'BANK-2026-001' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Exécuter et transmettre au rapprochement' }));
+    const proof = new File(['%PDF-1.7\n%%EOF'], 'preuve.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText(/Preuve bancaire privée/), {
+      target: { files: [proof] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Exécuter, rattacher la preuve et transmettre' }));
 
     await waitFor(() => expect(mocks.execute).toHaveBeenCalledWith(expect.objectContaining({
       saleId: sale.id,
@@ -136,6 +165,106 @@ describe('PaymentCreate — exécution internationale sécurisée', () => {
       referenceNumber: 'BANK-2026-001',
       idempotencyKey: '90000000-0000-4000-8000-000000000001',
     })));
+    expect(mocks.uploadProof).toHaveBeenCalledWith(
+      proof,
+      sale.payment_id,
+      '90000000-0000-4000-8000-000000000001',
+    );
     expect(mocks.navigate).toHaveBeenCalledWith(`/payments/${sale.payment_id}`);
+  });
+
+  it('reste fermé après un échec réseau de preuve et rejoue sans réexécuter le paiement', async () => {
+    mocks.uploadProof
+      .mockResolvedValueOnce({ success: false, error: 'Dépôt temporairement indisponible.' })
+      .mockResolvedValueOnce(privateProof());
+    render(<PaymentCreate />);
+
+    await screen.findByRole('option', { name: /VENTE-001/ });
+    fireEvent.change(screen.getByLabelText(/Vente en attente/), { target: { value: sale.id } });
+    await screen.findByRole('option', { name: /Banque client/ });
+    fireEvent.change(screen.getByLabelText(/Compte du client/), {
+      target: { value: '50000000-0000-4000-8000-000000000001' },
+    });
+    fireEvent.change(screen.getByLabelText(/Compte receveur SONASP/), {
+      target: { value: '60000000-0000-4000-8000-000000000001' },
+    });
+    fireEvent.change(screen.getByLabelText(/Référence bancaire/), {
+      target: { value: 'BANK-2026-001' },
+    });
+    fireEvent.change(screen.getByLabelText(/Preuve bancaire privée/), {
+      target: { files: [new File(['proof'], 'preuve.pdf', { type: 'application/pdf' })] },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Exécuter, rattacher/ }));
+    await screen.findByRole('button', { name: /Rattacher la preuve privée/ });
+    expect(mocks.navigate).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Rattacher la preuve privée/ }));
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith(`/payments/${sale.payment_id}`));
+    expect(mocks.execute).toHaveBeenCalledTimes(1);
+    expect(mocks.uploadProof).toHaveBeenCalledTimes(2);
+  });
+
+  it('retrouve après remount le paiement processing serveur et réutilise la clé déjà commise', async () => {
+    mocks.uploadProof
+      .mockResolvedValueOnce({ success: false, error: 'Réponse gateway perdue.' })
+      .mockResolvedValueOnce(privateProof());
+    const firstMount = render(<PaymentCreate />);
+
+    await screen.findByRole('option', { name: /VENTE-001/ });
+    fireEvent.change(screen.getByLabelText(/Vente en attente/), { target: { value: sale.id } });
+    await screen.findByRole('option', { name: /Banque client/ });
+    fireEvent.change(screen.getByLabelText(/Compte du client/), {
+      target: { value: '50000000-0000-4000-8000-000000000001' },
+    });
+    fireEvent.change(screen.getByLabelText(/Compte receveur SONASP/), {
+      target: { value: '60000000-0000-4000-8000-000000000001' },
+    });
+    fireEvent.change(screen.getByLabelText(/Référence bancaire/), {
+      target: { value: 'BANK-2026-001' },
+    });
+    fireEvent.change(screen.getByLabelText(/Preuve bancaire privée/), {
+      target: { files: [new File(['proof'], 'preuve.pdf', { type: 'application/pdf' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Exécuter, rattacher/ }));
+    await screen.findByRole('button', { name: /Rattacher la preuve privée/ });
+    firstMount.unmount();
+
+    const committedProofKey = '90000000-0000-4000-8000-000000000001';
+    mocks.getSales.mockResolvedValue({ success: true, data: [] });
+    mocks.getResumptions.mockResolvedValue({
+      success: true,
+      data: [{
+        payment_id: sale.payment_id,
+        sale_id: sale.id,
+        sale_number: sale.sale_number,
+        customer_id: sale.customer_id,
+        amount: sale.final_proceeds,
+        currency: sale.currency,
+        payment_version: 8,
+        reference_number: 'BANK-2026-001',
+        executed_at: '2026-08-25T00:00:00Z',
+        proof_path: `payment-proofs/${sale.payment_id}/${committedProofKey}.pdf`,
+        proof_idempotency_key: committedProofKey,
+        proof_file_name: 'preuve.pdf',
+      }],
+    });
+    render(<PaymentCreate />);
+
+    await screen.findByText('Reprendre un rattachement interrompu');
+    fireEvent.click(screen.getByRole('button', { name: 'Reprendre le rattachement' }));
+    const replayFile = new File(['proof'], 'preuve.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText(/Preuve bancaire à rattacher/), {
+      target: { files: [replayFile] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Rattacher la preuve privée' }));
+
+    await waitFor(() => expect(mocks.uploadProof).toHaveBeenLastCalledWith(
+      replayFile,
+      sale.payment_id,
+      committedProofKey,
+    ));
+    expect(mocks.execute).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith(`/payments/${sale.payment_id}`));
   });
 });

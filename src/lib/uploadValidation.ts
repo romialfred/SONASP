@@ -83,6 +83,11 @@ export const UPLOAD_POLICIES = {
     formats: [PDF, JPEG, PNG],
     acceptedLabel: 'un PDF ou une image JPEG/PNG',
   },
+  paymentProof: {
+    maxBytes: 10 * MEBIBYTE,
+    formats: [PDF, JPEG, PNG],
+    acceptedLabel: 'un PDF ou une image JPEG/PNG',
+  },
   artisanPhoto: {
     maxBytes: 5 * MEBIBYTE,
     formats: [JPEG, PNG],

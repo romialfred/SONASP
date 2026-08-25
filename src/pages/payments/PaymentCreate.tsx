@@ -13,18 +13,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';
 import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { errorMessage } from '@/lib/errorMessage';
+import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import {
   InternationalPaymentConflictError,
   createPaymentIdempotencyKey,
   executeInternationalPayment,
   getCurrentFXRate,
   getCustomerBanks,
+  getPaymentProofResumptions,
   getSalesAwaitingPayment,
   getSellerBanks,
+  uploadPaymentProof,
   type CustomerBank,
   type FXRate,
   type SaleAwaitingPayment,
   type SellerBank,
+  type InternationalPaymentMutationResult,
+  type PaymentProofResumeCandidate,
 } from '@/services/paymentService';
 
 interface PaymentFormState {
@@ -73,15 +78,24 @@ export function PaymentCreate() {
   const { addToast } = useToast();
   const canExecute = hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
   const idempotencyKey = useRef<string | null>(null);
+  const proofIdempotencyKey = useRef<string | null>(null);
+  const executionResult = useRef<InternationalPaymentMutationResult | null>(null);
+  const resumeProofKey = useRef<string | null>(null);
 
   const [loading, setLoading] = useState(canExecute);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sales, setSales] = useState<SaleAwaitingPayment[]>([]);
+  const [resumptions, setResumptions] = useState<PaymentProofResumeCandidate[]>([]);
+  const [resumeCandidate, setResumeCandidate] = useState<PaymentProofResumeCandidate | null>(null);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeSaving, setResumeSaving] = useState(false);
   const [customerBanks, setCustomerBanks] = useState<CustomerBank[]>([]);
   const [sellerBanks, setSellerBanks] = useState<SellerBank[]>([]);
   const [referenceFx, setReferenceFx] = useState<FXRate | null>(null);
   const [form, setForm] = useState<PaymentFormState>(INITIAL_FORM);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [executionCompleted, setExecutionCompleted] = useState(false);
 
   const selectedSale = useMemo(
     () => sales.find((sale) => sale.id === form.saleId) || null,
@@ -97,11 +111,23 @@ export function PaymentCreate() {
     setLoading(true);
     setLoadError(null);
     try {
-      const result = await getSalesAwaitingPayment();
-      if (!result.success) throw new Error(result.error || 'Chargement impossible.');
-      setSales(result.data || []);
+      const [salesResult, resumeResult] = await Promise.all([
+        getSalesAwaitingPayment(),
+        getPaymentProofResumptions(),
+      ]);
+      if (!salesResult.success) throw new Error(salesResult.error || 'Chargement impossible.');
+      if (!resumeResult.success) throw new Error(resumeResult.error || 'Reprises indisponibles.');
+      setSales(salesResult.data || []);
+      setResumptions(resumeResult.data || []);
+      setResumeCandidate((current) => (
+        current
+          ? (resumeResult.data || []).find((candidate) => candidate.payment_id === current.payment_id) || null
+          : null
+      ));
     } catch (error) {
       setSales([]);
+      setResumptions([]);
+      setResumeCandidate(null);
       setLoadError(errorMessage(error, 'Impossible de charger les ventes en attente de paiement.'));
     } finally {
       setLoading(false);
@@ -109,14 +135,21 @@ export function PaymentCreate() {
   }, [canExecute]);
 
   useEffect(() => { void loadSales(); }, [loadSales]);
+  useEffect(() => {
+    resumeProofKey.current = resumeCandidate?.proof_idempotency_key ?? null;
+  }, [resumeCandidate]);
 
   const updateForm = <K extends keyof PaymentFormState>(field: K, value: PaymentFormState[K]) => {
+    if (executionResult.current) return;
     idempotencyKey.current = null;
     setForm((current) => ({ ...current, [field]: value }));
   };
 
   const selectSale = async (saleId: string) => {
+    if (executionResult.current) return;
     idempotencyKey.current = null;
+    proofIdempotencyKey.current = null;
+    setProofFile(null);
     const sale = sales.find((candidate) => candidate.id === saleId) || null;
     setForm((current) => ({
       ...current,
@@ -179,39 +212,123 @@ export function PaymentCreate() {
     if (form.referenceNumber.trim().length < 5) {
       return 'La référence bancaire doit contenir au moins 5 caractères.';
     }
+    if (!proofFile) return 'La preuve bancaire privée est obligatoire avant l’exécution.';
+    try {
+      validateUploadFile(proofFile, UPLOAD_POLICIES.paymentProof);
+    } catch (error) {
+      return errorMessage(error, 'La preuve bancaire est invalide.');
+    }
     return null;
+  };
+
+  const selectProof = (file: File | null) => {
+    proofIdempotencyKey.current = null;
+    if (!file) {
+      setProofFile(null);
+      return;
+    }
+    try {
+      validateUploadFile(file, UPLOAD_POLICIES.paymentProof);
+      setProofFile(file);
+    } catch (error) {
+      setProofFile(null);
+      addToast(errorMessage(error, 'La preuve bancaire est invalide.'), 'error');
+    }
+  };
+
+  const selectResumeCandidate = (candidate: PaymentProofResumeCandidate) => {
+    setResumeCandidate(candidate);
+    setResumeFile(null);
+    resumeProofKey.current = candidate.proof_idempotency_key;
+  };
+
+  const selectResumeProof = (file: File | null) => {
+    if (!file) {
+      setResumeFile(null);
+      return;
+    }
+    try {
+      validateUploadFile(file, UPLOAD_POLICIES.paymentProof);
+      setResumeFile(file);
+    } catch (error) {
+      setResumeFile(null);
+      addToast(errorMessage(error, 'La preuve bancaire de reprise est invalide.'), 'error');
+    }
+  };
+
+  const handleResumeProof = async () => {
+    if (!canExecute || !resumeCandidate || !resumeFile) {
+      addToast('Sélectionnez le paiement serveur et sa preuve bancaire.', 'error');
+      return;
+    }
+    setResumeSaving(true);
+    try {
+      resumeProofKey.current ||= createPaymentIdempotencyKey();
+      const proof = await uploadPaymentProof(
+        resumeFile,
+        resumeCandidate.payment_id,
+        resumeProofKey.current,
+      );
+      if (!proof.success || !proof.data) {
+        throw new Error(proof.error || 'Le rattachement privé de reprise a échoué.');
+      }
+      addToast('Preuve privée rattachée ; le paiement peut être rapproché.', 'success');
+      navigate(`/payments/${resumeCandidate.payment_id}`);
+    } catch (error) {
+      addToast(errorMessage(error, 'La reprise de la preuve bancaire a été refusée.'), 'error');
+    } finally {
+      setResumeSaving(false);
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const invalid = validationError();
-    if (invalid || !selectedSale) {
+    if (invalid || !selectedSale || !proofFile) {
       addToast(invalid || 'Dossier de vente incomplet.', 'error');
       return;
     }
 
     setSaving(true);
     try {
-      idempotencyKey.current ||= createPaymentIdempotencyKey();
-      const result = await executeInternationalPayment({
-        saleId: selectedSale.id,
-        expectedSaleStatus: 'waiting_for_payment',
-        expectedPaymentVersion: selectedSale.payment_version,
-        paidAmount: Number(form.paidAmount),
-        paymentCurrency: form.paymentCurrency,
-        customerBankId: form.customerBankId,
-        sellerBankId: form.sellerBankId,
-        paymentDate: form.paymentDate,
-        referenceNumber: form.referenceNumber,
-        transactionId: form.transactionId,
-        notes: form.notes,
-        idempotencyKey: idempotencyKey.current,
-      });
+      let result = executionResult.current;
+      if (!result) {
+        idempotencyKey.current ||= createPaymentIdempotencyKey();
+        result = await executeInternationalPayment({
+          saleId: selectedSale.id,
+          expectedSaleStatus: 'waiting_for_payment',
+          expectedPaymentVersion: selectedSale.payment_version,
+          paidAmount: Number(form.paidAmount),
+          paymentCurrency: form.paymentCurrency,
+          customerBankId: form.customerBankId,
+          sellerBankId: form.sellerBankId,
+          paymentDate: form.paymentDate,
+          referenceNumber: form.referenceNumber,
+          transactionId: form.transactionId,
+          notes: form.notes,
+          idempotencyKey: idempotencyKey.current,
+        });
+        executionResult.current = result;
+        setExecutionCompleted(true);
+      }
+
+      proofIdempotencyKey.current ||= createPaymentIdempotencyKey();
+      const proof = await uploadPaymentProof(
+        proofFile,
+        result.payment_id,
+        proofIdempotencyKey.current,
+      );
+      if (!proof.success || !proof.data) {
+        throw new Error(
+          proof.error
+          || 'Le paiement est exécuté, mais la preuve privée n’a pas été rattachée. Réessayez sans modifier le dossier.',
+        );
+      }
 
       addToast(
         result.replayed
-          ? 'Ce paiement avait déjà été enregistré ; le résultat serveur a été rejoué sans doublon.'
-          : 'Paiement exécuté et transmis au rapprochement.',
+          ? 'Paiement rejoué sans doublon et preuve privée confirmée.'
+          : 'Paiement exécuté, preuve privée validée et dossier transmis au rapprochement.',
         'success',
       );
       navigate(`/payments/${result.payment_id}`);
@@ -258,6 +375,62 @@ export function PaymentCreate() {
         </div>
 
         {loadError && <Alert variant="error" title="Chargement impossible">{loadError}</Alert>}
+        {resumptions.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle>Reprendre un rattachement interrompu</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <Alert variant="warning" title="Paiement déjà exécuté">
+                Ces paiements ont été confirmés par le serveur, mais leur preuve privée est absente ou incomplète. Ne relancez pas l’exécution bancaire.
+              </Alert>
+              <div className="space-y-2">
+                {resumptions.map((candidate) => (
+                  <div key={candidate.payment_id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+                    <div>
+                      <p className="font-semibold">{candidate.sale_number}</p>
+                      <p className="text-sm text-gray-600">
+                        {formatCurrency(candidate.amount, candidate.currency)} · {candidate.reference_number || 'Sans référence'} · version {candidate.payment_version}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={resumeSaving}
+                      onClick={() => selectResumeCandidate(candidate)}
+                    >
+                      Reprendre le rattachement
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              {resumeCandidate && (
+                <div className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
+                  <p className="text-sm">
+                    Paiement serveur <span className="font-mono">{resumeCandidate.payment_id}</span>.
+                    {resumeCandidate.proof_idempotency_key
+                      ? ' La clé de preuve déjà commise sera réutilisée : sélectionnez exactement le même fichier.'
+                      : ' Une nouvelle clé de preuve sécurisée sera créée.'}
+                  </p>
+                  <FormField label="Preuve bancaire à rattacher" required htmlFor="resumePaymentProof">
+                    <Input
+                      id="resumePaymentProof"
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
+                      onChange={(event) => selectResumeProof(event.target.files?.[0] ?? null)}
+                      disabled={resumeSaving}
+                    />
+                  </FormField>
+                  <Button
+                    type="button"
+                    disabled={resumeSaving || !resumeFile}
+                    onClick={() => void handleResumeProof()}
+                  >
+                    {resumeSaving ? 'Rattachement en cours…' : 'Rattacher la preuve privée'}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
         {!loadError && sales.length === 0 && (
           <Alert variant="info" title="Aucune vente en attente">
             Seules les ventes SONASP au statut « waiting_for_payment » sont proposées.
@@ -270,7 +443,7 @@ export function PaymentCreate() {
               <CardHeader><CardTitle>Vente et comptes contrôlés</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <FormField label="Vente en attente" required htmlFor="saleId">
-                  <Select id="saleId" value={form.saleId} onChange={(event) => void selectSale(event.target.value)} disabled={saving} required>
+                  <Select id="saleId" value={form.saleId} onChange={(event) => void selectSale(event.target.value)} disabled={saving || executionCompleted} required>
                     <option value="">Sélectionner une vente…</option>
                     {sales.map((sale) => (
                       <option key={sale.id} value={sale.id}>
@@ -291,7 +464,7 @@ export function PaymentCreate() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField label="Compte du client" required htmlFor="customerBankId">
-                    <Select id="customerBankId" value={form.customerBankId} onChange={(event) => void selectCustomerBank(event.target.value)} disabled={!selectedSale || saving} required>
+                    <Select id="customerBankId" value={form.customerBankId} onChange={(event) => void selectCustomerBank(event.target.value)} disabled={!selectedSale || saving || executionCompleted} required>
                       <option value="">Compte payeur actif…</option>
                       {customerBanks.map((bank) => (
                         <option key={bank.id} value={bank.id}>{bank.bank_name} — {bank.currency}</option>
@@ -299,7 +472,7 @@ export function PaymentCreate() {
                     </Select>
                   </FormField>
                   <FormField label="Compte receveur SONASP" required htmlFor="sellerBankId">
-                    <Select id="sellerBankId" value={form.sellerBankId} onChange={(event) => updateForm('sellerBankId', event.target.value)} disabled={!selectedSale || saving} required>
+                    <Select id="sellerBankId" value={form.sellerBankId} onChange={(event) => updateForm('sellerBankId', event.target.value)} disabled={!selectedSale || saving || executionCompleted} required>
                       <option value="">Compte vérifié dans la devise de vente…</option>
                       {sellerBanks.map((bank) => (
                         <option key={bank.id} value={bank.id}>{bank.bank_name} — {bank.account_currency}</option>
@@ -315,23 +488,36 @@ export function PaymentCreate() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField label="Montant payé" required htmlFor="paidAmount">
-                    <Input id="paidAmount" type="number" min="0.01" step="0.01" value={form.paidAmount} onChange={(event) => updateForm('paidAmount', event.target.value)} disabled={!selectedSale || saving} required />
+                    <Input id="paidAmount" type="number" min="0.01" step="0.01" value={form.paidAmount} onChange={(event) => updateForm('paidAmount', event.target.value)} disabled={!selectedSale || saving || executionCompleted} required />
                   </FormField>
                   <FormField label="Devise payée" required htmlFor="paymentCurrency">
                     <Input id="paymentCurrency" value={form.paymentCurrency} readOnly placeholder="Dérivée du compte client" />
                   </FormField>
                   <FormField label="Date du paiement" required htmlFor="paymentDate">
-                    <Input id="paymentDate" type="date" min={thirtyDaysAgo()} max={today()} value={form.paymentDate} onChange={(event) => updateForm('paymentDate', event.target.value)} disabled={saving} required />
+                    <Input id="paymentDate" type="date" min={thirtyDaysAgo()} max={today()} value={form.paymentDate} onChange={(event) => updateForm('paymentDate', event.target.value)} disabled={saving || executionCompleted} required />
                   </FormField>
                   <FormField label="Référence bancaire" required htmlFor="referenceNumber">
-                    <Input id="referenceNumber" value={form.referenceNumber} onChange={(event) => updateForm('referenceNumber', event.target.value)} minLength={5} maxLength={255} disabled={saving} required />
+                    <Input id="referenceNumber" value={form.referenceNumber} onChange={(event) => updateForm('referenceNumber', event.target.value)} minLength={5} maxLength={255} disabled={saving || executionCompleted} required />
                   </FormField>
                   <FormField label="Identifiant de transaction" htmlFor="transactionId">
-                    <Input id="transactionId" value={form.transactionId} onChange={(event) => updateForm('transactionId', event.target.value)} maxLength={255} disabled={saving} />
+                    <Input id="transactionId" value={form.transactionId} onChange={(event) => updateForm('transactionId', event.target.value)} maxLength={255} disabled={saving || executionCompleted} />
                   </FormField>
                 </div>
                 <FormField label="Notes" htmlFor="notes">
-                  <textarea id="notes" value={form.notes} onChange={(event) => updateForm('notes', event.target.value)} rows={3} maxLength={4000} disabled={saving} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <textarea id="notes" value={form.notes} onChange={(event) => updateForm('notes', event.target.value)} rows={3} maxLength={4000} disabled={saving || executionCompleted} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                </FormField>
+                <FormField label="Preuve bancaire privée" required htmlFor="paymentProof">
+                  <Input
+                    id="paymentProof"
+                    type="file"
+                    accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
+                    onChange={(event) => selectProof(event.target.files?.[0] ?? null)}
+                    disabled={saving}
+                    required={!proofFile}
+                  />
+                  <p className="mt-1 text-xs text-gray-600">
+                    PDF/JPEG/PNG, 10 Mo maximum. Le serveur contrôle les octets réels et stocke la preuve dans un bucket privé.
+                  </p>
                 </FormField>
               </CardContent>
             </Card>
@@ -359,13 +545,18 @@ export function PaymentCreate() {
               </Card>
             )}
 
-            <Alert variant="warning" title="Preuve bancaire requise avant approbation">
-              Le gateway privé de preuve n’est pas encore disponible. L’exécution passe au statut
-              « processing » ; l’approbation restera fermée jusque-là.
+            <Alert variant={executionCompleted ? 'warning' : 'info'} title="Preuve bancaire privée obligatoire">
+              {executionCompleted
+                ? 'Le paiement est déjà exécuté. Renvoyez la même preuve : l’approbation reste fermée tant que le rattachement privé n’est pas confirmé.'
+                : 'Le dépôt est contrôlé par le serveur et lié exactement au paiement et à sa vente. Aucune URL publique n’est créée.'}
             </Alert>
 
-            <Button type="submit" disabled={saving || !selectedSale} className="w-full">
-              {saving ? 'Exécution en cours…' : 'Exécuter et transmettre au rapprochement'}
+            <Button type="submit" disabled={saving || !selectedSale || !proofFile} className="w-full">
+              {saving
+                ? 'Contrôle et dépôt en cours…'
+                : executionCompleted
+                  ? 'Rattacher la preuve privée et transmettre'
+                  : 'Exécuter, rattacher la preuve et transmettre'}
             </Button>
           </div>
         </form>

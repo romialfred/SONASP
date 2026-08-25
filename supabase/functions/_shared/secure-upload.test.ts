@@ -6,6 +6,7 @@ import {
   POLITIQUE_DOCUMENT_FRET,
   POLITIQUE_DOCUMENT_PRODUCTION,
   POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
+  POLITIQUE_PREUVE_PAIEMENT,
   signatureCorrespond,
   validerUploadServeur,
 } from './secure-upload.ts';
@@ -144,5 +145,17 @@ describe('secure-upload', () => {
     expect(POLITIQUE_DOCUMENT_FRET.formats.map((format) => format.signature)).toEqual([
       'pdf', 'jpeg', 'png',
     ]);
+  });
+
+  it('ferme la preuve bancaire à 10 Mio et aux formats vérifiables', () => {
+    expect(POLITIQUE_PREUVE_PAIEMENT.maxBytes).toBe(10 * 1024 * 1024);
+    expect(POLITIQUE_PREUVE_PAIEMENT.formats.map((format) => format.signature)).toEqual([
+      'pdf', 'jpeg', 'png',
+    ]);
+    expect(() => validerUploadServeur({
+      fileName: 'preuve.pdf.exe',
+      declaredMimeType: 'application/pdf',
+      bytes: encodeur.encode('%PDF-1.7\n%%EOF'),
+    }, POLITIQUE_PREUVE_PAIEMENT)).toThrow(ErreurValidationUploadServeur);
   });
 });

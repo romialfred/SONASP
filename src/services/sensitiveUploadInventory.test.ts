@@ -5,8 +5,11 @@ import { describe, expect, it } from 'vitest';
 interface Surface {
   file: string;
   directClientUpload: boolean;
+  directClientDelete?: boolean;
   getPublicUrl: boolean;
   gatewayCall?: string;
+  deleteGatewayCall?: string;
+  status?: string;
 }
 
 const root = process.cwd();
@@ -36,6 +39,10 @@ describe('inventaire machine-vérifiable des uploads sensibles', () => {
   }).map((file) => normalized(relative(root, file))).sort();
   const publicUrls = files.filter((file) => readFileSync(file, 'utf8').includes('.getPublicUrl('))
     .map((file) => normalized(relative(root, file))).sort();
+  const directDeletes = files.filter((file) => {
+    const source = readFileSync(file, 'utf8');
+    return /supabase\.storage[\s\S]{0,220}?\.remove\(/u.test(source);
+  }).map((file) => normalized(relative(root, file))).sort();
 
   it('recense chaque upload Storage direct restant', () => {
     expect(inventory.residual.filter((entry) => entry.directClientUpload).map((entry) => entry.file).sort())
@@ -47,10 +54,25 @@ describe('inventaire machine-vérifiable des uploads sensibles', () => {
       .toEqual(publicUrls);
   });
 
+  it('recense chaque suppression Storage directe restante', () => {
+    expect(inventory.residual.filter((entry) => entry.directClientDelete).map((entry) => entry.file).sort())
+      .toEqual(directDeletes);
+  });
+
   it.each(inventory.remediated)('$file ne régresse pas vers un accès Storage direct', (entry) => {
     const source = readFileSync(resolve(root, entry.file), 'utf8');
     expect(source).not.toMatch(/supabase\.storage[\s\S]{0,180}?\.upload\(/u);
     expect(source).not.toContain('.getPublicUrl(');
     expect(source).toContain(entry.gatewayCall ?? 'uploadSensitiveFile(');
+    if (entry.deleteGatewayCall) expect(source).toContain(entry.deleteGatewayCall);
   });
+
+  it.each(inventory.residual.filter((entry) => entry.status?.startsWith('fail-closed')))(
+    '$file reste fermé sans accès binaire navigateur',
+    (entry) => {
+      const source = readFileSync(resolve(root, entry.file), 'utf8');
+      expect(source).not.toMatch(/supabase\.storage[\s\S]{0,220}?\.(?:upload|remove)\(/u);
+      expect(source).not.toContain('.getPublicUrl(');
+    },
+  );
 });

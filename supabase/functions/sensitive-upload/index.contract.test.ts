@@ -54,4 +54,28 @@ describe('contrat d’intégration sensitive-upload', () => {
     expect(source).toContain("upload(chemin, octets");
     expect(source).toContain("event_type: 'sensitive_upload_deleted'");
   });
+
+  it('route les quatre suppressions privées par la même frontière serveur', () => {
+    expect(source).toContain('PROFILS_SUPPRESSION_DOCUMENTAIRE');
+    expect(source).toContain("table = 'production_documents'");
+    expect(source).toContain("table = 'shipping_documents'");
+    expect(source).toContain("table = 'mining_company_documents'");
+    expect(source).toContain("table = 'assay_certificates'");
+    expect(source).toContain('autoriserSuppressionDocumentSensible({');
+    expect(source).toContain('cheminObjetLieAuParent(reference, bucket, parentId)');
+    expect(source).toContain("clientActeur.rpc('snp_sec_can_prepare_company'");
+    expect(source).toContain("clientActeur.rpc('snp_sec_can_prepare_shipping'");
+    expect(source).toContain("clientActeur.rpc('snp_peut_consulter_production'");
+  });
+
+  it('sauvegarde, valide, supprime puis restaure si le DML metadata échoue', () => {
+    expect(source).toContain('admin.storage.from(bucket).download(chemin)');
+    expect(source).toContain('validerUploadServeur({');
+    expect(source).toContain('admin.storage.from(bucket).remove([chemin])');
+    expect(source).toContain('clientActeur.from(table)');
+    expect(source).toContain("event_type: 'sensitive_upload_delete_authorized'");
+    expect(source).toContain('.eq(pathField, reference)');
+    expect(source).toContain('admin.storage.from(bucket).upload(chemin, octets');
+    expect(source).toContain('parent_id: parentId');
+  });
 });

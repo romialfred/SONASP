@@ -139,15 +139,27 @@ describe('sensitiveUploadGateway', () => {
     }));
   });
 
-  it('supprime une ressource fret via Edge sans corps', async () => {
+  it.each([
+    'freight-customs-document',
+    'production-document',
+    'shipping-document',
+    'mining-company-document',
+    'assay-certificate',
+  ] as const)('supprime une ressource %s via Edge sans corps', async (profile) => {
     mocks.fetch.mockResolvedValue(new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     }));
     const id = 'ac585840-4d30-4a67-9e66-8d1fd77279ee';
-    await expect(deleteSensitiveResource('freight-customs-document', id)).resolves.toBeUndefined();
+    await expect(deleteSensitiveResource(profile, id)).resolves.toBeUndefined();
     const [url, options] = mocks.fetch.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain(`profile=freight-customs-document&resourceId=${id}`);
+    expect(url).toContain(`profile=${profile}&resourceId=${id}`);
     expect(options.method).toBe('DELETE');
     expect(options.body).toBeUndefined();
+  });
+
+  it('refuse un identifiant de suppression invalide avant le réseau', async () => {
+    await expect(deleteSensitiveResource('shipping-document', '../object'))
+      .rejects.toBeInstanceOf(SensitiveUploadGatewayError);
+    expect(mocks.fetch).not.toHaveBeenCalled();
   });
 });

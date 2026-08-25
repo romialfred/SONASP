@@ -1,11 +1,15 @@
 import { supabase } from '@/lib/supabase';
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export type SensitiveUploadProfile =
   | 'mining-company-document'
   | 'assay-certificate'
   | 'shipping-document'
   | 'production-document'
   | 'freight-customs-document';
+
+export type SensitiveDeleteProfile = SensitiveUploadProfile;
 
 export class SensitiveUploadGatewayError extends Error {
   constructor() {
@@ -78,9 +82,10 @@ export async function uploadSensitiveFile(
 }
 
 export async function deleteSensitiveResource(
-  profile: 'freight-customs-document',
+  profile: SensitiveDeleteProfile,
   resourceId: string,
 ): Promise<void> {
+  if (!UUID.test(resourceId)) throw new SensitiveUploadGatewayError();
   const { data } = await supabase.auth.getSession();
   const accessToken = data.session?.access_token;
   const baseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -94,7 +99,11 @@ export async function deleteSensitiveResource(
         headers: { Authorization: `Bearer ${accessToken}`, apikey: anonymousKey },
       },
     );
-    if (!response.ok) throw new SensitiveUploadGatewayError();
+    if (!response.ok || !response.headers.get('Content-Type')?.toLowerCase().includes('application/json')) {
+      throw new SensitiveUploadGatewayError();
+    }
+    const payload = await response.json().catch(() => null) as { success?: unknown } | null;
+    if (payload?.success !== true) throw new SensitiveUploadGatewayError();
   } catch {
     throw new SensitiveUploadGatewayError();
   }

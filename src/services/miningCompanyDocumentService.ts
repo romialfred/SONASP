@@ -2,10 +2,9 @@ import { supabase } from '@/lib/supabase';
 import {
   createPrivateSignedUrl,
   PRIVATE_STORAGE_BUCKETS,
-  requireStorageObjectPath,
 } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
-import { uploadSensitiveFile } from '@/services/sensitiveUploadGateway';
+import { deleteSensitiveResource, uploadSensitiveFile } from '@/services/sensitiveUploadGateway';
 
 const BUCKET = PRIVATE_STORAGE_BUCKETS.miningCompanyDocuments;
 
@@ -102,11 +101,8 @@ export const miningCompanyDocumentService = {
   },
 
   async remove(doc: Pick<MiningCompanyDocument, 'id' | 'file_path'>): Promise<void> {
-    const path = requireStorageObjectPath(doc.file_path, BUCKET);
-    const { error: storageError } = await supabase.storage.from(BUCKET).remove([path]);
-    if (storageError) throw storageError;
-    const { error } = await supabase.from('mining_company_documents').delete().eq('id', doc.id);
-    if (error) throw error;
+    if (!UUID.test(doc.id)) throw new Error('Identifiant de document invalide.');
+    await deleteSensitiveResource('mining-company-document', doc.id);
   },
 
   /** URL signée (bucket privé) valable 1h pour consulter/télécharger un document. */

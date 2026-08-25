@@ -3,11 +3,15 @@ import { productionDocumentService } from './productionDocumentService';
 
 const mocks = vi.hoisted(() => ({
   uploadSensitiveFile: vi.fn(),
+  deleteSensitiveResource: vi.fn(),
   createSignedUrl: vi.fn(),
   storageFrom: vi.fn(),
 }));
 
-vi.mock('./sensitiveUploadGateway', () => ({ uploadSensitiveFile: mocks.uploadSensitiveFile }));
+vi.mock('./sensitiveUploadGateway', () => ({
+  uploadSensitiveFile: mocks.uploadSensitiveFile,
+  deleteSensitiveResource: mocks.deleteSensitiveResource,
+}));
 vi.mock('@/lib/supabase', () => ({
   supabase: { storage: { from: mocks.storageFrom }, from: vi.fn() },
 }));
@@ -65,6 +69,13 @@ describe('productionDocumentService — upload privé', () => {
 
   it('ne tente jamais de créer ou lister un bucket depuis le navigateur', async () => {
     await expect(productionDocumentService.ensureBucketExists()).resolves.toBeUndefined();
+    expect(mocks.storageFrom).not.toHaveBeenCalled();
+  });
+
+  it('délègue la suppression au endpoint compensé sans DML Storage navigateur', async () => {
+    mocks.deleteSensitiveResource.mockResolvedValue(undefined);
+    await expect(productionDocumentService.deleteDocument(DOCUMENT_ID)).resolves.toBeUndefined();
+    expect(mocks.deleteSensitiveResource).toHaveBeenCalledWith('production-document', DOCUMENT_ID);
     expect(mocks.storageFrom).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 import { niveauAssurance } from '../_shared/assurance.ts';
 import { supprimerObjetAvecCompensation } from '../_shared/compensated-storage-delete.ts';
 import {
+  autoriserSuppressionDocumentSensible,
+  cheminObjetLieAuParent,
+} from '../_shared/sensitive-document-delete-policy.ts';
+import {
   autoriserCertificatAnalyse,
   parseMetadonneesCertificatAnalyse,
   type MetadonneesCertificatAnalyse,
@@ -49,6 +53,13 @@ const PROFILE_CERTIFICAT_ANALYSE = 'assay-certificate';
 const PROFILE_DOCUMENT_EXPEDITION = 'shipping-document';
 const PROFILE_DOCUMENT_PRODUCTION = 'production-document';
 const PROFILE_DOCUMENT_FRET = 'freight-customs-document';
+const PROFILS_SUPPRESSION_DOCUMENTAIRE = new Set([
+  PROFILE_DOCUMENT_SOCIETE,
+  PROFILE_CERTIFICAT_ANALYSE,
+  PROFILE_DOCUMENT_EXPEDITION,
+  PROFILE_DOCUMENT_PRODUCTION,
+  PROFILE_DOCUMENT_FRET,
+]);
 
 const profiles: Record<string, ProfilGatewayUpload> = {
   [PROFILE_DOCUMENT_SOCIETE]: {
@@ -494,7 +505,7 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
     },
 
     async remove({ profileId, resourceId, token }) {
-      if (profileId !== PROFILE_DOCUMENT_FRET || niveauAssurance(token) !== 'aal2') {
+      if (!PROFILS_SUPPRESSION_DOCUMENTAIRE.has(profileId) || niveauAssurance(token) !== 'aal2') {
         throw new Error('delete_not_allowed');
       }
       const { data: authentification, error: erreurAuth } = await admin.auth.getUser(token);
@@ -504,6 +515,7 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         auth: { autoRefreshToken: false, persistSession: false },
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
+      if (profileId === PROFILE_DOCUMENT_FRET) {
       const document = await admin.from('freight_customs_documents')
         .select('id, freight_customs_operation_id, file_path, file_name, file_size, mime_type')
         .eq('id', resourceId)
@@ -550,6 +562,18 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         bytes: octets,
       }, POLITIQUE_DOCUMENT_FRET);
 
+      const auditAutorisation = await admin.from('security_events').insert({
+        user_id: utilisateur.id,
+        event_type: 'sensitive_upload_delete_authorized',
+        details: {
+          profile: profileId,
+          tenant_id: operation.data.mining_company_id,
+          parent_id: operation.data.id,
+          resource_id: resourceId,
+        },
+      });
+      if (auditAutorisation.error) throw new Error('delete_audit_unavailable');
+
       await supprimerObjetAvecCompensation({
         expectedPath: chemin,
         async removeObject() {
@@ -587,6 +611,269 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
             resource_id: resourceId,
           },
         });
+      } catch {
+        console.error('[sensitive-upload] Audit secondaire de suppression indisponible.');
+      }
+        return;
+      }
+
+      let table = '';
+      let bucket = '';
+      let parentField = '';
+      let pathField = '';
+      let parentId = '';
+      let tenantId = '';
+      let reference: unknown = null;
+      let fileName: unknown = null;
+      let fileSize: unknown = null;
+      let mimeType: unknown = null;
+      let uploadedBy: string | null = null;
+      let parentExists = false;
+      let parentPermission = false;
+      let hasWriteCapability = false;
+      let mayDeleteAnyUploader = false;
+      let mutable = true;
+      let politique = POLITIQUE_DOCUMENT_PRODUCTION;
+
+      const [session, preparationSonasp] = await Promise.all([
+        clientActeur.rpc('snp_session_signaler_activite'),
+        clientActeur.rpc('snp_actor_has_capability', { p_capability_code: 'sonasp.prepare' }),
+      ]);
+      if (
+        session.error || preparationSonasp.error
+        || (session.data as { is_active?: unknown } | null)?.is_active !== true
+      ) throw new Error('delete_not_allowed');
+
+      if (profileId === PROFILE_DOCUMENT_EXPEDITION) {
+        const document = await admin.from('shipping_documents')
+          .select('id, shipping_preparation_id, document_url, file_name, file_size, mime_type, uploaded_by')
+          .eq('id', resourceId)
+          .maybeSingle();
+        if (document.error || !document.data) throw new Error('delete_not_allowed');
+        const parent = await admin.from('shipping_preparations')
+          .select('id, mining_company_id')
+          .eq('id', document.data.shipping_preparation_id)
+          .maybeSingle();
+        const permission = await clientActeur.rpc('snp_sec_can_prepare_shipping', {
+          p_shipping_id: document.data.shipping_preparation_id,
+        });
+        if (parent.error || permission.error || !parent.data?.mining_company_id) {
+          throw new Error('delete_not_allowed');
+        }
+        table = 'shipping_documents';
+        bucket = BUCKET_DOCUMENT_EXPEDITION;
+        parentField = 'shipping_preparation_id';
+        pathField = 'document_url';
+        parentId = document.data.shipping_preparation_id;
+        tenantId = parent.data.mining_company_id;
+        reference = document.data.document_url;
+        fileName = document.data.file_name;
+        fileSize = document.data.file_size;
+        mimeType = document.data.mime_type;
+        uploadedBy = document.data.uploaded_by;
+        parentExists = parent.data.id === parentId;
+        parentPermission = permission.data === true;
+        hasWriteCapability = permission.data === true;
+        mayDeleteAnyUploader = true;
+        politique = POLITIQUE_DOCUMENT_EXPEDITION;
+      } else if (profileId === PROFILE_CERTIFICAT_ANALYSE) {
+        const document = await admin.from('assay_certificates')
+          .select('id, shipping_preparation_id, file_path, file_name, file_size, mime_type, uploaded_by, approval_status')
+          .eq('id', resourceId)
+          .maybeSingle();
+        if (document.error || !document.data?.shipping_preparation_id) {
+          throw new Error('delete_not_allowed');
+        }
+        const parent = await admin.from('shipping_preparations')
+          .select('id, mining_company_id')
+          .eq('id', document.data.shipping_preparation_id)
+          .maybeSingle();
+        const permission = await clientActeur.rpc('snp_sec_can_prepare_shipping', {
+          p_shipping_id: document.data.shipping_preparation_id,
+        });
+        if (parent.error || permission.error || !parent.data?.mining_company_id) {
+          throw new Error('delete_not_allowed');
+        }
+        table = 'assay_certificates';
+        bucket = BUCKET_CERTIFICAT_ANALYSE;
+        parentField = 'shipping_preparation_id';
+        pathField = 'file_path';
+        parentId = document.data.shipping_preparation_id;
+        tenantId = parent.data.mining_company_id;
+        reference = document.data.file_path;
+        fileName = document.data.file_name;
+        fileSize = document.data.file_size;
+        mimeType = document.data.mime_type;
+        uploadedBy = document.data.uploaded_by;
+        parentExists = parent.data.id === parentId;
+        parentPermission = permission.data === true;
+        hasWriteCapability = permission.data === true;
+        mayDeleteAnyUploader = true;
+        mutable = document.data.approval_status === 'pending';
+        politique = POLITIQUE_CERTIFICAT_ANALYSE;
+      } else if (profileId === PROFILE_DOCUMENT_PRODUCTION) {
+        const document = await admin.from('production_documents')
+          .select('id, production_id, file_path, file_name, file_size, file_type, uploaded_by')
+          .eq('id', resourceId)
+          .maybeSingle();
+        if (document.error || !document.data) throw new Error('delete_not_allowed');
+        const parent = await admin.from('daily_production')
+          .select('id, mining_company_id')
+          .eq('id', document.data.production_id)
+          .maybeSingle();
+        const [permission, capaciteMine] = await Promise.all([
+          clientActeur.rpc('snp_peut_consulter_production', { p_production_id: document.data.production_id }),
+          clientActeur.rpc('snp_actor_has_capability', { p_capability_code: 'mine.operate' }),
+        ]);
+        if (
+          parent.error || permission.error || capaciteMine.error
+          || !parent.data?.mining_company_id
+        ) throw new Error('delete_not_allowed');
+        table = 'production_documents';
+        bucket = BUCKET_DOCUMENT_PRODUCTION;
+        parentField = 'production_id';
+        pathField = 'file_path';
+        parentId = document.data.production_id;
+        tenantId = parent.data.mining_company_id;
+        reference = document.data.file_path;
+        fileName = document.data.file_name;
+        fileSize = document.data.file_size;
+        mimeType = document.data.file_type;
+        uploadedBy = document.data.uploaded_by;
+        parentExists = parent.data.id === parentId;
+        parentPermission = permission.data === true;
+        hasWriteCapability = capaciteMine.data === true || preparationSonasp.data === true;
+        // La policy metadata historique limite la suppression à l'auteur.
+        mayDeleteAnyUploader = false;
+        politique = POLITIQUE_DOCUMENT_PRODUCTION;
+      } else if (profileId === PROFILE_DOCUMENT_SOCIETE) {
+        const document = await admin.from('mining_company_documents')
+          .select('id, mining_company_id, file_path, file_name, file_size, mime_type, uploaded_by')
+          .eq('id', resourceId)
+          .maybeSingle();
+        if (document.error || !document.data) throw new Error('delete_not_allowed');
+        const parent = await admin.from('mining_companies')
+          .select('id, is_active')
+          .eq('id', document.data.mining_company_id)
+          .maybeSingle();
+        const permission = await clientActeur.rpc('snp_sec_can_prepare_company', {
+          p_mining_company_id: document.data.mining_company_id,
+        });
+        if (parent.error || permission.error || !parent.data) throw new Error('delete_not_allowed');
+        table = 'mining_company_documents';
+        bucket = BUCKET_DOCUMENT_SOCIETE;
+        parentField = 'mining_company_id';
+        pathField = 'file_path';
+        parentId = document.data.mining_company_id;
+        tenantId = document.data.mining_company_id;
+        reference = document.data.file_path;
+        fileName = document.data.file_name;
+        fileSize = document.data.file_size;
+        mimeType = document.data.mime_type;
+        uploadedBy = document.data.uploaded_by;
+        parentExists = parent.data.id === parentId;
+        parentPermission = permission.data === true;
+        hasWriteCapability = permission.data === true;
+        mayDeleteAnyUploader = true;
+        mutable = parent.data.is_active === true;
+        politique = POLITIQUE_DOCUMENT_SOCIETE_MINIERE;
+      } else {
+        throw new Error('delete_not_allowed');
+      }
+
+      if (!autoriserSuppressionDocumentSensible({
+        actorId: utilisateur.id,
+        parentId,
+        tenantId,
+        uploadedBy,
+        activeSession: true,
+        aal2: true,
+        parentExists,
+        parentPermission,
+        hasWriteCapability,
+        mayDeleteAnyUploader,
+        mutable,
+      })) throw new Error('delete_not_allowed');
+      if (
+        typeof reference !== 'string'
+        || typeof fileName !== 'string'
+        || typeof mimeType !== 'string'
+        || !Number.isSafeInteger(fileSize)
+        || (fileSize as number) <= 0
+        || (fileSize as number) > politique.maxBytes
+      ) throw new Error('delete_not_allowed');
+      const chemin = cheminObjetLieAuParent(reference, bucket, parentId);
+      if (!chemin) throw new Error('delete_not_allowed');
+      const nomFichier = fileName;
+      const tailleFichier = fileSize as number;
+      const typeMime = mimeType;
+
+      const sauvegarde = await admin.storage.from(bucket).download(chemin);
+      if (sauvegarde.error || !sauvegarde.data) throw new Error('storage_backup_failed');
+      const octets = new Uint8Array(await sauvegarde.data.arrayBuffer());
+      if (octets.byteLength !== tailleFichier) throw new Error('storage_backup_failed');
+      validerUploadServeur({
+        fileName: nomFichier,
+        declaredMimeType: typeMime,
+        bytes: octets,
+      }, politique);
+
+      const auditAutorisation = await admin.from('security_events').insert({
+        user_id: utilisateur.id,
+        event_type: 'sensitive_upload_delete_authorized',
+        details: {
+          profile: profileId,
+          tenant_id: tenantId,
+          parent_id: parentId,
+          resource_id: resourceId,
+        },
+      });
+      if (auditAutorisation.error) throw new Error('delete_audit_unavailable');
+
+      await supprimerObjetAvecCompensation({
+        expectedPath: chemin,
+        async removeObject() {
+          const resultat = await admin.storage.from(bucket).remove([chemin]);
+          if (resultat.error) throw new Error('storage_delete_failed');
+        },
+        async deleteMetadata() {
+          const resultat = await clientActeur.from(table)
+            .delete()
+            .eq('id', resourceId)
+            .eq(parentField, parentId)
+            .eq(pathField, reference)
+            .select(pathField)
+            .maybeSingle();
+          if (resultat.error || !resultat.data) throw new Error('metadata_delete_failed');
+          const deletedReference = (resultat.data as Record<string, unknown>)[pathField];
+          const deletedPath = cheminObjetLieAuParent(deletedReference, bucket, parentId);
+          if (!deletedPath) throw new Error('metadata_delete_failed');
+          return deletedPath;
+        },
+        async restoreObject() {
+          const resultat = await admin.storage.from(bucket).upload(chemin, octets, {
+            contentType: typeMime,
+            cacheControl: '0',
+            upsert: false,
+          });
+          if (resultat.error) throw new Error('storage_restore_failed');
+        },
+        onRestoreFailure() {
+          console.error(`[sensitive-upload] Restauration compensatoire ${profileId} échouée.`);
+        },
+      });
+      try {
+        const audit = await admin.from('security_events').insert({
+          user_id: utilisateur.id,
+          event_type: 'sensitive_upload_deleted',
+          details: {
+            profile: profileId,
+            tenant_id: tenantId,
+            parent_id: parentId,
+            resource_id: resourceId,
+          },
+        });
+        if (audit.error) console.error('[sensitive-upload] Audit secondaire de suppression indisponible.');
       } catch {
         console.error('[sensitive-upload] Audit secondaire de suppression indisponible.');
       }

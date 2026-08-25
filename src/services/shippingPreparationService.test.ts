@@ -14,7 +14,10 @@ const storageMocks = vi.hoisted(() => ({
   createSignedUrl: vi.fn(),
 }));
 
-const uploadMocks = vi.hoisted(() => ({ uploadSensitiveFile: vi.fn() }));
+const uploadMocks = vi.hoisted(() => ({
+  uploadSensitiveFile: vi.fn(),
+  deleteSensitiveResource: vi.fn(),
+}));
 
 vi.mock('@/lib/supabase', () => ({ supabase: supabaseMock }));
 vi.mock('./sensitiveUploadGateway', () => uploadMocks);
@@ -144,18 +147,13 @@ describe('shippingPreparationService — frontières du workflow', () => {
     expect(storageMocks.createSignedUrl).toHaveBeenCalledWith('shipping-1/doc.pdf', 300);
   });
 
-  it('supprime le chemin canonique sans doubler le nom du bucket', async () => {
-    storageMocks.remove.mockResolvedValue({ data: [], error: null });
-    const eq = vi.fn().mockResolvedValue({ error: null });
-    const deleteRow = vi.fn(() => ({ eq }));
-    supabaseMock.from.mockReturnValue({ delete: deleteRow });
-
+  it('délègue la suppression au endpoint compensé sans faire confiance au chemin navigateur', async () => {
+    uploadMocks.deleteSensitiveResource.mockResolvedValue(undefined);
     await shippingPreparationService.deleteDocument(
-      'doc-1',
+      DOCUMENT_ID,
       'https://project.supabase.co/storage/v1/object/public/shipping-documents/shipping-documents/shipping-1/doc.pdf',
     );
-
-    expect(storageMocks.remove).toHaveBeenCalledWith(['shipping-1/doc.pdf']);
-    expect(eq).toHaveBeenCalledWith('id', 'doc-1');
+    expect(uploadMocks.deleteSensitiveResource).toHaveBeenCalledWith('shipping-document', DOCUMENT_ID);
+    expect(storageMocks.remove).not.toHaveBeenCalled();
   });
 });

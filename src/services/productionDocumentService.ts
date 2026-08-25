@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { createPrivateSignedUrl, PRIVATE_STORAGE_BUCKETS } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
-import { uploadSensitiveFile } from './sensitiveUploadGateway';
+import { deleteSensitiveResource, uploadSensitiveFile } from './sensitiveUploadGateway';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -101,26 +101,8 @@ class ProductionDocumentService {
 
   async deleteDocument(documentId: string): Promise<void> {
     try {
-      const { data: doc, error: fetchError } = await supabase
-        .from('production_documents')
-        .select('file_path')
-        .eq('id', documentId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const { error: storageError } = await supabase.storage
-        .from(this.BUCKET_NAME)
-        .remove([doc.file_path]);
-
-      if (storageError) throw storageError;
-
-      const { error: deleteError } = await supabase
-        .from('production_documents')
-        .delete()
-        .eq('id', documentId);
-
-      if (deleteError) throw deleteError;
+      if (!UUID.test(documentId)) throw new Error('Identifiant de document invalide.');
+      await deleteSensitiveResource('production-document', documentId);
     } catch (error: any) {
       console.error('Error deleting document:', error);
       throw new Error(error.message || 'Erreur lors de la suppression du document');

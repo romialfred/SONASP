@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase';
 import { createPrivateSignedUrl, PRIVATE_STORAGE_BUCKETS } from '@/lib/privateStorage';
-import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 
 export interface MinePortalCompany {
   id: string;
@@ -493,29 +492,13 @@ export const minePortalService = {
   },
 
   async uploadDocument(input: { file: File; documentType: string; contractId?: string }): Promise<void> {
-    const validatedFile = validateUploadFile(input.file, UPLOAD_POLICIES.mineDocument);
-    const session = await supabase.auth.getUser();
-    if (!session.data.user || session.error) throw new MinePortalDataError('Votre session a expiré. Reconnectez-vous.');
-    const objectPath = `incoming/${session.data.user.id}/${crypto.randomUUID()}.${validatedFile.extension}`;
-    const upload = await supabase.storage
-      .from('mining-company-documents')
-      .upload(objectPath, input.file, { contentType: validatedFile.mimeType, upsert: false });
-
-    if (upload.error) throw new MinePortalDataError('Le fichier n’a pas pu être téléversé.');
-
-    const registration = await callMineRpc('snp_portail_mine_enregistrer_document', {
-      p_chemin_temporaire: upload.data.path,
-      p_nom_fichier: input.file.name,
-      p_type_document: input.documentType,
-      p_type_mime: validatedFile.mimeType,
-      p_taille_octets: input.file.size,
-      p_contrat_id: input.contractId || null,
-    });
-
-    if (registration.error) {
-      await supabase.storage.from('mining-company-documents').remove([upload.data.path]);
-      assertRpcResult(registration, 'Le document n’a pas pu être rattaché au dossier.');
-    }
+    void input;
+    // Le contrat portail historique impose un chemin `incoming/<acteur>/...`
+    // désormais refusé par 4G, et ne peut pas transporter `contractId` via le
+    // profil fermé actuel sans nouvelle RPC. Aucun fallback Storage client.
+    throw new MinePortalDataError(
+      'Le dépôt documentaire du portail Mine est temporairement désactivé en attente du contrat serveur privé.',
+    );
   },
 
   async getDocumentUrl(filePath: string): Promise<string> {

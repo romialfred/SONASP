@@ -3,10 +3,9 @@ import { ShippingStatus } from '@/constants/shippingStatuses';
 import {
   createPrivateSignedUrl,
   PRIVATE_STORAGE_BUCKETS,
-  requireStorageObjectPath,
 } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
-import { uploadSensitiveFile } from './sensitiveUploadGateway';
+import { deleteSensitiveResource, uploadSensitiveFile } from './sensitiveUploadGateway';
 
 const SHIPPING_DOCUMENTS_BUCKET = PRIVATE_STORAGE_BUCKETS.shippingDocuments;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -397,19 +396,9 @@ class ShippingPreparationService {
     return createPrivateSignedUrl(SHIPPING_DOCUMENTS_BUCKET, documentReference, expiresInSeconds);
   }
 
-  async deleteDocument(id: string, documentUrl: string): Promise<void> {
-    const fileName = requireStorageObjectPath(documentUrl, SHIPPING_DOCUMENTS_BUCKET);
-    const { error: storageError } = await supabase.storage
-      .from(SHIPPING_DOCUMENTS_BUCKET)
-      .remove([fileName]);
-    if (storageError) throw storageError;
-
-    const { error } = await supabase
-      .from('shipping_documents')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+  async deleteDocument(id: string, _documentUrl?: string): Promise<void> {
+    if (!UUID.test(id)) throw new Error('Identifiant de document invalide.');
+    await deleteSensitiveResource('shipping-document', id);
   }
 
   /**

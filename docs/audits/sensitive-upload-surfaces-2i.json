@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-24",
-  "scope": "src services/pages containing Supabase Storage uploads or public URL generation",
+  "generatedAt": "2026-08-25",
+  "scope": "src services/pages containing Supabase Storage uploads, public URL generation or sensitive deletion",
   "remediated": [
     {
       "file": "src/services/shippingPreparationService.ts",
@@ -8,8 +8,10 @@
       "callers": ["src/components/shipping/DocumentUploadSection.tsx", "src/pages/shipping/ShippingPreparationNew.tsx"],
       "profile": "shipping-document",
       "gatewayCall": "uploadSensitiveFile(",
-      "status": "gateway-enforced-private-signed",
+      "deleteGatewayCall": "deleteSensitiveResource(",
+      "status": "gateway-enforced-private-signed-compensated-delete",
       "directClientUpload": false,
+      "directClientDelete": false,
       "getPublicUrl": false
     },
     {
@@ -18,8 +20,10 @@
       "callers": ["src/components/production/DailyProductionFormEnhanced.tsx", "src/pages/production/ProductionDetails.tsx"],
       "profile": "production-document",
       "gatewayCall": "uploadSensitiveFile(",
-      "status": "gateway-enforced-private-signed-4g-storage-policy",
+      "deleteGatewayCall": "deleteSensitiveResource(",
+      "status": "gateway-enforced-private-signed-compensated-delete-4g-storage-policy",
       "directClientUpload": false,
+      "directClientDelete": false,
       "getPublicUrl": false
     },
     {
@@ -28,8 +32,34 @@
       "callers": ["src/components/freight/AddDocumentModal.tsx", "src/components/freight/GenerateInvoiceModal.tsx"],
       "profile": "freight-customs-document",
       "gatewayCall": "uploadFreightCustomsBinary(",
+      "deleteGatewayCall": "deleteFreightCustomsBinary(",
       "status": "gateway-rpc-4f-private-signed-compensated-delete-4g-storage-policy",
       "directClientUpload": false,
+      "directClientDelete": false,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/services/miningCompanyDocumentService.ts",
+      "bucket": "mining-company-documents",
+      "callers": ["src/pages/stakeholders/MiningCompanyForm.tsx"],
+      "profile": "mining-company-document",
+      "gatewayCall": "uploadSensitiveFile(",
+      "deleteGatewayCall": "deleteSensitiveResource(",
+      "status": "gateway-enforced-private-signed-compensated-delete-4g-storage-policy",
+      "directClientUpload": false,
+      "directClientDelete": false,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/services/assayCertificateService.ts",
+      "bucket": "ASSAY-CERTIFICATES",
+      "callers": [],
+      "profile": "assay-certificate",
+      "gatewayCall": "uploadSensitiveFile(",
+      "deleteGatewayCall": "deleteSensitiveResource(",
+      "status": "gateway-enforced-private-signed-compensated-delete-4g-storage-policy",
+      "directClientUpload": false,
+      "directClientDelete": false,
       "getPublicUrl": false
     }
   ],
@@ -39,9 +69,11 @@
       "bucket": "freight-documents",
       "callers": ["src/pages/freight/FreightShipmentDetails.tsx"],
       "priority": "P2",
-      "status": "generated-pdf-but-public-url-and-private-bucket-not-provisioned",
-      "directClientUpload": true,
-      "getPublicUrl": true
+      "status": "fail-closed-private-bucket-no-client-policy-no-server-attachment-rpc",
+      "requiredContract": "Create a server RPC that locks freight_shipments.id, derives mining_company_id, requires an AAL2 freight capability, accepts a closed document kind, stores only freight-documents/<shipment>/<uuid>.pdf, and audits the attachment; make freight-documents private with metadata-backed SELECT and no authenticated writes before re-enabling.",
+      "directClientUpload": false,
+      "directClientDelete": false,
+      "getPublicUrl": false
     },
     {
       "file": "src/services/paymentService.ts",
@@ -51,6 +83,7 @@
       "status": "not-started-no-active-caller-no-authoritative-attachment-rpc-and-documents-bucket-not-private",
       "requiredContract": "Create a server RPC that locks payments.id, derives its sale/tenant, requires sonasp.finance.execute under AAL2, validates mutable payment state, and atomically stores a canonical private object path; then provision a dedicated private bucket with metadata-backed SELECT and no authenticated writes.",
       "directClientUpload": true,
+      "directClientDelete": false,
       "getPublicUrl": true
     },
     {
@@ -60,6 +93,7 @@
       "priority": "P1",
       "status": "public-url-schema-and-all-image-consumers-require-atomic-signed-url-migration",
       "directClientUpload": true,
+      "directClientDelete": false,
       "getPublicUrl": true
     },
     {
@@ -69,6 +103,7 @@
       "priority": "P1",
       "status": "no-server-validation-private-bucket-or-final-parent-storage-policy",
       "directClientUpload": true,
+      "directClientDelete": false,
       "getPublicUrl": true
     },
     {
@@ -76,8 +111,10 @@
       "bucket": "mining-company-documents",
       "callers": [],
       "priority": "P1",
-      "status": "private-and-rpc-parent-bound-but-bypasses-server-magic-byte-gateway",
-      "directClientUpload": true,
+      "status": "fail-closed-contract-id-not-supported-by-current-gateway-rpc",
+      "requiredContract": "Extend the mining-company-document gateway and its actor RPC with a server-validated optional contract_id owned by the derived mining company; do not restore incoming/<actor> browser writes.",
+      "directClientUpload": false,
+      "directClientDelete": false,
       "getPublicUrl": false
     },
     {
@@ -87,6 +124,7 @@
       "priority": "P1",
       "status": "page-local-public-upload-private-bucket-and-parent-contract-not-provisioned",
       "directClientUpload": true,
+      "directClientDelete": false,
       "getPublicUrl": true
     },
     {
@@ -96,6 +134,7 @@
       "priority": "P2",
       "status": "client-validated-and-signed-read-but-upload-still-direct",
       "directClientUpload": true,
+      "directClientDelete": false,
       "getPublicUrl": false
     },
     {
@@ -105,6 +144,7 @@
       "priority": "P2",
       "status": "generated-pdf-png-public-identification-assets",
       "directClientUpload": true,
+      "directClientDelete": false,
       "getPublicUrl": true
     },
     {
@@ -114,6 +154,7 @@
       "priority": "P2",
       "status": "generated-pdf-public-url-excluded-from-lot-sales-files",
       "directClientUpload": true,
+      "directClientDelete": false,
       "getPublicUrl": true
     },
     {
@@ -123,6 +164,7 @@
       "priority": "P3",
       "status": "browser-reencoded-jpeg-private-signed-read-but-upload-still-direct",
       "directClientUpload": true,
+      "directClientDelete": false,
       "getPublicUrl": false
     }
   ]

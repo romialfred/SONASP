@@ -8,6 +8,7 @@ const ACTOR_ID = '271124cb-b8cd-43be-9c31-b7f5ed9ca24e';
 
 const mocks = vi.hoisted(() => ({
   uploadSensitiveFile: vi.fn(),
+  deleteSensitiveResource: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase', () => ({
@@ -16,6 +17,7 @@ vi.mock('@/lib/supabase', () => ({
 
 vi.mock('@/services/sensitiveUploadGateway', () => ({
   uploadSensitiveFile: mocks.uploadSensitiveFile,
+  deleteSensitiveResource: mocks.deleteSensitiveResource,
 }));
 
 function gatewayDocument(overrides: Record<string, unknown> = {}) {
@@ -79,5 +81,14 @@ describe('miningCompanyDocumentService.upload', () => {
 
     await expect(miningCompanyDocumentService.upload(COMPANY_ID, file, 'autorisation'))
       .rejects.toThrow('La confirmation du dépôt est invalide.');
+  });
+
+  it('délègue la suppression au endpoint compensé', async () => {
+    mocks.deleteSensitiveResource.mockResolvedValue(undefined);
+    await expect(miningCompanyDocumentService.remove({
+      id: DOCUMENT_ID,
+      file_path: `${COMPANY_ID}/document.pdf`,
+    })).resolves.toBeUndefined();
+    expect(mocks.deleteSensitiveResource).toHaveBeenCalledWith('mining-company-document', DOCUMENT_ID);
   });
 });

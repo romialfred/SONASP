@@ -10,7 +10,10 @@ import { PDFViewer } from '@/components/ui/PDFViewer';
 import { CustomConfirm } from '@/components/ui/CustomConfirm';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { freightShipmentService, FreightShipment } from '@/services/freightShipmentService';
-import { freightDocumentService } from '@/services/freightDocumentService';
+import {
+  FREIGHT_LEGACY_DOCUMENTS_ENABLED,
+  freightDocumentService,
+} from '@/services/freightDocumentService';
 import { BullionSummaryData, ExportInvoiceData } from '@/services/freightInvoiceGenerationService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
@@ -613,10 +616,15 @@ export default function FreightShipmentDetails() {
                   {(!shipment.bullion_summary_pdf_path || !shipment.customs_invoice_pdf_path) && (
                     <Button
                       onClick={handleGenerateDocuments}
-                      disabled={generatingDocs}
+                      disabled={generatingDocs || !FREIGHT_LEGACY_DOCUMENTS_ENABLED}
+                      title={!FREIGHT_LEGACY_DOCUMENTS_ENABLED
+                        ? 'Stockage documentaire legacy désactivé en attente du gateway privé.'
+                        : undefined}
                       className="bg-white hover:bg-gray-100 text-amber-800 disabled:bg-gray-200 disabled:text-gray-500 text-xs px-2 py-1 shadow-sm"
                     >
-                      {generatingDocs ? (
+                      {!FREIGHT_LEGACY_DOCUMENTS_ENABLED ? (
+                        'Génération indisponible'
+                      ) : generatingDocs ? (
                         <>
                           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                           Génération...

@@ -2,11 +2,10 @@ import { supabase } from '@/lib/supabase';
 import {
   createPrivateSignedUrl,
   PRIVATE_STORAGE_BUCKETS,
-  requireStorageObjectPath,
 } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import type { ExtractedAssayData } from './pdfParsingService';
-import { uploadSensitiveFile } from './sensitiveUploadGateway';
+import { deleteSensitiveResource, uploadSensitiveFile } from './sensitiveUploadGateway';
 
 const ASSAY_CERTIFICATES_BUCKET = PRIVATE_STORAGE_BUCKETS.assayCertificates;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -669,31 +668,8 @@ export async function deleteCertificate(
   certificateId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Get certificate to get file path
-    const { data: certificate } = await supabase
-      .from('assay_certificates')
-      .select('file_path')
-      .eq('id', certificateId)
-      .single();
-
-    if (certificate?.file_path) {
-      const objectPath = requireStorageObjectPath(certificate.file_path, ASSAY_CERTIFICATES_BUCKET);
-      const { error: storageError } = await supabase.storage
-        .from(ASSAY_CERTIFICATES_BUCKET)
-        .remove([objectPath]);
-      if (storageError) return { success: false, error: storageError.message };
-    }
-
-    // Delete certificate record (cascade will delete related data)
-    const { error } = await supabase
-      .from('assay_certificates')
-      .delete()
-      .eq('id', certificateId);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
+    if (!UUID.test(certificateId)) return { success: false, error: 'Le certificat est invalide.' };
+    await deleteSensitiveResource('assay-certificate', certificateId);
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

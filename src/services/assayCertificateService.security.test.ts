@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { uploadAssayCertificate } from './assayCertificateService';
+import { deleteCertificate, uploadAssayCertificate } from './assayCertificateService';
 
 const mocks = vi.hoisted(() => ({
   uploadSensitiveFile: vi.fn(),
+  deleteSensitiveResource: vi.fn(),
   storageFrom: vi.fn(),
   tableFrom: vi.fn(),
 }));
@@ -16,6 +17,7 @@ vi.mock('@/lib/supabase', () => ({
 
 vi.mock('./sensitiveUploadGateway', () => ({
   uploadSensitiveFile: mocks.uploadSensitiveFile,
+  deleteSensitiveResource: mocks.deleteSensitiveResource,
 }));
 
 const SHIPPING_ID = '9b3fcaaa-9367-4c91-a82d-788f043f33f1';
@@ -81,5 +83,14 @@ describe('uploadAssayCertificate', () => {
       error: 'La préparation d’expédition est invalide.',
     });
     expect(mocks.uploadSensitiveFile).not.toHaveBeenCalled();
+  });
+
+  it('délègue la suppression au endpoint compensé', async () => {
+    const certificateId = '0e052595-dcbc-4670-9557-3cd2069f81e7';
+    mocks.deleteSensitiveResource.mockResolvedValue(undefined);
+    await expect(deleteCertificate(certificateId)).resolves.toEqual({ success: true });
+    expect(mocks.deleteSensitiveResource).toHaveBeenCalledWith('assay-certificate', certificateId);
+    expect(mocks.storageFrom).not.toHaveBeenCalled();
+    expect(mocks.tableFrom).not.toHaveBeenCalled();
   });
 });

@@ -153,4 +153,12 @@ describe('minePortalService', () => {
     await expect(minePortalService.submitForecast({ year: 2026, month: 9, forecastOz: 50 }))
       .rejects.toThrow('La prévision n’a pas pu être transmise.');
   });
+
+  it('ferme le dépôt documentaire legacy sans tentative Storage ou RPC', async () => {
+    const file = new File(['%PDF-1.7\n%%EOF'], 'contrat.pdf', { type: 'application/pdf' });
+    await expect(minePortalService.uploadDocument({ file, documentType: 'contrat' }))
+      .rejects.toThrow('temporairement désactivé');
+    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
 });

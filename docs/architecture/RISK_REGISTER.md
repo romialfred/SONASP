@@ -18,6 +18,7 @@ l'atteste. Les faits cités ont été observés sur le projet hébergé
 | R-10 | Montants financiers non arrondis en XOF | moyen | avérée | moyen | ouvert |
 | R-11 | Fonctions Edge non déployées | moyen | avérée | moyen | ouvert |
 | R-12 | Objets appelés par le code et absents du schéma | moyen | avérée | moyen | ouvert |
+| R-13 | Écriture anonyme sur snp_avoirs_achat | moyen | avérée | moyen | ouvert |
 
 ---
 
@@ -204,3 +205,21 @@ déployer n'apporterait rien tant qu'un appelant n'existe pas.
 **Description.** La vitrine publique interroge la table `publications`, qui n'existe
 pas en base : l'endpoint répond 404. Même famille que les RPC absentes traitées en
 R-04.
+
+---
+
+## R-13 — Écriture anonyme sur `snp_avoirs_achat` · OUVERT
+
+**Description.** La table préexistante `snp_avoirs_achat` accorde `INSERT`,
+`UPDATE` et `DELETE` au rôle `anon`, en plus de `SELECT`. RLS la protège, mais le
+privilège n'a aucune raison d'exister : un avoir est une pièce financière et
+aucune vitrine publique ne l'écrit.
+
+**Découvert** en vérifiant les droits des tables d'avoirs après création des
+avoirs client, dont la lecture anonyme a été retirée (migration
+`20260825260000`).
+
+**Mitigation à faire.** Retirer les privilèges d'écriture à `anon`, après avoir
+vérifié qu'aucun appelant légitime ne s'y appuie. Non traité dans le lot en
+cours pour ne pas mêler une table d'achat à un incrément de conciliation.
+

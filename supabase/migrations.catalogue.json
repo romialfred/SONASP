@@ -1470,6 +1470,26 @@
       "sha256": "fd9d25ca8a7e338476394e6df8fcbfd6f764854dadd3422bddf67aec7227d69f"
     },
     {
+      "path": "supabase/migrations/20260825250000_avoirs_client_et_imputations.sql",
+      "version": "20260825250000",
+      "description": "avoirs_client_et_imputations",
+      "canonical": false,
+      "prefixProblem": "invalid_utc_timestamp",
+      "nameProblem": null,
+      "normalizedBytes": 15049,
+      "sha256": "2e01e292fb4ca70dd8631d12e4092adec9ced8edeaab7000024223c9d65b4d8a"
+    },
+    {
+      "path": "supabase/migrations/20260825260000_retirer_lecture_anonyme_conciliation.sql",
+      "version": "20260825260000",
+      "description": "retirer_lecture_anonyme_conciliation",
+      "canonical": false,
+      "prefixProblem": "invalid_utc_timestamp",
+      "nameProblem": null,
+      "normalizedBytes": 2865,
+      "sha256": "fbf111617db6fe631ca5b63f437d3ecf49dcbcb674137d2659bee88fad6e49ea"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2246,6 +2266,16 @@
         "reason": "invalid_utc_timestamp"
       },
       {
+        "path": "supabase/migrations/20260825250000_avoirs_client_et_imputations.sql",
+        "prefix": "20260825250000",
+        "reason": "invalid_utc_timestamp"
+      },
+      {
+        "path": "supabase/migrations/20260825260000_retirer_lecture_anonyme_conciliation.sql",
+        "prefix": "20260825260000",
+        "reason": "invalid_utc_timestamp"
+      },
+      {
         "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
         "prefix": "26122025",
         "reason": "prefix_must_have_14_digits"
@@ -2448,10 +2478,10 @@
       },
       {
         "digits": 14,
-        "count": 50
+        "count": 52
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "6a2777c3da3c475b01ab7f5a892487de73023ef10dbce48b84eef7b1596c45ff"
+  "catalogueSha256": "54260a05588368172fbff408bad3110b5d693c9b0f26b7a8d0a55decdcebc844"
 }

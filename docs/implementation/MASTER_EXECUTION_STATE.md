@@ -115,10 +115,38 @@ aucun droit d'écriture depuis l'API.
 fois l'instantané, l'écriture commerciale, les écritures fiscales, la facture
 définitive et l'audit.
 
-### Incréments 5 à 9
+### Incrément 6 — Avoirs et imputations · **TERMINÉ**
 
-Facturation, avoirs et imputations, cloisonnement multi-tenant, cockpit et
-rapports, dette technique. Détail dans `docs/conciliation/IMPLEMENTATION_PLAN.md`.
+Objets : `snp_avoirs_client`, `snp_avoirs_imputations`, `snp_avoir_imputer()`,
+`snp_avoir_solde()`, `snp_avoirs_verifier_cumul()`.
+
+**Ordre inversé avec l'incrément 5** : la facture définitive dépend de la
+convention d'assiette, point métier non tranché, tandis que les avoirs
+complètent directement le trop-perçu que la conciliation matérialise.
+
+`snp_avoirs_achat` n'a pas été étendue : elle se rattache aux factures d'achat,
+ignore la contrepartie client et ne connaît que deux états. Ce sont deux flux
+distincts, non un doublon.
+
+Éprouvé : `AVO-2026-0001` créé, imputation partielle laissant 13 999,87,
+dépassement refusé, solde exact accepté ramenant à 0, imputation sur avoir
+épuisé refusée, modification d'imputation refusée.
+
+Concurrence : le déclencheur de cumul ne suffit pas seul, deux transactions
+liraient le même cumul. C'est le verrou `FOR UPDATE` de la procédure qui
+sérialise, l'écriture directe étant par ailleurs impossible — vérifié, les
+tables n'accordent que `SELECT`.
+
+### Incrément 5 — Facturation définitive · à faire
+
+**Bloqué par un point métier** : l'audit relève un net serveur divergeant du net
+imprimé. La convention d'assiette doit être tranchée avant d'imprimer une
+facture définitive.
+
+### Incréments 7 à 9
+
+Cloisonnement multi-tenant, cockpit et rapports, dette technique. Détail dans
+`docs/conciliation/IMPLEMENTATION_PLAN.md`.
 
 ---
 

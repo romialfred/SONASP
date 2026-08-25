@@ -30,7 +30,8 @@ Elle doit répondre à cinq questions avec une piste d'audit :
 | Sale | **existe** | `sales` | réutiliser, enrichir des références de conciliation |
 | SaleLine | **existe partiellement** | `snp_ventes_lots`, `sales_line_items` | réutiliser `snp_ventes_lots` |
 | Shipment | **existe** | `shipping_preparations`, `freight_shipments` | réutiliser |
-| Assay | **existe** | `snp_analyses_teneur` | réutiliser et exposer |
+| Assay aval (acheteur) | **existe** | `assay_certificates` | réutiliser, relier à la vente |
+| Assay amont (teneur) | **existe** | `snp_analyses_teneur` | réutiliser pour les achats |
 | Invoice | **existe partiellement** | `snp_factures_achat`, `snp_artisan_factures_definitives` | réutiliser côté achat, étendre côté vente |
 | Payment | **existe** | `payments`, `snp_artisan_paiements` | réutiliser |
 | PaymentAllocation | **absent** | — | à créer |
@@ -69,21 +70,39 @@ La conciliation lit ces valeurs ; elle ne les redemande jamais à l'utilisateur.
 `teneur_faisant_foi` détermine à lui seul quelle teneur emporte la valeur
 définitive, et `methode_prix` quelle règle de pricing appliquer.
 
-### 3.2 L'analyse de teneur est déjà modélisée
+### 3.2 Deux analyses existent, à deux moments distincts
 
-`snp_analyses_teneur` porte le couple central de la conciliation :
+Les confondre conduirait à construire à côté de ce qui sert déjà.
 
-- `teneur_declaree_pct` — la valeur provisoire, côté vendeur
-- `teneur_retenue_pct` — la valeur définitive retenue
-- `justification_retenue`, `retenue_par`, `retenue_le`, `decision`, `statut`
-- le rattachement : `contrat_id`, `enlevement_id`, `achat_id`, `requisition_id`
-- l'échantillonnage : `masse_echantillon_g`, `masse_lot_oz`,
-  `methode_echantillonnage`, `lieu_prelevement`, `numero_echantillon`
+**`assay_certificates` — le résultat de l'acheteur.** Quatre lignes réelles, une
+voie de téléversement sensible dédiée (profil `assay-certificate`) et un service
+applicatif. Elle porte le laboratoire émetteur, le numéro et la date du
+certificat, la pièce et son type, l'extraction automatique
+(`parsing_status`, `parsed_at`), la validation (`approval_status`,
+`approved_by`), l'échantillon, les teneurs mesurées en ppm, g/t et pourcent,
+`fineness`, `purity_percent`, et le rattachement `shipping_preparation_id`.
 
-La table est vide et n'a jamais été exposée. Le travail consiste à l'exposer et à
-la relier à la vente, non à créer une entité concurrente.
+C'est l'entité que le cahier des charges §10 décrit sous « résultats acheteur ».
+**Pour la conciliation d'une vente export, c'est elle qui fait foi.**
 
-### 3.3 Le socle transactionnel est réutilisable tel quel
+**`snp_analyses_teneur` — l'analyse de teneur amont.** Vide, jamais exposée, elle
+sert le circuit d'achat SONASP ↔ mine ou artisan : rattachements `contrat_id`,
+`requisition_id`, `achat_id`, `enlevement_id`, mais **aucun rattachement à une
+expédition ni à une vente**. Elle porte le couple `teneur_declaree_pct` /
+`teneur_retenue_pct`, une machine à états déjà contrainte en base — dont
+`snp_analyse_tranchee_motivee`, qui exige une justification d'au moins dix
+caractères pour trancher — ainsi que l'audit et la numérotation automatiques.
+
+La conciliation s'appuie sur l'une ou l'autre selon le flux conciliés : sur
+`assay_certificates` pour l'export, sur `snp_analyses_teneur` pour les achats.
+
+### 3.3 La numérotation métier est déjà outillée
+
+`snp_numero_suivant(prefixe, annee, table, colonne)` produit les références
+métier — `ANA-2026-0001` pour les analyses. Les références de conciliation
+(`REC-`) l'emploieront plutôt qu'une numérotation concurrente.
+
+### 3.4 Le socle transactionnel est réutilisable tel quel
 
 - **Idempotence** : le motif `*_operation_ledger` (`idempotency_key`, `operation`,
   `request_fingerprint`, `actor_id`, `capability_code`, `response`) est déjà en
@@ -106,10 +125,14 @@ la relier à la vente, non à créer une entité concurrente.
 
 Une conciliation rattache une opération de vente à ses valeurs définitives.
 
-Champs structurants : référence métier (`REC-AAAA-NNNNNN`), `sale_id`,
-`contrat_id`, `analyse_teneur_id`, `mining_company_id`, statut, version courante,
-et les deux jeux de valeurs — provisoires reprises de la vente, définitives issues
-de l'analyse et du contrat.
+Champs structurants : référence métier (`REC-AAAA-NNNNNN`, produite par
+`snp_numero_suivant`), `sale_id`, `contrat_id`, `mining_company_id`, statut,
+version courante, et les deux jeux de valeurs — provisoires reprises de la vente,
+définitives issues de l'analyse et du contrat.
+
+L'analyse source est désignée par un couple type/identifiant plutôt que par une
+clé unique : `assay_certificates` pour une vente export, `snp_analyses_teneur`
+pour un achat. Une seule des deux est renseignée, ce que garantit une contrainte.
 
 Une vente ne peut porter qu'une conciliation non annulée : contrainte d'unicité
 partielle, et non contrôle applicatif.

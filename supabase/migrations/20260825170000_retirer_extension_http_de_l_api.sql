@@ -1,85 +1,117 @@
 -- Retire les fonctions de l'extension `http` de la surface exposee par l'API.
 --
--- CONSTAT
--- L'extension `http` est installee dans le schema `public`. PostgREST expose
--- toute fonction de ce schema sous /rest/v1/rpc/<nom>, et les fonctions
--- http_get, http_post, http_put, http_delete, http_head et http sont
--- executables par `anon` comme par `authenticated`.
+-- CONSTAT, ETABLI PAR APPEL REEL SUR LA PRODUCTION
+-- L'extension `http` est installee dans le schema `public`, dont PostgREST
+-- expose toutes les fonctions sous /rest/v1/rpc/. Un appel
+--   POST /rest/v1/rpc/http_get   {"uri": "http://127.0.0.1:1/"}
+-- portant la seule cle anon — publique par construction, livree dans le
+-- bundle du navigateur — a ete execute par le serveur de base de donnees, qui
+-- a repondu « Failed to connect to 127.0.0.1 port 1 ». La requete sortante est
+-- donc bien emise par la base.
 --
--- La cle anon est publique par construction : elle est livree dans le bundle
--- du navigateur. N'importe qui peut donc appeler
---   POST /rest/v1/rpc/http_get  {"uri": "..."}
--- et faire emettre une requete HTTP arbitraire par le serveur de base de
--- donnees. C'est une falsification de requete cote serveur complete, sans
--- authentification : reseau interne, metadonnees d'infrastructure, et
--- exfiltration possible via http_post vers un hote controle par l'appelant.
+-- Il s'agit d'une falsification de requete cote serveur, sans authentification :
+-- atteinte des services internes, des metadonnees d'infrastructure, et
+-- exfiltration possible via http_post vers un hote choisi par l'appelant. Elle
+-- contournerait egalement toute liste blanche mise en place plus tard pour les
+-- echanges avec la DGI, l'appel ne passant pas par la fonction de bord prevue.
 --
--- Elle contournerait egalement toute liste blanche mise en place plus tard
--- pour les echanges avec la DGI, puisque l'appel ne passerait pas par la
--- fonction de bord prevue.
+-- POURQUOI UN SIMPLE REVOKE NE SUFFIT PAS
+-- L'extension appartient a `supabase_admin`, alors que les migrations
+-- s'executent sous `postgres`, qui n'en est pas membre. Un REVOKE emis par un
+-- non-proprietaire est sans effet : verifie en production, ou la premiere
+-- version de cette migration a ete rejetee par son propre postflight, les 38
+-- droits d'execution subsistant apres coup. La transaction a ete annulee et
+-- rien n'a ete modifie.
 --
 -- PARTI PRIS
--- L'extension n'est pas desinstallee : aucune fonction metier ne l'appelle
--- aujourd'hui, mais une desinstallation romprait toute dependance future non
--- inventoriee. Seuls les droits d'execution sont retires aux roles joignables
--- par l'API. `service_role` conserve les siens : il n'est jamais expose au
--- navigateur et sert les traitements de confiance.
+-- L'extension est recreee dans le schema `extensions`, prevu par Supabase pour
+-- cet usage et non expose par PostgREST. `ALTER EXTENSION ... SET SCHEMA` est
+-- refuse par pg_http, d'ou la recreation. Les droits d'execution restent
+-- accordes aux roles applicatifs, Supabase les reattribuant et la propriete
+-- revenant a `supabase_admin` : la defense en profondeur reste donc
+-- incomplete, mais la surface joignable depuis l'API est fermee, ce qui est
+-- l'objet de cette migration. Retirer ces droits demanderait une intervention
+-- sous `supabase_admin`, hors de portee d'une migration.
+--
+-- PREREQUIS VERIFIE : aucune fonction metier n'appelle http_get, http_post,
+-- http_put ni http_delete. La suppression ne rompt donc aucune dependance.
 --
 -- RETOUR ARRIERE
---   GRANT EXECUTE ON FUNCTION public.http_get(text) TO anon, authenticated;
---   -- et de meme pour chaque fonction de l'extension.
--- Ce retour arriere retablirait la faille : il n'a de sens que pour un
--- diagnostic, jamais comme etat durable.
+--   DROP EXTENSION http;
+--   CREATE EXTENSION http SCHEMA public;
+-- Ce retour arriere rouvre la faille : il n'a de sens que pour un diagnostic.
 
 BEGIN;
 
+-- Preflight : ne rien tenter si une fonction metier depend de l'extension.
 DO $$
 DECLARE
-  v_fonction record;
-  v_revoquees integer := 0;
+  v_dependantes integer;
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'http') THEN
     RAISE NOTICE 'Extension http absente : rien a durcir.';
     RETURN;
   END IF;
 
-  FOR v_fonction IN
-    SELECT p.oid::regprocedure AS signature
-      FROM pg_depend d
-      JOIN pg_extension e ON e.oid = d.refobjid AND e.extname = 'http'
-      JOIN pg_proc p ON p.oid = d.objid
-     WHERE d.deptype = 'e'
-  LOOP
-    EXECUTE format(
-      'REVOKE ALL ON FUNCTION %s FROM PUBLIC, anon, authenticated',
-      v_fonction.signature
-    );
-    v_revoquees := v_revoquees + 1;
-  END LOOP;
+  SELECT count(*) INTO v_dependantes
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public'
+     AND p.proname NOT LIKE 'http%'
+     AND (p.prosrc LIKE '%http_get(%'
+       OR p.prosrc LIKE '%http_post(%'
+       OR p.prosrc LIKE '%http_put(%'
+       OR p.prosrc LIKE '%http_delete(%');
 
-  RAISE NOTICE 'Droits retires sur % fonction(s) de l''extension http.', v_revoquees;
+  IF v_dependantes <> 0 THEN
+    RAISE EXCEPTION
+      'Preflight : % fonction(s) metier dependent de l''extension http.',
+      v_dependantes;
+  END IF;
 END;
 $$;
 
--- Postflight : plus aucune fonction de l'extension joignable par l'API.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+      FROM pg_extension e
+      JOIN pg_namespace n ON n.oid = e.extnamespace
+     WHERE e.extname = 'http' AND n.nspname = 'public'
+  ) THEN
+    EXECUTE 'DROP EXTENSION http';
+    EXECUTE 'CREATE EXTENSION http SCHEMA extensions';
+  END IF;
+END;
+$$;
+
+-- Postflight : plus aucune fonction http dans le schema expose.
 DO $$
 DECLARE
-  v_restantes integer;
+  v_dans_public integer;
 BEGIN
-  SELECT count(*) INTO v_restantes
+  IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'http') THEN
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO v_dans_public
     FROM pg_depend d
     JOIN pg_extension e ON e.oid = d.refobjid AND e.extname = 'http'
     JOIN pg_proc p ON p.oid = d.objid
-    JOIN pg_roles r ON r.rolname IN ('anon', 'authenticated')
+    JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE d.deptype = 'e'
-     AND has_function_privilege(r.oid, p.oid, 'EXECUTE');
+     AND n.nspname = 'public';
 
-  IF v_restantes <> 0 THEN
+  IF v_dans_public <> 0 THEN
     RAISE EXCEPTION
-      'Postflight : % droit(s) d''execution subsistent sur l''extension http.',
-      v_restantes;
+      'Postflight : % fonction(s) http subsistent dans le schema public.',
+      v_dans_public;
   END IF;
 END;
 $$;
 
 COMMIT;
+
+-- PostgREST met en cache la liste des fonctions exposees : sans rechargement,
+-- il continuerait de router les appels vers des fonctions disparues.
+NOTIFY pgrst, 'reload schema';

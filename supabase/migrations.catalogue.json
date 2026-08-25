@@ -1386,8 +1386,8 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 3002,
-      "sha256": "68409d225482f9c8e1308cd101951103aeda8c4abfaf6148c27b35e2b280d981"
+      "normalizedBytes": 4291,
+      "sha256": "2289304dd1889b1f174d9a3a4c07650183b1dac60aee6ae6be6ab46535a11d55"
     },
     {
       "path": "supabase/migrations/20260825170100_verrouiller_role_et_tenant_du_profil.sql",
@@ -2388,5 +2388,5 @@
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "17430eb018b8e9c71eea0d553a3d79d36ddaf89e99233638d6b290b7e54448ca"
+  "catalogueSha256": "a12a6bdc8a99ce2edc02a3ed184b043d0b35701b43ebb14dc07bd6958aa2dc63"
 }

@@ -1420,6 +1420,16 @@
       "sha256": "549baa505ec8920c922bcc10926a52fb0898089ddaf20f528f878751f41a6b87"
     },
     {
+      "path": "supabase/migrations/20260825200000_grands_livres_commercial_et_fiscal.sql",
+      "version": "20260825200000",
+      "description": "grands_livres_commercial_et_fiscal",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 14014,
+      "sha256": "7cafdcf505d92db27dd12d10d5edfd5eb9b313f6a994cd2ef7bfe3b49364d299"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2393,10 +2403,10 @@
       },
       {
         "digits": 14,
-        "count": 45
+        "count": 46
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "eb9ffd6e4391d4108f58bebd5042609ebd9c1dc0c8317ba72d22a64a7c53ec40"
+  "catalogueSha256": "af42c79d6775d0253f2c05764d7f9c438b37e8b0b2d01f4d5cede1115cf948ec"
 }

@@ -1410,6 +1410,16 @@
       "sha256": "f5b31387c09ed8f1cfe29444565774be21c6b7e6c3736f3e27f1a5a9cf628384"
     },
     {
+      "path": "supabase/migrations/20260825190000_referentiel_fiscal_versionne.sql",
+      "version": "20260825190000",
+      "description": "referentiel_fiscal_versionne",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 12366,
+      "sha256": "549baa505ec8920c922bcc10926a52fb0898089ddaf20f528f878751f41a6b87"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2383,10 +2393,10 @@
       },
       {
         "digits": 14,
-        "count": 44
+        "count": 45
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "de9fc819d5c39748ff2e8e787c0b7f04594b7211842183f4499bf34e07aaeef1"
+  "catalogueSha256": "eb9ffd6e4391d4108f58bebd5042609ebd9c1dc0c8317ba72d22a64a7c53ec40"
 }

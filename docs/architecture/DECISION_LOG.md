@@ -171,6 +171,48 @@ reste offerte : rétablir la connexion ne corrigerait aucun champ nul.
 
 ---
 
+## D-008 — Une convention de bornes plutôt qu'un paramètre d'inclusivité
+
+**Contexte.** Le cahier des charges §17 demande que chaque règle fiscale porte
+l'inclusivité de ses bornes de tranche.
+
+**Problème.** Rendre l'inclusivité paramétrable oblige la contrainte de
+non-chevauchement à construire dynamiquement le type d'intervalle. Elle cesse
+d'être vérifiable en base et redevient un contrôle applicatif — précisément ce que
+l'on cherche à éviter.
+
+**Décision.** Adopter la convention unique `[seuil_min, seuil_max)` : borne
+inférieure incluse, supérieure exclue, un seuil nul valant « pas de borne ». Deux
+barèmes contigus s'écrivent 0–1000 puis 1000–1300, sans recouvrement ni trou. Les
+colonnes d'inclusivité sont retirées : elles auraient été décoratives.
+
+**Vérification.** Sur le miroir, trois tranches contiguës sont acceptées, une
+tranche chevauchante refusée par la contrainte d'exclusion, une seconde TVA sur
+une période recouvrante refusée, un taux supérieur à 1 refusé.
+
+---
+
+## D-009 — Généraliser le référentiel fiscal sans toucher au circuit artisanal
+
+**Contexte.** `snp_artisan_tax_policies` versionne correctement par date d'effet
+mais fige trois taux en colonnes, sans assiette ni tranche. Elle ne peut porter ni
+le FNDL ni un barème progressif.
+
+**Décision.** Créer le référentiel généralisé et **laisser la politique artisanale
+en place**, inchangée. Elle sert aujourd'hui le seul circuit dont la fiscalité soit
+automatisée ; le rompre avant d'avoir éprouvé la bascule serait une régression.
+
+**Ce qui n'est pas livré.** Aucun taux. Les barèmes seront saisis par un acteur
+habilité avec leur référence réglementaire, et une règle reste en `projet` tant
+qu'un second acteur ne l'a pas approuvée. Le FNDL n'a aucune définition
+disponible.
+
+**Vérification de reproductibilité.** Sur le miroir, un barème créé avec effet en
+2027 à 7 % ne modifie pas le calcul d'une opération de 2026, qui continue de
+résoudre 4 %. C'est l'exigence §17.
+
+---
+
 ## Dérive connue : horodatage des migrations appliquées
 
 Les migrations appliquées par l'outil d'administration sont enregistrées avec

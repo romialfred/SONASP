@@ -1440,6 +1440,36 @@
       "sha256": "1b0f13def30d6e8fb8055e9a248e8e973d02258e68090aa52440b74e909b6abe"
     },
     {
+      "path": "supabase/migrations/20260825220000_rpc_conciliation_transactionnelle.sql",
+      "version": "20260825220000",
+      "description": "rpc_conciliation_transactionnelle",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 19958,
+      "sha256": "e608e9ad0da47301a41a796382dd439677bd270f59ef8c526edae8423c6a816e"
+    },
+    {
+      "path": "supabase/migrations/20260825230000_expliciter_droits_lecture_conciliation.sql",
+      "version": "20260825230000",
+      "description": "expliciter_droits_lecture_conciliation",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3792,
+      "sha256": "bb315b543d045c1f57c8b217992e4801d698cafa9f4770900335bb7dd34e5ba9"
+    },
+    {
+      "path": "supabase/migrations/20260825240000_corriger_policies_restrictives_conciliation.sql",
+      "version": "20260825240000",
+      "description": "corriger_policies_restrictives_conciliation",
+      "canonical": false,
+      "prefixProblem": "invalid_utc_timestamp",
+      "nameProblem": null,
+      "normalizedBytes": 5016,
+      "sha256": "fd9d25ca8a7e338476394e6df8fcbfd6f764854dadd3422bddf67aec7227d69f"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2211,6 +2241,11 @@
         "reason": "invalid_utc_timestamp"
       },
       {
+        "path": "supabase/migrations/20260825240000_corriger_policies_restrictives_conciliation.sql",
+        "prefix": "20260825240000",
+        "reason": "invalid_utc_timestamp"
+      },
+      {
         "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
         "prefix": "26122025",
         "reason": "prefix_must_have_14_digits"
@@ -2413,10 +2448,10 @@
       },
       {
         "digits": 14,
-        "count": 47
+        "count": 50
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "6d0e9d263b887317ec6c2629028e2169511d8cd37a710b5528b268154a750dcd"
+  "catalogueSha256": "6a2777c3da3c475b01ab7f5a892487de73023ef10dbce48b84eef7b1596c45ff"
 }

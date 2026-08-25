@@ -42,6 +42,18 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+/**
+ * Une variable d'environnement du shell l'emporte sur le `.env` du dépôt : le
+ * serveur de développement peut viser une autre instance (miroir local de
+ * schéma, projet de test) sans que rien ne l'indique. Les comptes y étant
+ * absents, GoTrue répond « Invalid login credentials » et l'écran de connexion
+ * accuse le mot de passe au lieu de l'instance. Nommer l'hôte visé lève cette
+ * ambiguïté. Retiré du bundle de production avec les autres `console.*`.
+ */
+if (import.meta.env.MODE === 'development') {
+  console.info(`[Supabase] Instance ciblée : ${new URL(supabaseUrl).host}`);
+}
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,

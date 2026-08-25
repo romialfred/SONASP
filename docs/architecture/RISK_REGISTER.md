@@ -11,7 +11,7 @@ l'atteste. Les faits cités ont été observés sur le projet hébergé
 | R-03 | Double réclamation de la taxe de développement communal | élevé | avérée | **élevé** | **fermé** |
 | R-04 | Chaîne de vente export inopérante | élevé | avérée | **élevé** | **fermé** |
 | R-05 | Privilèges hors RLS accordés aux rôles de l'API | moyen | possible | moyen | **fermé** |
-| R-06 | Cloisonnement multi-tenant incomplet | élevé | avérée | **élevé** | ouvert |
+| R-06 | Cloisonnement multi-tenant incomplet | élevé | **infirmée** | faible | **fermé** |
 | R-07 | Interfaces locales divergeant des types générés | moyen | avérée | moyen | ouvert |
 | R-08 | Dérive entre migrations du dépôt et production | moyen | avérée | moyen | ouvert |
 | R-09 | Barème fiscal sans validation juridique | élevé | avérée | **élevé** | ouvert |
@@ -106,17 +106,38 @@ RLS. Non-régression : `sales`, `daily_production`, `gold_prices_daily` et
 
 ---
 
-## R-06 — Cloisonnement multi-tenant incomplet · OUVERT
+## R-06 — Cloisonnement multi-tenant · FERMÉ, hypothèse initiale infirmée
 
-**Description.** Le cloisonnement par périmètre minier n'est pas posé. La migration
-prévue est inapplicable en l'état : elle repose sur `snp_est_agent_sonasp()`, dont la
-définition a changé et ne reconnaît plus que le rôle `management`, avec MFA.
+**Ce que l'audit annonçait.** Le cloisonnement par périmètre minier ne serait pas
+posé, la migration prévue n'ayant jamais été appliquée.
 
-**Conséquence si appliquée telle quelle.** Les rôles `admin`, `manager`, `factory`,
-`airport` et `refinery` perdraient tout accès aux tables à `mining_company_id`.
+**Ce que la mesure a établi.** Le cloisonnement était déjà en place et opérant. La
+production emploie, sur `daily_production` comme ailleurs, le prédicat complet
+`snp_est_agent_sonasp() OR snp_est_direction_lecture() OR mining_company_id =
+snp_societe_utilisateur()` — celui-là même qu'il aurait fallu construire.
 
-**Mitigation à construire.** Poser le cloisonnement avec un prédicat aligné sur
-l'état actuel des capabilities. Voir D-005.
+**Méthode.** La lecture des métadonnées s'est révélée trompeuse à deux reprises :
+elle a d'abord manqué `freight_shipments`, cloisonnée par une fonction plutôt que
+par la colonne, puis désigné comme non cloisonnées des tables qui l'étaient. Seul
+l'essai empirique tranche : pour chacune des 34 tables portant
+`mining_company_id`, un compte minier a tenté de compter les lignes d'une autre
+société. Vingt de ces tables en contenaient réellement — jusqu'à 209 lignes.
+
+**Résultat.** Une seule table laissait voir des données tierces :
+`expedition_lot_counters`, dont la politique de lecture portait `USING (true)`.
+Sept lignes d'une autre société y étaient visibles. Corrigée par la migration
+`20260825270000`, avec le prédicat standard.
+
+**Contrôle inverse.** Un agent national voit toujours 221 productions sur 221, 16
+préparations d'expédition et 53 achats miniers ; il voit les 9 compteurs sur 9
+après correction. Le cloisonnement ne prive personne de ce qui lui revient.
+
+**Piège écarté.** Un premier essai concluait à l'absence de fuite, puis à la
+privation totale d'un agent national. Les deux résultats étaient faux : le miroir
+portait encore les 120 politiques de la migration `20260822170000`, appliquées
+lors d'un test antérieur. Elles ont été retirées avant de conclure. La décision
+D-005 d'écarter cette migration reste juste : elle n'emploie pas
+`snp_est_direction_lecture` et aurait bien privé les rôles `admin` et `manager`.
 
 ---
 

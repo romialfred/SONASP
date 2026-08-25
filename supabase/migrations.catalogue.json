@@ -1490,6 +1490,16 @@
       "sha256": "fbf111617db6fe631ca5b63f437d3ecf49dcbcb674137d2659bee88fad6e49ea"
     },
     {
+      "path": "supabase/migrations/20260825270000_cloisonner_compteurs_expedition.sql",
+      "version": "20260825270000",
+      "description": "cloisonner_compteurs_expedition",
+      "canonical": false,
+      "prefixProblem": "invalid_utc_timestamp",
+      "nameProblem": null,
+      "normalizedBytes": 3472,
+      "sha256": "f5d126faf4a610c43b18e9c8148140a3ae2638990a5bf3b9c4ff5f3980cf69d7"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2276,6 +2286,11 @@
         "reason": "invalid_utc_timestamp"
       },
       {
+        "path": "supabase/migrations/20260825270000_cloisonner_compteurs_expedition.sql",
+        "prefix": "20260825270000",
+        "reason": "invalid_utc_timestamp"
+      },
+      {
         "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
         "prefix": "26122025",
         "reason": "prefix_must_have_14_digits"
@@ -2478,10 +2493,10 @@
       },
       {
         "digits": 14,
-        "count": 52
+        "count": 53
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "54260a05588368172fbff408bad3110b5d693c9b0f26b7a8d0a55decdcebc844"
+  "catalogueSha256": "c16a2466ca77ddb9698b4faa0b1d4d787401b304cb445357a50db450abc2dfd8"
 }

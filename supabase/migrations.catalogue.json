@@ -1340,6 +1340,16 @@
       "sha256": "7526d2ce9bbfcf1507ffa3dc5f2f359b11368dd9d9d72686f6986e555bf990e7"
     },
     {
+      "path": "supabase/migrations/20260825000007_lot_2m_administration_comptes_atomique.sql",
+      "version": "20260825000007",
+      "description": "lot_2m_administration_comptes_atomique",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 31752,
+      "sha256": "9d5c6bc88042d1e1ec39b62944e2065dafa5eb5acfa6acca4867547ea14e79a1"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2308,10 +2318,10 @@
       },
       {
         "digits": 14,
-        "count": 37
+        "count": 38
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "b1c84657fcbe61c56d86a40300f7dd5eb1d2e90c25db70d8673b117761ce283b"
+  "catalogueSha256": "e9b2b6fc493d38de63298591642a79a596bc6df180a7bc929ac0d58012675209"
 }

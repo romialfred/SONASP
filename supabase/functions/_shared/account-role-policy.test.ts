@@ -35,8 +35,12 @@ describe('hiérarchie des comptes administrables', () => {
     expect(policy('admin', 'owner')).toBe(false);
   });
 
-  it('autorise un Administrateur sur son niveau et les niveaux inférieurs', () => {
-    expect(policy('admin', 'admin')).toBe(true);
+  it('réserve les comptes Administrateur au Propriétaire', () => {
+    expect(policy('owner', 'admin')).toBe(true);
+    expect(policy('admin', 'admin')).toBe(false);
+  });
+
+  it('autorise un Administrateur uniquement sur les niveaux inférieurs', () => {
     expect(policy('admin', 'management')).toBe(true);
     expect(policy('admin', 'mine')).toBe(true);
   });

@@ -48,6 +48,7 @@ export function canManageAccountTarget(input: {
   return input.actorId !== input.targetId
     && (actorRole === 'owner' || actorRole === 'admin')
     && targetRole !== 'owner'
+    && !(actorRole === 'admin' && targetRole === 'admin')
     && targetLevel >= 0
     && targetLevel <= actorLevel;
 }

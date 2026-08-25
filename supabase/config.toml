@@ -5,7 +5,8 @@ site_url = "https://sonasp.data-univers.com"
 additional_redirect_urls = [
   "https://sonasp.data-univers.com/modifier-mot-de-passe",
   "https://sonasp.vercel.app/modifier-mot-de-passe",
-  "http://localhost:5173/modifier-mot-de-passe",
+  "http://localhost:5180/modifier-mot-de-passe",
+  "http://127.0.0.1:5180/modifier-mot-de-passe",
 ]
 
 # Ces fonctions vérifient explicitement le jeton utilisateur dans leur code.
@@ -16,6 +17,12 @@ verify_jwt = false
 
 [functions.get-users]
   verify_jwt = false
+
+[functions.get-user-details]
+verify_jwt = false
+
+[functions.manage-user-status]
+verify_jwt = false
 
 [functions.delete-user]
 verify_jwt = false
@@ -29,4 +36,18 @@ verify_jwt = false
 # Endpoint public par nature : il valide son Origin, limite les tentatives et
 # n'utilise la clé de service que dans la fonction pour consommer le jeton.
 [functions.activate-account]
+verify_jwt = false
+
+# Le gateway valide lui-même le JWT, l'AAL2, les capabilities, le tenant et le
+# contenu binaire. OPTIONS doit donc atteindre le handler sans JWT.
+[functions.sensitive-upload]
+verify_jwt = false
+
+# Le handler vérifie le JWT, l'AAL2, le registre de session et la hiérarchie.
+[functions.revoke-user-sessions]
+verify_jwt = false
+
+# Endpoint public protégé dans son handler par CORS, validation stricte,
+# honeypot et limitation de débit. Il ne reçoit volontairement aucun JWT.
+[functions.public-assistance]
 verify_jwt = false

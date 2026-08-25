@@ -6,9 +6,12 @@ const ORIGINES_PAR_DEFAUT = [
 ];
 
 function originesAutorisees(): Set<string> {
+  const environnement = (globalThis as typeof globalThis & {
+    Deno?: { env?: { get?: (nom: string) => string | undefined } };
+  }).Deno?.env;
   const configurees = [
-    Deno.env.get('ALLOWED_ORIGINS'),
-    Deno.env.get('ALLOWED_ORIGIN'),
+    environnement?.get?.('ALLOWED_ORIGINS'),
+    environnement?.get?.('ALLOWED_ORIGIN'),
   ]
     .filter(Boolean)
     .flatMap((valeur) => String(valeur).split(','))
@@ -67,6 +70,13 @@ export function reponsePrevol(req: Request): Response {
 export function reponseJson(req: Request, corps: unknown, statut = 200): Response {
   return new Response(JSON.stringify(corps), {
     status: statut,
-    headers: { ...entetesCors(req), 'Content-Type': 'application/json; charset=utf-8' },
+    headers: {
+      ...entetesCors(req),
+      'Cache-Control': 'private, no-store, max-age=0',
+      'Content-Type': 'application/json; charset=utf-8',
+      Pragma: 'no-cache',
+      'Referrer-Policy': 'no-referrer',
+      'X-Content-Type-Options': 'nosniff',
+    },
   });
 }

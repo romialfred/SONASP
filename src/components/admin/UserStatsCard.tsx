@@ -27,7 +27,7 @@ interface DashboardStats {
   logins_last_30_days: number;
   total_actions: number;
   actions_last_30_days: number;
-  accessible_sites: number;
+  accessible_sites: number | null;
   last_login: string | null;
 }
 
@@ -42,7 +42,7 @@ export default function UserStatsCard({ userId, userProfile }: UserStatsCardProp
     logins_last_30_days: 0,
     total_actions: 0,
     actions_last_30_days: 0,
-    accessible_sites: 0,
+    accessible_sites: null,
     last_login: null
   });
   const [loading, setLoading] = useState(true);
@@ -60,16 +60,19 @@ export default function UserStatsCard({ userId, userProfile }: UserStatsCardProp
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { count: totalLogins } = await supabase
-        .from('user_login_history')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+      // Les sessions se lisent par la procedure dediee : la table n'est pas
+      // exposee a l'API et la procedure applique elle-meme le controle d'acces.
+      const { data: sessions, error: erreurSessions } = await supabase.rpc(
+        'snp_sessions_lister',
+        { p_user_id: userId, p_actives_seulement: false },
+      );
+      if (erreurSessions) throw erreurSessions;
 
-      const { count: recentLogins } = await supabase
-        .from('user_login_history')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('login_at', thirtyDaysAgo.toISOString());
+      const listeSessions = (sessions ?? []) as Array<{ created_at: string }>;
+      const totalLogins = listeSessions.length;
+      const recentLogins = listeSessions.filter(
+        (session) => new Date(session.created_at) >= thirtyDaysAgo,
+      ).length;
 
       const { count: totalActions } = await supabase
         .from('user_activity_logs')
@@ -82,17 +85,12 @@ export default function UserStatsCard({ userId, userProfile }: UserStatsCardProp
         .eq('user_id', userId)
         .gte('created_at', thirtyDaysAgo.toISOString());
 
-      const { count: accessibleSites } = await supabase
-        .from('user_mining_company_access')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-
       setStats({
         total_logins: totalLogins || 0,
         logins_last_30_days: recentLogins || 0,
         total_actions: totalActions || 0,
         actions_last_30_days: recentActions || 0,
-        accessible_sites: accessibleSites || 0,
+        accessible_sites: null,
         last_login: userProfile.last_login_at
       });
     } catch (err) {
@@ -210,16 +208,17 @@ export default function UserStatsCard({ userId, userProfile }: UserStatsCardProp
               <Building2 className="w-6 h-6 text-amber-700" />
             </div>
             <span className="text-xs font-medium text-amber-600 bg-amber-200 px-2 py-1 rounded-full">
-              Actifs
+              Indisponible
             </span>
           </div>
           <h3 className="text-3xl font-bold text-amber-900 mb-1">
-            {stats.accessible_sites}
+            {stats.accessible_sites ?? '-'}
           </h3>
-          <p className="text-sm font-medium text-amber-700">Sites Accessibles</p>
+          <p className="text-sm font-medium text-amber-700">Sites accessibles</p>
           <div className="mt-2 pt-2 border-t border-amber-200">
             <p className="text-xs text-amber-600">
-              Compagnies minières
+              Le référentiel user_mining_company_access est absent de la base :
+              ce compte ne peut pas être calculé.
             </p>
           </div>
         </Card>
@@ -350,7 +349,7 @@ export default function UserStatsCard({ userId, userProfile }: UserStatsCardProp
               <span className="font-bold text-blue-600">
                 {stats.logins_last_30_days} fois
               </span>.
-              {stats.accessible_sites > 0 && (
+              {stats.accessible_sites !== null && stats.accessible_sites > 0 && (
                 <span>
                   {' '}Il a accès à{' '}
                   <span className="font-bold text-amber-600">

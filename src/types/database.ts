@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.17"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -157,187 +182,6 @@ export type Database = {
             columns: ["requested_by"]
             isOneToOne: false
             referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      assay_base_metals: {
-        Row: {
-          aluminum_ppm: number | null
-          calcium_ppm: number | null
-          certificate_id: string | null
-          chromium_ppm: number | null
-          cobalt_ppm: number | null
-          copper_ppm: number | null
-          created_at: string | null
-          id: string
-          iron_ppm: number | null
-          magnesium_ppm: number | null
-          manganese_ppm: number | null
-          nickel_ppm: number | null
-          notes: string | null
-          tin_ppm: number | null
-          updated_at: string | null
-          zinc_ppm: number | null
-        }
-        Insert: {
-          aluminum_ppm?: number | null
-          calcium_ppm?: number | null
-          certificate_id?: string | null
-          chromium_ppm?: number | null
-          cobalt_ppm?: number | null
-          copper_ppm?: number | null
-          created_at?: string | null
-          id?: string
-          iron_ppm?: number | null
-          magnesium_ppm?: number | null
-          manganese_ppm?: number | null
-          nickel_ppm?: number | null
-          notes?: string | null
-          tin_ppm?: number | null
-          updated_at?: string | null
-          zinc_ppm?: number | null
-        }
-        Update: {
-          aluminum_ppm?: number | null
-          calcium_ppm?: number | null
-          certificate_id?: string | null
-          chromium_ppm?: number | null
-          cobalt_ppm?: number | null
-          copper_ppm?: number | null
-          created_at?: string | null
-          id?: string
-          iron_ppm?: number | null
-          magnesium_ppm?: number | null
-          manganese_ppm?: number | null
-          nickel_ppm?: number | null
-          notes?: string | null
-          tin_ppm?: number | null
-          updated_at?: string | null
-          zinc_ppm?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assay_base_metals_certificate_id_fkey"
-            columns: ["certificate_id"]
-            isOneToOne: false
-            referencedRelation: "assay_certificates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      assay_certificate_data: {
-        Row: {
-          certificate_date: string | null
-          certificate_id: string
-          certificate_number: string | null
-          copper_percentage: number | null
-          created_at: string | null
-          deleterious_elements: Json | null
-          extraction_confidence: number | null
-          fineness: number | null
-          gold_content_gpt: number | null
-          gold_content_ozt: number | null
-          gold_content_ppm: number | null
-          gold_purity_percentage: number | null
-          id: string
-          iron_percentage: number | null
-          is_verified: boolean | null
-          laboratory_address: string | null
-          laboratory_name: string | null
-          moisture_percentage: number | null
-          palladium_content_ppm: number | null
-          platinum_content_ppm: number | null
-          raw_text: string | null
-          sample_description: string | null
-          sample_id: string | null
-          sample_weight_g: number | null
-          shipping_preparation_id: string | null
-          silver_content_gpt: number | null
-          silver_content_ozt: number | null
-          silver_content_ppm: number | null
-          silver_purity_percentage: number | null
-          total_weight_g: number | null
-          updated_at: string | null
-          verification_notes: string | null
-          zinc_percentage: number | null
-        }
-        Insert: {
-          certificate_date?: string | null
-          certificate_id: string
-          certificate_number?: string | null
-          copper_percentage?: number | null
-          created_at?: string | null
-          deleterious_elements?: Json | null
-          extraction_confidence?: number | null
-          fineness?: number | null
-          gold_content_gpt?: number | null
-          gold_content_ozt?: number | null
-          gold_content_ppm?: number | null
-          gold_purity_percentage?: number | null
-          id?: string
-          iron_percentage?: number | null
-          is_verified?: boolean | null
-          laboratory_address?: string | null
-          laboratory_name?: string | null
-          moisture_percentage?: number | null
-          palladium_content_ppm?: number | null
-          platinum_content_ppm?: number | null
-          raw_text?: string | null
-          sample_description?: string | null
-          sample_id?: string | null
-          sample_weight_g?: number | null
-          shipping_preparation_id?: string | null
-          silver_content_gpt?: number | null
-          silver_content_ozt?: number | null
-          silver_content_ppm?: number | null
-          silver_purity_percentage?: number | null
-          total_weight_g?: number | null
-          updated_at?: string | null
-          verification_notes?: string | null
-          zinc_percentage?: number | null
-        }
-        Update: {
-          certificate_date?: string | null
-          certificate_id?: string
-          certificate_number?: string | null
-          copper_percentage?: number | null
-          created_at?: string | null
-          deleterious_elements?: Json | null
-          extraction_confidence?: number | null
-          fineness?: number | null
-          gold_content_gpt?: number | null
-          gold_content_ozt?: number | null
-          gold_content_ppm?: number | null
-          gold_purity_percentage?: number | null
-          id?: string
-          iron_percentage?: number | null
-          is_verified?: boolean | null
-          laboratory_address?: string | null
-          laboratory_name?: string | null
-          moisture_percentage?: number | null
-          palladium_content_ppm?: number | null
-          platinum_content_ppm?: number | null
-          raw_text?: string | null
-          sample_description?: string | null
-          sample_id?: string | null
-          sample_weight_g?: number | null
-          shipping_preparation_id?: string | null
-          silver_content_gpt?: number | null
-          silver_content_ozt?: number | null
-          silver_content_ppm?: number | null
-          silver_purity_percentage?: number | null
-          total_weight_g?: number | null
-          updated_at?: string | null
-          verification_notes?: string | null
-          zinc_percentage?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assay_certificate_data_certificate_id_fkey"
-            columns: ["certificate_id"]
-            isOneToOne: false
-            referencedRelation: "assay_certificates"
             referencedColumns: ["id"]
           },
         ]
@@ -505,6 +349,215 @@ export type Database = {
         }
         Relationships: []
       }
+      assay_base_metals: {
+        Row: {
+          aluminum_ppm: number | null
+          calcium_ppm: number | null
+          certificate_id: string | null
+          chromium_ppm: number | null
+          cobalt_ppm: number | null
+          copper_ppm: number | null
+          created_at: string | null
+          id: string
+          iron_ppm: number | null
+          magnesium_ppm: number | null
+          manganese_ppm: number | null
+          nickel_ppm: number | null
+          notes: string | null
+          tin_ppm: number | null
+          updated_at: string | null
+          zinc_ppm: number | null
+        }
+        Insert: {
+          aluminum_ppm?: number | null
+          calcium_ppm?: number | null
+          certificate_id?: string | null
+          chromium_ppm?: number | null
+          cobalt_ppm?: number | null
+          copper_ppm?: number | null
+          created_at?: string | null
+          id?: string
+          iron_ppm?: number | null
+          magnesium_ppm?: number | null
+          manganese_ppm?: number | null
+          nickel_ppm?: number | null
+          notes?: string | null
+          tin_ppm?: number | null
+          updated_at?: string | null
+          zinc_ppm?: number | null
+        }
+        Update: {
+          aluminum_ppm?: number | null
+          calcium_ppm?: number | null
+          certificate_id?: string | null
+          chromium_ppm?: number | null
+          cobalt_ppm?: number | null
+          copper_ppm?: number | null
+          created_at?: string | null
+          id?: string
+          iron_ppm?: number | null
+          magnesium_ppm?: number | null
+          manganese_ppm?: number | null
+          nickel_ppm?: number | null
+          notes?: string | null
+          tin_ppm?: number | null
+          updated_at?: string | null
+          zinc_ppm?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assay_base_metals_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assay_base_metals_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates_with_shipping"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assay_certificate_data: {
+        Row: {
+          certificate_date: string | null
+          certificate_id: string
+          certificate_number: string | null
+          copper_percentage: number | null
+          created_at: string | null
+          deleterious_elements: Json | null
+          extraction_confidence: number | null
+          fineness: number | null
+          gold_content_gpt: number | null
+          gold_content_ozt: number | null
+          gold_content_ppm: number | null
+          gold_purity_percentage: number | null
+          id: string
+          iron_percentage: number | null
+          is_verified: boolean | null
+          laboratory_address: string | null
+          laboratory_name: string | null
+          moisture_percentage: number | null
+          palladium_content_ppm: number | null
+          platinum_content_ppm: number | null
+          raw_text: string | null
+          sample_description: string | null
+          sample_id: string | null
+          sample_weight_g: number | null
+          shipping_preparation_id: string
+          silver_content_gpt: number | null
+          silver_content_ozt: number | null
+          silver_content_ppm: number | null
+          silver_purity_percentage: number | null
+          total_weight_g: number | null
+          updated_at: string | null
+          verification_notes: string | null
+          zinc_percentage: number | null
+        }
+        Insert: {
+          certificate_date?: string | null
+          certificate_id: string
+          certificate_number?: string | null
+          copper_percentage?: number | null
+          created_at?: string | null
+          deleterious_elements?: Json | null
+          extraction_confidence?: number | null
+          fineness?: number | null
+          gold_content_gpt?: number | null
+          gold_content_ozt?: number | null
+          gold_content_ppm?: number | null
+          gold_purity_percentage?: number | null
+          id?: string
+          iron_percentage?: number | null
+          is_verified?: boolean | null
+          laboratory_address?: string | null
+          laboratory_name?: string | null
+          moisture_percentage?: number | null
+          palladium_content_ppm?: number | null
+          platinum_content_ppm?: number | null
+          raw_text?: string | null
+          sample_description?: string | null
+          sample_id?: string | null
+          sample_weight_g?: number | null
+          shipping_preparation_id: string
+          silver_content_gpt?: number | null
+          silver_content_ozt?: number | null
+          silver_content_ppm?: number | null
+          silver_purity_percentage?: number | null
+          total_weight_g?: number | null
+          updated_at?: string | null
+          verification_notes?: string | null
+          zinc_percentage?: number | null
+        }
+        Update: {
+          certificate_date?: string | null
+          certificate_id?: string
+          certificate_number?: string | null
+          copper_percentage?: number | null
+          created_at?: string | null
+          deleterious_elements?: Json | null
+          extraction_confidence?: number | null
+          fineness?: number | null
+          gold_content_gpt?: number | null
+          gold_content_ozt?: number | null
+          gold_content_ppm?: number | null
+          gold_purity_percentage?: number | null
+          id?: string
+          iron_percentage?: number | null
+          is_verified?: boolean | null
+          laboratory_address?: string | null
+          laboratory_name?: string | null
+          moisture_percentage?: number | null
+          palladium_content_ppm?: number | null
+          platinum_content_ppm?: number | null
+          raw_text?: string | null
+          sample_description?: string | null
+          sample_id?: string | null
+          sample_weight_g?: number | null
+          shipping_preparation_id?: string
+          silver_content_gpt?: number | null
+          silver_content_ozt?: number | null
+          silver_content_ppm?: number | null
+          silver_purity_percentage?: number | null
+          total_weight_g?: number | null
+          updated_at?: string | null
+          verification_notes?: string | null
+          zinc_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assay_certificate_data_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assay_certificate_data_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates_with_shipping"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assay_certificate_data_certificate_shipping_fkey"
+            columns: ["certificate_id", "shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates"
+            referencedColumns: ["id", "shipping_preparation_id"]
+          },
+          {
+            foreignKeyName: "assay_certificate_data_certificate_shipping_fkey"
+            columns: ["certificate_id", "shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates_with_shipping"
+            referencedColumns: ["id", "shipping_preparation_id"]
+          },
+        ]
+      }
       assay_certificates: {
         Row: {
           approval_notes: string | null
@@ -532,7 +585,7 @@ export type Database = {
           purity_percent: number | null
           sample_id: string | null
           sample_weight_grams: number | null
-          shipping_preparation_id: string | null
+          shipping_preparation_id: string
           silver_content_gpt: number | null
           silver_content_percent: number | null
           silver_content_ppm: number | null
@@ -565,7 +618,7 @@ export type Database = {
           purity_percent?: number | null
           sample_id?: string | null
           sample_weight_grams?: number | null
-          shipping_preparation_id?: string | null
+          shipping_preparation_id: string
           silver_content_gpt?: number | null
           silver_content_percent?: number | null
           silver_content_ppm?: number | null
@@ -598,7 +651,7 @@ export type Database = {
           purity_percent?: number | null
           sample_id?: string | null
           sample_weight_grams?: number | null
-          shipping_preparation_id?: string | null
+          shipping_preparation_id?: string
           silver_content_gpt?: number | null
           silver_content_percent?: number | null
           silver_content_ppm?: number | null
@@ -618,6 +671,20 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_assay_certificates_shipping_preparation"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_assay_certificates_shipping_preparation"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
             referencedColumns: ["id"]
           },
           {
@@ -687,6 +754,13 @@ export type Database = {
             columns: ["certificate_id"]
             isOneToOne: false
             referencedRelation: "assay_certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assay_deleterious_elements_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates_with_shipping"
             referencedColumns: ["id"]
           },
         ]
@@ -845,6 +919,13 @@ export type Database = {
             columns: ["certificate_id"]
             isOneToOne: false
             referencedRelation: "assay_certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_approvals_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates_with_shipping"
             referencedColumns: ["id"]
           },
           {
@@ -1547,13 +1628,14 @@ export type Database = {
           license_number: string
           mining_company_id: string
           notes: string | null
-          remaining_quantity_grams: number | null
+          quota_baseline_used_grams: number
+          remaining_quantity_grams: number
           request_date: string
           start_date: string
           status: string | null
           updated_at: string
           updated_by: string | null
-          used_quantity_grams: number | null
+          used_quantity_grams: number
         }
         Insert: {
           authorized_quantity_grams: number
@@ -1567,13 +1649,14 @@ export type Database = {
           license_number: string
           mining_company_id: string
           notes?: string | null
-          remaining_quantity_grams?: number | null
+          quota_baseline_used_grams?: number
+          remaining_quantity_grams: number
           request_date: string
           start_date: string
           status?: string | null
           updated_at?: string
           updated_by?: string | null
-          used_quantity_grams?: number | null
+          used_quantity_grams?: number
         }
         Update: {
           authorized_quantity_grams?: number
@@ -1587,13 +1670,14 @@ export type Database = {
           license_number?: string
           mining_company_id?: string
           notes?: string | null
-          remaining_quantity_grams?: number | null
+          quota_baseline_used_grams?: number
+          remaining_quantity_grams?: number
           request_date?: string
           start_date?: string
           status?: string | null
           updated_at?: string
           updated_by?: string | null
-          used_quantity_grams?: number | null
+          used_quantity_grams?: number
         }
         Relationships: [
           {
@@ -1709,6 +1793,7 @@ export type Database = {
           box_type: string | null
           country_of_origin: string | null
           created_at: string | null
+          created_by: string | null
           description: string | null
           exchange_rate_fcfa_usd: number | null
           freight_customs_operation_id: string
@@ -1730,11 +1815,13 @@ export type Database = {
           total_value_cfa: number | null
           total_value_usd: number | null
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           box_type?: string | null
           country_of_origin?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           exchange_rate_fcfa_usd?: number | null
           freight_customs_operation_id: string
@@ -1756,11 +1843,13 @@ export type Database = {
           total_value_cfa?: number | null
           total_value_usd?: number | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           box_type?: string | null
           country_of_origin?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           exchange_rate_fcfa_usd?: number | null
           freight_customs_operation_id?: string
@@ -1782,6 +1871,7 @@ export type Database = {
           total_value_cfa?: number | null
           total_value_usd?: number | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1808,19 +1898,25 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           customs_approval_date: string | null
+          customs_approved_by: string | null
           customs_office: string | null
           customs_officer_name: string | null
           customs_reference_number: string | null
+          dispatched_by: string | null
           estimated_arrival_date: string | null
           estimated_departure_date: string | null
           freight_forwarder_contact: string | null
           id: string
+          mining_company_id: string
           notes: string | null
+          prepared_by: string | null
           reference_number: string
           shipping_preparation_id: string
           status: Database["public"]["Enums"]["freight_customs_status"]
+          status_changed_at: string | null
           tracking_number: string | null
           transport_company_id: string | null
+          transport_prepared_by: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1830,19 +1926,25 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           customs_approval_date?: string | null
+          customs_approved_by?: string | null
           customs_office?: string | null
           customs_officer_name?: string | null
           customs_reference_number?: string | null
+          dispatched_by?: string | null
           estimated_arrival_date?: string | null
           estimated_departure_date?: string | null
           freight_forwarder_contact?: string | null
           id?: string
+          mining_company_id: string
           notes?: string | null
+          prepared_by?: string | null
           reference_number: string
           shipping_preparation_id: string
           status?: Database["public"]["Enums"]["freight_customs_status"]
+          status_changed_at?: string | null
           tracking_number?: string | null
           transport_company_id?: string | null
+          transport_prepared_by?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1852,19 +1954,25 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           customs_approval_date?: string | null
+          customs_approved_by?: string | null
           customs_office?: string | null
           customs_officer_name?: string | null
           customs_reference_number?: string | null
+          dispatched_by?: string | null
           estimated_arrival_date?: string | null
           estimated_departure_date?: string | null
           freight_forwarder_contact?: string | null
           id?: string
+          mining_company_id?: string
           notes?: string | null
+          prepared_by?: string | null
           reference_number?: string
           shipping_preparation_id?: string
           status?: Database["public"]["Enums"]["freight_customs_status"]
+          status_changed_at?: string | null
           tracking_number?: string | null
           transport_company_id?: string | null
+          transport_prepared_by?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1872,7 +1980,42 @@ export type Database = {
             foreignKeyName: "fk_shipping_preparation"
             columns: ["shipping_preparation_id"]
             isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_shipping_preparation"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_shipping_preparation"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
             referencedRelation: "shipping_preparations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "freight_customs_operations_mining_company_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "freight_customs_operations_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "freight_customs_operations_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
             referencedColumns: ["id"]
           },
           {
@@ -1950,6 +2093,13 @@ export type Database = {
             columns: ["production_id"]
             isOneToOne: true
             referencedRelation: "daily_production"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "freight_shipment_productions_production_id_fkey"
+            columns: ["production_id"]
+            isOneToOne: true
+            referencedRelation: "daily_production_with_metals"
             referencedColumns: ["id"]
           },
         ]
@@ -2142,6 +2292,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "mining_companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "freight_shipments_shipping_company_fkey"
+            columns: ["shipping_preparation_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+          {
+            foreignKeyName: "freight_shipments_shipping_company_fkey"
+            columns: ["shipping_preparation_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+          {
+            foreignKeyName: "freight_shipments_shipping_company_fkey"
+            columns: ["shipping_preparation_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_preparations"
+            referencedColumns: ["id", "mining_company_id"]
           },
         ]
       }
@@ -3152,6 +3323,9 @@ export type Database = {
           approved_by: string | null
           auto_credited_at: string | null
           bank_name: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           converted_by: string | null
           converted_to_actual_at: string | null
           created_at: string | null
@@ -3160,9 +3334,14 @@ export type Database = {
           customer_bank_id: string | null
           customer_id: string | null
           due_date: string | null
+          executed_at: string | null
+          executed_by: string | null
+          execution_reference_key: string | null
           expected_date: string
           fx_analysis_id: string | null
           fx_rate: number | null
+          fx_rate_date: string | null
+          fx_rate_source: string | null
           id: string
           invoice_number: string | null
           is_virtual: boolean | null
@@ -3176,12 +3355,16 @@ export type Database = {
           received_amount: number | null
           receiving_currency: string | null
           reference_number: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           sale_id: string
           seller_bank_id: string | null
           status: string | null
           transaction_id: string | null
           verified_at: string | null
           verified_by: string | null
+          version: number
           virtual_due_date: string | null
         }
         Insert: {
@@ -3192,6 +3375,9 @@ export type Database = {
           approved_by?: string | null
           auto_credited_at?: string | null
           bank_name?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           converted_by?: string | null
           converted_to_actual_at?: string | null
           created_at?: string | null
@@ -3200,9 +3386,14 @@ export type Database = {
           customer_bank_id?: string | null
           customer_id?: string | null
           due_date?: string | null
+          executed_at?: string | null
+          executed_by?: string | null
+          execution_reference_key?: string | null
           expected_date: string
           fx_analysis_id?: string | null
           fx_rate?: number | null
+          fx_rate_date?: string | null
+          fx_rate_source?: string | null
           id?: string
           invoice_number?: string | null
           is_virtual?: boolean | null
@@ -3216,12 +3407,16 @@ export type Database = {
           received_amount?: number | null
           receiving_currency?: string | null
           reference_number?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           sale_id: string
           seller_bank_id?: string | null
           status?: string | null
           transaction_id?: string | null
           verified_at?: string | null
           verified_by?: string | null
+          version?: number
           virtual_due_date?: string | null
         }
         Update: {
@@ -3232,6 +3427,9 @@ export type Database = {
           approved_by?: string | null
           auto_credited_at?: string | null
           bank_name?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           converted_by?: string | null
           converted_to_actual_at?: string | null
           created_at?: string | null
@@ -3240,9 +3438,14 @@ export type Database = {
           customer_bank_id?: string | null
           customer_id?: string | null
           due_date?: string | null
+          executed_at?: string | null
+          executed_by?: string | null
+          execution_reference_key?: string | null
           expected_date?: string
           fx_analysis_id?: string | null
           fx_rate?: number | null
+          fx_rate_date?: string | null
+          fx_rate_source?: string | null
           id?: string
           invoice_number?: string | null
           is_virtual?: boolean | null
@@ -3256,12 +3459,16 @@ export type Database = {
           received_amount?: number | null
           receiving_currency?: string | null
           reference_number?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           sale_id?: string
           seller_bank_id?: string | null
           status?: string | null
           transaction_id?: string | null
           verified_at?: string | null
           verified_by?: string | null
+          version?: number
           virtual_due_date?: string | null
         }
         Relationships: [
@@ -3632,6 +3839,13 @@ export type Database = {
             referencedRelation: "daily_production"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "production_documents_production_id_fkey"
+            columns: ["production_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
+            referencedColumns: ["id"]
+          },
         ]
       }
       production_forecasts: {
@@ -3721,6 +3935,13 @@ export type Database = {
             columns: ["production_id"]
             isOneToOne: false
             referencedRelation: "daily_production"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_status_history_production_id_fkey"
+            columns: ["production_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
             referencedColumns: ["id"]
           },
         ]
@@ -5109,6 +5330,20 @@ export type Database = {
             foreignKeyName: "shipping_documents_shipping_preparation_id_fkey"
             columns: ["shipping_preparation_id"]
             isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_documents_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_documents_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
             referencedRelation: "shipping_preparations"
             referencedColumns: ["id"]
           },
@@ -5146,6 +5381,20 @@ export type Database = {
           shipping_preparation_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "shipping_ingots_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_ingots_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shipping_ingots_shipping_preparation_id_fkey"
             columns: ["shipping_preparation_id"]
@@ -5242,10 +5491,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "shipping_export_license_company_fkey"
+            columns: ["export_license_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+          {
             foreignKeyName: "shipping_preparations_daily_production_id_fkey"
             columns: ["daily_production_id"]
             isOneToOne: false
             referencedRelation: "daily_production"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_daily_production_id_fkey"
+            columns: ["daily_production_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
             referencedColumns: ["id"]
           },
           {
@@ -5282,6 +5545,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "refineries"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_production_company_fkey"
+            columns: ["daily_production_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+          {
+            foreignKeyName: "shipping_production_company_fkey"
+            columns: ["daily_production_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
+            referencedColumns: ["id", "mining_company_id"]
           },
         ]
       }
@@ -5487,6 +5764,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "shipping_production_items_daily_production_id_fkey"
+            columns: ["daily_production_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_production_items_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_production_items_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "shipping_production_items_shipping_preparation_id_fkey"
             columns: ["shipping_preparation_id"]
             isOneToOne: false
@@ -5527,6 +5825,20 @@ export type Database = {
           signed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "shipping_signatories_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_signatories_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shipping_signatories_shipping_preparation_id_fkey"
             columns: ["shipping_preparation_id"]
@@ -5572,6 +5884,147 @@ export type Database = {
           name?: string
           site_type?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      snp_account_admin_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          new_values: Json
+          previous_values: Json
+          target_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          new_values?: Json
+          previous_values?: Json
+          target_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          new_values?: Json
+          previous_values?: Json
+          target_id?: string
+        }
+        Relationships: []
+      }
+      snp_account_deletion_dependency_registry: {
+        Row: {
+          classification: string
+          column_name: string
+          constraint_name: string | null
+          delete_action: unknown
+          referenced_column_name: string | null
+          referenced_schema_name: string | null
+          referenced_table_name: string | null
+          registered_at: string
+          schema_name: string
+          source: string
+          table_name: string
+        }
+        Insert: {
+          classification: string
+          column_name: string
+          constraint_name?: string | null
+          delete_action?: unknown
+          referenced_column_name?: string | null
+          referenced_schema_name?: string | null
+          referenced_table_name?: string | null
+          registered_at?: string
+          schema_name: string
+          source: string
+          table_name: string
+        }
+        Update: {
+          classification?: string
+          column_name?: string
+          constraint_name?: string | null
+          delete_action?: unknown
+          referenced_column_name?: string | null
+          referenced_schema_name?: string | null
+          referenced_table_name?: string | null
+          registered_at?: string
+          schema_name?: string
+          source?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
+      snp_account_lifecycle_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          application_sessions_revoked: number
+          authorized_at: string
+          db_completed_at: string | null
+          external_error_code: string | null
+          external_success: boolean | null
+          finalized_at: string | null
+          id: string
+          idempotency_key: string
+          payload_hash: string
+          previous_active: boolean
+          previous_version: number
+          reason: string
+          request_payload: Json
+          result_active: boolean | null
+          result_version: number | null
+          status: string
+          target_id: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          application_sessions_revoked?: number
+          authorized_at?: string
+          db_completed_at?: string | null
+          external_error_code?: string | null
+          external_success?: boolean | null
+          finalized_at?: string | null
+          id?: string
+          idempotency_key: string
+          payload_hash: string
+          previous_active: boolean
+          previous_version: number
+          reason: string
+          request_payload: Json
+          result_active?: boolean | null
+          result_version?: number | null
+          status: string
+          target_id: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          application_sessions_revoked?: number
+          authorized_at?: string
+          db_completed_at?: string | null
+          external_error_code?: string | null
+          external_success?: boolean | null
+          finalized_at?: string | null
+          id?: string
+          idempotency_key?: string
+          payload_hash?: string
+          previous_active?: boolean
+          previous_version?: number
+          reason?: string
+          request_payload?: Json
+          result_active?: boolean | null
+          result_version?: number | null
+          status?: string
+          target_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -6067,6 +6520,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "snp_artisan_activities_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_activities_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
             foreignKeyName: "snp_artisan_activities_carte_id_fkey"
             columns: ["carte_id"]
             isOneToOne: false
@@ -6120,6 +6587,20 @@ export type Database = {
             referencedRelation: "snp_artisans_miniers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_artisan_documents_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_documents_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
         ]
       }
       snp_artisan_factures_definitives: {
@@ -6148,8 +6629,10 @@ export type Database = {
           statut: string | null
           taux_retenue_source: number | null
           taux_tva: number | null
+          tax_policy_id: string | null
           updated_at: string | null
           vente_or_id: string
+          version: number
         }
         Insert: {
           artisan_id: string
@@ -6176,8 +6659,10 @@ export type Database = {
           statut?: string | null
           taux_retenue_source?: number | null
           taux_tva?: number | null
+          tax_policy_id?: string | null
           updated_at?: string | null
           vente_or_id: string
+          version?: number
         }
         Update: {
           artisan_id?: string
@@ -6204,8 +6689,10 @@ export type Database = {
           statut?: string | null
           taux_retenue_source?: number | null
           taux_tva?: number | null
+          tax_policy_id?: string | null
           updated_at?: string | null
           vente_or_id?: string
+          version?: number
         }
         Relationships: [
           {
@@ -6216,13 +6703,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "snp_artisan_factures_definitives_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_factures_definitives_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_factures_definitives_comptoir_organization_id_fkey"
+            columns: ["comptoir_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "snp_artisan_factures_definitives_vente_or_id_fkey"
             columns: ["vente_or_id"]
             isOneToOne: false
             referencedRelation: "snp_artisan_ventes_or"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_artisan_factures_definitives_vente_or_id_fkey"
+            columns: ["vente_or_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["vente_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_factures_tax_policy_fkey"
+            columns: ["tax_policy_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisan_tax_policies"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      snp_artisan_finance_operation_ledger: {
+        Row: {
+          actor_id: string
+          aggregate_id: string
+          capability_code: string
+          completed_at: string | null
+          comptoir_organization_id: string | null
+          created_at: string
+          idempotency_key: string
+          operation: string
+          request_fingerprint: string
+          response: Json | null
+        }
+        Insert: {
+          actor_id: string
+          aggregate_id: string
+          capability_code: string
+          completed_at?: string | null
+          comptoir_organization_id?: string | null
+          created_at?: string
+          idempotency_key: string
+          operation: string
+          request_fingerprint: string
+          response?: Json | null
+        }
+        Update: {
+          actor_id?: string
+          aggregate_id?: string
+          capability_code?: string
+          completed_at?: string | null
+          comptoir_organization_id?: string | null
+          created_at?: string
+          idempotency_key?: string
+          operation?: string
+          request_fingerprint?: string
+          response?: Json | null
+        }
+        Relationships: []
       }
       snp_artisan_moyens_paiement: {
         Row: {
@@ -6293,11 +6854,27 @@ export type Database = {
             referencedRelation: "snp_artisans_miniers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_artisan_moyens_paiement_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_moyens_paiement_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
         ]
       }
       snp_artisan_paiements: {
         Row: {
           artisan_id: string
+          cancelled_by: string | null
+          completed_by: string | null
           comptoir_organization_id: string | null
           created_at: string | null
           date_completion: string | null
@@ -6305,6 +6882,7 @@ export type Database = {
           date_validation: string | null
           details_paiement: Json | null
           facture_id: string
+          failed_by: string | null
           id: string
           montant_paye: number
           montant_taxes_retenues: number
@@ -6315,14 +6893,18 @@ export type Database = {
           recu_paiement_url: string | null
           reference_paiement: string
           statut: string | null
+          terminal_reason: string | null
           traite_par: string | null
           type_paiement: string
           updated_at: string | null
           valide_par: string | null
           vente_or_id: string
+          version: number
         }
         Insert: {
           artisan_id: string
+          cancelled_by?: string | null
+          completed_by?: string | null
           comptoir_organization_id?: string | null
           created_at?: string | null
           date_completion?: string | null
@@ -6330,6 +6912,7 @@ export type Database = {
           date_validation?: string | null
           details_paiement?: Json | null
           facture_id: string
+          failed_by?: string | null
           id?: string
           montant_paye: number
           montant_taxes_retenues?: number
@@ -6340,14 +6923,18 @@ export type Database = {
           recu_paiement_url?: string | null
           reference_paiement: string
           statut?: string | null
+          terminal_reason?: string | null
           traite_par?: string | null
           type_paiement: string
           updated_at?: string | null
           valide_par?: string | null
           vente_or_id: string
+          version?: number
         }
         Update: {
           artisan_id?: string
+          cancelled_by?: string | null
+          completed_by?: string | null
           comptoir_organization_id?: string | null
           created_at?: string | null
           date_completion?: string | null
@@ -6355,6 +6942,7 @@ export type Database = {
           date_validation?: string | null
           details_paiement?: Json | null
           facture_id?: string
+          failed_by?: string | null
           id?: string
           montant_paye?: number
           montant_taxes_retenues?: number
@@ -6365,11 +6953,13 @@ export type Database = {
           recu_paiement_url?: string | null
           reference_paiement?: string
           statut?: string | null
+          terminal_reason?: string | null
           traite_par?: string | null
           type_paiement?: string
           updated_at?: string | null
           valide_par?: string | null
           vente_or_id?: string
+          version?: number
         }
         Relationships: [
           {
@@ -6380,11 +6970,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "snp_artisan_paiements_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_paiements_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_paiements_comptoir_organization_id_fkey"
+            columns: ["comptoir_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "snp_artisan_paiements_facture_id_fkey"
             columns: ["facture_id"]
             isOneToOne: false
             referencedRelation: "snp_artisan_factures_definitives"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_paiements_facture_id_fkey"
+            columns: ["facture_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["facture_id"]
           },
           {
             foreignKeyName: "snp_artisan_paiements_moyen_paiement_id_fkey"
@@ -6400,13 +7018,58 @@ export type Database = {
             referencedRelation: "snp_artisan_ventes_or"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_artisan_paiements_vente_or_id_fkey"
+            columns: ["vente_or_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["vente_id"]
+          },
         ]
+      }
+      snp_artisan_tax_policies: {
+        Row: {
+          community_rate: number
+          created_at: string
+          effective_from: string
+          effective_until: string | null
+          id: string
+          policy_code: string
+          source_note: string
+          vat_rate: number
+          withholding_rate: number
+        }
+        Insert: {
+          community_rate: number
+          created_at?: string
+          effective_from: string
+          effective_until?: string | null
+          id?: string
+          policy_code: string
+          source_note: string
+          vat_rate: number
+          withholding_rate: number
+        }
+        Update: {
+          community_rate?: number
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          policy_code?: string
+          source_note?: string
+          vat_rate?: number
+          withholding_rate?: number
+        }
+        Relationships: []
       }
       snp_artisan_taxes_retenues: {
         Row: {
           artisan_id: string
-          comptoir_organization_id: string | null
+          comptabilise_at: string | null
+          comptabilise_par: string | null
           compte_comptable: string | null
+          comptoir_organization_id: string | null
           created_at: string | null
           date_reversement: string | null
           exercice_fiscal: string | null
@@ -6417,17 +7080,23 @@ export type Database = {
           paiement_id: string
           periode_fiscale: string | null
           reference_comptable: string | null
+          reversed_by: string | null
           reversement_reference: string | null
+          reversement_started_at: string | null
+          reversement_started_by: string | null
           statut_reversement: string | null
           taux_taxe: number
           type_taxe: string
           updated_at: string | null
           vente_or_id: string
+          version: number
         }
         Insert: {
           artisan_id: string
-          comptoir_organization_id?: string | null
+          comptabilise_at?: string | null
+          comptabilise_par?: string | null
           compte_comptable?: string | null
+          comptoir_organization_id?: string | null
           created_at?: string | null
           date_reversement?: string | null
           exercice_fiscal?: string | null
@@ -6438,17 +7107,23 @@ export type Database = {
           paiement_id: string
           periode_fiscale?: string | null
           reference_comptable?: string | null
+          reversed_by?: string | null
           reversement_reference?: string | null
+          reversement_started_at?: string | null
+          reversement_started_by?: string | null
           statut_reversement?: string | null
           taux_taxe: number
           type_taxe: string
           updated_at?: string | null
           vente_or_id: string
+          version?: number
         }
         Update: {
           artisan_id?: string
-          comptoir_organization_id?: string | null
+          comptabilise_at?: string | null
+          comptabilise_par?: string | null
           compte_comptable?: string | null
+          comptoir_organization_id?: string | null
           created_at?: string | null
           date_reversement?: string | null
           exercice_fiscal?: string | null
@@ -6459,12 +7134,16 @@ export type Database = {
           paiement_id?: string
           periode_fiscale?: string | null
           reference_comptable?: string | null
+          reversed_by?: string | null
           reversement_reference?: string | null
+          reversement_started_at?: string | null
+          reversement_started_by?: string | null
           statut_reversement?: string | null
           taux_taxe?: number
           type_taxe?: string
           updated_at?: string | null
           vente_or_id?: string
+          version?: number
         }
         Relationships: [
           {
@@ -6475,11 +7154,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "snp_artisan_taxes_retenues_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_taxes_retenues_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_taxes_retenues_comptoir_organization_id_fkey"
+            columns: ["comptoir_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "snp_artisan_taxes_retenues_facture_id_fkey"
             columns: ["facture_id"]
             isOneToOne: false
             referencedRelation: "snp_artisan_factures_definitives"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_taxes_retenues_facture_id_fkey"
+            columns: ["facture_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["facture_id"]
           },
           {
             foreignKeyName: "snp_artisan_taxes_retenues_paiement_id_fkey"
@@ -6494,6 +7201,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "snp_artisan_ventes_or"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_taxes_retenues_vente_or_id_fkey"
+            columns: ["vente_or_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["vente_id"]
           },
         ]
       }
@@ -6557,64 +7271,19 @@ export type Database = {
             referencedRelation: "snp_artisans_miniers"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      snp_artisan_infractions: {
-        Row: {
-          artisan_id: string
-          conclusion: Database["public"]["Enums"]["snp_conclusion_infraction"] | null
-          created_at: string | null
-          created_by: string | null
-          date_cloture: string | null
-          date_infraction: string
-          description: string
-          documents: Json | null
-          id: string
-          lieu: string | null
-          remarques: string | null
-          statut_traitement: Database["public"]["Enums"]["snp_statut_traitement_infraction"]
-          type_infraction: string
-          updated_at: string | null
-        }
-        Insert: {
-          artisan_id: string
-          conclusion?: Database["public"]["Enums"]["snp_conclusion_infraction"] | null
-          created_at?: string | null
-          created_by?: string | null
-          date_cloture?: string | null
-          date_infraction: string
-          description: string
-          documents?: Json | null
-          id?: string
-          lieu?: string | null
-          remarques?: string | null
-          statut_traitement?: Database["public"]["Enums"]["snp_statut_traitement_infraction"]
-          type_infraction: string
-          updated_at?: string | null
-        }
-        Update: {
-          artisan_id?: string
-          conclusion?: Database["public"]["Enums"]["snp_conclusion_infraction"] | null
-          created_at?: string | null
-          created_by?: string | null
-          date_cloture?: string | null
-          date_infraction?: string
-          description?: string
-          documents?: Json | null
-          id?: string
-          lieu?: string | null
-          remarques?: string | null
-          statut_traitement?: Database["public"]["Enums"]["snp_statut_traitement_infraction"]
-          type_infraction?: string
-          updated_at?: string | null
-        }
-        Relationships: [
           {
-            foreignKeyName: "snp_artisan_infractions_artisan_id_fkey"
+            foreignKeyName: "snp_artisan_transactions_artisan_id_fkey"
             columns: ["artisan_id"]
             isOneToOne: false
-            referencedRelation: "snp_artisans_miniers"
-            referencedColumns: ["id"]
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_transactions_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
           },
         ]
       }
@@ -6647,6 +7316,7 @@ export type Database = {
           type_or: string
           updated_at: string
           updated_by: string | null
+          version: number
         }
         Insert: {
           acheteur_comptoir_organization_id?: string | null
@@ -6676,6 +7346,7 @@ export type Database = {
           type_or: string
           updated_at?: string
           updated_by?: string | null
+          version?: number
         }
         Update: {
           acheteur_comptoir_organization_id?: string | null
@@ -6705,8 +7376,16 @@ export type Database = {
           type_or?: string
           updated_at?: string
           updated_by?: string | null
+          version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "snp_artisan_ventes_or_acheteur_comptoir_organization_id_fkey"
+            columns: ["acheteur_comptoir_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "snp_artisan_ventes_or_acheteur_id_fkey"
             columns: ["acheteur_id"]
@@ -6722,10 +7401,125 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "snp_artisan_ventes_or_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_ventes_or_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_ventes_or_comptoir_organization_id_fkey"
+            columns: ["comptoir_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "snp_artisan_ventes_or_facture_definitive_id_fkey"
             columns: ["facture_definitive_id"]
             isOneToOne: false
             referencedRelation: "snp_artisan_factures_definitives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_ventes_or_facture_definitive_id_fkey"
+            columns: ["facture_definitive_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["facture_id"]
+          },
+        ]
+      }
+      snp_artisanal_stock_ledger: {
+        Row: {
+          artisan_id: string | null
+          business_reference: string
+          created_at: string
+          created_by: string
+          direction: string
+          id: string
+          idempotency_key: string
+          movement_type: string
+          organization_id: string
+          quantity_grams: number
+          reason: string | null
+          reverses_entry_id: string | null
+          source_id: string | null
+          source_type: string | null
+        }
+        Insert: {
+          artisan_id?: string | null
+          business_reference: string
+          created_at?: string
+          created_by: string
+          direction: string
+          id?: string
+          idempotency_key: string
+          movement_type: string
+          organization_id: string
+          quantity_grams: number
+          reason?: string | null
+          reverses_entry_id?: string | null
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Update: {
+          artisan_id?: string | null
+          business_reference?: string
+          created_at?: string
+          created_by?: string
+          direction?: string
+          id?: string
+          idempotency_key?: string
+          movement_type?: string
+          organization_id?: string
+          quantity_grams?: number
+          reason?: string | null
+          reverses_entry_id?: string | null
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_artisanal_stock_ledger_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_artisanal_stock_ledger_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisanal_stock_ledger_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisanal_stock_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_artisanal_stock_ledger_reverses_entry_id_fkey"
+            columns: ["reverses_entry_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisanal_stock_ledger"
             referencedColumns: ["id"]
           },
         ]
@@ -6734,6 +7528,7 @@ export type Database = {
         Row: {
           actif: boolean
           adresse: string | null
+          artisanal_site_id: string | null
           chiffre_affaires_fcfa: number
           collecteur_id: string | null
           commune: string | null
@@ -6776,6 +7571,7 @@ export type Database = {
         Insert: {
           actif?: boolean
           adresse?: string | null
+          artisanal_site_id?: string | null
           chiffre_affaires_fcfa?: number
           collecteur_id?: string | null
           commune?: string | null
@@ -6818,6 +7614,7 @@ export type Database = {
         Update: {
           actif?: boolean
           adresse?: string | null
+          artisanal_site_id?: string | null
           chiffre_affaires_fcfa?: number
           collecteur_id?: string | null
           commune?: string | null
@@ -6857,7 +7654,36 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "snp_artisans_collecteur_id_fkey"
+            columns: ["collecteur_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_artisans_collecteur_id_fkey"
+            columns: ["collecteur_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisans_collecteur_id_fkey"
+            columns: ["collecteur_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisans_miniers_artisanal_site_id_fkey"
+            columns: ["artisanal_site_id"]
+            isOneToOne: false
+            referencedRelation: "artisanal_sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       snp_avoirs_achat: {
         Row: {
@@ -6916,6 +7742,284 @@ export type Database = {
           },
         ]
       }
+      snp_avoirs_client: {
+        Row: {
+          annule_le: string | null
+          annule_par: string | null
+          conciliation_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          devise: string
+          id: string
+          mining_company_id: string | null
+          montant_initial: number
+          motif: string
+          reference: string
+          rembourse_le: string | null
+          rembourse_par: string | null
+          sale_id_origine: string | null
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          annule_le?: string | null
+          annule_par?: string | null
+          conciliation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          devise?: string
+          id?: string
+          mining_company_id?: string | null
+          montant_initial: number
+          motif: string
+          reference: string
+          rembourse_le?: string | null
+          rembourse_par?: string | null
+          sale_id_origine?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Update: {
+          annule_le?: string | null
+          annule_par?: string | null
+          conciliation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          devise?: string
+          id?: string
+          mining_company_id?: string | null
+          montant_initial?: number
+          motif?: string
+          reference?: string
+          rembourse_le?: string | null
+          rembourse_par?: string | null
+          sale_id_origine?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_avoirs_client_annule_par_fkey"
+            columns: ["annule_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_client_conciliation_id_fkey"
+            columns: ["conciliation_id"]
+            isOneToOne: false
+            referencedRelation: "snp_conciliations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_client_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_client_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_client_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_client_rembourse_par_fkey"
+            columns: ["rembourse_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_client_sale_id_origine_fkey"
+            columns: ["sale_id_origine"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_avoirs_imputations: {
+        Row: {
+          avoir_id: string
+          conciliation_id: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          impute_par: string | null
+          montant_impute: number
+          motif: string | null
+          sale_id: string | null
+        }
+        Insert: {
+          avoir_id: string
+          conciliation_id?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          impute_par?: string | null
+          montant_impute: number
+          motif?: string | null
+          sale_id?: string | null
+        }
+        Update: {
+          avoir_id?: string
+          conciliation_id?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          impute_par?: string | null
+          montant_impute?: number
+          motif?: string | null
+          sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_avoirs_imputations_avoir_id_fkey"
+            columns: ["avoir_id"]
+            isOneToOne: false
+            referencedRelation: "snp_avoirs_client"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_imputations_conciliation_id_fkey"
+            columns: ["conciliation_id"]
+            isOneToOne: false
+            referencedRelation: "snp_conciliations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_imputations_impute_par_fkey"
+            columns: ["impute_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_imputations_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_calculs_fiscaux: {
+        Row: {
+          assiette_retenue: string
+          calcule_le: string
+          calcule_par: string | null
+          code_taxe: string
+          contexte_id: string
+          contexte_type: string
+          devise: string
+          formule: string
+          id: string
+          mining_company_id: string | null
+          montant_assiette: number
+          montant_obtenu: number
+          regle_id: string | null
+          regle_provisoire: boolean
+          taux_applique: number | null
+        }
+        Insert: {
+          assiette_retenue: string
+          calcule_le?: string
+          calcule_par?: string | null
+          code_taxe: string
+          contexte_id: string
+          contexte_type: string
+          devise?: string
+          formule: string
+          id?: string
+          mining_company_id?: string | null
+          montant_assiette: number
+          montant_obtenu: number
+          regle_id?: string | null
+          regle_provisoire?: boolean
+          taux_applique?: number | null
+        }
+        Update: {
+          assiette_retenue?: string
+          calcule_le?: string
+          calcule_par?: string | null
+          code_taxe?: string
+          contexte_id?: string
+          contexte_type?: string
+          devise?: string
+          formule?: string
+          id?: string
+          mining_company_id?: string | null
+          montant_assiette?: number
+          montant_obtenu?: number
+          regle_id?: string | null
+          regle_provisoire?: boolean
+          taux_applique?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_calculs_fiscaux_calcule_par_fkey"
+            columns: ["calcule_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_calculs_fiscaux_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_calculs_fiscaux_regle_id_fkey"
+            columns: ["regle_id"]
+            isOneToOne: false
+            referencedRelation: "snp_regles_fiscales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_capability_catalog: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          domain: string
+          label: string
+          sensitive: boolean
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          domain: string
+          label: string
+          sensitive?: boolean
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          domain?: string
+          label?: string
+          sensitive?: boolean
+        }
+        Relationships: []
+      }
       snp_carte_statistics: {
         Row: {
           carte_id: string
@@ -6963,6 +8067,7 @@ export type Database = {
           carte_recto_url: string | null
           carte_verso_url: string | null
           created_at: string | null
+          created_by: string | null
           date_emission: string
           date_expiration: string
           date_suspension: string | null
@@ -6978,6 +8083,7 @@ export type Database = {
           suspendue_le: string | null
           suspendue_par: string | null
           updated_at: string | null
+          updated_by: string | null
           validee_le: string | null
           validee_par: string | null
         }
@@ -6986,6 +8092,7 @@ export type Database = {
           carte_recto_url?: string | null
           carte_verso_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           date_emission?: string
           date_expiration?: string
           date_suspension?: string | null
@@ -7001,6 +8108,7 @@ export type Database = {
           suspendue_le?: string | null
           suspendue_par?: string | null
           updated_at?: string | null
+          updated_by?: string | null
           validee_le?: string | null
           validee_par?: string | null
         }
@@ -7009,6 +8117,7 @@ export type Database = {
           carte_recto_url?: string | null
           carte_verso_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           date_emission?: string
           date_expiration?: string
           date_suspension?: string | null
@@ -7024,6 +8133,7 @@ export type Database = {
           suspendue_le?: string | null
           suspendue_par?: string | null
           updated_at?: string | null
+          updated_by?: string | null
           validee_le?: string | null
           validee_par?: string | null
         }
@@ -7033,6 +8143,638 @@ export type Database = {
             columns: ["artisan_id"]
             isOneToOne: false
             referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_cartes_professionnelles_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_cartes_professionnelles_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+        ]
+      }
+      snp_collector_accounts: {
+        Row: {
+          collector_id: string
+          comptoir_organization_id: string | null
+          id: string
+          is_active: boolean
+          linked_at: string
+          linked_by: string | null
+          reason: string
+          unlinked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          collector_id: string
+          comptoir_organization_id?: string | null
+          id?: string
+          is_active?: boolean
+          linked_at?: string
+          linked_by?: string | null
+          reason: string
+          unlinked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          collector_id?: string
+          comptoir_organization_id?: string | null
+          id?: string
+          is_active?: boolean
+          linked_at?: string
+          linked_by?: string | null
+          reason?: string
+          unlinked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_collector_accounts_collector_id_fkey"
+            columns: ["collector_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_collector_accounts_collector_id_fkey"
+            columns: ["collector_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_collector_accounts_collector_id_fkey"
+            columns: ["collector_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_collector_accounts_comptoir_organization_id_fkey"
+            columns: ["comptoir_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_collector_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_collector_artisan_assignments: {
+        Row: {
+          artisan_id: string
+          assigned_by: string | null
+          collector_id: string
+          comptoir_organization_id: string | null
+          created_at: string
+          id: string
+          reason: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          artisan_id: string
+          assigned_by?: string | null
+          collector_id: string
+          comptoir_organization_id?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          artisan_id?: string
+          assigned_by?: string | null
+          collector_id?: string
+          comptoir_organization_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_collector_artisan_assignments_comptoir_organization_id_fkey"
+            columns: ["comptoir_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_collector_assignments_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_collector_assignments_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_collector_assignments_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_collector_assignments_collector_id_fkey"
+            columns: ["collector_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_collector_assignments_collector_id_fkey"
+            columns: ["collector_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_collector_assignments_collector_id_fkey"
+            columns: ["collector_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+        ]
+      }
+      snp_comptes_audit: {
+        Row: {
+          acteur_id: string
+          action: string
+          ancien_etat: boolean
+          cible_id: string
+          cree_le: string
+          motif: string
+          nouvel_etat: boolean
+          uid: string
+        }
+        Insert: {
+          acteur_id: string
+          action: string
+          ancien_etat: boolean
+          cible_id: string
+          cree_le?: string
+          motif: string
+          nouvel_etat: boolean
+          uid?: string
+        }
+        Update: {
+          acteur_id?: string
+          action?: string
+          ancien_etat?: boolean
+          cible_id?: string
+          cree_le?: string
+          motif?: string
+          nouvel_etat?: boolean
+          uid?: string
+        }
+        Relationships: []
+      }
+      snp_comptoir_ventes_sonasp: {
+        Row: {
+          comptoir_organization_id: string
+          created_at: string
+          date_vente: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          quantity_grams: number
+          reference_vente: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sonasp_organization_id: string
+          status: string
+          submitted_by: string
+          total_fcfa: number | null
+          unit_price_fcfa: number
+          updated_at: string
+        }
+        Insert: {
+          comptoir_organization_id: string
+          created_at?: string
+          date_vente?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          quantity_grams: number
+          reference_vente: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sonasp_organization_id: string
+          status?: string
+          submitted_by: string
+          total_fcfa?: number | null
+          unit_price_fcfa: number
+          updated_at?: string
+        }
+        Update: {
+          comptoir_organization_id?: string
+          created_at?: string
+          date_vente?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          quantity_grams?: number
+          reference_vente?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sonasp_organization_id?: string
+          status?: string
+          submitted_by?: string
+          total_fcfa?: number | null
+          unit_price_fcfa?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_comptoir_ventes_sonasp_comptoir_organization_id_fkey"
+            columns: ["comptoir_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_comptoir_ventes_sonasp_sonasp_organization_id_fkey"
+            columns: ["sonasp_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_conciliations: {
+        Row: {
+          analyse_teneur_id: string | null
+          assay_certificate_id: string | null
+          ca_final: number | null
+          ca_initial: number | null
+          cloture_le: string | null
+          contrat_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          date_fixing: string | null
+          deductions_contractuelles: number | null
+          devise_finale: string | null
+          devise_initiale: string | null
+          id: string
+          mining_company_id: string | null
+          motif_statut: string | null
+          observations: string | null
+          or_fin_final_g: number | null
+          or_fin_initial_g: number | null
+          poids_final_g: number | null
+          poids_initial_g: number | null
+          prix_final: number | null
+          prix_initial: number | null
+          reference: string
+          sale_id: string
+          soumis_le: string | null
+          soumis_par: string | null
+          source_analyse_type: string | null
+          statut: string
+          taux_change_final: number | null
+          taux_change_initial: number | null
+          teneur_finale_pct: number | null
+          teneur_initiale_pct: number | null
+          updated_at: string
+          updated_by: string | null
+          valide_le: string | null
+          valide_par: string | null
+          version: number
+        }
+        Insert: {
+          analyse_teneur_id?: string | null
+          assay_certificate_id?: string | null
+          ca_final?: number | null
+          ca_initial?: number | null
+          cloture_le?: string | null
+          contrat_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          date_fixing?: string | null
+          deductions_contractuelles?: number | null
+          devise_finale?: string | null
+          devise_initiale?: string | null
+          id?: string
+          mining_company_id?: string | null
+          motif_statut?: string | null
+          observations?: string | null
+          or_fin_final_g?: number | null
+          or_fin_initial_g?: number | null
+          poids_final_g?: number | null
+          poids_initial_g?: number | null
+          prix_final?: number | null
+          prix_initial?: number | null
+          reference: string
+          sale_id: string
+          soumis_le?: string | null
+          soumis_par?: string | null
+          source_analyse_type?: string | null
+          statut?: string
+          taux_change_final?: number | null
+          taux_change_initial?: number | null
+          teneur_finale_pct?: number | null
+          teneur_initiale_pct?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          valide_le?: string | null
+          valide_par?: string | null
+          version?: number
+        }
+        Update: {
+          analyse_teneur_id?: string | null
+          assay_certificate_id?: string | null
+          ca_final?: number | null
+          ca_initial?: number | null
+          cloture_le?: string | null
+          contrat_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          date_fixing?: string | null
+          deductions_contractuelles?: number | null
+          devise_finale?: string | null
+          devise_initiale?: string | null
+          id?: string
+          mining_company_id?: string | null
+          motif_statut?: string | null
+          observations?: string | null
+          or_fin_final_g?: number | null
+          or_fin_initial_g?: number | null
+          poids_final_g?: number | null
+          poids_initial_g?: number | null
+          prix_final?: number | null
+          prix_initial?: number | null
+          reference?: string
+          sale_id?: string
+          soumis_le?: string | null
+          soumis_par?: string | null
+          source_analyse_type?: string | null
+          statut?: string
+          taux_change_final?: number | null
+          taux_change_initial?: number | null
+          teneur_finale_pct?: number | null
+          teneur_initiale_pct?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          valide_le?: string | null
+          valide_par?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_conciliations_analyse_teneur_id_fkey"
+            columns: ["analyse_teneur_id"]
+            isOneToOne: false
+            referencedRelation: "snp_analyses_teneur"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_assay_certificate_id_fkey"
+            columns: ["assay_certificate_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_assay_certificate_id_fkey"
+            columns: ["assay_certificate_id"]
+            isOneToOne: false
+            referencedRelation: "assay_certificates_with_shipping"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_contrat_id_fkey"
+            columns: ["contrat_id"]
+            isOneToOne: false
+            referencedRelation: "snp_contrats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_soumis_par_fkey"
+            columns: ["soumis_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_valide_par_fkey"
+            columns: ["valide_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_conciliations_ecarts: {
+        Row: {
+          code_taxe: string | null
+          conciliation_id: string
+          created_at: string
+          depasse_seuil: boolean
+          ecart_absolu: number | null
+          ecart_relatif_pct: number | null
+          id: string
+          justification: string | null
+          parametre: string
+          seuil_contractuel_pct: number | null
+          unite: string | null
+          valeur_definitive: number | null
+          valeur_initiale: number | null
+        }
+        Insert: {
+          code_taxe?: string | null
+          conciliation_id: string
+          created_at?: string
+          depasse_seuil?: boolean
+          ecart_absolu?: number | null
+          ecart_relatif_pct?: number | null
+          id?: string
+          justification?: string | null
+          parametre: string
+          seuil_contractuel_pct?: number | null
+          unite?: string | null
+          valeur_definitive?: number | null
+          valeur_initiale?: number | null
+        }
+        Update: {
+          code_taxe?: string | null
+          conciliation_id?: string
+          created_at?: string
+          depasse_seuil?: boolean
+          ecart_absolu?: number | null
+          ecart_relatif_pct?: number | null
+          id?: string
+          justification?: string | null
+          parametre?: string
+          seuil_contractuel_pct?: number | null
+          unite?: string | null
+          valeur_definitive?: number | null
+          valeur_initiale?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_conciliations_ecarts_conciliation_id_fkey"
+            columns: ["conciliation_id"]
+            isOneToOne: false
+            referencedRelation: "snp_conciliations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_conciliations_operation_ledger: {
+        Row: {
+          actor_id: string
+          aggregate_id: string
+          capability_code: string
+          completed_at: string | null
+          created_at: string
+          idempotency_key: string
+          operation: string
+          request_fingerprint: string
+          response: Json | null
+        }
+        Insert: {
+          actor_id: string
+          aggregate_id: string
+          capability_code: string
+          completed_at?: string | null
+          created_at?: string
+          idempotency_key: string
+          operation: string
+          request_fingerprint: string
+          response?: Json | null
+        }
+        Update: {
+          actor_id?: string
+          aggregate_id?: string
+          capability_code?: string
+          completed_at?: string | null
+          created_at?: string
+          idempotency_key?: string
+          operation?: string
+          request_fingerprint?: string
+          response?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_conciliations_operation_ledger_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_conciliations_versions: {
+        Row: {
+          acteur_id: string | null
+          acteur_role: string | null
+          conciliation_id: string
+          created_at: string
+          id: string
+          motif: string
+          valeurs_apres: Json
+          valeurs_avant: Json
+          version: number
+        }
+        Insert: {
+          acteur_id?: string | null
+          acteur_role?: string | null
+          conciliation_id: string
+          created_at?: string
+          id?: string
+          motif: string
+          valeurs_apres: Json
+          valeurs_avant: Json
+          version: number
+        }
+        Update: {
+          acteur_id?: string | null
+          acteur_role?: string | null
+          conciliation_id?: string
+          created_at?: string
+          id?: string
+          motif?: string
+          valeurs_apres?: Json
+          valeurs_avant?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_conciliations_versions_acteur_id_fkey"
+            columns: ["acteur_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_versions_conciliation_id_fkey"
+            columns: ["conciliation_id"]
+            isOneToOne: false
+            referencedRelation: "snp_conciliations"
             referencedColumns: ["id"]
           },
         ]
@@ -7352,6 +9094,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "snp_artisans_miniers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_contrats_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_contrats_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
           },
           {
             foreignKeyName: "snp_contrats_contrat_parent_id_fkey"
@@ -7700,6 +9456,63 @@ export type Database = {
           },
         ]
       }
+      snp_decisions_approbation_audit: {
+        Row: {
+          actor_id: string
+          actor_role: string
+          approval_request_id: string | null
+          created_at: string
+          decision: string
+          entity_id: string
+          entity_type: string
+          id: string
+          previous_status: string
+          reason: string | null
+          resulting_status: string
+        }
+        Insert: {
+          actor_id: string
+          actor_role: string
+          approval_request_id?: string | null
+          created_at?: string
+          decision: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          previous_status: string
+          reason?: string | null
+          resulting_status: string
+        }
+        Update: {
+          actor_id?: string
+          actor_role?: string
+          approval_request_id?: string | null
+          created_at?: string
+          decision?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          previous_status?: string
+          reason?: string | null
+          resulting_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_decisions_approbation_audit_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_decisions_approbation_audit_approval_request_id_fkey"
+            columns: ["approval_request_id"]
+            isOneToOne: false
+            referencedRelation: "approval_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       snp_demandes_achat: {
         Row: {
           conditions_paiement: string
@@ -7934,6 +9747,162 @@ export type Database = {
             columns: ["acteur_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_export_license_requests: {
+        Row: {
+          comment: string | null
+          created_at: string
+          decision_reason: string | null
+          desired_export_date: string
+          destination: string
+          id: string
+          license_id: string | null
+          mining_company_id: string
+          reason: string
+          requested_quantity_grams: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          submitted_by: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          decision_reason?: string | null
+          desired_export_date: string
+          destination: string
+          id?: string
+          license_id?: string | null
+          mining_company_id: string
+          reason: string
+          requested_quantity_grams: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          decision_reason?: string | null
+          desired_export_date?: string
+          destination?: string
+          id?: string
+          license_id?: string | null
+          mining_company_id?: string
+          reason?: string
+          requested_quantity_grams?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_export_license_requests_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_export_license_requests_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_export_license_reservations: {
+        Row: {
+          id: string
+          license_id: string
+          mining_company_id: string
+          release_reason: string | null
+          released_at: string | null
+          released_by: string | null
+          reserved_at: string
+          reserved_by: string | null
+          reserved_grams: number
+          shipping_preparation_id: string | null
+          shipping_reference: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          license_id: string
+          mining_company_id: string
+          release_reason?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          reserved_at?: string
+          reserved_by?: string | null
+          reserved_grams: number
+          shipping_preparation_id?: string | null
+          shipping_reference: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          license_id?: string
+          mining_company_id?: string
+          release_reason?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          reserved_at?: string
+          reserved_by?: string | null
+          reserved_grams?: number
+          shipping_preparation_id?: string | null
+          shipping_reference?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_export_license_reservations_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_export_license_reservations_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_export_license_reservations_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: true
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_export_license_reservations_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: true
+            referencedRelation: "shipments_for_refinery"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_export_license_reservations_shipping_preparation_id_fkey"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: true
+            referencedRelation: "shipping_preparations"
             referencedColumns: ["id"]
           },
         ]
@@ -8181,6 +10150,219 @@ export type Database = {
           },
         ]
       }
+      snp_grand_livre_commercial: {
+        Row: {
+          conciliation_id: string | null
+          contrepartie_id: string
+          contrepartie_type: string
+          created_at: string
+          created_by: string | null
+          devise: string
+          id: string
+          idempotency_key: string
+          mining_company_id: string | null
+          montant: number
+          montant_xof: number | null
+          motif: string | null
+          reverses_entry_id: string | null
+          sale_id: string | null
+          sens: string
+          source_id: string
+          source_taux: string | null
+          source_type: string
+          taux_change: number | null
+          taux_horodate: string | null
+          type_mouvement: string
+        }
+        Insert: {
+          conciliation_id?: string | null
+          contrepartie_id: string
+          contrepartie_type: string
+          created_at?: string
+          created_by?: string | null
+          devise?: string
+          id?: string
+          idempotency_key: string
+          mining_company_id?: string | null
+          montant: number
+          montant_xof?: number | null
+          motif?: string | null
+          reverses_entry_id?: string | null
+          sale_id?: string | null
+          sens: string
+          source_id: string
+          source_taux?: string | null
+          source_type: string
+          taux_change?: number | null
+          taux_horodate?: string | null
+          type_mouvement: string
+        }
+        Update: {
+          conciliation_id?: string | null
+          contrepartie_id?: string
+          contrepartie_type?: string
+          created_at?: string
+          created_by?: string | null
+          devise?: string
+          id?: string
+          idempotency_key?: string
+          mining_company_id?: string | null
+          montant?: number
+          montant_xof?: number | null
+          motif?: string | null
+          reverses_entry_id?: string | null
+          sale_id?: string | null
+          sens?: string
+          source_id?: string
+          source_taux?: string | null
+          source_type?: string
+          taux_change?: number | null
+          taux_horodate?: string | null
+          type_mouvement?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_grand_livre_commercial_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_commercial_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_commercial_reverses_entry_id_fkey"
+            columns: ["reverses_entry_id"]
+            isOneToOne: false
+            referencedRelation: "snp_grand_livre_commercial"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_commercial_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_grand_livre_fiscal: {
+        Row: {
+          calcul_id: string | null
+          code_taxe: string
+          conciliation_id: string | null
+          created_at: string
+          created_by: string | null
+          devise: string
+          exercice: string | null
+          facture_id: string | null
+          id: string
+          idempotency_key: string
+          mining_company_id: string
+          montant: number
+          motif: string | null
+          periode: string | null
+          regle_id: string | null
+          reverses_entry_id: string | null
+          sale_id: string | null
+          sens: string
+          statut_credit: string | null
+          type_mouvement: string
+        }
+        Insert: {
+          calcul_id?: string | null
+          code_taxe: string
+          conciliation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          devise?: string
+          exercice?: string | null
+          facture_id?: string | null
+          id?: string
+          idempotency_key: string
+          mining_company_id: string
+          montant: number
+          motif?: string | null
+          periode?: string | null
+          regle_id?: string | null
+          reverses_entry_id?: string | null
+          sale_id?: string | null
+          sens: string
+          statut_credit?: string | null
+          type_mouvement: string
+        }
+        Update: {
+          calcul_id?: string | null
+          code_taxe?: string
+          conciliation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          devise?: string
+          exercice?: string | null
+          facture_id?: string | null
+          id?: string
+          idempotency_key?: string
+          mining_company_id?: string
+          montant?: number
+          motif?: string | null
+          periode?: string | null
+          regle_id?: string | null
+          reverses_entry_id?: string | null
+          sale_id?: string | null
+          sens?: string
+          statut_credit?: string | null
+          type_mouvement?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_grand_livre_fiscal_calcul_id_fkey"
+            columns: ["calcul_id"]
+            isOneToOne: false
+            referencedRelation: "snp_calculs_fiscaux"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_fiscal_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_fiscal_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_fiscal_regle_id_fkey"
+            columns: ["regle_id"]
+            isOneToOne: false
+            referencedRelation: "snp_regles_fiscales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_fiscal_reverses_entry_id_fkey"
+            columns: ["reverses_entry_id"]
+            isOneToOne: false
+            referencedRelation: "snp_grand_livre_fiscal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_fiscal_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       snp_modules: {
         Row: {
           code: string
@@ -8349,6 +10531,201 @@ export type Database = {
             columns: ["notification_id"]
             isOneToOne: false
             referencedRelation: "snp_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_organizations: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          mining_company_id: string | null
+          name: string
+          organization_type: string
+          source_artisan_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          mining_company_id?: string | null
+          name: string
+          organization_type: string
+          source_artisan_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          mining_company_id?: string | null
+          name?: string
+          organization_type?: string
+          source_artisan_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_organizations_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_organizations_source_artisan_id_fkey"
+            columns: ["source_artisan_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_organizations_source_artisan_id_fkey"
+            columns: ["source_artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_organizations_source_artisan_id_fkey"
+            columns: ["source_artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+        ]
+      }
+      snp_payment_operation_ledger: {
+        Row: {
+          actor_id: string
+          aggregate_id: string
+          capability_code: string
+          completed_at: string | null
+          created_at: string
+          idempotency_key: string
+          operation: string
+          payment_id: string | null
+          request_fingerprint: string
+          result: Json | null
+          sale_id: string | null
+        }
+        Insert: {
+          actor_id: string
+          aggregate_id: string
+          capability_code: string
+          completed_at?: string | null
+          created_at?: string
+          idempotency_key: string
+          operation: string
+          payment_id?: string | null
+          request_fingerprint: string
+          result?: Json | null
+          sale_id?: string | null
+        }
+        Update: {
+          actor_id?: string
+          aggregate_id?: string
+          capability_code?: string
+          completed_at?: string | null
+          created_at?: string
+          idempotency_key?: string
+          operation?: string
+          payment_id?: string | null
+          request_fingerprint?: string
+          result?: Json | null
+          sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_payment_operation_ledger_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_payment_operation_ledger_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_payment_proofs: {
+        Row: {
+          created_at: string
+          customer_id: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          idempotency_key: string
+          mime_type: string
+          payment_id: string
+          request_fingerprint: string
+          sale_id: string
+          sha256: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          idempotency_key: string
+          mime_type: string
+          payment_id: string
+          request_fingerprint: string
+          sale_id: string
+          sha256: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          idempotency_key?: string
+          mime_type?: string
+          payment_id?: string
+          request_fingerprint?: string
+          sale_id?: string
+          sha256?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_payment_proofs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_payment_proofs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_payment_proofs_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
             referencedColumns: ["id"]
           },
         ]
@@ -8567,6 +10944,10 @@ export type Database = {
           prepare_par: string | null
           preuve_url: string | null
           rapproche_par: string | null
+          reception_motif: string | null
+          reception_repondu_le: string | null
+          reception_repondu_par: string | null
+          reception_statut: string
           reference_bancaire: string | null
           reference_interne: string | null
           reference_reglement: string
@@ -8601,6 +10982,10 @@ export type Database = {
           prepare_par?: string | null
           preuve_url?: string | null
           rapproche_par?: string | null
+          reception_motif?: string | null
+          reception_repondu_le?: string | null
+          reception_repondu_par?: string | null
+          reception_statut?: string
           reference_bancaire?: string | null
           reference_interne?: string | null
           reference_reglement: string
@@ -8635,6 +11020,10 @@ export type Database = {
           prepare_par?: string | null
           preuve_url?: string | null
           rapproche_par?: string | null
+          reception_motif?: string | null
+          reception_repondu_le?: string | null
+          reception_repondu_par?: string | null
+          reception_statut?: string
           reference_bancaire?: string | null
           reference_interne?: string | null
           reference_reglement?: string
@@ -8790,6 +11179,109 @@ export type Database = {
             columns: ["reglement_id"]
             isOneToOne: false
             referencedRelation: "snp_reglements_achat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_regles_fiscales: {
+        Row: {
+          abroge_le: string | null
+          abroge_par: string | null
+          approuve_le: string | null
+          approuve_par: string | null
+          assiette: string
+          categorie_acheteur: string
+          code_taxe: string
+          commentaire: string | null
+          cree_le: string
+          cree_par: string | null
+          date_effet: string
+          date_fin: string | null
+          devise_seuil: string | null
+          id: string
+          libelle: string
+          mode_calcul: string
+          montant_forfaitaire: number | null
+          reference_reglementaire: string | null
+          seuil_max: number | null
+          seuil_min: number | null
+          statut: string
+          taux: number | null
+          unite_seuil: string | null
+          updated_at: string
+        }
+        Insert: {
+          abroge_le?: string | null
+          abroge_par?: string | null
+          approuve_le?: string | null
+          approuve_par?: string | null
+          assiette: string
+          categorie_acheteur?: string
+          code_taxe: string
+          commentaire?: string | null
+          cree_le?: string
+          cree_par?: string | null
+          date_effet: string
+          date_fin?: string | null
+          devise_seuil?: string | null
+          id?: string
+          libelle: string
+          mode_calcul: string
+          montant_forfaitaire?: number | null
+          reference_reglementaire?: string | null
+          seuil_max?: number | null
+          seuil_min?: number | null
+          statut?: string
+          taux?: number | null
+          unite_seuil?: string | null
+          updated_at?: string
+        }
+        Update: {
+          abroge_le?: string | null
+          abroge_par?: string | null
+          approuve_le?: string | null
+          approuve_par?: string | null
+          assiette?: string
+          categorie_acheteur?: string
+          code_taxe?: string
+          commentaire?: string | null
+          cree_le?: string
+          cree_par?: string | null
+          date_effet?: string
+          date_fin?: string | null
+          devise_seuil?: string | null
+          id?: string
+          libelle?: string
+          mode_calcul?: string
+          montant_forfaitaire?: number | null
+          reference_reglementaire?: string | null
+          seuil_max?: number | null
+          seuil_min?: number | null
+          statut?: string
+          taux?: number | null
+          unite_seuil?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_regles_fiscales_abroge_par_fkey"
+            columns: ["abroge_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_regles_fiscales_approuve_par_fkey"
+            columns: ["approuve_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_regles_fiscales_cree_par_fkey"
+            columns: ["cree_par"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -9339,6 +11831,209 @@ export type Database = {
           },
         ]
       }
+      snp_role_capabilities: {
+        Row: {
+          capability_code: string
+          created_at: string
+          role: string
+        }
+        Insert: {
+          capability_code: string
+          created_at?: string
+          role: string
+        }
+        Update: {
+          capability_code?: string
+          created_at?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_role_capabilities_capability_code_fkey"
+            columns: ["capability_code"]
+            isOneToOne: false
+            referencedRelation: "snp_capability_catalog"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      snp_rpc_execution_allowlist: {
+        Row: {
+          function_name: unknown
+          function_signature: string
+          grantee: unknown
+          migration_version: string
+          purpose: string
+        }
+        Insert: {
+          function_name: unknown
+          function_signature: string
+          grantee: unknown
+          migration_version: string
+          purpose: string
+        }
+        Update: {
+          function_name?: unknown
+          function_signature?: string
+          grantee?: unknown
+          migration_version?: string
+          purpose?: string
+        }
+        Relationships: []
+      }
+      snp_user_capabilities: {
+        Row: {
+          allowed: boolean
+          capability_code: string
+          granted_at: string
+          granted_by: string | null
+          reason: string
+          user_id: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          allowed: boolean
+          capability_code: string
+          granted_at?: string
+          granted_by?: string | null
+          reason: string
+          user_id: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          allowed?: boolean
+          capability_code?: string
+          granted_at?: string
+          granted_by?: string | null
+          reason?: string
+          user_id?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_user_capabilities_capability_code_fkey"
+            columns: ["capability_code"]
+            isOneToOne: false
+            referencedRelation: "snp_capability_catalog"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "snp_user_capabilities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_user_organization_memberships: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          id: string
+          is_primary: boolean
+          membership_role: string
+          organization_id: string
+          reason: string
+          user_id: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          is_primary?: boolean
+          membership_role?: string
+          organization_id: string
+          reason: string
+          user_id: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          is_primary?: boolean
+          membership_role?: string
+          organization_id?: string
+          reason?: string
+          user_id?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_user_organization_memberships_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_user_organization_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      snp_ventes_evenements_audit: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          previous_status: string | null
+          resulting_status: string
+          sale_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          previous_status?: string | null
+          resulting_status: string
+          sale_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          previous_status?: string | null
+          resulting_status?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_ventes_evenements_audit_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_ventes_evenements_audit_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       snp_ventes_lots: {
         Row: {
           achat_mine_id: string | null
@@ -9395,11 +12090,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "snp_ventes_lots_sale_id_fkey"
-            columns: ["sale_id"]
+            foreignKeyName: "snp_ventes_lots_artisan_vente_id_fkey"
+            columns: ["artisan_vente_id"]
             isOneToOne: false
-            referencedRelation: "sales"
-            referencedColumns: ["id"]
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["vente_id"]
           },
           {
             foreignKeyName: "snp_ventes_lots_released_by_fkey"
@@ -9408,7 +12103,104 @@ export type Database = {
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_ventes_lots_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      snp_workflow_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string | null
+          aggregate_id: string | null
+          aggregate_type: string
+          capability_code: string | null
+          context: Json
+          id: number
+          occurred_at: string
+          reason: string | null
+          status_after: string | null
+          status_before: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string | null
+          aggregate_id?: string | null
+          aggregate_type: string
+          capability_code?: string | null
+          context?: Json
+          id?: never
+          occurred_at?: string
+          reason?: string | null
+          status_after?: string | null
+          status_before?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          aggregate_id?: string | null
+          aggregate_type?: string
+          capability_code?: string | null
+          context?: Json
+          id?: never
+          occurred_at?: string
+          reason?: string | null
+          status_after?: string | null
+          status_before?: string | null
+        }
+        Relationships: []
+      }
+      snp_workflow_notification_outbox: {
+        Row: {
+          aggregate_id: string | null
+          aggregate_type: string
+          attempts: number
+          available_at: string
+          created_at: string
+          event_key: string
+          event_type: string
+          id: number
+          last_error: string | null
+          payload: Json
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          aggregate_id?: string | null
+          aggregate_type: string
+          attempts?: number
+          available_at?: string
+          created_at?: string
+          event_key: string
+          event_type: string
+          id?: never
+          last_error?: string | null
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          aggregate_id?: string | null
+          aggregate_type?: string
+          attempts?: number
+          available_at?: string
+          created_at?: string
+          event_key?: string
+          event_type?: string
+          id?: never
+          last_error?: string | null
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       stakeholder_activities: {
         Row: {
@@ -9795,6 +12587,7 @@ export type Database = {
           id: string
           ip_address: unknown
           metadata: Json | null
+          mining_company_id: string | null
           new_status: string
           notes: string | null
           old_status: string | null
@@ -9811,6 +12604,7 @@ export type Database = {
           id?: string
           ip_address?: unknown
           metadata?: Json | null
+          mining_company_id?: string | null
           new_status: string
           notes?: string | null
           old_status?: string | null
@@ -9827,12 +12621,21 @@ export type Database = {
           id?: string
           ip_address?: unknown
           metadata?: Json | null
+          mining_company_id?: string | null
           new_status?: string
           notes?: string | null
           old_status?: string | null
           user_agent?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "unified_status_history_mining_company_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_2fa_setup: {
         Row: {
@@ -10157,6 +12960,7 @@ export type Database = {
           timezone: string | null
           two_factor_enabled: boolean | null
           updated_at: string | null
+          version: number
         }
         Insert: {
           account_activated?: boolean | null
@@ -10196,6 +13000,7 @@ export type Database = {
           timezone?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string | null
+          version?: number
         }
         Update: {
           account_activated?: boolean | null
@@ -10235,8 +13040,16 @@ export type Database = {
           timezone?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string | null
+          version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "user_profiles_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "user_invitations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_profiles_mfa_reset_by_fkey"
             columns: ["mfa_reset_by"]
@@ -10255,29 +13068,53 @@ export type Database = {
       }
       user_sessions: {
         Row: {
-          created_at: string | null
+          browser: string | null
+          created_at: string
+          device_type: string | null
           expires_at: string
           id: string
           ip_address: string | null
-          session_token: string
+          is_active: boolean
+          last_activity_at: string
+          location_country: string | null
+          revocation_reason: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          token_hash: string
           user_agent: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          browser?: string | null
+          created_at?: string
+          device_type?: string | null
           expires_at: string
           id?: string
           ip_address?: string | null
-          session_token: string
+          is_active?: boolean
+          last_activity_at?: string
+          location_country?: string | null
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token_hash: string
           user_agent?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          browser?: string | null
+          created_at?: string
+          device_type?: string | null
           expires_at?: string
           id?: string
           ip_address?: string | null
-          session_token?: string
+          is_active?: boolean
+          last_activity_at?: string
+          location_country?: string | null
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token_hash?: string
           user_agent?: string | null
           user_id?: string
         }
@@ -10645,6 +13482,407 @@ export type Database = {
       }
     }
     Views: {
+      assay_certificates_with_shipping: {
+        Row: {
+          approval_notes: string | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          certificate_date: string | null
+          certificate_number: string | null
+          created_at: string | null
+          expedition_lot_number: string | null
+          file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          fineness: number | null
+          gold_content_gpt: number | null
+          gold_content_percent: number | null
+          gold_content_ppm: number | null
+          id: string | null
+          issuing_laboratory: string | null
+          mime_type: string | null
+          mining_company_country: string | null
+          mining_company_id: string | null
+          mining_company_name: string | null
+          palladium_content_ppm: number | null
+          parsed_at: string | null
+          parsing_error: string | null
+          parsing_status: string | null
+          platinum_content_ppm: number | null
+          prepared_at: string | null
+          purity_percent: number | null
+          sample_id: string | null
+          sample_weight_grams: number | null
+          shipped_at: string | null
+          shipped_to_address: string | null
+          shipped_to_company: string | null
+          shipped_to_country: string | null
+          shipping_created_at: string | null
+          shipping_gross_weight: number | null
+          shipping_preparation_id: string | null
+          shipping_status: string | null
+          shipping_weight: number | null
+          silver_content_gpt: number | null
+          silver_content_percent: number | null
+          silver_content_ppm: number | null
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assay_certificates_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assay_certificates_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_assay_certificates_shipping_preparation"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_presale"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_assay_certificates_shipping_preparation"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipments_for_refinery"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_assay_certificates_shipping_preparation"
+            columns: ["shipping_preparation_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_preparations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_production_with_metals: {
+        Row: {
+          bar_reference: string | null
+          bullion_grams: number | null
+          created_at: string | null
+          created_by: string | null
+          estimated_fineness_pct: number | null
+          estimated_gold_pct: number | null
+          estimated_oz: number | null
+          estimated_silver_pct: number | null
+          gold_content_grams: number | null
+          gold_content_oz: number | null
+          id: string | null
+          mining_company_id: string | null
+          notes: string | null
+          production_date: string | null
+          pure_gold_grams: number | null
+          silver_content_grams: number | null
+          silver_content_oz: number | null
+          site_id: string | null
+          status: Database["public"]["Enums"]["production_status_v2"] | null
+          status_old_backup:
+            | Database["public"]["Enums"]["production_status"]
+            | null
+          total_metal_content_grams: number | null
+          total_metal_pct: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bar_reference?: string | null
+          bullion_grams?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          estimated_fineness_pct?: number | null
+          estimated_gold_pct?: number | null
+          estimated_oz?: number | null
+          estimated_silver_pct?: number | null
+          gold_content_grams?: never
+          gold_content_oz?: never
+          id?: string | null
+          mining_company_id?: string | null
+          notes?: string | null
+          production_date?: string | null
+          pure_gold_grams?: number | null
+          silver_content_grams?: number | null
+          silver_content_oz?: never
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["production_status_v2"] | null
+          status_old_backup?:
+            | Database["public"]["Enums"]["production_status"]
+            | null
+          total_metal_content_grams?: never
+          total_metal_pct?: never
+          updated_at?: string | null
+        }
+        Update: {
+          bar_reference?: string | null
+          bullion_grams?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          estimated_fineness_pct?: number | null
+          estimated_gold_pct?: number | null
+          estimated_oz?: number | null
+          estimated_silver_pct?: number | null
+          gold_content_grams?: never
+          gold_content_oz?: never
+          id?: string | null
+          mining_company_id?: string | null
+          notes?: string | null
+          production_date?: string | null
+          pure_gold_grams?: number | null
+          silver_content_grams?: number | null
+          silver_content_oz?: never
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["production_status_v2"] | null
+          status_old_backup?:
+            | Database["public"]["Enums"]["production_status"]
+            | null
+          total_metal_content_grams?: never
+          total_metal_pct?: never
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_production_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipments_for_presale: {
+        Row: {
+          bullion_grams: number | null
+          created_at: string | null
+          created_by: string | null
+          daily_production_id: string | null
+          estimated_fineness_pct: number | null
+          estimated_oz: number | null
+          expedition_lot_number: string | null
+          export_license_id: string | null
+          freight_company_id: string | null
+          id: string | null
+          license_id: string | null
+          mining_company_id: string | null
+          notes: string | null
+          packing_list_document_id: string | null
+          packing_list_url: string | null
+          prepared_at: string | null
+          production_date: string | null
+          pure_gold_grams: number | null
+          refinery_id: string | null
+          seal_number: string | null
+          shipped_at: string | null
+          shipped_to_address: string | null
+          shipped_to_company: string | null
+          shipped_to_country: string | null
+          status:
+            | Database["public"]["Enums"]["shipping_preparation_status"]
+            | null
+          status_old_backup: string | null
+          total_boxes: number | null
+          total_gross_weight_grams: number | null
+          total_net_weight_grams: number | null
+          total_weight_oz: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_export_license_company_fkey"
+            columns: ["export_license_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_daily_production_id_fkey"
+            columns: ["daily_production_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_daily_production_id_fkey"
+            columns: ["daily_production_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_export_license_id_fkey"
+            columns: ["export_license_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_freight_company_id_fkey"
+            columns: ["freight_company_id"]
+            isOneToOne: false
+            referencedRelation: "transport_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_refinery_id_fkey_refineries"
+            columns: ["refinery_id"]
+            isOneToOne: false
+            referencedRelation: "refineries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_production_company_fkey"
+            columns: ["daily_production_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+          {
+            foreignKeyName: "shipping_production_company_fkey"
+            columns: ["daily_production_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+        ]
+      }
+      shipments_for_refinery: {
+        Row: {
+          bullion_grams: number | null
+          created_at: string | null
+          created_by: string | null
+          daily_production_id: string | null
+          estimated_fineness_pct: number | null
+          expedition_lot_number: string | null
+          export_license_id: string | null
+          freight_company_id: string | null
+          id: string | null
+          license_id: string | null
+          mining_company_id: string | null
+          notes: string | null
+          packing_list_document_id: string | null
+          packing_list_url: string | null
+          prepared_at: string | null
+          production_date: string | null
+          pure_gold_grams: number | null
+          refinery_id: string | null
+          seal_number: string | null
+          shipped_at: string | null
+          shipped_to_address: string | null
+          shipped_to_company: string | null
+          shipped_to_country: string | null
+          status:
+            | Database["public"]["Enums"]["shipping_preparation_status"]
+            | null
+          status_old_backup: string | null
+          total_boxes: number | null
+          total_gross_weight_grams: number | null
+          total_net_weight_grams: number | null
+          total_weight_oz: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_export_license_company_fkey"
+            columns: ["export_license_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_daily_production_id_fkey"
+            columns: ["daily_production_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_daily_production_id_fkey"
+            columns: ["daily_production_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_export_license_id_fkey"
+            columns: ["export_license_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_freight_company_id_fkey"
+            columns: ["freight_company_id"]
+            isOneToOne: false
+            referencedRelation: "transport_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "export_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_preparations_refinery_id_fkey_refineries"
+            columns: ["refinery_id"]
+            isOneToOne: false
+            referencedRelation: "refineries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_production_company_fkey"
+            columns: ["daily_production_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+          {
+            foreignKeyName: "shipping_production_company_fkey"
+            columns: ["daily_production_id", "mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "daily_production_with_metals"
+            referencedColumns: ["id", "mining_company_id"]
+          },
+        ]
+      }
       v_artisan_paiements_resume: {
         Row: {
           artisan_id: string | null
@@ -10693,7 +13931,6 @@ export type Database = {
       }
     }
     Functions: {
-      add_audit_fields: { Args: { target_table: string }; Returns: undefined }
       analyze_audit_fields: {
         Args: never
         Returns: {
@@ -10711,18 +13948,6 @@ export type Database = {
         Returns: boolean
       }
       auto_desactiver_artisan_carte_expiree: { Args: never; Returns: undefined }
-      bytea_to_text: { Args: { data: string }; Returns: string }
-      calculate_commission: {
-        Args: {
-          p_customer_tier: string
-          p_metal_type: string
-          p_quantity_oz: number
-          p_sale_amount: number
-          p_sale_id: string
-          p_salesperson_id: string
-        }
-        Returns: number
-      }
       calculate_final_fine: {
         Args: {
           fineness_percentage: number
@@ -10730,10 +13955,6 @@ export type Database = {
           post_melting_weight: number
         }
         Returns: Record<string, unknown>
-      }
-      calculate_forward_price: {
-        Args: { forward_days: number; spot_price: number }
-        Returns: number
       }
       calculate_fx_gain_loss: {
         Args: { p_amount: number; p_best_rate: number; p_customer_rate: number }
@@ -10809,11 +14030,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_approval_escalations: { Args: never; Returns: undefined }
-      check_inventory_available: {
-        Args: { p_metal_type?: string; p_quantity_oz: number }
-        Returns: boolean
-      }
       check_license_availability: {
         Args: { p_license_id: string; p_required_quantity: number }
         Returns: {
@@ -10853,6 +14069,13 @@ export type Database = {
         Returns: boolean
       }
       check_user_role: { Args: { required_role: string }; Returns: boolean }
+      consume_activation_token: {
+        Args: { p_now?: string; p_token: string }
+        Returns: {
+          token_type: string
+          user_id: string
+        }[]
+      }
       convert_virtual_to_actual_payment: {
         Args: {
           p_account_number: string
@@ -10896,36 +14119,6 @@ export type Database = {
         Returns: string
       }
       current_user_role: { Args: never; Returns: string }
-      determine_best_fx_rate: {
-        Args: {
-          p_bceao_rate?: number
-          p_customer_rate: number
-          p_ecb_rate?: number
-          p_other_rate?: number
-          p_revolut_rate?: number
-        }
-        Returns: {
-          best_rate: number
-          best_source: string
-          worst_rate: number
-          worst_source: string
-        }[]
-      }
-      determine_best_rate: {
-        Args: {
-          p_bceao_rate: number
-          p_customer_rate: number
-          p_ecb_rate: number
-          p_other_rate: number
-          p_revolut_rate: number
-        }
-        Returns: {
-          best_rate: number
-          best_source: string
-          worst_rate: number
-          worst_source: string
-        }[]
-      }
       generate_activation_token: {
         Args: {
           p_created_by?: string
@@ -10946,15 +14139,6 @@ export type Database = {
       generate_sale_number: { Args: never; Returns: string }
       generer_numero_facture: { Args: never; Returns: string }
       generer_reference_paiement: { Args: never; Returns: string }
-      get_allowed_customers_for_seller: {
-        Args: { p_seller_id: string; p_seller_type: string }
-        Returns: {
-          customer_country: string
-          customer_email: string
-          customer_id: string
-          customer_name: string
-        }[]
-      }
       get_authorized_customers_for_mine: {
         Args: { p_mining_company_id: string }
         Returns: {
@@ -10964,17 +14148,6 @@ export type Database = {
           refining_fees_paid_by_customer: boolean
           sale_method: string
           transport_fees_paid_by_customer: boolean
-        }[]
-      }
-      get_available_inventory: {
-        Args: { p_site_id?: number }
-        Returns: {
-          available_ounces: number
-          entry_date: string
-          inventory_id: string
-          name: string
-          refining_record_id: string
-          weight_ounces: number
         }[]
       }
       get_certificate_with_data: {
@@ -11029,13 +14202,16 @@ export type Database = {
         Args: { p_mining_company_id: string; p_year?: number }
         Returns: string
       }
-      get_next_possible_statuses: {
-        Args: { batch_id_param: string }
+      get_production_status_history: {
+        Args: { prod_id: string }
         Returns: {
-          description: string
-          next_status: string
-          requires_role: string
-          user_can_perform: boolean
+          changed_at: string
+          changed_by: string
+          id: string
+          new_status: string
+          notes: string
+          old_status: string
+          user_email: string
         }[]
       }
       get_production_summary: {
@@ -11057,10 +14233,6 @@ export type Database = {
           variance_vs_budget: number
           variance_vs_forecast: number
         }[]
-      }
-      get_recommended_mechanism: {
-        Args: { quantity: number; trend: string }
-        Returns: string
       }
       get_shipping_assay_certificates: {
         Args: { p_shipping_id: string }
@@ -11167,145 +14339,9 @@ export type Database = {
           variance_vs_forecast: number
         }[]
       }
-      http: {
-        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "http_request"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_delete:
-        | {
-            Args: { uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { content: string; content_type: string; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_get:
-        | {
-            Args: { uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { data: Json; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_head: {
-        Args: { uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_header: {
-        Args: { field: string; value: string }
-        Returns: Database["public"]["CompositeTypes"]["http_header"]
-        SetofOptions: {
-          from: "*"
-          to: "http_header"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_list_curlopt: {
-        Args: never
-        Returns: {
-          curlopt: string
-          value: string
-        }[]
-      }
-      http_patch: {
-        Args: { content: string; content_type: string; uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_post:
-        | {
-            Args: { content: string; content_type: string; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { data: Json; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_put: {
-        Args: { content: string; content_type: string; uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_reset_curlopt: { Args: never; Returns: boolean }
-      http_set_curlopt: {
-        Args: { curlopt: string; value: string }
-        Returns: boolean
-      }
       is_admin_user: { Args: { user_id: string }; Returns: boolean }
       is_management: { Args: never; Returns: boolean }
       is_management_user: { Args: { user_id: string }; Returns: boolean }
-      is_valid_customer_for_seller: {
-        Args: {
-          p_customer_id: string
-          p_seller_id: string
-          p_seller_type: string
-        }
-        Returns: {
-          error_message: string
-          is_valid: boolean
-        }[]
-      }
       log_security_event: {
         Args: {
           p_details?: Json
@@ -11344,17 +14380,172 @@ export type Database = {
         }
         Returns: boolean
       }
-      search_audit_by_date: {
-        Args: { end_date: string; start_date: string }
+      snp_2l_can_read_payment_proof: {
+        Args: { p_payment_id: string; p_sale_id: string }
+        Returns: boolean
+      }
+      snp_2l_can_read_payment_proof_object: {
+        Args: { p_object_name: string }
+        Returns: boolean
+      }
+      snp_2l_payment_proof_object_matches: {
+        Args: {
+          p_file_name: string
+          p_file_path: string
+          p_file_size: number
+          p_idempotency_key: string
+          p_mime_type: string
+          p_payment_id: string
+          p_sha256: string
+          p_uploaded_by: string
+        }
+        Returns: boolean
+      }
+      snp_2m_account_business_activity: {
+        Args: { p_target_id: string }
+        Returns: Json
+      }
+      snp_2m_assert_dependency_registry_complete: {
+        Args: never
+        Returns: undefined
+      }
+      snp_2m_assert_target: {
+        Args: {
+          p_actor_role: string
+          p_expected_version: number
+          p_require_inactive: boolean
+          p_target_id: string
+        }
         Returns: {
-          batch_number: string
-          changed_at: string
-          changed_by_name: string
-          changed_by_role: string
-          comments: string
-          previous_status: string
-          status: string
+          account_activated: boolean | null
+          account_locked: boolean
+          account_locked_until: string | null
+          activation_completed_at: string | null
+          approval_notifications: boolean | null
+          created_at: string | null
+          department: string | null
+          email: string
+          email_notifications: boolean | null
+          failed_login_attempts: number | null
+          full_name: string | null
+          id: string
+          invitation_id: string | null
+          is_active: boolean
+          is_sales_approver: boolean
+          job_title: string | null
+          language: string | null
+          language_preference: string | null
+          last_activity_at: string | null
+          last_login_at: string | null
+          last_login_ip: string | null
+          last_password_change: string | null
+          locked_until: string | null
+          mfa_enrolled_at: string | null
+          mfa_reset_at: string | null
+          mfa_reset_by: string | null
+          mining_company_id: string | null
+          must_change_password: boolean
+          password_changed_at: string | null
+          password_expiry_days: number | null
+          password_must_change: boolean | null
+          phone: string | null
+          profile_picture_url: string | null
+          role: string
+          timezone: string | null
+          two_factor_enabled: boolean | null
+          updated_at: string | null
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_2m_can_read_lifecycle_audit: { Args: never; Returns: boolean }
+      snp_2m_current_dependency_inventory: {
+        Args: never
+        Returns: {
+          classification: string
+          column_name: string
+          constraint_name: string
+          delete_action: unknown
+          referenced_column_name: string
+          referenced_schema_name: string
+          referenced_table_name: string
+          schema_name: string
+          source: string
+          table_name: string
         }[]
+      }
+      snp_2m_require_account_admin: { Args: never; Returns: string }
+      snp_4b_can_manage_artisan: {
+        Args: { p_artisan_id: string; p_capability: string }
+        Returns: boolean
+      }
+      snp_4b_card_snapshot: {
+        Args: {
+          p_row: Database["public"]["Tables"]["snp_cartes_professionnelles"]["Row"]
+        }
+        Returns: Json
+      }
+      snp_4b_payment_snapshot: {
+        Args: {
+          p_row: Database["public"]["Tables"]["snp_artisan_moyens_paiement"]["Row"]
+        }
+        Returns: Json
+      }
+      snp_4b_verified_payment_proof: {
+        Args: { p_reglement_id: string }
+        Returns: boolean
+      }
+      snp_4h_complete_payment_operation: {
+        Args: {
+          p_idempotency_key: string
+          p_payment_id: string
+          p_result: Json
+          p_sale_id: string
+        }
+        Returns: undefined
+      }
+      snp_4h_payment_idempotency_reserve: {
+        Args: {
+          p_actor: string
+          p_aggregate_id: string
+          p_capability: string
+          p_idempotency_key: string
+          p_operation: string
+          p_request_fingerprint: string
+        }
+        Returns: Json
+      }
+      snp_4i_can_read_finance_scope: {
+        Args: { p_artisan_id: string; p_comptoir_id: string }
+        Returns: boolean
+      }
+      snp_4i_capability_for_scope: {
+        Args: {
+          p_comptoir_capability: string
+          p_comptoir_id: string
+          p_sonasp_capability: string
+        }
+        Returns: string
+      }
+      snp_4i_idempotency_complete: {
+        Args: { p_idempotency_key: string; p_response: Json }
+        Returns: undefined
+      }
+      snp_4i_idempotency_reserve: {
+        Args: {
+          p_aggregate_id: string
+          p_capability: string
+          p_comptoir_id: string
+          p_idempotency_key: string
+          p_operation: string
+          p_request: Json
+        }
+        Returns: Json
       }
       snp_aal: { Args: never; Returns: string }
       snp_accuser_reception_requisition: {
@@ -11390,7 +14581,52 @@ export type Database = {
         Args: { p_uid: string }
         Returns: undefined
       }
+      snp_actor_capabilities: {
+        Args: never
+        Returns: {
+          capability_code: string
+        }[]
+      }
+      snp_actor_has_capability: {
+        Args: { p_capability_code: string }
+        Returns: boolean
+      }
+      snp_admin_compte_definir_statut: {
+        Args: {
+          p_expected_version: number
+          p_idempotency_key: string
+          p_is_active: boolean
+          p_reason: string
+          p_target_id: string
+        }
+        Returns: Json
+      }
+      snp_admin_compte_finaliser_action: {
+        Args: {
+          p_error_code?: string
+          p_idempotency_key: string
+          p_success: boolean
+        }
+        Returns: Json
+      }
+      snp_admin_compte_preparer_suppression: {
+        Args: {
+          p_expected_version: number
+          p_idempotency_key: string
+          p_reason: string
+          p_target_id: string
+        }
+        Returns: Json
+      }
       snp_affecter_fifo: {
+        Args: { p_reglement_id: string }
+        Returns: {
+          factures_soldees: number
+          montant_affecte: number
+          solde_non_affecte: number
+        }[]
+      }
+      snp_affecter_fifo_legacy_4b: {
         Args: { p_reglement_id: string }
         Returns: {
           factures_soldees: number
@@ -11410,6 +14646,60 @@ export type Database = {
           reste_facture: number
           solde_reglement: number
         }[]
+      }
+      snp_affecter_reglement_legacy_4b: {
+        Args: {
+          p_facture_id: string
+          p_montant: number
+          p_observations?: string
+          p_reglement_id: string
+        }
+        Returns: {
+          affectation_id: string
+          reste_facture: number
+          solde_reglement: number
+        }[]
+      }
+      snp_ajouter_preuve_reglement: {
+        Args: {
+          p_banque_emettrice?: string
+          p_commentaire?: string
+          p_date_emission?: string
+          p_empreinte_sha256?: string
+          p_fichier_url: string
+          p_nom_origine: string
+          p_reference_document?: string
+          p_reglement_id: string
+          p_taille_octets: number
+          p_type_document: string
+          p_type_mime: string
+        }
+        Returns: {
+          ajoute_le: string
+          ajoute_par: string | null
+          banque_emettrice: string | null
+          commentaire: string | null
+          date_emission: string | null
+          empreinte_sha256: string | null
+          fichier_url: string
+          id: string
+          motif_rejet: string | null
+          nom_origine: string
+          reference_document: string | null
+          reglement_id: string
+          statut_verification: string
+          taille_octets: number
+          type_document: string
+          type_mime: string
+          verifiee_le: string | null
+          verifiee_par: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_reglements_preuves"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       snp_alertes_contractuelles: {
         Args: never
@@ -11449,6 +14739,14 @@ export type Database = {
           solde_reglement: number
         }[]
       }
+      snp_annuler_affectation_legacy_4b: {
+        Args: { p_affectation_id: string; p_motif: string }
+        Returns: {
+          affectation_id: string
+          reste_facture: number
+          solde_reglement: number
+        }[]
+      }
       snp_appliquer_contrats_au_plan: {
         Args: { p_ecraser_ajustements?: boolean; p_plan_id: string }
         Returns: {
@@ -11458,6 +14756,51 @@ export type Database = {
           quantite_contractuelle: number
           quantite_reliquat: number
         }[]
+      }
+      snp_artisan_creer_paiement: {
+        Args: {
+          p_expected_facture_statut: string
+          p_expected_facture_version: number
+          p_facture_id: string
+          p_idempotency_key: string
+          p_moyen_paiement_id: string
+          p_notes?: string
+        }
+        Returns: Json
+      }
+      snp_artisan_emettre_facture: {
+        Args: {
+          p_date_echeance?: string
+          p_expected_vente_statut: string
+          p_expected_vente_version: number
+          p_idempotency_key: string
+          p_notes?: string
+          p_vente_id: string
+        }
+        Returns: Json
+      }
+      snp_artisan_transition_paiement: {
+        Args: {
+          p_expected_statut: string
+          p_expected_version: number
+          p_idempotency_key: string
+          p_notes?: string
+          p_nouveau_statut: string
+          p_paiement_id: string
+        }
+        Returns: Json
+      }
+      snp_artisan_transition_reversement_taxe: {
+        Args: {
+          p_expected_statut: string
+          p_expected_version: number
+          p_idempotency_key: string
+          p_notes?: string
+          p_nouveau_statut: string
+          p_reversement_reference?: string
+          p_taxe_id: string
+        }
+        Returns: Json
       }
       snp_assiette_achat: {
         Args: { p_debut: string; p_fin: string }
@@ -11470,6 +14813,39 @@ export type Database = {
           validee: number
         }[]
       }
+      snp_assign_artisan_to_collector: {
+        Args: {
+          p_artisan_id: string
+          p_collector_id: string
+          p_comptoir_organization_id: string
+          p_reason: string
+        }
+        Returns: string
+      }
+      snp_assign_user_organization: {
+        Args: {
+          p_is_primary?: boolean
+          p_membership_role: string
+          p_organization_id: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      snp_audit_email_settings_change: {
+        Args: { p_action: string; p_configuration_id: string }
+        Returns: undefined
+      }
+      snp_avoir_imputer: {
+        Args: {
+          p_avoir_id: string
+          p_idempotency_key: string
+          p_montant: number
+          p_sale_id: string
+        }
+        Returns: Json
+      }
+      snp_avoir_solde: { Args: { p_avoir_id: string }; Returns: number }
       snp_balance_agee: {
         Args: { p_date?: string; p_mining_company_id?: string }
         Returns: {
@@ -11488,7 +14864,108 @@ export type Database = {
           total: number
         }[]
       }
+      snp_can_access_artisan: {
+        Args: { p_artisan_id: string }
+        Returns: boolean
+      }
+      snp_certify_artisan_invoice: {
+        Args: {
+          p_dgi_reference: string
+          p_document_path: string
+          p_facture_id: string
+        }
+        Returns: undefined
+      }
       snp_changer_statut_contrat: {
+        Args: {
+          p_commentaire?: string
+          p_contrat_id: string
+          p_motif?: string
+          p_statut: string
+        }
+        Returns: {
+          approuve_par: string | null
+          artisan_id: string | null
+          conditions_enlevement: string | null
+          conditions_livraison: string | null
+          conditions_paiement: string
+          confidentialite: string | null
+          contrat_parent_id: string | null
+          contrat_precedent_id: string | null
+          created_at: string
+          created_by: string | null
+          date_activation: string | null
+          date_approbation: string | null
+          date_cloture: string | null
+          date_debut: string
+          date_fin: string
+          date_signature: string | null
+          date_soumission: string | null
+          decote_pct: number
+          delai_contestation_jours: number
+          delai_paiement_jours: number
+          devise_cours: string
+          devise_reglement: string
+          direction_responsable: string | null
+          force_majeure: string | null
+          formule_prix: string | null
+          frais_contre_expertise: string
+          gestionnaire_id: string | null
+          id: string
+          intitule: string
+          laboratoire_independant: string | null
+          laboratoire_initial: string | null
+          livraison_anticipee_autorisee: boolean
+          methode_analyse: string | null
+          methode_echantillonnage: string | null
+          methode_prix: string
+          mining_company_id: string | null
+          modalites_pesee: string | null
+          motif_statut: string | null
+          numero_contrat: string
+          obligations_fournisseur: string | null
+          obligations_sonasp: string | null
+          observations: string | null
+          partenaire_libelle: string | null
+          partenaire_type: string
+          penalites: string | null
+          periodicite: string
+          plafond_depassement_pct: number
+          preavis_reconduction_jours: number | null
+          prime_pct: number
+          prix_ajuste_sur_teneur: boolean
+          prix_fixe_fcfa: number | null
+          quantite_maximale: number | null
+          quantite_minimale: number | null
+          quantite_totale: number | null
+          reconduction: string
+          reglement_differends: string | null
+          report_reliquat: string
+          representant_contact: string | null
+          representant_partenaire: string | null
+          site_id: string | null
+          source_cours: string | null
+          statut: string
+          teneur_faisant_foi: string
+          teneur_minimale_pct: number | null
+          teneur_reference_pct: number | null
+          teneur_tolerance_pct: number
+          tolerance_quantite_pct: number
+          transfert_propriete: string | null
+          type_contrat: string
+          unite: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_contrats"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_changer_statut_contrat_legacy_4b: {
         Args: {
           p_commentaire?: string
           p_contrat_id: string
@@ -11658,9 +15135,121 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      snp_changer_statut_requisition_legacy_4b: {
+        Args: {
+          p_commentaire?: string
+          p_motif?: string
+          p_requisition_id: string
+          p_statut: string
+        }
+        Returns: {
+          accord_mine: boolean | null
+          accord_recu_le: string | null
+          accuse_reception_le: string | null
+          accuse_reception_par: string | null
+          autorisee_par: string | null
+          autorite_origine: string | null
+          conditions_analyse: string | null
+          conditions_transport: string | null
+          confidentialite: string
+          contestation_motif: string | null
+          contestation_recue_le: string | null
+          contrat_id: string | null
+          created_at: string
+          created_by: string | null
+          date_autorisation: string | null
+          date_cloture: string | null
+          date_effet: string | null
+          date_executoire: string | null
+          date_notification: string | null
+          date_signature_acte: string | null
+          delai_mise_a_disposition_jours: number | null
+          equipe: string | null
+          id: string
+          imputation_contractuelle: string | null
+          imputation_decidee_le: string | null
+          imputation_decidee_par: string | null
+          imputation_motif: string | null
+          lieu_enlevement: string | null
+          lieu_stockage: string | null
+          methode_prix: string
+          mining_company_id: string | null
+          modalites_enlevement: string | null
+          modalites_paiement: string
+          motif_statut: string | null
+          nature_acte: string | null
+          objet: string
+          observations: string | null
+          observations_mine: string | null
+          observations_recues_le: string | null
+          partenaire_type: string
+          periode_debut: string | null
+          periode_fin: string | null
+          pourcentage_production: number | null
+          prix_once_fcfa: number | null
+          produits_concernes: string | null
+          quantite_oz: number | null
+          reference: string
+          reference_acte: string | null
+          regime_juridique: string
+          responsable_id: string | null
+          site_id: string | null
+          statut: string
+          teneur_estimee_pct: number | null
+          type_requisition: string
+          unite: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_requisitions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       snp_compter_facteurs_verifies: {
         Args: { p_user_id?: string }
         Returns: number
+      }
+      snp_comptoir_stock_balance: {
+        Args: { p_organization_id: string }
+        Returns: number
+      }
+      snp_conciliation_completer: {
+        Args: { p_idempotency_key: string; p_response: Json }
+        Returns: undefined
+      }
+      snp_conciliation_enregistrer_analyse: {
+        Args: {
+          p_conciliation_id: string
+          p_date_fixing: string
+          p_idempotency_key: string
+          p_poids_final_g: number
+          p_prix_final: number
+          p_source_id: string
+          p_source_type: string
+          p_teneur_finale_pct: number
+        }
+        Returns: Json
+      }
+      snp_conciliation_ouvrir: {
+        Args: { p_idempotency_key: string; p_sale_id: string }
+        Returns: Json
+      }
+      snp_conciliation_reserver: {
+        Args: {
+          p_aggregate_id: string
+          p_capability: string
+          p_idempotency_key: string
+          p_operation: string
+          p_request: Json
+        }
+        Returns: Json
+      }
+      snp_conciliation_valider: {
+        Args: { p_conciliation_id: string; p_idempotency_key: string }
+        Returns: Json
       }
       snp_configuration_courriel_active: {
         Args: never
@@ -11693,6 +15282,17 @@ export type Database = {
           securise: boolean
           uid: string
         }[]
+      }
+      snp_configurer_compte_portail: {
+        Args: {
+          p_full_name: string
+          p_is_active: boolean
+          p_mining_company_id?: string
+          p_phone: string
+          p_role: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
       snp_confirmer_enrolement_mfa: { Args: never; Returns: boolean }
       snp_conformite_mfa: {
@@ -11827,6 +15427,10 @@ export type Database = {
           titre: string
         }[]
       }
+      snp_create_comptoir_organization: {
+        Args: { p_code: string; p_name: string; p_reason: string }
+        Returns: string
+      }
       snp_creer_configuration_courriel: {
         Args: {
           p_activer?: boolean
@@ -11840,6 +15444,39 @@ export type Database = {
           p_securise: boolean
         }
         Returns: string
+      }
+      snp_creer_vente_export: {
+        Args: {
+          p_customer_id: string
+          p_freight_cost?: number
+          p_in_process_refinery_id?: string
+          p_london_am_rate: number
+          p_lots?: Json
+          p_mechanism_type?: string
+          p_other_costs?: number
+          p_quantity_oz: number
+          p_seller_id: string
+        }
+        Returns: Json
+      }
+      snp_creer_vente_export_mine: {
+        Args: {
+          p_customer_id: string
+          p_freight_cost?: number
+          p_in_process_refinery_id?: string
+          p_london_am_rate: number
+          p_mechanism_type?: string
+          p_other_costs?: number
+          p_quantity_oz: number
+        }
+        Returns: Json
+      }
+      snp_current_collector_id: { Args: never; Returns: string }
+      snp_current_organization_id: { Args: never; Returns: string }
+      snp_current_organization_type: { Args: never; Returns: string }
+      snp_decider_approbation: {
+        Args: { p_decision: string; p_demande_id: string; p_motif?: string }
+        Returns: Json
       }
       snp_decider_imputation_requisition: {
         Args: {
@@ -11914,46 +15551,49 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      snp_creer_vente_export: {
-        Args: {
-          p_customer_id: string
-          p_freight_cost?: number
-          p_in_process_refinery_id?: string | null
-          p_london_am_rate: number
-          p_lots?: Json
-          p_mechanism_type?: string | null
-          p_other_costs?: number
-          p_quantity_oz: number
-          p_seller_id: string
-        }
-        Returns: Json
+      snp_definir_approbateur_ventes: {
+        Args: { p_active: boolean; p_user_id: string }
+        Returns: undefined
       }
-      snp_creer_vente_export_mine: {
+      snp_definir_capacite_utilisateur: {
         Args: {
-          p_customer_id: string
-          p_freight_cost?: number
-          p_in_process_refinery_id?: string | null
-          p_london_am_rate: number
-          p_mechanism_type?: string | null
-          p_other_costs?: number
-          p_quantity_oz: number
+          p_allowed: boolean
+          p_capability_code: string
+          p_reason: string
+          p_user_id: string
+          p_valid_until?: string
         }
-        Returns: Json
+        Returns: undefined
       }
-      snp_decider_approbation: {
-        Args: {
-          p_decision: string
-          p_demande_id: string
-          p_motif?: string | null
-        }
-        Returns: Json
+      snp_definir_statut_compte: {
+        Args: { p_actif: boolean; p_motif: string; p_utilisateur_id: string }
+        Returns: undefined
       }
       snp_desactiver_configuration_courriel: {
         Args: { p_uid: string }
         Returns: undefined
       }
       snp_encoder_instant_carte: { Args: { instant: string }; Returns: string }
+      snp_enregistrer_connexion: { Args: never; Returns: undefined }
       snp_enregistrer_reglement: {
+        Args: {
+          p_affecter_fifo?: boolean
+          p_banque?: string
+          p_date?: string
+          p_mining_company_id: string
+          p_mode?: string
+          p_montant: number
+          p_observations?: string
+          p_reference_bancaire?: string
+        }
+        Returns: {
+          montant_affecte: number
+          reference: string
+          reglement_id: string
+          solde_non_affecte: number
+        }[]
+      }
+      snp_enregistrer_reglement_legacy_4b: {
         Args: {
           p_affecter_fifo?: boolean
           p_banque?: string
@@ -12019,16 +15659,9 @@ export type Database = {
           obtenu: string
         }[]
       }
-      snp_essai_modules_contractuels: {
-        Args: never
-        Returns: {
-          attendu: string
-          conforme: boolean
-          etape: string
-          obtenu: string
-        }[]
-      }
       snp_est_agent_sonasp: { Args: never; Returns: boolean }
+      snp_est_direction_lecture: { Args: never; Returns: boolean }
+      snp_est_operateur_interne: { Args: never; Returns: boolean }
       snp_etat_mfa: {
         Args: never
         Returns: {
@@ -12116,39 +15749,228 @@ export type Database = {
           tranche: string
         }[]
       }
+      snp_fret_ajouter_document: {
+        Args: {
+          p_description: string
+          p_document_type: Database["public"]["Enums"]["freight_document_type"]
+          p_file_name: string
+          p_file_path: string
+          p_file_size: number
+          p_mime_type: string
+          p_operation_id: string
+          p_title: string
+        }
+        Returns: {
+          description: string | null
+          document_type: Database["public"]["Enums"]["freight_document_type"]
+          file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          freight_customs_operation_id: string
+          id: string
+          mime_type: string | null
+          title: string
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "freight_customs_documents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_fret_creer_operation: {
+        Args: { p_shipping_preparation_id: string }
+        Returns: {
+          actual_arrival_date: string | null
+          actual_departure_date: string | null
+          awb_number: string | null
+          created_at: string | null
+          created_by: string | null
+          customs_approval_date: string | null
+          customs_approved_by: string | null
+          customs_office: string | null
+          customs_officer_name: string | null
+          customs_reference_number: string | null
+          dispatched_by: string | null
+          estimated_arrival_date: string | null
+          estimated_departure_date: string | null
+          freight_forwarder_contact: string | null
+          id: string
+          mining_company_id: string
+          notes: string | null
+          prepared_by: string | null
+          reference_number: string
+          shipping_preparation_id: string
+          status: Database["public"]["Enums"]["freight_customs_status"]
+          status_changed_at: string | null
+          tracking_number: string | null
+          transport_company_id: string | null
+          transport_prepared_by: string | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "freight_customs_operations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_fret_enregistrer_facture: {
+        Args: { p_donnees: Json; p_operation_id: string }
+        Returns: {
+          box_type: string | null
+          country_of_origin: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          exchange_rate_fcfa_usd: number | null
+          freight_customs_operation_id: string
+          id: string
+          metal_price_cfa_per_kg: number | null
+          mine_location: string | null
+          mine_name: string | null
+          number_of_boxes: number | null
+          recipient_address: string | null
+          recipient_city: string | null
+          recipient_country: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
+          sender_address: string | null
+          sender_city: string | null
+          sender_country: string | null
+          sender_name: string | null
+          sender_nif: string | null
+          total_value_cfa: number | null
+          total_value_usd: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "freight_customs_invoice_data"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_fret_exiger_portee: {
+        Args: { p_capability: string; p_mining_company_id: string }
+        Returns: undefined
+      }
+      snp_fret_modifier_operation: {
+        Args: {
+          p_expected_updated_at: string
+          p_modifications: Json
+          p_operation_id: string
+        }
+        Returns: {
+          actual_arrival_date: string | null
+          actual_departure_date: string | null
+          awb_number: string | null
+          created_at: string | null
+          created_by: string | null
+          customs_approval_date: string | null
+          customs_approved_by: string | null
+          customs_office: string | null
+          customs_officer_name: string | null
+          customs_reference_number: string | null
+          dispatched_by: string | null
+          estimated_arrival_date: string | null
+          estimated_departure_date: string | null
+          freight_forwarder_contact: string | null
+          id: string
+          mining_company_id: string
+          notes: string | null
+          prepared_by: string | null
+          reference_number: string
+          shipping_preparation_id: string
+          status: Database["public"]["Enums"]["freight_customs_status"]
+          status_changed_at: string | null
+          tracking_number: string | null
+          transport_company_id: string | null
+          transport_prepared_by: string | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "freight_customs_operations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_fret_peut_consulter_tenant: {
+        Args: { p_mining_company_id: string }
+        Returns: boolean
+      }
+      snp_fret_supprimer_document: {
+        Args: { p_document_id: string }
+        Returns: string
+      }
+      snp_fret_transitionner_operation: {
+        Args: {
+          p_details?: Json
+          p_expected_status: string
+          p_new_status: string
+          p_operation_id: string
+        }
+        Returns: {
+          actual_arrival_date: string | null
+          actual_departure_date: string | null
+          awb_number: string | null
+          created_at: string | null
+          created_by: string | null
+          customs_approval_date: string | null
+          customs_approved_by: string | null
+          customs_office: string | null
+          customs_officer_name: string | null
+          customs_reference_number: string | null
+          dispatched_by: string | null
+          estimated_arrival_date: string | null
+          estimated_departure_date: string | null
+          freight_forwarder_contact: string | null
+          id: string
+          mining_company_id: string
+          notes: string | null
+          prepared_by: string | null
+          reference_number: string
+          shipping_preparation_id: string
+          status: Database["public"]["Enums"]["freight_customs_status"]
+          status_changed_at: string | null
+          tracking_number: string | null
+          transport_company_id: string | null
+          transport_prepared_by: string | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "freight_customs_operations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       snp_generer_echeancier: {
         Args: { p_contrat_id: string; p_ecraser?: boolean }
         Returns: number
+      }
+      snp_historique_peut_consulter_tenant: {
+        Args: { p_mining_company_id: string }
+        Returns: boolean
+      }
+      snp_link_collector_account: {
+        Args: {
+          p_collector_id: string
+          p_comptoir_organization_id: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: string
       }
       snp_marquer_notifications_lues: {
         Args: { p_ids?: string[] }
         Returns: number
       }
-      snp_configurer_compte_portail: {
-        Args: {
-          p_full_name: string
-          p_is_active: boolean
-          p_mining_company_id: string | null
-          p_phone: string | null
-          p_role: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
-      snp_definir_approbateur_ventes: {
-        Args: { p_active: boolean; p_user_id: string }
-        Returns: undefined
-      }
       snp_mfa_satisfaite: { Args: never; Returns: boolean }
-      snp_niveau_role: { Args: { p_role: string }; Returns: number }
-      snp_peut_administrer_compte: {
-        Args: { p_target_id: string }
-        Returns: boolean
-      }
-      snp_remplacer_habilitations_compte: {
-        Args: { p_habilitations: Json; p_user_id: string }
-        Returns: undefined
-      }
       snp_modifier_configuration_courriel: {
         Args: {
           p_expediteur_courriel: string
@@ -12163,21 +15985,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      snp_portail_mine_modifier_production: {
-        Args: {
-          p_date_production: string
-          p_notes?: string | null
-          p_poids_brut_grammes: number
-          p_production_id: string
-          p_reference_barre?: string | null
-          p_teneur_estimee_pct: number
-        }
-        Returns: string
-      }
-      snp_portail_mine_supprimer_production: {
-        Args: { p_production_id: string }
-        Returns: undefined
-      }
+      snp_niveau_role: { Args: { p_role: string }; Returns: number }
       snp_notifications_resume: {
         Args: never
         Returns: {
@@ -12283,8 +16091,263 @@ export type Database = {
         }
         Returns: string
       }
+      snp_paiement_international_annuler: {
+        Args: {
+          p_expected_status: string
+          p_expected_version: number
+          p_idempotency_key: string
+          p_payment_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      snp_paiement_international_decider: {
+        Args: {
+          p_decision: string
+          p_expected_status: string
+          p_expected_version: number
+          p_idempotency_key: string
+          p_payment_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      snp_paiement_international_executer: {
+        Args: {
+          p_customer_bank_id: string
+          p_expected_payment_version: number
+          p_expected_sale_status: string
+          p_idempotency_key: string
+          p_notes: string
+          p_paid_amount: number
+          p_payment_currency: string
+          p_payment_date: string
+          p_proof_path: string
+          p_reference_number: string
+          p_sale_id: string
+          p_seller_bank_id: string
+          p_transaction_id: string
+        }
+        Returns: Json
+      }
+      snp_paiement_preuve_rattacher: {
+        Args: {
+          p_file_name: string
+          p_file_path: string
+          p_file_size: number
+          p_idempotency_key: string
+          p_mime_type: string
+          p_payment_id: string
+          p_sha256: string
+        }
+        Returns: Json
+      }
+      snp_paiements_preuve_reprise_lister: { Args: never; Returns: Json[] }
+      snp_peut_administrer_compte: {
+        Args: { p_target_id: string }
+        Returns: boolean
+      }
+      snp_peut_consulter_expedition: {
+        Args: { p_expedition_id: string }
+        Returns: boolean
+      }
+      snp_peut_consulter_licence_export: {
+        Args: { p_license_id: string }
+        Returns: boolean
+      }
+      snp_peut_consulter_mouvement_stock: {
+        Args: { p_inventory_id: string }
+        Returns: boolean
+      }
+      snp_peut_consulter_production: {
+        Args: { p_production_id: string }
+        Returns: boolean
+      }
+      snp_peut_consulter_transport: {
+        Args: { p_transport_id: string }
+        Returns: boolean
+      }
+      snp_peut_consulter_vente: {
+        Args: { p_sale_id: string }
+        Returns: boolean
+      }
+      snp_peut_financer: { Args: { p_action?: string }; Returns: boolean }
+      snp_peut_gerer_expedition: {
+        Args: { p_expedition_id: string }
+        Returns: boolean
+      }
+      snp_peut_gerer_sites_artisanaux: { Args: never; Returns: boolean }
+      snp_peut_modifier_licence_export: {
+        Args: { p_license_id: string }
+        Returns: boolean
+      }
       snp_peut_valider: { Args: never; Returns: boolean }
+      snp_portail_mine_declarer_production: {
+        Args: {
+          p_date_production: string
+          p_notes?: string
+          p_poids_brut_grammes: number
+          p_reference_barre?: string
+          p_teneur_estimee_pct: number
+        }
+        Returns: string
+      }
+      snp_portail_mine_modifier_production: {
+        Args: {
+          p_date_production: string
+          p_notes?: string
+          p_poids_brut_grammes: number
+          p_production_id: string
+          p_reference_barre?: string
+          p_teneur_estimee_pct: number
+        }
+        Returns: string
+      }
+      snp_portail_mine_repondre_reglement: {
+        Args: { p_decision: string; p_motif?: string; p_reglement_id: string }
+        Returns: undefined
+      }
+      snp_portail_mine_repondre_requisition: {
+        Args: {
+          p_commentaire: string
+          p_decision: string
+          p_requisition_id: string
+        }
+        Returns: {
+          accord_mine: boolean | null
+          accord_recu_le: string | null
+          accuse_reception_le: string | null
+          accuse_reception_par: string | null
+          autorisee_par: string | null
+          autorite_origine: string | null
+          conditions_analyse: string | null
+          conditions_transport: string | null
+          confidentialite: string
+          contestation_motif: string | null
+          contestation_recue_le: string | null
+          contrat_id: string | null
+          created_at: string
+          created_by: string | null
+          date_autorisation: string | null
+          date_cloture: string | null
+          date_effet: string | null
+          date_executoire: string | null
+          date_notification: string | null
+          date_signature_acte: string | null
+          delai_mise_a_disposition_jours: number | null
+          equipe: string | null
+          id: string
+          imputation_contractuelle: string | null
+          imputation_decidee_le: string | null
+          imputation_decidee_par: string | null
+          imputation_motif: string | null
+          lieu_enlevement: string | null
+          lieu_stockage: string | null
+          methode_prix: string
+          mining_company_id: string | null
+          modalites_enlevement: string | null
+          modalites_paiement: string
+          motif_statut: string | null
+          nature_acte: string | null
+          objet: string
+          observations: string | null
+          observations_mine: string | null
+          observations_recues_le: string | null
+          partenaire_type: string
+          periode_debut: string | null
+          periode_fin: string | null
+          pourcentage_production: number | null
+          prix_once_fcfa: number | null
+          produits_concernes: string | null
+          quantite_oz: number | null
+          reference: string
+          reference_acte: string | null
+          regime_juridique: string
+          responsable_id: string | null
+          site_id: string | null
+          statut: string
+          teneur_estimee_pct: number | null
+          type_requisition: string
+          unite: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_requisitions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_portail_mine_soumettre_budget: {
+        Args: { p_annee: number; p_budget_oz: number; p_mois: number }
+        Returns: string
+      }
+      snp_portail_mine_soumettre_demande_licence_export: {
+        Args: {
+          p_commentaire: string
+          p_date_export_souhaitee: string
+          p_destination: string
+          p_motif: string
+          p_quantite_demandee_grammes: number
+        }
+        Returns: {
+          comment: string | null
+          created_at: string
+          decision_reason: string | null
+          desired_export_date: string
+          destination: string
+          id: string
+          license_id: string | null
+          mining_company_id: string
+          reason: string
+          requested_quantity_grams: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          submitted_by: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_export_license_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_portail_mine_soumettre_prevision: {
+        Args: {
+          p_annee: number
+          p_mois: number
+          p_notes?: string
+          p_prevision_oz: number
+        }
+        Returns: string
+      }
+      snp_portail_mine_supprimer_production: {
+        Args: { p_production_id: string }
+        Returns: undefined
+      }
       snp_preparer_reglement: {
+        Args: {
+          p_affectations: Json
+          p_compte_bancaire_id: string
+          p_date_execution_prevue?: string
+          p_mining_company_id: string
+          p_montant: number
+          p_objet?: string
+          p_observations?: string
+          p_reference_interne?: string
+        }
+        Returns: {
+          r_affecte: number
+          r_non_affecte: number
+          r_reference: string
+          r_reglement_id: string
+        }[]
+      }
+      snp_preparer_reglement_legacy_4b: {
         Args: {
           p_affectations: Json
           p_compte_bancaire_id: string
@@ -12306,12 +16369,53 @@ export type Database = {
         Args: { p_facture_id: string }
         Returns: undefined
       }
+      snp_recompute_license_usage: {
+        Args: { p_actor_id?: string; p_license_id: string }
+        Returns: number
+      }
+      snp_record_comptoir_stock_movement: {
+        Args: {
+          p_artisan_id: string
+          p_business_reference: string
+          p_direction: string
+          p_idempotency_key: string
+          p_movement_type: string
+          p_organization_id: string
+          p_quantity_grams: number
+          p_reason?: string
+          p_reverses_entry_id?: string
+          p_source_id?: string
+          p_source_type?: string
+        }
+        Returns: string
+      }
+      snp_record_workflow_event: {
+        Args: {
+          p_action: string
+          p_aggregate_id: string
+          p_aggregate_type: string
+          p_capability_code: string
+          p_context?: Json
+          p_reason?: string
+          p_status_after: string
+          p_status_before: string
+        }
+        Returns: number
+      }
       snp_reglement_solde: { Args: { p_reglement_id: string }; Returns: number }
       snp_reglement_statuts_engageants: { Args: never; Returns: string[] }
       snp_reglement_statuts_payeurs: { Args: never; Returns: string[] }
       snp_reinitialiser_mfa: {
         Args: { p_motif: string; p_utilisateur_id: string }
         Returns: undefined
+      }
+      snp_release_shipping_license_quota: {
+        Args: { p_reason: string; p_shipping_id: string }
+        Returns: boolean
+      }
+      snp_release_shipping_reservation_internal: {
+        Args: { p_actor_id: string; p_reason: string; p_shipping_id: string }
+        Returns: boolean
       }
       snp_releve_societe: {
         Args: { p_debut?: string; p_fin?: string; p_mining_company_id: string }
@@ -12326,6 +16430,48 @@ export type Database = {
           statut: string
           type_operation: string
         }[]
+      }
+      snp_remplacer_habilitations_compte: {
+        Args: { p_habilitations: Json; p_user_id: string }
+        Returns: undefined
+      }
+      snp_renouveler_carte_professionnelle: {
+        Args: {
+          p_artisan_id: string
+          p_date_expiration?: string
+          p_observations?: string
+        }
+        Returns: {
+          artisan_id: string
+          carte_recto_url: string | null
+          carte_verso_url: string | null
+          created_at: string | null
+          created_by: string | null
+          date_emission: string
+          date_expiration: string
+          date_suspension: string | null
+          date_validation: string | null
+          id: string
+          motif_suspension: string | null
+          numero_carte: string
+          numero_securite: string | null
+          observations: string | null
+          qr_code_data: string | null
+          qr_code_url: string | null
+          statut: string
+          suspendue_le: string | null
+          suspendue_par: string | null
+          updated_at: string | null
+          updated_by: string | null
+          validee_le: string | null
+          validee_par: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_cartes_professionnelles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       snp_repartir_plan: {
         Args: { p_ecraser_ajustements?: boolean; p_plan_id: string }
@@ -12345,12 +16491,13 @@ export type Database = {
         }[]
       }
       snp_repondre_vente_client: {
-        Args: {
-          p_decision: string
-          p_motif?: string | null
-          p_vente_id: string
-        }
+        Args: { p_decision: string; p_motif?: string; p_vente_id: string }
         Returns: Json
+      }
+      snp_require_active_session: { Args: never; Returns: undefined }
+      snp_require_capability: {
+        Args: { p_capability_code: string }
+        Returns: undefined
       }
       snp_requisition_execution: {
         Args: { p_requisition_id: string }
@@ -12367,10 +16514,167 @@ export type Database = {
           solde_a_payer_fcfa: number
         }[]
       }
+      snp_resoudre_regle_fiscale: {
+        Args: {
+          p_categorie_acheteur?: string
+          p_code_taxe: string
+          p_date: string
+          p_valeur_seuil?: number
+        }
+        Returns: {
+          abroge_le: string | null
+          abroge_par: string | null
+          approuve_le: string | null
+          approuve_par: string | null
+          assiette: string
+          categorie_acheteur: string
+          code_taxe: string
+          commentaire: string | null
+          cree_le: string
+          cree_par: string | null
+          date_effet: string
+          date_fin: string | null
+          devise_seuil: string | null
+          id: string
+          libelle: string
+          mode_calcul: string
+          montant_forfaitaire: number | null
+          reference_reglementaire: string | null
+          seuil_max: number | null
+          seuil_min: number | null
+          statut: string
+          taux: number | null
+          unite_seuil: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_regles_fiscales"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       snp_role_utilisateur: { Args: never; Returns: string }
-      snp_vente_a_valider_client: {
-        Args: { p_vente_id: string }
-        Returns: Json
+      snp_sec_aal2: { Args: never; Returns: boolean }
+      snp_sec_can_access_shipping_storage: {
+        Args: { p_bucket_id: string; p_object_name: string; p_write?: boolean }
+        Returns: boolean
+      }
+      snp_sec_can_admin_referentials: { Args: never; Returns: boolean }
+      snp_sec_can_approve_shipping: {
+        Args: { p_shipping_id: string }
+        Returns: boolean
+      }
+      snp_sec_can_approve_workflow: { Args: never; Returns: boolean }
+      snp_sec_can_delete_mining_document: {
+        Args: { p_object_name: string }
+        Returns: boolean
+      }
+      snp_sec_can_prepare_company: {
+        Args: { p_mining_company_id: string }
+        Returns: boolean
+      }
+      snp_sec_can_prepare_shipping: {
+        Args: { p_shipping_id: string }
+        Returns: boolean
+      }
+      snp_sec_can_prepare_workflow: { Args: never; Returns: boolean }
+      snp_sec_can_read_audit: { Args: never; Returns: boolean }
+      snp_sec_can_read_company: {
+        Args: { p_mining_company_id: string }
+        Returns: boolean
+      }
+      snp_sec_can_read_mining_document: {
+        Args: { p_object_name: string }
+        Returns: boolean
+      }
+      snp_sec_can_read_shipping: {
+        Args: { p_shipping_id: string }
+        Returns: boolean
+      }
+      snp_sec_can_write_mining_document: {
+        Args: { p_object_name: string }
+        Returns: boolean
+      }
+      snp_sec_is_internal_reader: { Args: never; Returns: boolean }
+      snp_sec_storage_shipping_id: {
+        Args: { p_bucket_id: string; p_object_name: string }
+        Returns: string
+      }
+      snp_session_current_expiry: { Args: never; Returns: string }
+      snp_session_current_hash: { Args: never; Returns: string }
+      snp_session_enregistrer: {
+        Args: {
+          p_browser?: string
+          p_device_type?: string
+          p_location_country?: string
+          p_user_agent?: string
+        }
+        Returns: Database["public"]["CompositeTypes"]["snp_session_public"]
+        SetofOptions: {
+          from: "*"
+          to: "snp_session_public"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_session_est_active: { Args: never; Returns: boolean }
+      snp_session_request_ip: { Args: never; Returns: string }
+      snp_session_require_access: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      snp_session_require_active_actor: { Args: never; Returns: undefined }
+      snp_session_revoquer: {
+        Args: { p_motif?: string; p_session_id: string }
+        Returns: Database["public"]["CompositeTypes"]["snp_session_public"]
+        SetofOptions: {
+          from: "*"
+          to: "snp_session_public"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_session_signaler_activite: {
+        Args: never
+        Returns: Database["public"]["CompositeTypes"]["snp_session_public"]
+        SetofOptions: {
+          from: "*"
+          to: "snp_session_public"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_session_to_public: {
+        Args: {
+          p_current_hash: string
+          p_session: Database["public"]["Tables"]["user_sessions"]["Row"]
+        }
+        Returns: Database["public"]["CompositeTypes"]["snp_session_public"]
+        SetofOptions: {
+          from: "*"
+          to: "snp_session_public"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_sessions_lister: {
+        Args: { p_actives_seulement?: boolean; p_user_id?: string }
+        Returns: Database["public"]["CompositeTypes"]["snp_session_public"][]
+        SetofOptions: {
+          from: "*"
+          to: "snp_session_public"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      snp_sessions_revoquer_toutes: {
+        Args: {
+          p_excepter_session_courante?: boolean
+          p_motif?: string
+          p_user_id?: string
+        }
+        Returns: number
       }
       snp_situation_societe: {
         Args: { p_mining_company_id: string }
@@ -12388,18 +16692,8 @@ export type Database = {
           reste_du: number
         }[]
       }
+      snp_societe_compte_mine: { Args: never; Returns: string }
       snp_societe_utilisateur: { Args: never; Returns: string }
-      snp_stock_exportable_mine: {
-        Args: never
-        Returns: {
-          disponible_grammes: number
-          disponible_oz: number
-          production_oz: number
-          rachete_sonasp_oz: number
-          suralloue: boolean
-          vendu_mine_oz: number
-        }[]
-      }
       snp_societes_eligibles_paiement: {
         Args: never
         Returns: {
@@ -12416,15 +16710,136 @@ export type Database = {
           societe: string
         }[]
       }
+      snp_solde_commercial: {
+        Args: { p_contrepartie_id: string; p_contrepartie_type: string }
+        Returns: number
+      }
+      snp_solde_fiscal: {
+        Args: { p_code_taxe: string; p_mining_company_id: string }
+        Returns: number
+      }
+      snp_sonasp_decider_demande_licence_export: {
+        Args: {
+          p_commentaires?: string
+          p_date_debut?: string
+          p_date_fin?: string
+          p_decision: string
+          p_demande_id: string
+          p_institution_emettrice?: string
+          p_motif_decision?: string
+          p_numero_licence?: string
+          p_quantite_autorisee_grammes?: number
+        }
+        Returns: {
+          comment: string | null
+          created_at: string
+          decision_reason: string | null
+          desired_export_date: string
+          destination: string
+          id: string
+          license_id: string | null
+          mining_company_id: string
+          reason: string
+          requested_quantity_grams: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          submitted_by: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_export_license_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_sonasp_modifier_licence_export: {
+        Args: {
+          p_authorized_quantity_grams?: number
+          p_comments?: string
+          p_end_date?: string
+          p_expected_updated_at: string
+          p_issuing_institution?: string
+          p_license_id: string
+          p_notes?: string
+          p_reason?: string
+          p_start_date?: string
+          p_status?: string
+        }
+        Returns: {
+          authorized_quantity_grams: number
+          average_sale_price: number | null
+          comments: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          issuing_institution: string
+          license_number: string
+          mining_company_id: string
+          notes: string | null
+          quota_baseline_used_grams: number
+          remaining_quantity_grams: number
+          request_date: string
+          start_date: string
+          status: string | null
+          updated_at: string
+          updated_by: string | null
+          used_quantity_grams: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "export_licenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       snp_soumettre_plan: {
         Args: { p_plan_id: string }
         Returns: {
           demandes_creees: number
         }[]
       }
+      snp_stock_exportable_mine: {
+        Args: never
+        Returns: {
+          disponible_grammes: number
+          disponible_oz: number
+          production_oz: number
+          rachete_sonasp_oz: number
+          suralloue: boolean
+          vendu_mine_oz: number
+        }[]
+      }
+      snp_storage_can_read_object: {
+        Args: { p_bucket_id: string; p_object_name: string }
+        Returns: boolean
+      }
+      snp_storage_reference_matches: {
+        Args: {
+          p_bucket_id: string
+          p_object_name: string
+          p_reference: string
+        }
+        Returns: boolean
+      }
+      snp_submit_comptoir_sale_to_sonasp: {
+        Args: {
+          p_notes?: string
+          p_quantity_grams: number
+          p_unit_price_fcfa: number
+        }
+        Returns: string
+      }
       snp_supprimer_configuration_courriel: {
         Args: { p_uid: string }
         Returns: undefined
+      }
+      snp_sync_shipping_license_reservation: {
+        Args: { p_actor_id?: string; p_shipping_id: string }
+        Returns: boolean
       }
       snp_tracer_acces_document: {
         Args: {
@@ -12479,6 +16894,67 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      snp_transition_carte_professionnelle: {
+        Args: {
+          p_carte_id: string
+          p_expected_statut: string
+          p_motif?: string
+          p_nouveau_statut: string
+        }
+        Returns: {
+          artisan_id: string
+          carte_recto_url: string | null
+          carte_verso_url: string | null
+          created_at: string | null
+          created_by: string | null
+          date_emission: string
+          date_expiration: string
+          date_suspension: string | null
+          date_validation: string | null
+          id: string
+          motif_suspension: string | null
+          numero_carte: string
+          numero_securite: string | null
+          observations: string | null
+          qr_code_data: string | null
+          qr_code_url: string | null
+          statut: string
+          suspendue_le: string | null
+          suspendue_par: string | null
+          updated_at: string | null
+          updated_by: string | null
+          validee_le: string | null
+          validee_par: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_cartes_professionnelles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_transition_comptoir_sale_to_sonasp: {
+        Args: { p_notes?: string; p_sale_id: string; p_target_status: string }
+        Returns: undefined
+      }
+      snp_transition_daily_production: {
+        Args: {
+          p_expected_status: string
+          p_new_status: string
+          p_notes?: string
+          p_production_id: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      snp_transition_shipping_preparation: {
+        Args: {
+          p_expected_status: Database["public"]["Enums"]["shipping_preparation_status"]
+          p_new_status: Database["public"]["Enums"]["shipping_preparation_status"]
+          p_shipping_id: string
+        }
+        Returns: Json
+      }
       snp_transitions_contrat: { Args: { p_statut: string }; Returns: string[] }
       snp_transitions_reglement: {
         Args: { p_statut: string }
@@ -12488,9 +16964,111 @@ export type Database = {
         Args: { p_statut: string }
         Returns: string[]
       }
-      text_to_bytea: { Args: { data: string }; Returns: string }
-      trigger_daily_fx_update: { Args: never; Returns: undefined }
-      trigger_monthly_fx_aggregation: { Args: never; Returns: undefined }
+      snp_troy_ounces_to_grams: { Args: { p_ounces: number }; Returns: number }
+      snp_upsert_artisan_moyen_paiement: {
+        Args: {
+          p_actif?: boolean
+          p_artisan_id: string
+          p_banque?: string
+          p_code_swift?: string
+          p_est_principal?: boolean
+          p_libelle?: string
+          p_moyen_id?: string
+          p_numero_compte?: string
+          p_numero_telephone?: string
+          p_observations?: string
+          p_titulaire: string
+          p_type: string
+        }
+        Returns: {
+          actif: boolean
+          artisan_id: string
+          banque: string | null
+          code_swift: string | null
+          created_at: string
+          created_by: string | null
+          est_principal: boolean
+          id: string
+          libelle: string | null
+          numero_compte: string | null
+          numero_telephone: string | null
+          observations: string | null
+          titulaire: string
+          type: string
+          updated_at: string
+          updated_by: string | null
+          verifie_le: string | null
+          verifie_par: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_artisan_moyens_paiement"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_vente_a_valider_client: {
+        Args: { p_vente_id: string }
+        Returns: Json
+      }
+      snp_verifier_artisan_moyen_paiement: {
+        Args: { p_approuve: boolean; p_motif?: string; p_moyen_id: string }
+        Returns: {
+          actif: boolean
+          artisan_id: string
+          banque: string | null
+          code_swift: string | null
+          created_at: string
+          created_by: string | null
+          est_principal: boolean
+          id: string
+          libelle: string | null
+          numero_compte: string | null
+          numero_telephone: string | null
+          observations: string | null
+          titulaire: string
+          type: string
+          updated_at: string
+          updated_by: string | null
+          verifie_le: string | null
+          verifie_par: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_artisan_moyens_paiement"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      snp_verifier_preuve_reglement: {
+        Args: { p_decision: string; p_motif?: string; p_preuve_id: string }
+        Returns: {
+          ajoute_le: string
+          ajoute_par: string | null
+          banque_emettrice: string | null
+          commentaire: string | null
+          date_emission: string | null
+          empreinte_sha256: string | null
+          fichier_url: string
+          id: string
+          motif_rejet: string | null
+          nom_origine: string
+          reference_document: string | null
+          reglement_id: string
+          statut_verification: string
+          taille_octets: number
+          type_document: string
+          type_mime: string
+          verifiee_le: string | null
+          verifiee_par: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "snp_reglements_preuves"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       update_artisan_metrics: {
         Args: {
           p_artisan_id: string
@@ -12499,27 +17077,9 @@ export type Database = {
         }
         Returns: undefined
       }
-      urlencode:
-        | { Args: { data: Json }; Returns: string }
-        | {
-            Args: { string: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { string: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
       user_accessible_companies: { Args: never; Returns: string[] }
       user_has_company_access: {
         Args: { target_company_id: string }
-        Returns: boolean
-      }
-      user_has_permission: {
-        Args: { p_permission: string; p_resource: string; p_user_id: string }
         Returns: boolean
       }
       user_has_role: { Args: { required_role: string }; Returns: boolean }
@@ -12544,15 +17104,6 @@ export type Database = {
         Args: { p_new_status: string; p_old_status: string }
         Returns: boolean
       }
-      validate_status_transition: {
-        Args: {
-          p_batch_id: string
-          p_from_status: string
-          p_to_status: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
     }
     Enums: {
       company_type_enum: "production_mine" | "institution" | "parent_company"
@@ -12571,6 +17122,8 @@ export type Database = {
       freight_customs_status:
         | "waiting_for_shipping"
         | "shipped_for_refinery"
+        | "customs_pending"
+        | "customs_approved"
         | "ready_for_transport"
         | "shipped_to_refinery"
       freight_document_type:
@@ -12598,8 +17151,6 @@ export type Database = {
         | "RELEASE"
         | "ADJUST"
         | "EXPIRE"
-      snp_conclusion_infraction: "reconnu" | "soupçonne" | "complice" | "innocente"
-      snp_statut_traitement_infraction: "en_cours" | "cloture"
       refinery_status:
         | "waiting_for_refinery_approval"
         | "refinery_approved"
@@ -12649,22 +17200,22 @@ export type Database = {
         | "sales"
     }
     CompositeTypes: {
-      http_header: {
-        field: string | null
-        value: string | null
-      }
-      http_request: {
-        method: unknown
-        uri: string | null
-        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
-        content_type: string | null
-        content: string | null
-      }
-      http_response: {
-        status: number | null
-        content_type: string | null
-        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
-        content: string | null
+      snp_session_public: {
+        id: string | null
+        user_id: string | null
+        ip_address: string | null
+        user_agent: string | null
+        device_type: string | null
+        browser: string | null
+        location_country: string | null
+        last_activity_at: string | null
+        expires_at: string | null
+        is_active: boolean | null
+        is_current: boolean | null
+        created_at: string | null
+        revoked_at: string | null
+        revoked_by: string | null
+        revocation_reason: string | null
       }
     }
   }
@@ -12788,6 +17339,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       company_type_enum: ["production_mine", "institution", "parent_company"],
@@ -12807,6 +17361,8 @@ export const Constants = {
       freight_customs_status: [
         "waiting_for_shipping",
         "shipped_for_refinery",
+        "customs_pending",
+        "customs_approved",
         "ready_for_transport",
         "shipped_to_refinery",
       ],
@@ -12838,8 +17394,6 @@ export const Constants = {
         "ADJUST",
         "EXPIRE",
       ],
-      snp_conclusion_infraction: ["reconnu", "soupçonne", "complice", "innocente"],
-      snp_statut_traitement_infraction: ["en_cours", "cloture"],
       refinery_status: [
         "waiting_for_refinery_approval",
         "refinery_approved",

@@ -12,7 +12,7 @@ l'atteste. Les faits cités ont été observés sur le projet hébergé
 | R-04 | Chaîne de vente export inopérante | élevé | avérée | **élevé** | **fermé** |
 | R-05 | Privilèges hors RLS accordés aux rôles de l'API | moyen | possible | moyen | **fermé** |
 | R-06 | Cloisonnement multi-tenant incomplet | élevé | **infirmée** | faible | **fermé** |
-| R-07 | Interfaces locales divergeant des types générés | moyen | avérée | moyen | ouvert |
+| R-07 | Interfaces locales divergeant des types générés | moyen | avérée | faible | **réduit** |
 | R-08 | Dérive entre migrations du dépôt et production | moyen | avérée | moyen | ouvert |
 | R-09 | Barème fiscal sans validation juridique | élevé | avérée | **élevé** | ouvert |
 | R-10 | Montants financiers non arrondis en XOF | moyen | avérée | moyen | ouvert |
@@ -151,9 +151,16 @@ présentation.
 **Mitigation partielle.** Interface corrigée, treize accès protégés, trois tests de
 non-régression.
 
-**Résiduel.** Le motif subsiste ailleurs : quatre incompatibilités d'affectation dans
-`ShippingPreparationNew`, et `typecheck:database` échoue sur 20 relations absentes de
-`src/types/database.ts`.
+**Traité depuis.** `src/types/database.ts` a été régénéré depuis le schéma vivant :
+12 892 lignes portées à 17 446. Les objets créés dans la journée — procédures de
+conciliation, référentiel fiscal, grands livres, avoirs — y figurent désormais,
+ainsi que `snp_sessions_lister` et le type `snp_session_public`. La régénération
+n'a introduit aucune erreur : le compilateur passe de 539 à 535.
+
+**Résiduel.** Quatre incompatibilités d'affectation subsistent dans
+`ShippingPreparationNew`. Les 18 relations encore signalées par
+`typecheck:database` ne relèvent pas du typage mais de R-12 : elles n'existent pas
+en base.
 
 ---
 

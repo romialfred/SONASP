@@ -8,8 +8,9 @@ import {
   formatConnexion,
   type AdminUser,
 } from './UsersListPage';
-import UserDetailsPage from './UserDetailsPage';
+import UserDetailsPage, { csvCell } from './UserDetailsPage';
 import { ALL_ROLES, roleLabel, roleTone } from '@/lib/roleLabels';
+import type { AdministrationUserDetails } from '@/services/userAdministrationDetailsService';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   getSession: vi.fn(),
   safeFetch: vi.fn(),
+  getUserDetails: vi.fn(),
   rpc: vi.fn(),
   addToast: vi.fn(),
   confirmer: vi.fn(),
@@ -45,6 +47,10 @@ vi.mock('@/components/ui/ConfirmationDialog', () => ({
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.currentUser }) }));
 
 vi.mock('@/lib/apiClient', () => ({ safeFetch: mocks.safeFetch }));
+
+vi.mock('@/services/userAdministrationDetailsService', () => ({
+  getAdministrationUserDetails: mocks.getUserDetails,
+}));
 
 vi.mock('@/lib/supabase', () => ({
   supabase: { from: mocks.from, rpc: mocks.rpc, auth: { getSession: mocks.getSession } },
@@ -104,6 +110,59 @@ const comptes: AdminUser[] = [
   },
 ];
 
+function ficheUtilisateur(
+  id = 'u1',
+  fullName = 'Awa KABORE',
+  email = 'awa@sonasp.bf',
+): AdministrationUserDetails {
+  return {
+    success: true,
+    profile: {
+      id,
+      email,
+      full_name: fullName,
+      phone: '+226 70 00 00 01',
+      role: 'admin',
+      job_title: 'Cheffe de service',
+      department: 'Contrôle',
+      is_active: true,
+      account_locked: false,
+      account_locked_until: null,
+      failed_login_attempts: 2,
+      two_factor_enabled: false,
+      mfa_enrolled_at: null,
+      last_login_at: '2026-08-10T09:00:00Z',
+      last_login_ip: null,
+      last_activity_at: null,
+      created_at: '2026-01-01',
+      updated_at: '2026-08-10T09:00:00Z',
+      activation_completed_at: null,
+      must_change_password: false,
+      password_changed_at: null,
+      timezone: 'Africa/Ouagadougou',
+      language_preference: 'fr',
+      language: 'fr',
+      mining_company_id: null,
+      mining_company: null,
+    },
+    statistics: {
+      connection_events: 1,
+      connection_events_30d: 1,
+      rejected_connections: 0,
+      activity_events: 2,
+      activity_events_30d: 2,
+      permissions_count: 0,
+      sites_count: 0,
+    },
+    connections: [],
+    activities: [],
+    permissions: [],
+    sites: [],
+    account_changes: [],
+    sources_unavailable: [],
+  };
+}
+
 describe('référentiel des rôles', () => {
   it('nomme les rôles en français', () => {
     // Les écrans d'administration affichaient « Owner », « Factory »…
@@ -154,8 +213,14 @@ describe('UsersListPage', () => {
         ? {
             ok: true,
             status: 200,
-            data: { success: true, message: 'Compte supprimé définitivement' },
+            data: { success: true, deleted_user_id: 'u2', message: 'Compte supprimé définitivement' },
           }
+        : String(input).includes('/manage-user-status')
+          ? {
+              ok: true,
+              status: 200,
+              data: { success: true, user_id: 'u1', is_active: false, message: 'Compte désactivé et sessions fermées.' },
+            }
         : {
             ok: true,
             status: 200,
@@ -226,11 +291,17 @@ describe('UsersListPage', () => {
 
     await waitFor(() => expect(mocks.confirmer).toHaveBeenCalled());
     expect(mocks.confirmer.mock.calls[0][0]).toMatchObject({ severity: 'danger' });
-    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith('snp_definir_statut_compte', {
-      p_utilisateur_id: 'u1',
-      p_actif: false,
-      p_motif: 'Compte de test clôturé',
-    }));
+    await waitFor(() => expect(mocks.safeFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/functions/v1/manage-user-status'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          user_id: 'u1',
+          is_active: false,
+          reason: 'Compte de test clôturé',
+        }),
+      }),
+    ));
   });
 
   it('n’enregistre rien si la confirmation est refusée', async () => {
@@ -241,7 +312,10 @@ describe('UsersListPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Désactiver Awa KABORE' }));
 
     await waitFor(() => expect(mocks.confirmer).toHaveBeenCalled());
-    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.safeFetch).not.toHaveBeenCalledWith(
+      expect.stringContaining('/functions/v1/manage-user-status'),
+      expect.anything(),
+    );
   });
 
   it('empêche un administrateur de désactiver son propre compte', async () => {
@@ -274,6 +348,13 @@ describe('UsersListPage', () => {
     expect(mocks.addToast).toHaveBeenCalledWith('Compte supprimé définitivement', 'success');
   });
 
+  it('ne propose jamais la suppression d’un compte encore actif', async () => {
+    render(<UsersListPage />);
+    await waitFor(() => expect(screen.getByText('Awa KABORE')).toBeInTheDocument());
+
+    expect(screen.queryByRole('button', { name: 'Supprimer Awa KABORE' })).not.toBeInTheDocument();
+  });
+
   it('ne propose jamais la suppression du propriétaire', async () => {
     mocks.reponses.user_profiles = [
       {
@@ -291,6 +372,53 @@ describe('UsersListPage', () => {
     await waitFor(() => expect(screen.getByText('Compte propriétaire')).toBeInTheDocument());
 
     expect(screen.queryByRole('button', { name: 'Supprimer Compte propriétaire' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Désactiver Compte propriétaire' })).not.toBeInTheDocument();
+  });
+
+  it('refuse une confirmation de statut incohérente', async () => {
+    mocks.safeFetch.mockImplementation(async (input: RequestInfo | URL) =>
+      String(input).includes('/manage-user-status')
+        ? { ok: true, status: 200, data: { success: true, user_id: 'autre', is_active: false } }
+        : { ok: true, status: 200, data: { users: mocks.reponses.user_profiles || [] } },
+    );
+    render(<UsersListPage />);
+    await waitFor(() => expect(screen.getByText('Awa KABORE')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Désactiver Awa KABORE' }));
+
+    await waitFor(() => expect(mocks.addToast).toHaveBeenCalledWith(
+      'Le serveur n’a pas confirmé le nouveau statut du compte.',
+      'error',
+    ));
+    expect(mocks.addToast).not.toHaveBeenCalledWith(expect.anything(), 'success');
+  });
+
+  it('refuse une confirmation de suppression pour une autre cible', async () => {
+    mocks.safeFetch.mockImplementation(async (input: RequestInfo | URL) =>
+      String(input).includes('/delete-user')
+        ? { ok: true, status: 200, data: { success: true, deleted_user_id: 'autre' } }
+        : { ok: true, status: 200, data: { users: mocks.reponses.user_profiles || [] } },
+    );
+    render(<UsersListPage />);
+    await waitFor(() => expect(screen.getByText('Moussa OUEDRAOGO')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer Moussa OUEDRAOGO' }));
+
+    await waitFor(() => expect(mocks.addToast).toHaveBeenCalledWith(
+      'Le serveur n’a pas confirmé la suppression du compte demandé.',
+      'error',
+    ));
+    expect(screen.getByText('Moussa OUEDRAOGO')).toBeInTheDocument();
+  });
+
+  it('ferme la liste si les affectations ne peuvent pas être chargées', async () => {
+    mocks.reponses.user_site_assignments = null;
+    render(<UsersListPage />);
+
+    await waitFor(() => expect(screen.getByText('offline')).toBeInTheDocument());
+    expect(screen.getByText('Liste des comptes indisponible')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument();
+    expect(screen.queryByText('Aucun compte n’est enregistré.')).not.toBeInTheDocument();
   });
 
   it('signale un échec de chargement', async () => {
@@ -298,7 +426,9 @@ describe('UsersListPage', () => {
     render(<UsersListPage />);
 
     await waitFor(() => expect(screen.getByText('offline')).toBeInTheDocument());
-    expect(screen.getByText('Aucun compte ne correspond')).toBeInTheDocument();
+    expect(screen.getByText('Liste des comptes indisponible')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument();
+    expect(screen.queryByText('Aucun compte n’est enregistré.')).not.toBeInTheDocument();
   });
 });
 
@@ -306,29 +436,8 @@ describe('UserDetailsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.params.userId = 'u1';
-    mocks.reponses = {
-      user_profiles: [
-        {
-          id: 'u1',
-          email: 'awa@sonasp.bf',
-          full_name: 'Awa KABORE',
-          phone: '+226 70 00 00 01',
-          role: 'admin',
-          job_title: 'Cheffe de service',
-          department: 'Contrôle',
-          is_active: true,
-          account_locked: false,
-          two_factor_enabled: false,
-          last_login_at: '2026-08-10T09:00:00Z',
-          last_activity_at: null,
-          created_at: '2026-01-01',
-          timezone: 'Africa/Ouagadougou',
-          language_preference: 'fr',
-          profile_picture_url: null,
-          failed_login_attempts: 2,
-        },
-      ],
-    };
+    mocks.reponses = {};
+    mocks.getUserDetails.mockResolvedValue(ficheUtilisateur());
     mocks.from.mockImplementation((table: string) => stub(table));
   });
 
@@ -338,11 +447,12 @@ describe('UserDetailsPage', () => {
 
     expect(screen.getAllByText('Administrateur').length).toBeGreaterThan(0);
     expect(screen.getByText('Cheffe de service')).toBeInTheDocument();
-    expect(screen.getByText(/2 tentative\(s\) de connexion échouée/)).toBeInTheDocument();
-    expect(screen.getByText('Statistiques du compte')).toBeInTheDocument();
+    expect(screen.getByText(/2 tentative\(s\) échouée\(s\)/)).toBeInTheDocument();
+    expect(screen.getByText('Connexions consignées')).toBeInTheDocument();
+    expect(screen.getByText('Cycle de vie du compte')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Permissions/ }));
-    expect(screen.getByText('Permissions détaillées')).toBeInTheDocument();
+    expect(screen.getByText('Permissions individuelles')).toBeInTheDocument();
   });
 
   it('propose des actions au lieu d’un cul-de-sac', async () => {
@@ -354,10 +464,72 @@ describe('UserDetailsPage', () => {
   });
 
   it('distingue un compte absent d’une base injoignable', async () => {
-    mocks.reponses.user_profiles = null;
+    mocks.getUserDetails.mockRejectedValue(new Error('offline'));
     render(<UserDetailsPage />);
 
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Compte introuvable' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Compte indisponible' })).toBeInTheDocument());
     expect(screen.getByText('offline')).toBeInTheDocument();
+  });
+
+  it('rend une source partielle indisponible et bloque son export', async () => {
+    const fiche = ficheUtilisateur();
+    fiche.statistics.connection_events = null;
+    fiche.statistics.connection_events_30d = null;
+    fiche.statistics.rejected_connections = null;
+    fiche.sources_unavailable = ['journal des connexions'];
+    mocks.getUserDetails.mockResolvedValue(fiche);
+    render(<UserDetailsPage />);
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Awa KABORE' })).toBeInTheDocument());
+
+    expect(screen.getAllByText('Indisponible').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('tab', { name: /Connexions/ }));
+
+    expect(screen.getByRole('button', { name: 'Exporter en CSV' })).toBeDisabled();
+    expect(screen.getByText('Journal des connexions partiellement indisponible.')).toBeInTheDocument();
+    expect(screen.queryByText('Ce compte ne s’est jamais connecté.')).not.toBeInTheDocument();
+  });
+
+  it('ignore une réponse tardive après changement de compte', async () => {
+    let resolvePremier!: (value: ReturnType<typeof ficheUtilisateur>) => void;
+    let resolveSecond!: (value: ReturnType<typeof ficheUtilisateur>) => void;
+    mocks.getUserDetails.mockImplementation((id: string) => new Promise((resolve) => {
+      if (id === 'u1') resolvePremier = resolve;
+      else resolveSecond = resolve;
+    }));
+
+    const { rerender } = render(<UserDetailsPage />);
+    await waitFor(() => expect(mocks.getUserDetails).toHaveBeenCalledWith('u1', expect.any(AbortSignal)));
+
+    mocks.params.userId = 'u2';
+    rerender(<UserDetailsPage />);
+    await waitFor(() => expect(mocks.getUserDetails).toHaveBeenCalledWith('u2', expect.any(AbortSignal)));
+
+    resolveSecond(ficheUtilisateur('u2', 'Moussa OUEDRAOGO', 'moussa@sonasp.bf'));
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Moussa OUEDRAOGO' })).toBeInTheDocument());
+
+    resolvePremier(ficheUtilisateur('u1', 'Awa KABORE', 'awa@sonasp.bf'));
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Awa KABORE' })).not.toBeInTheDocument());
+    expect(screen.getByRole('heading', { name: 'Moussa OUEDRAOGO' })).toBeInTheDocument();
+  });
+
+  it('refuse d’afficher une fiche qui ne correspond pas à la route', async () => {
+    mocks.getUserDetails.mockResolvedValue(ficheUtilisateur('u2', 'Moussa OUEDRAOGO'));
+    render(<UserDetailsPage />);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Compte indisponible' })).toBeInTheDocument());
+    expect(screen.getByText('La fiche reçue ne correspond pas au compte demandé.')).toBeInTheDocument();
+  });
+});
+
+describe('export CSV administratif', () => {
+  it.each(['=1+1', '+cmd', '-10+20', '@SUM(A1)', '\t=cmd', ' =cmd'])(
+    'neutralise une formule commençant par %s',
+    (valeur) => {
+      expect(csvCell(valeur)).toMatch(/^"'/);
+    },
+  );
+
+  it('échappe les guillemets sans modifier une valeur ordinaire', () => {
+    expect(csvCell('Compte "test"')).toBe('"Compte ""test"""');
   });
 });

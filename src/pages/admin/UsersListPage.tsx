@@ -83,8 +83,26 @@ export const formatConnexion = (valeur: string | null): string => {
   const date = new Date(valeur);
   return Number.isNaN(date.getTime())
     ? 'Jamais connecté'
-    : new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+    : new Intl.DateTimeFormat('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'Africa/Ouagadougou',
+      }).format(date);
 };
+
+interface StatusMutationResponse {
+  success?: boolean;
+  user_id?: string;
+  is_active?: boolean;
+  message?: string;
+}
+
+interface DeleteMutationResponse {
+  success?: boolean;
+  deleted_user_id?: string;
+  message?: string;
+}
 
 export function UsersListPage() {
   const navigate = useNavigate();
@@ -143,6 +161,7 @@ export function UsersListPage() {
       ]);
 
       if (compagniesResult.error) throw compagniesResult.error;
+      if (affectationsResult.error) throw affectationsResult.error;
 
       const compagnieParId = new Map<string, string>();
       (compagniesResult.data || []).forEach((compagnie: Record<string, unknown>) => {
@@ -209,6 +228,10 @@ export function UsersListPage() {
       addToast('Vous ne pouvez pas désactiver votre propre compte.', 'error');
       return;
     }
+    if (user.role === 'owner') {
+      addToast('Le statut du compte propriétaire est protégé.', 'error');
+      return;
+    }
 
     const decision = await demanderConfirmation({
       title: user.is_active ? 'Désactiver ce compte ?' : 'Réactiver ce compte ?',
@@ -227,13 +250,43 @@ export function UsersListPage() {
 
     setEnCours(user.id);
     try {
-      const { error } = await supabase.rpc('snp_definir_statut_compte', {
-        p_utilisateur_id: user.id,
-        p_actif: !user.is_active,
-        p_motif: decision.trim(),
-      });
-      if (error) throw error;
-      addToast(user.is_active ? 'Compte désactivé' : 'Compte réactivé', 'success');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!session?.access_token || !anonKey) {
+        throw new Error('Votre session d’administration n’est pas disponible.');
+      }
+
+      // Le changement d'état passe par une frontière serveur vérifiant AAL2,
+      // hiérarchie, capacité et audit. La page ne dépend plus d'un RPC absent
+      // du cache PostgREST de certaines instances déployées.
+      const nouvelEtat = !user.is_active;
+      const resultat = await safeFetch<StatusMutationResponse>(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user-status`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: anonKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            is_active: nouvelEtat,
+            reason: decision.trim(),
+          }),
+        },
+      );
+      if (!resultat.ok) throw new Error(resultat.error.message);
+      if (resultat.data.success !== true
+        || resultat.data.user_id !== user.id
+        || resultat.data.is_active !== nouvelEtat) {
+        throw new Error('Le serveur n’a pas confirmé le nouveau statut du compte.');
+      }
+      addToast(
+        resultat.data.message || (user.is_active ? 'Compte désactivé' : 'Compte réactivé'),
+        'success',
+      );
       await charger();
     } catch (reason) {
       addToast(errorMessage(reason, 'Modification impossible'), 'error');
@@ -249,6 +302,10 @@ export function UsersListPage() {
     }
     if (user.role === 'owner') {
       addToast('Le compte propriétaire est protégé.', 'error');
+      return;
+    }
+    if (user.is_active) {
+      addToast('Désactivez le compte avant de demander sa suppression.', 'error');
       return;
     }
 
@@ -274,7 +331,7 @@ export function UsersListPage() {
         throw new Error('Votre session d’administration n’est pas disponible.');
       }
 
-      const resultat = await safeFetch<{ success?: boolean; message?: string }>(
+      const resultat = await safeFetch<DeleteMutationResponse>(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
         {
           method: 'POST',
@@ -287,6 +344,9 @@ export function UsersListPage() {
         },
       );
       if (!resultat.ok) throw new Error(resultat.error.message);
+      if (resultat.data.success !== true || resultat.data.deleted_user_id !== user.id) {
+        throw new Error('Le serveur n’a pas confirmé la suppression du compte demandé.');
+      }
 
       setUsers((comptes) => comptes.filter((compte) => compte.id !== user.id));
       addToast(resultat.data.message || 'Compte supprimé définitivement', 'success');
@@ -385,6 +445,16 @@ export function UsersListPage() {
             <div className="admin-page__loading">
               <Loader2 className="sn-spin" aria-hidden="true" /> Chargement des comptes…
             </div>
+          ) : erreur ? (
+            <EmptyState
+              title="Liste des comptes indisponible"
+              description="Le chargement n’a pas abouti. Réessayez après vérification de votre session et de vos habilitations."
+              action={
+                <button type="button" className="sn-btn sn-btn--primary" onClick={() => void charger()}>
+                  Réessayer
+                </button>
+              }
+            />
           ) : visibles.length === 0 ? (
             <EmptyState
               title="Aucun compte ne correspond"
@@ -460,31 +530,33 @@ export function UsersListPage() {
                           >
                             <PencilLine aria-hidden="true" />
                           </button>
-                          <button
-                            type="button"
-                            className="sn-btn sn-btn--icon"
-                            aria-label={
-                              user.is_active
-                                ? `Désactiver ${user.full_name || user.email}`
-                                : `Réactiver ${user.full_name || user.email}`
-                            }
-                            disabled={enCours === user.id || utilisateurCourant?.id === user.id}
-                            onClick={() => void basculerStatut(user)}
-                          >
-                            {enCours === user.id ? (
-                              <Loader2 className="sn-spin" aria-hidden="true" />
-                            ) : user.is_active ? (
-                              <Lock aria-hidden="true" />
-                            ) : (
-                              <Unlock aria-hidden="true" />
-                            )}
-                          </button>
                           {user.role !== 'owner' && (
+                            <button
+                              type="button"
+                              className="sn-btn sn-btn--icon"
+                              aria-label={
+                                user.is_active
+                                  ? `Désactiver ${user.full_name || user.email}`
+                                  : `Réactiver ${user.full_name || user.email}`
+                              }
+                              disabled={enCours === user.id || utilisateurCourant?.id === user.id}
+                              onClick={() => void basculerStatut(user)}
+                            >
+                              {enCours === user.id ? (
+                                <Loader2 className="sn-spin" aria-hidden="true" />
+                              ) : user.is_active ? (
+                                <Lock aria-hidden="true" />
+                              ) : (
+                                <Unlock aria-hidden="true" />
+                              )}
+                            </button>
+                          )}
+                          {user.role !== 'owner' && !user.is_active && (
                             <button
                               type="button"
                               className="sn-btn sn-btn--icon sn-btn--danger"
                               aria-label={`Supprimer ${user.full_name || user.email}`}
-                              title="Supprimer si aucune activité métier n’est rattachée au compte"
+                              title="Supprimer le compte inactif si aucune activité métier ne lui est rattachée"
                               disabled={enCours === user.id || utilisateurCourant?.id === user.id}
                               onClick={() => void supprimerCompte(user)}
                             >

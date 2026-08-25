@@ -8,9 +8,9 @@ l'atteste. Les faits cités ont été observés sur le projet hébergé
 |---|---|---|---|---|---|
 | R-01 | SSRF non authentifiée via l'extension `http` | critique | avérée | **critique** | **fermé** |
 | R-02 | Élévation de privilège par modification de son propre profil | critique | avérée | **critique** | **fermé** |
-| R-03 | Double réclamation de la taxe de développement communal | élevé | avérée | **élevé** | corrigé, non appliqué |
+| R-03 | Double réclamation de la taxe de développement communal | élevé | avérée | **élevé** | **fermé** |
 | R-04 | Chaîne de vente export inopérante | élevé | avérée | **élevé** | **fermé** |
-| R-05 | Privilèges hors RLS accordés aux rôles de l'API | moyen | possible | moyen | corrigé, non appliqué |
+| R-05 | Privilèges hors RLS accordés aux rôles de l'API | moyen | possible | moyen | **fermé** |
 | R-06 | Cloisonnement multi-tenant incomplet | élevé | avérée | **élevé** | ouvert |
 | R-07 | Interfaces locales divergeant des types générés | moyen | avérée | moyen | ouvert |
 | R-08 | Dérive entre migrations du dépôt et production | moyen | avérée | moyen | ouvert |
@@ -53,15 +53,20 @@ champ. Un compte pouvait modifier son `role` et son `mining_company_id`.
 
 ---
 
-## R-03 — Double réclamation fiscale · corrigé, non appliqué
+## R-03 — Double réclamation fiscale · FERMÉ
 
 **Description.** 16 573 105,49 FCFA réclamés une seconde fois sur une taxe déjà
 soldée, sur 24 paiements.
 
-**Mitigation.** Migration `20260825160000` : déclencheur détaché, doublons annulés
-sans suppression. Éprouvée sur le miroir, rejouable.
+**Mitigation.** Migration `20260825160000` appliquée : déclencheur détaché, doublons
+annulés sans suppression.
 
-**Statut.** En attente d'application en production.
+**Vérification.** Avant : 24 lignes `autre` à reverser pour 16 573 105,49 FCFA.
+Après : ces 24 lignes portent le statut `annule` et le motif `DOUBLON-TDC-20260825`.
+Les trois autres taxes sont inchangées. Aucune ligne supprimée.
+
+**Résiduel.** Le flux futur est assaini, l'historique des montants non arrondis ne
+l'est pas — voir R-10.
 
 ---
 
@@ -80,15 +85,23 @@ redevance déjà présente.
 
 ---
 
-## R-05 — Privilèges hors RLS · corrigé, non appliqué
+## R-05 — Privilèges hors RLS · FERMÉ
 
-**Description.** `anon` et `authenticated` détiennent TRUNCATE, REFERENCES et
-TRIGGER sur la quasi-totalité des tables. Ces privilèges échappent aux politiques.
+**Description.** `anon` et `authenticated` détenaient TRUNCATE, REFERENCES et
+TRIGGER sur la quasi-totalité des tables. Ces privilèges échappent aux politiques :
+TRUNCATE vide une table sans trace, TRIGGER fait exécuter du code lors des écritures
+d'autrui.
 
 **Nuance.** Non atteignables via PostgREST : pas de faille directe, mais la défense
-en profondeur est annulée.
+en profondeur était annulée.
 
-**Mitigation.** Migration `20260825170200`, éprouvée et rejouable. Non appliquée.
+**Mitigation.** Migration `20260825170200` appliquée, privilèges par défaut corrigés
+pour que les tables créées ensuite ne les reçoivent plus.
+
+**Vérification.** Aucun des trois privilèges ne subsiste pour `anon` ni
+`authenticated` ; seuls SELECT, INSERT, UPDATE et DELETE demeurent, tous filtrés par
+RLS. Non-régression : `sales`, `daily_production`, `gold_prices_daily` et
+`fx_rates_daily` répondent 200.
 
 ---
 

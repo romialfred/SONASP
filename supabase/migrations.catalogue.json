@@ -1270,6 +1270,16 @@
       "sha256": "6c183bbf94e543c6b8c6de439ebb781f8ce4550de28b30da434e90b0b2344b9f"
     },
     {
+      "path": "supabase/migrations/20260824235970_bridge_freight_status_enum.sql",
+      "version": "20260824235970",
+      "description": "bridge_freight_status_enum",
+      "canonical": false,
+      "prefixProblem": "invalid_utc_timestamp",
+      "nameProblem": null,
+      "normalizedBytes": 1635,
+      "sha256": "ec17a9ad0918cd61d536fd514eef764f7606270065e15e7430f98ce5f34e766e"
+    },
+    {
       "path": "supabase/migrations/20260825000000_lot_4f_fret_douane_et_historique_immuable.sql",
       "version": "20260825000000",
       "description": "lot_4f_fret_douane_et_historique_immuable",
@@ -2116,6 +2126,11 @@
         "reason": "invalid_utc_timestamp"
       },
       {
+        "path": "supabase/migrations/20260824235970_bridge_freight_status_enum.sql",
+        "prefix": "20260824235970",
+        "reason": "invalid_utc_timestamp"
+      },
+      {
         "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
         "prefix": "26122025",
         "reason": "prefix_must_have_14_digits"
@@ -2318,10 +2333,10 @@
       },
       {
         "digits": 14,
-        "count": 38
+        "count": 39
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "e9b2b6fc493d38de63298591642a79a596bc6df180a7bc929ac0d58012675209"
+  "catalogueSha256": "52075c172deb6abcb081aeb3093c08a574d824214020db3a77a35e890bdb86d1"
 }

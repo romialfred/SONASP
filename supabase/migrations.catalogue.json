@@ -1300,6 +1300,26 @@
       "sha256": "73a542f5eb95e0ff788098ad995df9fb3986fbefb14d76cfd1421e6a8ab1b1d5"
     },
     {
+      "path": "supabase/migrations/20260825000003_lot_4h_paiements_ventes_atomiques.sql",
+      "version": "20260825000003",
+      "description": "lot_4h_paiements_ventes_atomiques",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 43259,
+      "sha256": "fc9210d5176515e30abe59f8b3eac787ac497a34c899b2745897f2653680bb9b"
+    },
+    {
+      "path": "supabase/migrations/20260825000004_lot_2k_storage_legacy_fret_fail_closed.sql",
+      "version": "20260825000004",
+      "description": "lot_2k_storage_legacy_fret_fail_closed",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3123,
+      "sha256": "b5194fcf3a79658d90e09863f84c71fa46e22280aeb6fd1be96b18e55aba53d0"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2268,10 +2288,10 @@
       },
       {
         "digits": 14,
-        "count": 33
+        "count": 35
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "85439e206561659aa713db8c8b8813b66ec1f2eeda6704dd92902a4c989adf99"
+  "catalogueSha256": "76062a5411bd44ddac31a2be8ce839b8263646558dea5e68a20b79e4f068ed75"
 }

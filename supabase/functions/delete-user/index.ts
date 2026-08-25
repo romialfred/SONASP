@@ -94,9 +94,6 @@ Deno.serve(creerHandlerAdministration({
         .maybeSingle();
       if (erreurCible) throw new ErreurPublique(503, 'La vérification du compte est indisponible.');
       if (!cible) throw new ErreurPublique(404, 'Ce compte n’existe plus.');
-      if (cible.is_active !== false) {
-        throw new ErreurPublique(409, 'Le compte doit être désactivé avant toute suppression.');
-      }
       if (!canManageAccountTarget({
         actorId: acteur.id,
         actorRole: roleActeur,
@@ -187,7 +184,7 @@ Deno.serve(creerHandlerAdministration({
         success: true,
         deleted_user_id: utilisateurId,
         audit_action_id: contrat.action_id,
-        message: 'Le compte inactif et sans activité a été supprimé définitivement.',
+        message: 'Le compte sans activité a été désactivé puis supprimé définitivement.',
       });
     } catch (erreur) {
       if (erreur instanceof ErreurPublique) {

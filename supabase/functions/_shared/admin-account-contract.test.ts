@@ -27,10 +27,10 @@ describe('contrat statique des Edge d’administration', () => {
     expect(source).not.toContain(".from('user_profiles')\n        .update");
   });
 
-  it('prépare la suppression en DB et exige une cible inactive', () => {
+  it('prépare la suppression en DB et délègue la désactivation atomique au RPC', () => {
     const source = lire('supabase/functions/delete-user/index.ts');
     expect(source).toContain(".select('id,role,is_active,version')");
-    expect(source).toContain('cible.is_active !== false');
+    expect(source).not.toContain('cible.is_active !== false');
     expect(source).toContain("'snp_admin_compte_preparer_suppression'");
     expect(source).toContain('auth.admin.deleteUser');
     expect(source).not.toContain('application/openapi+json');

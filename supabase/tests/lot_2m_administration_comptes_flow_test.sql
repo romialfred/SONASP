@@ -96,29 +96,31 @@ INSERT INTO public.user_profiles(id,email,full_name,role,is_active,mfa_enrolled_
 ('2d000000-0000-4000-8000-000000000001','owner-2m@invalid.test','Owner 2M','owner',true,now()),
 ('2d000000-0000-4000-8000-000000000002','admin-2m@invalid.test','Admin 2M','admin',true,now()),
 ('2d000000-0000-4000-8000-000000000003','admin2-2m@invalid.test','Admin pair 2M','admin',true,now()),
-('2d000000-0000-4000-8000-000000000004','user-2m@invalid.test','User 2M','user',true,NULL),
-('2d000000-0000-4000-8000-000000000005','blocked-2m@invalid.test','Blocked 2M','user',false,NULL),
-('2d000000-0000-4000-8000-000000000006','delete-2m@invalid.test','Delete 2M','user',false,NULL),
-('2d000000-0000-4000-8000-000000000007','cancelled-2m@invalid.test','Cancelled 2M','user',false,NULL),
+('2d000000-0000-4000-8000-000000000004','user-2m@invalid.test','User 2M','customer',true,NULL),
+('2d000000-0000-4000-8000-000000000005','blocked-2m@invalid.test','Blocked 2M','customer',false,NULL),
+('2d000000-0000-4000-8000-000000000006','delete-2m@invalid.test','Delete 2M','customer',true,NULL),
+('2d000000-0000-4000-8000-000000000007','cancelled-2m@invalid.test','Cancelled 2M','customer',false,NULL),
 ('2d000000-0000-4000-8000-000000000008','delegated-2m@invalid.test','Delegated 2M','management',true,now()),
 ('2d000000-0000-4000-8000-000000000009','owner2-2m@invalid.test','Owner pair 2M','owner',true,now());
 
-INSERT INTO public.user_sessions(user_id,session_id) VALUES
-('2d000000-0000-4000-8000-000000000001','owner-session-2m'),
-('2d000000-0000-4000-8000-000000000002','admin-session-2m'),
-('2d000000-0000-4000-8000-000000000003','admin2-session-2m'),
-('2d000000-0000-4000-8000-000000000004','user-session-2m'),
-('2d000000-0000-4000-8000-000000000005','blocked-session-2m'),
-('2d000000-0000-4000-8000-000000000006','delete-session-2m'),
-('2d000000-0000-4000-8000-000000000007','cancelled-session-2m'),
-('2d000000-0000-4000-8000-000000000008','delegated-session-2m'),
-('2d000000-0000-4000-8000-000000000009','owner2-session-2m');
-INSERT INTO public.snp_user_capabilities(user_id,capability_code,allowed)
-VALUES('2d000000-0000-4000-8000-000000000008','accounts.manage',true);
-INSERT INTO public.approval_requests(assigned_to,status)
-VALUES('2d000000-0000-4000-8000-000000000005','pending');
-INSERT INTO public.approval_requests(cancelled_by,status)
-VALUES('2d000000-0000-4000-8000-000000000007','cancelled');
+INSERT INTO public.user_sessions(user_id,expires_at,token_hash) VALUES
+('2d000000-0000-4000-8000-000000000001',now()+interval '1 hour',extensions.digest('owner-session-2m','sha256')),
+('2d000000-0000-4000-8000-000000000002',now()+interval '1 hour',extensions.digest('admin-session-2m','sha256')),
+('2d000000-0000-4000-8000-000000000003',now()+interval '1 hour',extensions.digest('admin2-session-2m','sha256')),
+('2d000000-0000-4000-8000-000000000004',now()+interval '1 hour',extensions.digest('user-session-2m','sha256')),
+('2d000000-0000-4000-8000-000000000005',now()+interval '1 hour',extensions.digest('blocked-session-2m','sha256')),
+('2d000000-0000-4000-8000-000000000006',now()+interval '1 hour',extensions.digest('delete-session-2m','sha256')),
+('2d000000-0000-4000-8000-000000000007',now()+interval '1 hour',extensions.digest('cancelled-session-2m','sha256')),
+('2d000000-0000-4000-8000-000000000008',now()+interval '1 hour',extensions.digest('delegated-session-2m','sha256')),
+('2d000000-0000-4000-8000-000000000009',now()+interval '1 hour',extensions.digest('owner2-session-2m','sha256'));
+INSERT INTO public.snp_user_capabilities(user_id,capability_code,allowed,reason)
+VALUES('2d000000-0000-4000-8000-000000000008','accounts.manage',true,'Test lot 2M');
+INSERT INTO public.approval_requests(
+  request_type,entity_id,entity_type,approver_role,assigned_to,status
+) VALUES(
+  'sale_approval','2d000000-0000-4000-8000-000000000005','test_2m','admin',
+  '2d000000-0000-4000-8000-000000000005','pending'
+);
 
 SELECT pg_temp.set_claims_2m(
   '2d000000-0000-4000-8000-000000000002','authenticated','aal2','admin-session-2m'
@@ -191,7 +193,7 @@ SELECT pg_temp.set_claims_2m(
   '2d000000-0000-4000-8000-000000000003','authenticated','aal2','admin2-session-2m'
 );
 UPDATE public.user_sessions SET is_active=false,revoked_at=clock_timestamp()
-WHERE session_id='admin2-session-2m';
+WHERE token_hash=extensions.digest('admin2-session-2m','sha256');
 SELECT is(pg_temp.try_status_2m(
   '2d000000-0000-4000-8000-000000000005',0,true,
   'Session révoquée doit être refusée ici',
@@ -237,15 +239,13 @@ SELECT is(pg_temp.try_delete_2m(
   '2d000000-0000-4000-8000-000000000109'
 ),'ERR:23503','assigned_to bloque la suppression');
 SELECT is(pg_temp.try_delete_2m(
-  '2d000000-0000-4000-8000-000000000007',0,
-  'Suppression bloquée par annulation métier',
-  '2d000000-0000-4000-8000-000000000110'
-),'ERR:23503','cancelled_by bloque la suppression');
-SELECT is(pg_temp.try_delete_2m(
   '2d000000-0000-4000-8000-000000000006',0,
-  'Suppression inactive sans activité métier',
+  'Suppression active sans activité métier',
   '2d000000-0000-4000-8000-000000000111'
 ),'OK:db_completed:false','suppression propre préparée sans DML Auth SQL');
+SELECT is((SELECT is_active FROM public.user_profiles
+  WHERE id='2d000000-0000-4000-8000-000000000006'),false,
+  'préparation suppression désactive atomiquement la cible éligible');
 SELECT is((SELECT is_active FROM public.user_sessions
   WHERE user_id='2d000000-0000-4000-8000-000000000006'),false,
   'préparation suppression révoque le registre applicatif');

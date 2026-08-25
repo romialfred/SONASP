@@ -122,9 +122,11 @@ SELECT ok(position('INSERT INTO public.snp_comptes_audit' IN pg_get_functiondef(
 SELECT ok(position('snp_2m_account_business_activity' IN pg_get_functiondef(
   'public.snp_admin_compte_preparer_suppression(uuid,bigint,text,uuid)'::regprocedure))>0,
   'suppression exige absence activite autoritative');
-SELECT ok(position('p_require_inactive AND v_target.is_active' IN pg_get_functiondef(
-  'public.snp_2m_assert_target(uuid,bigint,text,boolean)'::regprocedure))>0,
-  'suppression exige cible inactive');
+SELECT ok(position('v_actor_role,false' IN regexp_replace(lower(pg_get_functiondef(
+  'public.snp_admin_compte_preparer_suppression(uuid,bigint,text,uuid)'::regprocedure)),'\s+','','g'))>0
+  AND position('setis_active=false' IN regexp_replace(lower(pg_get_functiondef(
+  'public.snp_admin_compte_preparer_suppression(uuid,bigint,text,uuid)'::regprocedure)),'\s+','','g'))>0,
+  'suppression désactive atomiquement une cible éligible');
 SELECT ok(position('v_action.status<>''db_completed''' IN replace(pg_get_functiondef(
   'public.snp_admin_compte_finaliser_action(uuid,boolean,text)'::regprocedure),' ',''))>0,
   'finalisation monotone depuis db_completed');

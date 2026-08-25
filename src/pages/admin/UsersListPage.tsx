@@ -304,16 +304,12 @@ export function UsersListPage() {
       addToast('Le compte propriétaire est protégé.', 'error');
       return;
     }
-    if (user.is_active) {
-      addToast('Désactivez le compte avant de demander sa suppression.', 'error');
-      return;
-    }
-
     const decision = await demanderConfirmation({
       title: 'Supprimer définitivement ce compte ?',
       message:
         `${user.full_name || user.email} sera supprimé uniquement si le serveur confirme `
-        + 'qu’aucune activité métier ne lui est rattachée. Cette action est irréversible.',
+        + 'qu’aucune activité métier ne lui est rattachée. Ses sessions seront fermées automatiquement. '
+        + 'Cette action est irréversible.',
       confirmText: 'Supprimer le compte',
       cancelText: 'Annuler',
       severity: 'danger',
@@ -551,12 +547,12 @@ export function UsersListPage() {
                               )}
                             </button>
                           )}
-                          {user.role !== 'owner' && !user.is_active && (
+                          {user.role !== 'owner' && (
                             <button
                               type="button"
                               className="sn-btn sn-btn--icon sn-btn--danger"
                               aria-label={`Supprimer ${user.full_name || user.email}`}
-                              title="Supprimer le compte inactif si aucune activité métier ne lui est rattachée"
+                              title="Supprimer le compte si aucune activité métier ne lui est rattachée"
                               disabled={enCours === user.id || utilisateurCourant?.id === user.id}
                               onClick={() => void supprimerCompte(user)}
                             >

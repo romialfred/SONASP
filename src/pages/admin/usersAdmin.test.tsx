@@ -348,11 +348,24 @@ describe('UsersListPage', () => {
     expect(mocks.addToast).toHaveBeenCalledWith('Compte supprimé définitivement', 'success');
   });
 
-  it('ne propose jamais la suppression d’un compte encore actif', async () => {
+  it('permet de demander la suppression sécurisée d’un compte actif sans étape manuelle', async () => {
+    mocks.safeFetch.mockImplementation(async (input: RequestInfo | URL) =>
+      String(input).includes('/delete-user')
+        ? { ok: true, status: 200, data: { success: true, deleted_user_id: 'u1' } }
+        : { ok: true, status: 200, data: { users: mocks.reponses.user_profiles || [] } },
+    );
     render(<UsersListPage />);
     await waitFor(() => expect(screen.getByText('Awa KABORE')).toBeInTheDocument());
 
-    expect(screen.queryByRole('button', { name: 'Supprimer Awa KABORE' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer Awa KABORE' }));
+
+    await waitFor(() => expect(mocks.safeFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/functions/v1/delete-user'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ user_id: 'u1', motif: 'Compte de test clôturé' }),
+      }),
+    ));
   });
 
   it('ne propose jamais la suppression du propriétaire', async () => {

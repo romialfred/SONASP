@@ -1360,6 +1360,16 @@
       "sha256": "9d5c6bc88042d1e1ec39b62944e2065dafa5eb5acfa6acca4867547ea14e79a1"
     },
     {
+      "path": "supabase/migrations/20260825000008_restaurer_suppression_compte_atomique.sql",
+      "version": "20260825000008",
+      "description": "restaurer_suppression_compte_atomique",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 5432,
+      "sha256": "ec314fff3eee499746c437c9fb508ea2555019cde441550096657f6b2995b80c"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2333,10 +2343,10 @@
       },
       {
         "digits": 14,
-        "count": 39
+        "count": 40
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "349498e733457d59b21fccb97676e145b4cfdc91288461405e218b804f6c08be"
+  "catalogueSha256": "98644b2416a1246d48af6865e0817acf63248c15f30ddd9a79d00e30ec6168a6"
 }

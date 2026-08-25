@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, DollarSign, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle, DollarSign, ShieldCheck } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -9,744 +9,364 @@ import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
 import { Loading } from '@/components/ui/Loading';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';
-import { getReferentialFxRates } from '@/services/fxRateReferential';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
+import { errorMessage } from '@/lib/errorMessage';
+import {
+  InternationalPaymentConflictError,
+  createPaymentIdempotencyKey,
+  executeInternationalPayment,
+  getCurrentFXRate,
+  getCustomerBanks,
+  getSalesAwaitingPayment,
+  getSellerBanks,
+  type CustomerBank,
+  type FXRate,
+  type SaleAwaitingPayment,
+  type SellerBank,
+} from '@/services/paymentService';
 
-interface Sale {
-  id: string;
-  sale_number: string;
-  sale_date: string;
-  customer_id: string;
-  customer_name: string;
-  quantity_oz: number;
-  final_proceeds: number;
-  currency: string;
-  mechanism_type: string;
-  seller_type: string;
-  seller_name: string;
+interface PaymentFormState {
+  saleId: string;
+  customerBankId: string;
+  sellerBankId: string;
+  paidAmount: string;
+  paymentCurrency: string;
+  paymentDate: string;
+  referenceNumber: string;
+  transactionId: string;
+  notes: string;
 }
 
-interface CustomerBank {
-  id: string;
-  bank_name: string;
-  account_number: string;
-  swift_code: string;
-  currency: string;
-  bank_country: string;
+const today = () => new Date().toISOString().slice(0, 10);
+
+function thirtyDaysAgo(): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - 30);
+  return date.toISOString().slice(0, 10);
 }
 
-interface CompanyBank {
-  id: string;
-  name: string;
-  currency: string;
-  country: string;
-}
+const INITIAL_FORM: PaymentFormState = {
+  saleId: '',
+  customerBankId: '',
+  sellerBankId: '',
+  paidAmount: '',
+  paymentCurrency: '',
+  paymentDate: today(),
+  referenceNumber: '',
+  transactionId: '',
+  notes: '',
+};
 
-
-interface FxAnalysis {
-  customerRate: number;
-  revolutRate: number;
-  ecbRate: number;
-  bceaoRate: number;
-  bestRate: number;
-  bestSource: string;
-  amountWithCustomerRate: number;
-  amountWithBestRate: number;
-  gainLoss: number;
-  gainLossPercent: number;
+function formatCurrency(amount: number, currency: string): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: currency || 'USD',
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 export function PaymentCreate() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToast } = useToast();
+  const canExecute = hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
+  const idempotencyKey = useRef<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(canExecute);
   const [saving, setSaving] = useState(false);
-  const [sales, setSales] = useState<Sale[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [sales, setSales] = useState<SaleAwaitingPayment[]>([]);
   const [customerBanks, setCustomerBanks] = useState<CustomerBank[]>([]);
-  const [companyBanks, setCompanyBanks] = useState<CompanyBank[]>([]);
-  const [fxAnalysis, setFxAnalysis] = useState<FxAnalysis | null>(null);
+  const [sellerBanks, setSellerBanks] = useState<SellerBank[]>([]);
+  const [referenceFx, setReferenceFx] = useState<FXRate | null>(null);
+  const [form, setForm] = useState<PaymentFormState>(INITIAL_FORM);
 
-  const [formData, setFormData] = useState({
-    saleId: '',
-    customerBankId: '',
-    paymentCurrency: '',
-    companyBankId: '',
-    receivedCurrency: '',
-    amountReceived: '',
-    paymentDate: new Date().toISOString().split('T')[0],
-    paymentReference: '',
-    notes: '',
-  });
+  const selectedSale = useMemo(
+    () => sales.find((sale) => sale.id === form.saleId) || null,
+    [form.saleId, sales],
+  );
 
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
-
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  const loadSales = useCallback(async () => {
+    if (!canExecute) {
+      setSales([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setLoadError(null);
     try {
-      setLoading(true);
-
-      // Fetch sales with valid status criteria
-      const { data: salesData, error: salesError } = await supabase
-        .from('sales')
-        .select(`
-          id,
-          sale_number,
-          sale_date,
-          customer_id,
-          quantity_oz,
-          final_proceeds,
-          currency,
-          mechanism_type,
-          seller_type,
-          seller_id,
-          customers!inner(name)
-        `)
-        .or('status.eq.customer_approved,status.eq.waiting_for_payment,status.eq.completed')
-        .order('created_at', { ascending: false });
-
-      if (salesError) throw salesError;
-
-      // Filter out sales that already have approved payments
-      let filteredSalesData = salesData || [];
-      if (salesData && salesData.length > 0) {
-        const { data: existingPayments } = await supabase
-          .from('payments')
-          .select('sale_id, status')
-          .in('sale_id', salesData.map((s: any) => s.id))
-          .eq('status', 'approved');
-
-        const paidSaleIds = new Set(existingPayments?.map(p => p.sale_id) || []);
-        filteredSalesData = salesData.filter((sale: any) => !paidSaleIds.has(sale.id));
-      }
-
-      const enrichedSales = await Promise.all(
-        (filteredSalesData || []).map(async (sale: any) => {
-          let sellerName = 'N/A';
-
-          if (sale.seller_type === 'mining_company' && sale.seller_id) {
-            const { data: miningData } = await supabase
-              .from('mining_companies')
-              .select('name')
-              .eq('id', sale.seller_id)
-              .single();
-            sellerName = miningData?.name || 'N/A';
-          } else if (sale.seller_type === 'sonasp') {
-            sellerName = 'SONASP';
-          }
-
-          return {
-            id: sale.id,
-            sale_number: sale.sale_number,
-            sale_date: sale.sale_date,
-            customer_id: sale.customer_id,
-            customer_name: sale.customers?.name || 'Unknown',
-            quantity_oz: sale.quantity_oz,
-            final_proceeds: sale.final_proceeds,
-            currency: sale.currency,
-            mechanism_type: sale.mechanism_type,
-            seller_type: sale.seller_type,
-            seller_name: sellerName,
-          };
-        })
-      );
-
-      setSales(enrichedSales);
-
-      const { data: companyBanksData, error: companyBanksError } = await supabase
-        .from('system_parameters')
-        .select('parameter_value')
-        .eq('parameter_key', 'company_banks')
-        .single();
-
-      if (!companyBanksError && companyBanksData?.parameter_value) {
-        const banks = JSON.parse(companyBanksData.parameter_value);
-        setCompanyBanks(banks);
-      } else {
-        // Trois comptes d'une société tierce étaient proposés au règlement
-        // faute de paramétrage. Un compte bancaire ne s'invente pas : la liste
-        // reste vide et l'écran nomme le paramètre manquant.
-        setCompanyBanks([]);
-      }
-
-    } catch (error: any) {
-      console.error('Error loading data:', error);
-      addToast(error.message || 'Failed to load payment data', 'error');
+      const result = await getSalesAwaitingPayment();
+      if (!result.success) throw new Error(result.error || 'Chargement impossible.');
+      setSales(result.data || []);
+    } catch (error) {
+      setSales([]);
+      setLoadError(errorMessage(error, 'Impossible de charger les ventes en attente de paiement.'));
     } finally {
       setLoading(false);
     }
+  }, [canExecute]);
+
+  useEffect(() => { void loadSales(); }, [loadSales]);
+
+  const updateForm = <K extends keyof PaymentFormState>(field: K, value: PaymentFormState[K]) => {
+    idempotencyKey.current = null;
+    setForm((current) => ({ ...current, [field]: value }));
   };
 
-  const handleSaleChange = async (saleId: string) => {
-    setFormData({ ...formData, saleId, customerBankId: '', paymentCurrency: '' });
+  const selectSale = async (saleId: string) => {
+    idempotencyKey.current = null;
+    const sale = sales.find((candidate) => candidate.id === saleId) || null;
+    setForm((current) => ({
+      ...current,
+      saleId,
+      customerBankId: '',
+      sellerBankId: '',
+      paymentCurrency: '',
+      paidAmount: sale ? String(sale.final_proceeds) : '',
+    }));
     setCustomerBanks([]);
-    setFxAnalysis(null);
-
-    if (!saleId) {
-      setSelectedSale(null);
-      return;
-    }
-
-    const sale = sales.find(s => s.id === saleId);
-    setSelectedSale(sale || null);
-
-    if (sale) {
-      const { data: banksData, error: banksError } = await supabase
-        .from('customer_banks')
-        .select('*')
-        .eq('customer_id', sale.customer_id);
-
-      if (!banksError && banksData) {
-        setCustomerBanks(banksData);
-      }
-    }
-  };
-
-  const calculateFxAnalysis = useCallback(async () => {
-    if (!formData.paymentCurrency || !formData.amountReceived || !selectedSale) {
-      return;
-    }
-
-    const amount = parseFloat(formData.amountReceived);
-    if (isNaN(amount) || amount <= 0) {
-      return;
-    }
+    setSellerBanks([]);
+    setReferenceFx(null);
+    if (!sale) return;
 
     try {
-      const fromCurrency = formData.paymentCurrency;
-      const toCurrency = selectedSale.currency || 'USD';
+      const [customers, sellers] = await Promise.all([
+        getCustomerBanks(sale.customer_id),
+        getSellerBanks(sale.seller_type, sale.seller_id),
+      ]);
+      if (!customers.success) throw new Error(customers.error || 'Comptes du client indisponibles.');
+      if (!sellers.success) throw new Error(sellers.error || 'Comptes SONASP indisponibles.');
 
-      const fxRates = await getReferentialFxRates(fromCurrency, toCurrency, 10);
-      const referenceRate = fxRates[0]?.rate;
-      if (!referenceRate) throw new Error('Aucun taux de change disponible pour cette paire.');
+      setCustomerBanks(customers.data || []);
+      setSellerBanks((sellers.data || []).filter(
+        (bank) => bank.account_currency?.toUpperCase() === sale.currency.toUpperCase(),
+      ));
+    } catch (error) {
+      addToast(errorMessage(error, 'Impossible de charger les comptes bancaires autorisés.'), 'error');
+    }
+  };
 
-      // Le référentiel actuel fournit un taux officiel unique par jour. Les
-      // quatre indicateurs restent alignés sur cette valeur tant qu'aucune
-      // cotation bancaire certifiée n'est enregistrée.
-      const customerRate = referenceRate;
-      const revolutRate = referenceRate;
-      const ecbRate = referenceRate;
-      const bceaoRate = referenceRate;
+  const selectCustomerBank = async (bankId: string) => {
+    const bank = customerBanks.find((candidate) => candidate.id === bankId) || null;
+    idempotencyKey.current = null;
+    setForm((current) => ({
+      ...current,
+      customerBankId: bankId,
+      paymentCurrency: bank?.currency?.toUpperCase() || '',
+    }));
+    setReferenceFx(null);
+    if (!bank || !selectedSale) return;
 
-      const rates = [
-        { source: 'Customer Bank', rate: customerRate },
-        { source: 'Revolut', rate: revolutRate },
-        { source: 'ECB', rate: ecbRate },
-        { source: 'BCEAO', rate: bceaoRate },
-      ];
+    const result = await getCurrentFXRate(bank.currency, selectedSale.currency);
+    if (result.success && result.data) setReferenceFx(result.data);
+  };
 
-      const bestRateData = rates.reduce((best, current) =>
-        current.rate > best.rate ? current : best
-      );
+  const validationError = (): string | null => {
+    if (!canExecute) return 'Une session AAL2 avec la capacité finance d’exécution est requise.';
+    if (!selectedSale || selectedSale.status !== 'waiting_for_payment') {
+      return 'La vente n’est plus dans l’état attendu. Actualisez la liste.';
+    }
+    if (!form.customerBankId || !form.sellerBankId) return 'Sélectionnez les deux comptes bancaires validés.';
+    if (!form.paymentCurrency) return 'La devise du compte payeur est manquante.';
+    if (!Number.isFinite(Number(form.paidAmount)) || Number(form.paidAmount) <= 0) {
+      return 'Le montant payé doit être strictement positif.';
+    }
+    if (form.paymentDate < thirtyDaysAgo() || form.paymentDate > today()) {
+      return 'La date de paiement doit être comprise dans les trente derniers jours.';
+    }
+    if (form.referenceNumber.trim().length < 5) {
+      return 'La référence bancaire doit contenir au moins 5 caractères.';
+    }
+    return null;
+  };
 
-      const amountWithCustomerRate = amount * customerRate;
-      const amountWithBestRate = amount * bestRateData.rate;
-      const gainLoss = amountWithBestRate - amountWithCustomerRate;
-      const gainLossPercent = (gainLoss / amountWithCustomerRate) * 100;
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const invalid = validationError();
+    if (invalid || !selectedSale) {
+      addToast(invalid || 'Dossier de vente incomplet.', 'error');
+      return;
+    }
 
-      setFxAnalysis({
-        customerRate,
-        revolutRate,
-        ecbRate,
-        bceaoRate,
-        bestRate: bestRateData.rate,
-        bestSource: bestRateData.source,
-        amountWithCustomerRate,
-        amountWithBestRate,
-        gainLoss,
-        gainLossPercent,
+    setSaving(true);
+    try {
+      idempotencyKey.current ||= createPaymentIdempotencyKey();
+      const result = await executeInternationalPayment({
+        saleId: selectedSale.id,
+        expectedSaleStatus: 'waiting_for_payment',
+        expectedPaymentVersion: selectedSale.payment_version,
+        paidAmount: Number(form.paidAmount),
+        paymentCurrency: form.paymentCurrency,
+        customerBankId: form.customerBankId,
+        sellerBankId: form.sellerBankId,
+        paymentDate: form.paymentDate,
+        referenceNumber: form.referenceNumber,
+        transactionId: form.transactionId,
+        notes: form.notes,
+        idempotencyKey: idempotencyKey.current,
       });
 
+      addToast(
+        result.replayed
+          ? 'Ce paiement avait déjà été enregistré ; le résultat serveur a été rejoué sans doublon.'
+          : 'Paiement exécuté et transmis au rapprochement.',
+        'success',
+      );
+      navigate(`/payments/${result.payment_id}`);
     } catch (error) {
-      console.error('Error calculating FX analysis:', error);
-    }
-  }, [formData.paymentCurrency, formData.amountReceived, selectedSale]);
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      calculateFxAnalysis();
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [calculateFxAnalysis]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.saleId || !formData.amountReceived || !selectedSale) {
-      addToast('Please fill in all required fields', 'error');
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      let fxAnalysisId = null;
-
-      if (fxAnalysis) {
-        const { data: analysisData, error: analysisError } = await supabase
-          .from('fx_rate_analysis')
-          .insert([{
-            payment_id: null,
-            sale_id: formData.saleId,
-            payment_currency: formData.paymentCurrency,
-            received_currency: formData.receivedCurrency,
-            virtual_payment_amount: parseFloat(formData.amountReceived),
-            virtual_payment_currency: formData.paymentCurrency,
-            customer_fx_rate: fxAnalysis.customerRate,
-            revolut_fx_rate: fxAnalysis.revolutRate,
-            ecb_fx_rate: fxAnalysis.ecbRate,
-            bceao_fx_rate: fxAnalysis.bceaoRate,
-            best_fx_rate: fxAnalysis.bestRate,
-            best_rate_source: fxAnalysis.bestSource,
-            amount_with_customer_rate: fxAnalysis.amountWithCustomerRate,
-            amount_with_best_rate: fxAnalysis.amountWithBestRate,
-            gain_loss_amount: fxAnalysis.gainLoss,
-            gain_loss_percent: fxAnalysis.gainLossPercent,
-            analysis_date: new Date().toISOString(),
-            created_by: user?.id,
-          }])
-          .select()
-          .single();
-
-        if (analysisError) {
-          console.error('FX analysis creation error:', analysisError);
-        } else {
-          fxAnalysisId = analysisData?.id;
-        }
+      if (error instanceof InternationalPaymentConflictError) {
+        addToast(error.message, 'error');
+        await loadSales();
+      } else {
+        addToast(errorMessage(error, 'Le serveur a refusé l’exécution du paiement.'), 'error');
       }
-
-      const { data: paymentData, error: paymentError } = await supabase
-        .from('payments')
-        .insert([{
-          sale_id: formData.saleId,
-          customer_id: selectedSale.customer_id,
-          customer_bank_id: formData.customerBankId || null,
-          company_bank_id: formData.companyBankId || null,
-          amount: parseFloat(formData.amountReceived),
-          currency: formData.receivedCurrency || formData.paymentCurrency,
-          payment_currency: formData.paymentCurrency,
-          received_currency: formData.receivedCurrency,
-          fx_rate: fxAnalysis?.customerRate || 1,
-          payment_date: formData.paymentDate,
-          expected_date: formData.paymentDate,
-          actual_date: formData.paymentDate,
-          payment_reference: formData.paymentReference,
-          bank_reference: formData.paymentReference,
-          status: 'pending',
-          notes: formData.notes,
-          fx_analysis_id: fxAnalysisId,
-          created_by: user?.id,
-        }])
-        .select()
-        .single();
-
-      if (paymentError) throw paymentError;
-
-      if (fxAnalysisId) {
-        await supabase
-          .from('fx_rate_analysis')
-          .update({ payment_id: paymentData.id })
-          .eq('id', fxAnalysisId);
-      }
-
-      const { error: saleUpdateError } = await supabase
-        .from('sales')
-        .update({
-          status: 'virtual_payment',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', formData.saleId);
-
-      if (saleUpdateError) {
-        console.error('Sale status update error:', saleUpdateError);
-      }
-
-      addToast('Payment created successfully', 'success');
-      navigate('/payments');
-
-    } catch (error: any) {
-      console.error('Error creating payment:', error);
-      addToast(error.message || 'Failed to create payment', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
-
   if (loading) {
+    return <MainLayout><Loading message="Chargement des paiements autorisés…" /></MainLayout>;
+  }
+
+  if (!canExecute) {
     return (
       <MainLayout>
-        <Loading message="Loading payment form..." />
+        <div className="max-w-3xl mx-auto p-6">
+          <Alert variant="error" title="Exécution non autorisée">
+            Cette opération exige une session AAL2 active et la capacité
+            « Finances — exécution » fournie par le serveur.
+          </Alert>
+        </div>
       </MainLayout>
     );
   }
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/payments')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div>
-              <h1 className="font-heading text-3xl font-bold text-gray-900">Create Payment</h1>
-              <p className="text-gray-600 mt-1">Record customer payment and analyze FX rates</p>
-            </div>
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/payments')}>
+            <ArrowLeft className="h-4 w-4 mr-2" /> Retour
+          </Button>
+          <div>
+            <h1 className="font-heading text-3xl font-bold text-gray-900">Exécuter un paiement international</h1>
+            <p className="text-gray-600 mt-1">Conversion atomique de l’engagement existant, sans création en double.</p>
           </div>
         </div>
 
-        {sales.length === 0 && !loading && (
-          <Alert variant="info" title="No Sales Awaiting Payment">
-            <div className="space-y-2">
-              <p>There are no sales approved by customers yet that are awaiting payment recording.</p>
-              <ul className="text-sm list-disc list-inside mt-2 space-y-1">
-                <li>Make sure sales have been approved by customers</li>
-                <li>Verify that sales don't already have approved payments</li>
-                <li>Check the Sales Dashboard for pending customer approvals</li>
-                <li>Ensure sales status is 'customer_approved', 'waiting_for_payment', or 'completed'</li>
-              </ul>
-            </div>
+        {loadError && <Alert variant="error" title="Chargement impossible">{loadError}</Alert>}
+        {!loadError && sales.length === 0 && (
+          <Alert variant="info" title="Aucune vente en attente">
+            Seules les ventes SONASP au statut « waiting_for_payment » sont proposées.
           </Alert>
         )}
 
-        {sales.length > 0 && (
-          <Alert variant="success" title={`${sales.length} Sale(s) Ready for Payment`}>
-            <p>Select a sale below to create a payment record. All listed sales have been approved and are ready for payment processing.</p>
-          </Alert>
-        )}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader><CardTitle>Vente et comptes contrôlés</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <FormField label="Vente en attente" required htmlFor="saleId">
+                  <Select id="saleId" value={form.saleId} onChange={(event) => void selectSale(event.target.value)} disabled={saving} required>
+                    <option value="">Sélectionner une vente…</option>
+                    {sales.map((sale) => (
+                      <option key={sale.id} value={sale.id}>
+                        {sale.sale_number} — {sale.customer_name} — {formatCurrency(sale.final_proceeds, sale.currency)}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sale Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField label="Select Sale" required htmlFor="saleId">
-                    <Select
-                      id="saleId"
-                      value={formData.saleId}
-                      onChange={(e) => handleSaleChange(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a sale...</option>
-                      {sales.map((sale) => (
-                        <option key={sale.id} value={sale.id}>
-                          {sale.sale_number} - {sale.customer_name} - {formatCurrency(sale.final_proceeds, sale.currency)}
-                        </option>
+                {selectedSale && (
+                  <div className="rounded-lg bg-gray-50 p-4 grid grid-cols-2 gap-3 text-sm">
+                    <div><span className="text-gray-600">Client</span><p className="font-semibold">{selectedSale.customer_name}</p></div>
+                    <div><span className="text-gray-600">Montant de la vente</span><p className="font-semibold">{formatCurrency(selectedSale.final_proceeds, selectedSale.currency)}</p></div>
+                    <div><span className="text-gray-600">Engagement</span><p className="font-semibold">{selectedSale.payment_id ? `version ${selectedSale.payment_version}` : 'Dette historique — secours serveur'}</p></div>
+                    <div><span className="text-gray-600">Devise de règlement</span><p className="font-semibold">{selectedSale.currency}</p></div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Compte du client" required htmlFor="customerBankId">
+                    <Select id="customerBankId" value={form.customerBankId} onChange={(event) => void selectCustomerBank(event.target.value)} disabled={!selectedSale || saving} required>
+                      <option value="">Compte payeur actif…</option>
+                      {customerBanks.map((bank) => (
+                        <option key={bank.id} value={bank.id}>{bank.bank_name} — {bank.currency}</option>
                       ))}
                     </Select>
                   </FormField>
-
-                  {selectedSale && (
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Customer</p>
-                          <p className="font-medium">{selectedSale.customer_name}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Sale Date</p>
-                          <p className="font-medium">{new Date(selectedSale.sale_date).toLocaleDateString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Quantity</p>
-                          <p className="font-medium">{selectedSale.quantity_oz.toFixed(3)} oz</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Amount</p>
-                          <p className="font-medium text-lg">{formatCurrency(selectedSale.final_proceeds, selectedSale.currency)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Mechanism</p>
-                          <p className="font-medium">{selectedSale.mechanism_type || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Seller</p>
-                          <p className="font-medium">{selectedSale.seller_name}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Customer Bank" htmlFor="customerBankId">
-                      <Select
-                        id="customerBankId"
-                        value={formData.customerBankId}
-                        onChange={(e) => setFormData({ ...formData, customerBankId: e.target.value })}
-                        disabled={!selectedSale}
-                      >
-                        <option value="">Select customer bank...</option>
-                        {customerBanks.map((bank) => (
-                          <option key={bank.id} value={bank.id}>
-                            {bank.bank_name} ({bank.currency}) - {bank.bank_country}
-                          </option>
-                        ))}
-                      </Select>
-                    </FormField>
-
-                    <FormField label="Payment Currency" required htmlFor="paymentCurrency">
-                      <Select
-                        id="paymentCurrency"
-                        value={formData.paymentCurrency}
-                        onChange={(e) => setFormData({ ...formData, paymentCurrency: e.target.value })}
-                        required
-                        disabled={!selectedSale}
-                      >
-                        <option value="">Select currency...</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="XOF">XOF (CFA)</option>
-                      </Select>
-                    </FormField>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Company Bank (Receiver)" htmlFor="companyBankId">
-                      <Select
-                        id="companyBankId"
-                        value={formData.companyBankId}
-                        onChange={(e) => setFormData({ ...formData, companyBankId: e.target.value })}
-                        disabled={!selectedSale}
-                      >
-                        <option value="">
-                          {companyBanks.length === 0
-                            ? 'Aucun compte paramétré'
-                            : 'Choisir le compte de la SONASP…'}
-                        </option>
-                        {companyBanks.map((bank) => (
-                          <option key={bank.id} value={bank.id}>
-                            {bank.name} ({bank.currency})
-                          </option>
-                        ))}
-                      </Select>
-                      {companyBanks.length === 0 && (
-                        <p className="mt-1 text-xs text-amber-700">
-                          Les comptes de règlement ne sont pas renseignés : paramètre
-                          « company_banks » à définir dans les paramètres du système.
-                        </p>
-                      )}
-                    </FormField>
-
-                    <FormField label="Received Currency" htmlFor="receivedCurrency">
-                      <Select
-                        id="receivedCurrency"
-                        value={formData.receivedCurrency}
-                        onChange={(e) => setFormData({ ...formData, receivedCurrency: e.target.value })}
-                        disabled={!selectedSale}
-                      >
-                        <option value="">Same as payment currency</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="XOF">XOF (CFA)</option>
-                      </Select>
-                    </FormField>
-                  </div>
-
-                  <FormField label="Amount Received" required htmlFor="amountReceived">
-                    <Input
-                      id="amountReceived"
-                      type="number"
-                      step="0.01"
-                      value={formData.amountReceived}
-                      onChange={(e) => setFormData({ ...formData, amountReceived: e.target.value })}
-                      placeholder="Enter amount received"
-                      required
-                      disabled={!selectedSale}
-                    />
+                  <FormField label="Compte receveur SONASP" required htmlFor="sellerBankId">
+                    <Select id="sellerBankId" value={form.sellerBankId} onChange={(event) => updateForm('sellerBankId', event.target.value)} disabled={!selectedSale || saving} required>
+                      <option value="">Compte vérifié dans la devise de vente…</option>
+                      {sellerBanks.map((bank) => (
+                        <option key={bank.id} value={bank.id}>{bank.bank_name} — {bank.account_currency}</option>
+                      ))}
+                    </Select>
                   </FormField>
+                </div>
+              </CardContent>
+            </Card>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Payment Date" required htmlFor="paymentDate">
-                      <Input
-                        id="paymentDate"
-                        type="date"
-                        value={formData.paymentDate}
-                        onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-                        required
-                        disabled={!selectedSale}
-                      />
-                    </FormField>
-
-                    <FormField label="Payment Reference" htmlFor="paymentReference">
-                      <Input
-                        id="paymentReference"
-                        type="text"
-                        value={formData.paymentReference}
-                        onChange={(e) => setFormData({ ...formData, paymentReference: e.target.value })}
-                        placeholder="Reference number"
-                        disabled={!selectedSale}
-                      />
-                    </FormField>
-                  </div>
-
-                  <FormField label="Notes" htmlFor="notes">
-                    <textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      rows={3}
-                      placeholder="Additional notes..."
-                      disabled={!selectedSale}
-                    />
+            <Card>
+              <CardHeader><CardTitle>Détails bancaires</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Montant payé" required htmlFor="paidAmount">
+                    <Input id="paidAmount" type="number" min="0.01" step="0.01" value={form.paidAmount} onChange={(event) => updateForm('paidAmount', event.target.value)} disabled={!selectedSale || saving} required />
                   </FormField>
-                </CardContent>
-              </Card>
-            </div>
+                  <FormField label="Devise payée" required htmlFor="paymentCurrency">
+                    <Input id="paymentCurrency" value={form.paymentCurrency} readOnly placeholder="Dérivée du compte client" />
+                  </FormField>
+                  <FormField label="Date du paiement" required htmlFor="paymentDate">
+                    <Input id="paymentDate" type="date" min={thirtyDaysAgo()} max={today()} value={form.paymentDate} onChange={(event) => updateForm('paymentDate', event.target.value)} disabled={saving} required />
+                  </FormField>
+                  <FormField label="Référence bancaire" required htmlFor="referenceNumber">
+                    <Input id="referenceNumber" value={form.referenceNumber} onChange={(event) => updateForm('referenceNumber', event.target.value)} minLength={5} maxLength={255} disabled={saving} required />
+                  </FormField>
+                  <FormField label="Identifiant de transaction" htmlFor="transactionId">
+                    <Input id="transactionId" value={form.transactionId} onChange={(event) => updateForm('transactionId', event.target.value)} maxLength={255} disabled={saving} />
+                  </FormField>
+                </div>
+                <FormField label="Notes" htmlFor="notes">
+                  <textarea id="notes" value={form.notes} onChange={(event) => updateForm('notes', event.target.value)} rows={3} maxLength={4000} disabled={saving} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                </FormField>
+              </CardContent>
+            </Card>
+          </div>
 
-            <div className="space-y-6">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Contrôles serveur</CardTitle></CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p className="flex gap-2"><CheckCircle className="h-4 w-4 text-green-600 mt-0.5" /> Acteur, statut et horodatages sont dérivés du JWT.</p>
+                <p className="flex gap-2"><CheckCircle className="h-4 w-4 text-green-600 mt-0.5" /> Les deux comptes, leur devise et leur validité sont revérifiés.</p>
+                <p className="flex gap-2"><DollarSign className="h-4 w-4 text-green-600 mt-0.5" /> Le taux FX est choisi dans le référentiel serveur.</p>
+                <p className="flex gap-2"><AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" /> Un autre agent habilité devra rapprocher l’opération.</p>
+              </CardContent>
+            </Card>
+
+            {referenceFx && selectedSale && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    FX Rate Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!fxAnalysis ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <DollarSign className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                      <p>Enter amount to see FX analysis</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <p className="text-sm text-blue-600 mb-2">Exchange Rates Comparison</p>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Customer Bank:</span>
-                            <span className="font-medium">{fxAnalysis.customerRate.toFixed(4)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Revolut:</span>
-                            <span className="font-medium">{fxAnalysis.revolutRate.toFixed(4)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>ECB:</span>
-                            <span className="font-medium">{fxAnalysis.ecbRate.toFixed(4)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>BCEAO:</span>
-                            <span className="font-medium">{fxAnalysis.bceaoRate.toFixed(4)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border-t pt-4">
-                        <p className="text-sm font-medium mb-2">Amount Comparison</p>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-xs text-gray-600">With Customer Rate</p>
-                            <p className="text-lg font-bold">
-                              {formatCurrency(fxAnalysis.amountWithCustomerRate, selectedSale?.currency || 'USD')}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-600">With Best Rate ({fxAnalysis.bestSource})</p>
-                            <p className="text-lg font-bold text-green-600">
-                              {formatCurrency(fxAnalysis.amountWithBestRate, selectedSale?.currency || 'USD')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={`p-4 rounded-lg ${fxAnalysis.gainLoss >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                        {fxAnalysis.gainLoss >= 0 ? (
-                          <div className="flex items-start gap-3">
-                            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-green-900">Potential Gain</p>
-                              <p className="text-2xl font-bold text-green-600">
-                                {formatCurrency(Math.abs(fxAnalysis.gainLoss), selectedSale?.currency || 'USD')}
-                              </p>
-                              <p className="text-xs text-green-700 mt-1">
-                                {fxAnalysis.bestSource} offers {fxAnalysis.gainLossPercent.toFixed(2)}% better rate
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-start gap-3">
-                            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-red-900">Lost Opportunity</p>
-                              <p className="text-2xl font-bold text-red-600">
-                                {formatCurrency(Math.abs(fxAnalysis.gainLoss), selectedSale?.currency || 'USD')}
-                              </p>
-                              <p className="text-xs text-red-700 mt-1">
-                                Customer rate is {Math.abs(fxAnalysis.gainLossPercent).toFixed(2)}% less favorable
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <Alert variant="info" title="Analysis Saved">
-                        This analysis will be saved for future FX rate reports
-                      </Alert>
-                    </div>
-                  )}
+                <CardHeader><CardTitle>Taux indicatif</CardTitle></CardHeader>
+                <CardContent className="text-sm space-y-2">
+                  <p className="text-2xl font-bold">{referenceFx.rate.toFixed(6)}</p>
+                  <p>{referenceFx.from_currency}/{referenceFx.to_currency} au {referenceFx.rate_date}</p>
+                  <p className="text-gray-600">Indication uniquement : la RPC sélectionne et contrôle le taux final.</p>
                 </CardContent>
               </Card>
+            )}
 
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/payments')}
-                  className="flex-1"
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1 flex items-center justify-center gap-2"
-                  disabled={saving || !selectedSale || !formData.amountReceived}
-                >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Create Payment
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+            <Alert variant="warning" title="Preuve bancaire requise avant approbation">
+              Le gateway privé de preuve n’est pas encore disponible. L’exécution passe au statut
+              « processing » ; l’approbation restera fermée jusque-là.
+            </Alert>
+
+            <Button type="submit" disabled={saving || !selectedSale} className="w-full">
+              {saving ? 'Exécution en cours…' : 'Exécuter et transmettre au rapprochement'}
+            </Button>
           </div>
         </form>
       </div>

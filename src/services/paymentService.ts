@@ -1,29 +1,64 @@
 import { supabase } from '@/lib/supabase';
 import { getLatestReferentialFxRate, getReferentialFxRates } from '@/services/fxRateReferential';
 
-export interface CreatePaymentData {
+export type InternationalPaymentStatus =
+  | 'pending'
+  | 'processing'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled'
+  | 'failed';
+
+export type InternationalPaymentDecision = 'approve' | 'reject';
+
+export interface InternationalPaymentMutationResult {
+  payment_id: string;
   sale_id: string;
-  amount: number;
-  currency: string;
-  fx_rate: number;
-  expected_date: string;
-  bank_name: string;
-  account_number?: string;
-  reference_number: string;
-  proof_url?: string;
-  notes?: string;
+  payment_status: InternationalPaymentStatus;
+  sale_status: string;
+  version: number;
+  idempotency_key: string;
+  replayed: boolean;
+  processed_at: string;
+  decision?: InternationalPaymentDecision;
+  paid_amount?: number;
+  payment_currency?: string;
+  settlement_amount?: number;
+  settlement_currency?: string;
+  fx_rate?: number;
+  fx_rate_date?: string;
+  fx_rate_source?: string;
 }
 
-export interface CreateRealPaymentData {
-  sale_id: string;
-  customer_bank_id: string;
-  seller_bank_id: string;
-  payment_currency: string;
-  receiving_currency: string;
-  received_amount: number;
-  reference_number: string;
-  fx_rate?: number;
+export interface ExecuteInternationalPaymentData {
+  saleId: string;
+  expectedSaleStatus: 'waiting_for_payment' | 'virtual_payment';
+  expectedPaymentVersion: number | null;
+  paidAmount: number;
+  paymentCurrency: string;
+  customerBankId: string;
+  sellerBankId: string;
+  paymentDate: string;
+  referenceNumber: string;
+  transactionId?: string;
   notes?: string;
+  idempotencyKey: string;
+}
+
+export interface DecideInternationalPaymentData {
+  paymentId: string;
+  expectedVersion: number;
+  decision: InternationalPaymentDecision;
+  reason?: string;
+  idempotencyKey: string;
+}
+
+export interface CancelInternationalPaymentData {
+  paymentId: string;
+  expectedStatus: 'pending' | 'processing';
+  expectedVersion: number;
+  reason: string;
+  idempotencyKey: string;
 }
 
 export interface SaleAwaitingPayment {
@@ -37,7 +72,12 @@ export interface SaleAwaitingPayment {
   gross_proceeds: number;
   net_proceeds: number;
   final_proceeds: number;
+  currency: string;
+  seller_type: string;
+  seller_id: string;
   status: string;
+  payment_id: string | null;
+  payment_version: number | null;
 }
 
 export interface CustomerBank {
@@ -75,11 +115,134 @@ export interface Payment {
   reference_number: string;
   proof_url?: string;
   status: string;
+  version?: number;
   notes?: string;
   created_by?: string;
   created_at: string;
   approved_by?: string;
   approved_at?: string;
+}
+
+interface PaymentRpcError {
+  code?: string;
+  message?: string;
+}
+
+type PaymentRpcName =
+  | 'snp_paiement_international_executer'
+  | 'snp_paiement_international_decider'
+  | 'snp_paiement_international_annuler';
+
+const paymentRpc = supabase as unknown as {
+  rpc(
+    functionName: PaymentRpcName,
+    parameters: Record<string, unknown>,
+  ): PromiseLike<{
+    data: InternationalPaymentMutationResult | null;
+    error: PaymentRpcError | null;
+  }>;
+};
+
+export class InternationalPaymentConflictError extends Error {
+  constructor() {
+    super('Le paiement ou sa vente a changé entre-temps. Actualisez le dossier avant de réessayer.');
+    this.name = 'InternationalPaymentConflictError';
+  }
+}
+
+export function createPaymentIdempotencyKey(): string {
+  if (!globalThis.crypto?.randomUUID) {
+    throw new Error('Le navigateur ne fournit pas de générateur UUID sécurisé.');
+  }
+  return globalThis.crypto.randomUUID();
+}
+
+function isOptimisticConflict(error: PaymentRpcError): boolean {
+  return error.code === '40001' || error.message?.includes('Conflit optimiste') === true;
+}
+
+function assertMutationResult(
+  data: InternationalPaymentMutationResult | null,
+  expectedStatuses: InternationalPaymentStatus[],
+  expectedSaleStatuses: string[],
+  expectedIdempotencyKey: unknown,
+): InternationalPaymentMutationResult {
+  if (!data?.payment_id || !data.sale_id || !data.idempotency_key
+      || !Number.isInteger(data.version) || data.version < 0
+      || !expectedStatuses.includes(data.payment_status)
+      || !expectedSaleStatuses.includes(data.sale_status)
+      || data.idempotency_key !== expectedIdempotencyKey) {
+    throw new Error('Le serveur n’a pas confirmé l’opération de paiement attendue.');
+  }
+  return data;
+}
+
+async function callPaymentRpc(
+  functionName: PaymentRpcName,
+  parameters: Record<string, unknown>,
+  expectedStatuses: InternationalPaymentStatus[],
+  expectedSaleStatuses: string[],
+): Promise<InternationalPaymentMutationResult> {
+  const { data, error } = await paymentRpc.rpc(functionName, parameters);
+  if (error) {
+    if (isOptimisticConflict(error)) throw new InternationalPaymentConflictError();
+    throw error;
+  }
+  return assertMutationResult(
+    data,
+    expectedStatuses,
+    expectedSaleStatuses,
+    parameters.p_idempotency_key,
+  );
+}
+
+export async function executeInternationalPayment(
+  input: ExecuteInternationalPaymentData,
+): Promise<InternationalPaymentMutationResult> {
+  return callPaymentRpc('snp_paiement_international_executer', {
+    p_sale_id: input.saleId,
+    p_expected_sale_status: input.expectedSaleStatus,
+    p_expected_payment_version: input.expectedPaymentVersion,
+    p_paid_amount: input.paidAmount,
+    p_payment_currency: input.paymentCurrency.trim().toUpperCase(),
+    p_customer_bank_id: input.customerBankId,
+    p_seller_bank_id: input.sellerBankId,
+    p_payment_date: input.paymentDate,
+    p_reference_number: input.referenceNumber.trim(),
+    p_transaction_id: input.transactionId?.trim() || null,
+    // Aucun chemin/URL libre n'est accepté. Un gateway privé dédié
+    // rattachera ultérieurement la preuve avant le rapprochement positif.
+    p_proof_path: null,
+    p_notes: input.notes?.trim() || null,
+    p_idempotency_key: input.idempotencyKey,
+  }, ['processing'], ['virtual_payment']);
+}
+
+export async function decideInternationalPayment(
+  input: DecideInternationalPaymentData,
+): Promise<InternationalPaymentMutationResult> {
+  return callPaymentRpc('snp_paiement_international_decider', {
+    p_payment_id: input.paymentId,
+    p_expected_status: 'processing',
+    p_expected_version: input.expectedVersion,
+    p_decision: input.decision,
+    p_reason: input.reason?.trim() || null,
+    p_idempotency_key: input.idempotencyKey,
+  },
+  input.decision === 'approve' ? ['approved'] : ['rejected'],
+  input.decision === 'approve' ? ['payment_received'] : ['waiting_for_payment']);
+}
+
+export async function cancelInternationalPayment(
+  input: CancelInternationalPaymentData,
+): Promise<InternationalPaymentMutationResult> {
+  return callPaymentRpc('snp_paiement_international_annuler', {
+    p_payment_id: input.paymentId,
+    p_expected_status: input.expectedStatus,
+    p_expected_version: input.expectedVersion,
+    p_reason: input.reason.trim(),
+    p_idempotency_key: input.idempotencyKey,
+  }, ['cancelled'], ['waiting_for_payment']);
 }
 
 export interface FXRate {
@@ -89,46 +252,6 @@ export interface FXRate {
   rate: number;
   rate_date: string;
   source: string;
-}
-
-export async function createPayment(
-  paymentData: CreatePaymentData,
-  userId: string
-): Promise<{ success: boolean; data?: Payment; error?: string }> {
-  try {
-    const { data: payment, error: paymentError } = await supabase
-      .from('payments')
-      .insert({
-        sale_id: paymentData.sale_id,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        fx_rate: paymentData.fx_rate,
-        expected_date: paymentData.expected_date,
-        bank_name: paymentData.bank_name,
-        account_number: paymentData.account_number,
-        reference_number: paymentData.reference_number,
-        proof_url: paymentData.proof_url,
-        status: 'pending',
-        notes: paymentData.notes,
-        created_by: userId,
-      })
-      .select()
-      .single();
-
-    if (paymentError) {
-      console.error('Error creating payment:', paymentError);
-      console.error('Error details:', JSON.stringify(paymentError, null, 2));
-      return { success: false, error: paymentError.message };
-    }
-
-    // Log audit event
-    console.log('Payment created:', payment.id);
-
-    return { success: true, data: payment };
-  } catch (error: any) {
-    console.error('Error in createPayment:', error);
-    return { success: false, error: error.message };
-  }
 }
 
 export async function getPaymentById(
@@ -179,78 +302,6 @@ export async function getPaymentsBySale(
   } catch (error: any) {
     return { success: false, error: error.message };
   }
-}
-
-export async function updatePaymentStatus(
-  paymentId: string,
-  status: string,
-  userId: string,
-  actualDate?: string,
-  notes?: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const updateData: any = {
-      status,
-    };
-
-    if (actualDate) {
-      updateData.actual_date = actualDate;
-    }
-
-    if (status === 'approved') {
-      updateData.approved_by = userId;
-      updateData.approved_at = new Date().toISOString();
-    }
-
-    const { error } = await supabase
-      .from('payments')
-      .update(updateData)
-      .eq('id', paymentId);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    // Log audit event
-    console.log('Payment status updated:', paymentId, status);
-
-    if (status === 'approved') {
-      const { data: payment } = await supabase
-        .from('payments')
-        .select('sale_id')
-        .eq('id', paymentId)
-        .maybeSingle();
-
-      if (payment) {
-        await supabase
-          .from('sales')
-          .update({
-            status: 'payment_received',
-          })
-          .eq('id', payment.sale_id);
-      }
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
-export async function approvePayment(
-  paymentId: string,
-  userId: string,
-  notes?: string
-): Promise<{ success: boolean; error?: string }> {
-  return updatePaymentStatus(paymentId, 'approved', userId, undefined, notes);
-}
-
-export async function rejectPayment(
-  paymentId: string,
-  userId: string,
-  reason: string
-): Promise<{ success: boolean; error?: string }> {
-  return updatePaymentStatus(paymentId, 'rejected', userId, undefined, reason);
 }
 
 export async function uploadPaymentProof(
@@ -383,29 +434,53 @@ export async function getSalesAwaitingPayment(): Promise<{
         gross_proceeds,
         net_proceeds,
         final_proceeds,
+        currency,
+        seller_type,
+        seller_id,
         status,
-        customers(id, name)
+        customers(id, name),
+        payments(id, status, version, is_virtual, created_at)
       `)
       .eq('status', 'waiting_for_payment')
+      .eq('seller_type', 'sonasp')
       .order('sale_date', { ascending: false });
 
     if (error) {
       return { success: false, error: error.message };
     }
 
-    const formattedSales: SaleAwaitingPayment[] = (sales || []).map((sale: any) => ({
-      id: sale.id,
-      sale_number: sale.sale_number,
-      customer_id: sale.customer_id,
-      customer_name: sale.customers?.name || 'Unknown',
-      quantity_oz: sale.quantity_oz,
-      sale_date: sale.sale_date,
-      mechanism_type: sale.mechanism_type,
-      gross_proceeds: sale.gross_proceeds,
-      net_proceeds: sale.net_proceeds,
-      final_proceeds: sale.final_proceeds,
-      status: sale.status,
-    }));
+    const formattedSales: SaleAwaitingPayment[] = (sales || []).map((sale: any) => {
+      const pendingPayments = (Array.isArray(sale.payments) ? sale.payments : [])
+        .filter((payment: any) => payment.status === 'pending')
+        .sort((left: any, right: any) => {
+          if (Boolean(left.is_virtual) !== Boolean(right.is_virtual)) {
+            return left.is_virtual ? -1 : 1;
+          }
+          return String(right.created_at || '').localeCompare(String(left.created_at || ''));
+        });
+      const pendingPayment = pendingPayments[0] || null;
+
+      return {
+        id: sale.id,
+        sale_number: sale.sale_number,
+        customer_id: sale.customer_id,
+        customer_name: sale.customers?.name || 'Unknown',
+        quantity_oz: sale.quantity_oz,
+        sale_date: sale.sale_date,
+        mechanism_type: sale.mechanism_type,
+        gross_proceeds: sale.gross_proceeds,
+        net_proceeds: sale.net_proceeds,
+        final_proceeds: sale.final_proceeds,
+        currency: sale.currency || 'USD',
+        seller_type: sale.seller_type,
+        seller_id: sale.seller_id,
+        status: sale.status,
+        payment_id: pendingPayment?.id || null,
+        payment_version: Number.isInteger(pendingPayment?.version)
+          ? pendingPayment.version
+          : null,
+      };
+    });
 
     return { success: true, data: formattedSales };
   } catch (error: any) {
@@ -435,14 +510,22 @@ export async function getCustomerBanks(
 }
 
 export async function getSellerBanks(
-  stakeholderType: string = 'mining_company'
+  stakeholderType: string = 'mining_company',
+  stakeholderId?: string,
 ): Promise<{ success: boolean; data?: SellerBank[]; error?: string }> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('stakeholder_bank_accounts')
       .select('*')
       .eq('stakeholder_type', stakeholderType)
       .eq('is_active', true)
+      .eq('verification_status', 'verified');
+
+    if (stakeholderId) {
+      query = query.eq('stakeholder_id', stakeholderId);
+    }
+
+    const { data, error } = await query
       .order('is_primary', { ascending: false });
 
     if (error) {
@@ -451,84 +534,6 @@ export async function getSellerBanks(
 
     return { success: true, data: data || [] };
   } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
-export async function createRealPayment(
-  paymentData: CreateRealPaymentData,
-  userId: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
-  try {
-    const { data: sale, error: saleError } = await supabase
-      .from('sales')
-      .select('id, status, gross_proceeds, final_proceeds')
-      .eq('id', paymentData.sale_id)
-      .maybeSingle();
-
-    if (saleError || !sale) {
-      return { success: false, error: 'Sale not found' };
-    }
-
-    if (sale.status !== 'waiting_for_payment' && sale.status !== 'virtual_payment') {
-      return {
-        success: false,
-        error: `Cannot record payment for sale with status: ${sale.status}`,
-      };
-    }
-
-    const { data: existingRealPayment } = await supabase
-      .from('payments')
-      .select('id')
-      .eq('sale_id', paymentData.sale_id)
-      .eq('payment_type', 'real')
-      .maybeSingle();
-
-    if (existingRealPayment) {
-      return {
-        success: false,
-        error: 'A real payment already exists for this sale',
-      };
-    }
-
-    const fxRate = paymentData.fx_rate || 1.0;
-    const expectedAmount = sale.final_proceeds || sale.gross_proceeds;
-
-    const { data: payment, error: paymentError } = await supabase
-      .from('payments')
-      .insert({
-        sale_id: paymentData.sale_id,
-        amount: paymentData.received_amount,
-        currency: paymentData.receiving_currency,
-        payment_type: 'real',
-        is_virtual: false,
-        customer_bank_id: paymentData.customer_bank_id,
-        seller_bank_id: paymentData.seller_bank_id,
-        payment_currency: paymentData.payment_currency,
-        receiving_currency: paymentData.receiving_currency,
-        received_amount: paymentData.received_amount,
-        fx_rate: fxRate,
-        expected_date: new Date().toISOString().split('T')[0],
-        actual_date: new Date().toISOString().split('T')[0],
-        reference_number: paymentData.reference_number,
-        status: 'approved',
-        notes: paymentData.notes,
-        created_by: userId,
-        approved_by: userId,
-        approved_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (paymentError) {
-      console.error('Error creating real payment:', paymentError);
-      return { success: false, error: paymentError.message };
-    }
-
-    console.log('Real payment created successfully:', payment.id);
-    return { success: true, data: payment };
-  } catch (error: any) {
-    console.error('Error in createRealPayment:', error);
     return { success: false, error: error.message };
   }
 }

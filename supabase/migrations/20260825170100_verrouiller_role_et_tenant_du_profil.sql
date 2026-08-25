@@ -66,6 +66,13 @@ AS $$
 DECLARE
   v_par_authenticated boolean := coalesce(auth.role(), '') = 'authenticated';
   v_rpc_canonique boolean := coalesce(current_setting('snp.account_status_rpc', true), '') = 'on';
+  -- `auth.role()` lit le jeton et vaut donc 'authenticated' y compris au sein
+  -- d'une fonction SECURITY DEFINER : s'y fier bloquerait l'administration
+  -- legitime des comptes. `current_user`, lui, vaut le proprietaire de la
+  -- fonction dans un RPC de confiance et 'authenticated' sur une ecriture
+  -- directe via PostgREST. C'est le motif deja retenu par
+  -- snp_4i_require_trusted_mutation.
+  v_ecriture_directe boolean := current_user IN ('anon', 'authenticated');
 BEGIN
   IF NEW.role IS DISTINCT FROM OLD.role
      OR NEW.is_active IS DISTINCT FROM OLD.is_active
@@ -81,18 +88,16 @@ BEGIN
     -- Le role commande les capacites : il ne peut pas etre choisi par le
     -- titulaire du compte, sous peine d'elevation de privilege.
     IF NEW.role IS DISTINCT FROM OLD.role
-       AND v_par_authenticated
-       AND NOT v_rpc_canonique THEN
-      RAISE EXCEPTION 'Le role se modifie uniquement via le RPC canonique.'
+       AND v_ecriture_directe THEN
+      RAISE EXCEPTION 'Le role se modifie uniquement via une operation d''administration.'
         USING ERRCODE = '42501';
     END IF;
 
     -- La societe de rattachement porte le cloisonnement entre organisations :
     -- la changer soi-meme reviendrait a franchir la frontiere multi-tenant.
     IF NEW.mining_company_id IS DISTINCT FROM OLD.mining_company_id
-       AND v_par_authenticated
-       AND NOT v_rpc_canonique THEN
-      RAISE EXCEPTION 'La societe de rattachement se modifie uniquement via le RPC canonique.'
+       AND v_ecriture_directe THEN
+      RAISE EXCEPTION 'La societe de rattachement se modifie uniquement via une operation d''administration.'
         USING ERRCODE = '42501';
     END IF;
 
@@ -121,7 +126,8 @@ BEGIN
   END IF;
 
   IF v_source NOT LIKE '%Le role se modifie uniquement%'
-     OR v_source NOT LIKE '%La societe de rattachement se modifie uniquement%' THEN
+     OR v_source NOT LIKE '%La societe de rattachement se modifie uniquement%'
+     OR v_source NOT LIKE '%v_ecriture_directe%' THEN
     RAISE EXCEPTION 'Postflight : les gardes role et tenant ne sont pas en place.';
   END IF;
 END;

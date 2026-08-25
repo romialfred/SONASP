@@ -1396,8 +1396,8 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 4977,
-      "sha256": "3f6c696fae7691291c13faa85a662f763bc303f24cf67e546b5a2618766cee13"
+      "normalizedBytes": 5469,
+      "sha256": "55459bf79abb838df823cae560f64acde73ba8a9d62f523d950009346a7ade8a"
     },
     {
       "path": "supabase/migrations/20260825170200_retirer_privileges_hors_rls.sql",
@@ -2388,5 +2388,5 @@
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "a12a6bdc8a99ce2edc02a3ed184b043d0b35701b43ebb14dc07bd6958aa2dc63"
+  "catalogueSha256": "de9fc819d5c39748ff2e8e787c0b7f04594b7211842183f4499bf34e07aaeef1"
 }

@@ -471,4 +471,3 @@ GRANT EXECUTE ON FUNCTION public.snp_actor_has_capability(text),
   public.snp_session_est_active(),public.snp_sec_can_read_company(uuid),
   public.snp_sec_can_read_shipping(uuid),public.snp_peut_consulter_production(uuid),
   public.snp_societe_compte_mine() TO authenticated,service_role;
-

@@ -213,6 +213,35 @@ résoudre 4 %. C'est l'exigence §17.
 
 ---
 
+## D-010 — Ne pas recréer un objet que le backend a déjà remplacé
+
+**Contexte.** Dix-sept relations appelées par le code sont absentes de la base.
+La tentation immédiate est de les créer pour rendre les écrans fonctionnels.
+
+**Ce qui a failli être livré.** Une vue `user_login_history` avait été écrite,
+éprouvée sur le miroir, et s'apprêtait à partir en production. Elle dérivait de
+`user_sessions`, sans exposer le condensé de jeton, et en `security_invoker`
+pour ne pas contourner les politiques.
+
+**Pourquoi elle a été retirée.** `snp_sessions_lister()` existe déjà, exécutable
+par `authenticated`, accompagnée de `snp_session_to_public()` qui filtre les
+champs publics et de `snp_session_require_access()` qui contrôle l'accès. La
+table `user_sessions` porte des politiques mais aucun GRANT : elle est
+délibérément hors de portée de l'API. Créer une vue par-dessus, fût-elle
+prudente, aurait rouvert une voie que l'architecture avait fermée.
+
+**Décision.** Le défaut est dans le frontend, non dans la base. Aucune vue n'est
+créée ; la correction consiste à faire appeler la procédure existante par les
+composants. La migration a été supprimée du dépôt et la vue retirée du miroir
+avant tout déploiement.
+
+**Règle retenue.** Avant de créer un objet manquant, chercher ce que le backend
+offre déjà pour le même besoin. Un objet absent n'est pas toujours un oubli :
+c'est parfois une suppression volontaire dont le code appelant n'a pas tiré les
+conséquences.
+
+---
+
 ## Dérive connue : horodatage des migrations appliquées
 
 Les migrations appliquées par l'outil d'administration sont enregistrées avec

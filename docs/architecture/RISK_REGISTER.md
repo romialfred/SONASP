@@ -17,7 +17,7 @@ l'atteste. Les faits cités ont été observés sur le projet hébergé
 | R-09 | Barème fiscal sans validation juridique | élevé | avérée | **élevé** | ouvert |
 | R-10 | Montants financiers non arrondis en XOF | moyen | avérée | moyen | ouvert |
 | R-11 | Fonctions Edge non déployées | moyen | avérée | moyen | ouvert |
-| R-12 | Objets appelés par le code et absents du schéma | moyen | avérée | moyen | ouvert |
+| R-12 | Dix-sept objets appelés par le code et absents du schéma | **élevé** | avérée | **élevé** | ouvert, qualifié |
 | R-13 | Écriture anonyme sur snp_avoirs_achat | moyen | avérée | moyen | ouvert |
 
 ---
@@ -221,11 +221,49 @@ déployer n'apporterait rien tant qu'un appelant n'existe pas.
 
 ---
 
-## R-12 — Objets appelés par le code et absents du schéma · OUVERT
+## R-12 — Dix-sept objets appelés par le code et absents du schéma · OUVERT, qualifié
 
-**Description.** La vitrine publique interroge la table `publications`, qui n'existe
-pas en base : l'endpoint répond 404. Même famille que les RPC absentes traitées en
-R-04.
+**Ampleur mesurée.** Le contrôle `typecheck:database` signalait vingt relations
+utilisées par `supabase.from()` et absentes des types. La vérification en base
+établit que **dix-sept d'entre elles n'existent pas du tout** : ce n'est pas un
+défaut de typage mais du code qui interroge le vide. La base ne compte que sept
+vues, dont aucune ne correspond aux manquantes.
+
+**Confirmé par appel réel** : 404 sur `user_login_history`,
+`user_mining_company_access`, `current_inventory_status`, `fx_rate_comparison`,
+`v_sales_price_analysis` et `snp_modules_actifs`, quand une relation réellement
+présente répond 401.
+
+**Écrans concernés** : historique de connexion, accès aux sociétés, inventaire,
+analyse de change, prix de vente, modules actifs, licences d'export, résumé
+déposants, raffinage.
+
+**Trois natures distinctes, trois traitements.**
+
+*Vues dérivables.* Leur source est unique et le mapping évident.
+
+*Tables métier.* `user_mining_company_access` en est une : le code référence sa
+contrainte `user_mining_company_access_granted_by_fkey`. La reconstituer
+supposerait d'inventer ses règles d'attribution et de révocation.
+
+*Modèles que le backend a déjà remplacés.* C'est le cas le plus instructif.
+`user_login_history` n'a pas à être recréée : `snp_sessions_lister()` existe,
+exécutable par `authenticated`, avec `snp_session_to_public()` qui filtre les
+champs publics et `snp_session_require_access()` qui contrôle l'accès. La table
+`user_sessions` porte des politiques mais **aucun GRANT** : elle est délibérément
+inaccessible depuis l'API. Le défaut est donc dans le frontend, resté sur une
+approche antérieure.
+
+**Ce qui n'a pas été fait, et pourquoi.** Une vue `user_login_history` avait été
+écrite puis retirée avant tout déploiement : elle aurait contourné l'architecture
+de sécurité que les RPC mettent en place. Mieux vaut un écran franchement
+inopérant qu'un écran affichant des données inventées ou contournant un contrôle.
+
+**Suite.** La refonte de `LoginSessionsTab` et `UserStatsCard` vers
+`snp_sessions_lister` est un incrément à part : le composant expose `success`,
+`failure_reason`, `two_factor_used`, `logout_at` et `session_duration`, champs
+d'un modèle de tentatives de connexion qui n'a jamais existé, quand le backend
+fournit un modèle de sessions.
 
 ---
 

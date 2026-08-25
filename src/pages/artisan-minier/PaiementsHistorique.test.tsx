@@ -7,10 +7,13 @@ import type { PaiementArtisan } from '@/services/artisanPaiementsService';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   getAllPaiements: vi.fn(),
-  updatePaiementStatut: vi.fn(),
+  transitionPaiement: vi.fn(),
   showSuccess: vi.fn(),
   showError: vi.fn(),
-  user: { id: 'validator-id' } as Record<string, unknown>,
+  user: {
+    id: 'validator-id', role: 'management', is_active: true,
+    capabilities: ['sonasp.finance.execute', 'sonasp.finance.reconcile'],
+  } as Record<string, unknown>,
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -43,8 +46,9 @@ vi.mock('@/hooks/useCollectorWorkspace', () => ({
 vi.mock('@/services/artisanPaiementsService', () => ({
   default: {
     getAllPaiements: mocks.getAllPaiements,
-    updatePaiementStatut: mocks.updatePaiementStatut,
+    transitionPaiement: mocks.transitionPaiement,
   },
+  createArtisanPaymentIdempotencyKey: () => '10000000-0000-4000-8000-000000000001',
 }));
 
 type Row = PaiementArtisan & { artisan?: { nom?: string; prenoms?: string; numero_carte?: string } };
@@ -61,6 +65,7 @@ const paiement = (over: Partial<Row>): Row =>
     montant_taxes_retenues: 120_000,
     details_paiement: {},
     statut: 'complete',
+    version: 4,
     date_paiement: '2026-05-12T10:00:00Z',
     artisan: { nom: 'KABORE', prenoms: 'Awa', numero_carte: 'CP-0001' },
     ...over,
@@ -91,9 +96,12 @@ describe('filterPaiements', () => {
 describe('PaiementsHistorique', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.user = { id: 'validator-id' };
+    mocks.user = {
+      id: 'validator-id', role: 'management', is_active: true,
+      capabilities: ['sonasp.finance.execute', 'sonasp.finance.reconcile'],
+    };
     mocks.getAllPaiements.mockResolvedValue(paiements);
-    mocks.updatePaiementStatut.mockResolvedValue(undefined);
+    mocks.transitionPaiement.mockResolvedValue(undefined);
   });
 
   it('affiche les indicateurs et les règlements', async () => {
@@ -124,8 +132,9 @@ describe('PaiementsHistorique', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Valider' }));
 
-    await waitFor(() => expect(mocks.updatePaiementStatut).toHaveBeenCalledWith('p2', 'valide', {
-      preuvePaiementUrl: undefined,
+    await waitFor(() => expect(mocks.transitionPaiement).toHaveBeenCalledWith({
+      paymentId: 'p2', expectedStatus: 'en_traitement', expectedVersion: 4,
+      newStatus: 'valide', idempotencyKey: '10000000-0000-4000-8000-000000000001',
     }));
   });
 
@@ -150,6 +159,28 @@ describe('PaiementsHistorique', () => {
     expect(screen.getAllByText('Lecture seule').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Valider' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Dossiers en attente/ })).not.toBeInTheDocument();
-    expect(mocks.updatePaiementStatut).not.toHaveBeenCalled();
+    expect(mocks.transitionPaiement).not.toHaveBeenCalled();
+  });
+
+  it('n’expose aucune transition sans capacité sensible autoritative', async () => {
+    mocks.user = { id: 'reader', role: 'management', is_active: true, capabilities: [] };
+    render(<PaiementsHistorique />);
+    await waitFor(() => expect(screen.getByText('PAY-002')).toBeInTheDocument());
+
+    expect(screen.queryByRole('button', { name: 'Valider' })).not.toBeInTheDocument();
+    expect(screen.getByText('Rapprochement AAL2 requis')).toBeInTheDocument();
+    expect(mocks.transitionPaiement).not.toHaveBeenCalled();
+  });
+
+  it('ne demande jamais une URL libre pour clôturer un paiement validé', async () => {
+    mocks.getAllPaiements.mockResolvedValue([
+      paiement({ id: 'p4', statut: 'valide', facture: { certification_dgi_status: 'certified' } }),
+    ]);
+    render(<PaiementsHistorique />);
+    await waitFor(() => expect(screen.getByText(/gateway de preuve requis/)).toBeInTheDocument());
+
+    expect(screen.queryByPlaceholderText(/URL ou chemin/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Clôturer' })).not.toBeInTheDocument();
+    expect(mocks.transitionPaiement).not.toHaveBeenCalled();
   });
 });

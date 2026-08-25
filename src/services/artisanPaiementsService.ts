@@ -27,6 +27,8 @@ export interface FactureDefinitive {
   dgi_certified_at?: string | null;
   dgi_certified_by?: string | null;
   comptoir_organization_id?: string | null;
+  /** Verrou optimiste détenu et incrémenté par les RPC 4I. */
+  version?: number;
 }
 
 export interface PaiementArtisan {
@@ -55,6 +57,8 @@ export interface PaiementArtisan {
   created_at?: string;
   updated_at?: string;
   comptoir_organization_id?: string | null;
+  /** Verrou optimiste détenu et incrémenté par les RPC 4I. */
+  version?: number;
 }
 
 export interface TaxeRetenue {
@@ -76,6 +80,8 @@ export interface TaxeRetenue {
   exercice_fiscal?: string;
   created_at?: string;
   updated_at?: string;
+  /** Verrou optimiste détenu et incrémenté par les RPC 4I. */
+  version?: number;
 }
 
 export interface VenteEnAttentePaiement {
@@ -93,96 +99,217 @@ export interface VenteEnAttentePaiement {
   statut_paiement: string;
   certification_dgi_status: FactureDefinitive['certification_dgi_status'] | null;
   jours_attente: number | null;
+  vente_statut: string;
+  vente_version: number;
+  facture_version: number | null;
+}
+
+export type ArtisanPaymentStatus = PaiementArtisan['statut'];
+export type ArtisanTaxStatus = TaxeRetenue['statut_reversement'];
+
+export interface ArtisanInvoiceMutationResult {
+  invoice_id: string;
+  sale_id: string;
+  invoice_number: string;
+  invoice_status: FactureDefinitive['statut'];
+  invoice_version: number;
+  sale_status: string;
+  sale_payment_status: string;
+  sale_version: number;
+  gross_amount: number;
+  vat_amount: number;
+  withholding_amount: number;
+  other_tax_amount: number;
+  total_taxes: number;
+  net_payable: number;
+  tax_policy_version: string;
+  idempotency_key: string;
+  replayed: boolean;
+  processed_at: string;
+}
+
+export interface ArtisanPaymentMutationResult {
+  payment_id: string;
+  invoice_id: string;
+  sale_id: string;
+  artisan_id: string;
+  payment_reference: string;
+  payment_status: ArtisanPaymentStatus;
+  payment_version: number;
+  invoice_status: FactureDefinitive['statut'];
+  invoice_version: number;
+  sale_status: string;
+  sale_payment_status: string;
+  sale_version: number;
+  amount_paid: number;
+  taxes_withheld: number;
+  payment_method_id: string;
+  payment_type: PaiementArtisan['type_paiement'];
+  idempotency_key: string;
+  replayed: boolean;
+  processed_at: string;
+}
+
+export interface ArtisanTaxMutationResult {
+  tax_id: string;
+  payment_id: string;
+  invoice_id: string;
+  sale_id: string;
+  tax_type: TaxeRetenue['type_taxe'];
+  tax_status: ArtisanTaxStatus;
+  tax_version: number;
+  remittance_reference: string | null;
+  idempotency_key: string;
+  replayed: boolean;
+  processed_at: string;
+}
+
+export interface EmitArtisanInvoiceInput {
+  saleId: string;
+  expectedSaleStatus: string;
+  expectedSaleVersion: number;
+  idempotencyKey: string;
+  dueDate?: string | null;
+  notes?: string;
+}
+
+export interface CreateArtisanPaymentInput {
+  invoiceId: string;
+  expectedInvoiceStatus: FactureDefinitive['statut'];
+  expectedInvoiceVersion: number;
+  paymentMethodId: string;
+  idempotencyKey: string;
+  notes?: string;
+}
+
+export interface TransitionArtisanPaymentInput {
+  paymentId: string;
+  expectedStatus: ArtisanPaymentStatus;
+  expectedVersion: number;
+  newStatus: ArtisanPaymentStatus;
+  idempotencyKey: string;
+  notes?: string;
+}
+
+export interface TransitionArtisanTaxInput {
+  taxId: string;
+  expectedStatus: ArtisanTaxStatus;
+  expectedVersion: number;
+  newStatus: ArtisanTaxStatus;
+  idempotencyKey: string;
+  remittanceReference?: string;
+  notes?: string;
+}
+
+interface ArtisanRpcError {
+  code?: string;
+  message?: string;
+}
+
+export class ArtisanPaymentConflictError extends Error {
+  constructor(message = 'Le dossier a été modifié par un autre opérateur. Rechargez-le avant de recommencer.') {
+    super(message);
+    this.name = 'ArtisanPaymentConflictError';
+  }
+}
+
+export function createArtisanPaymentIdempotencyKey(): string {
+  if (typeof crypto === 'undefined' || typeof crypto.randomUUID !== 'function') {
+    throw new Error("Le navigateur ne permet pas de générer une clé d'idempotence sûre.");
+  }
+  return crypto.randomUUID();
+}
+
+function nullableTrimmed(value?: string | null): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function assertExpectedVersion(version: number): void {
+  if (!Number.isSafeInteger(version) || version < 0) {
+    throw new Error('La version serveur attendue est invalide. Rechargez le dossier.');
+  }
+}
+
+function isOptimisticConflict(error: ArtisanRpcError): boolean {
+  return error.code === '40001' || /conflit optimiste/i.test(error.message || '');
+}
+
+const PAYMENT_TRANSITIONS: Record<ArtisanPaymentStatus, ArtisanPaymentStatus[]> = {
+  en_attente: ['en_traitement', 'annule', 'echec'],
+  en_traitement: ['valide', 'annule', 'echec'],
+  valide: ['complete', 'annule', 'echec'],
+  complete: [],
+  annule: [],
+  echec: [],
+};
+
+const TAX_TRANSITIONS: Record<ArtisanTaxStatus, ArtisanTaxStatus[]> = {
+  a_reverser: ['en_cours'],
+  en_cours: ['reverse'],
+  reverse: ['comptabilise'],
+  comptabilise: [],
+};
+
+function assertCommonMutationResult(
+  data: Record<string, unknown> | null,
+  idField: string,
+  expectedIdempotencyKey: string,
+): asserts data is Record<string, unknown> & {
+  idempotency_key: string;
+  replayed: boolean;
+  processed_at: string;
+} {
+  if (!data || typeof data[idField] !== 'string'
+    || data.idempotency_key !== expectedIdempotencyKey
+    || typeof data.replayed !== 'boolean'
+    || typeof data.processed_at !== 'string') {
+    throw new Error("La procédure sécurisée n'a pas confirmé l'opération demandée.");
+  }
+}
+
+async function callArtisanMutationRpc<T extends object>(
+  name: string,
+  parameters: Record<string, unknown>,
+  idField: string,
+  expectedIdempotencyKey: string,
+): Promise<T> {
+  const { data, error } = await (supabase as any).rpc(name, parameters) as {
+    data: T | null;
+    error: ArtisanRpcError | null;
+  };
+  if (error) {
+    if (isOptimisticConflict(error)) throw new ArtisanPaymentConflictError();
+    throw error;
+  }
+  assertCommonMutationResult(data as Record<string, unknown> | null, idField, expectedIdempotencyKey);
+  return data as T;
 }
 
 const artisanPaiementsService = {
-  async genererNumeroFacture(): Promise<string> {
-    try {
-      const { data, error } = await supabase.rpc('generer_numero_facture');
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Erreur génération numéro facture:', error);
-      throw error;
+  async emettreFacture(input: EmitArtisanInvoiceInput): Promise<ArtisanInvoiceMutationResult> {
+    assertExpectedVersion(input.expectedSaleVersion);
+    const result = await callArtisanMutationRpc<ArtisanInvoiceMutationResult>(
+      'snp_artisan_emettre_facture',
+      {
+        p_vente_id: input.saleId,
+        p_expected_vente_statut: input.expectedSaleStatus,
+        p_expected_vente_version: input.expectedSaleVersion,
+        p_idempotency_key: input.idempotencyKey,
+        p_date_echeance: input.dueDate || null,
+        p_notes: nullableTrimmed(input.notes),
+      },
+      'invoice_id',
+      input.idempotencyKey,
+    );
+    if (!result.sale_id || !result.invoice_number
+      || result.invoice_status !== 'emise'
+      || result.sale_payment_status !== 'facture_emise'
+      || typeof result.invoice_version !== 'number'
+      || typeof result.sale_version !== 'number') {
+      throw new Error("La procédure sécurisée n'a pas confirmé l'émission de la facture.");
     }
-  },
-
-  async genererReferencePaiement(): Promise<string> {
-    try {
-      const { data, error } = await supabase.rpc('generer_reference_paiement');
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Erreur génération référence paiement:', error);
-      throw error;
-    }
-  },
-
-  async calculerTaxes(
-    montantBrut: number,
-    tauxTva: number = 18.0,
-    tauxRetenue: number = 1.5
-  ): Promise<{
-    montant_tva: number;
-    montant_retenue_source: number;
-    montant_total_taxes: number;
-    montant_net: number;
-  }> {
-    try {
-      const { data, error } = await supabase.rpc('calculer_taxes_vente', {
-        p_montant_brut: montantBrut,
-        p_taux_tva: tauxTva,
-        p_taux_retenue_source: tauxRetenue
-      });
-
-      if (error) throw error;
-      return data[0];
-    } catch (error) {
-      console.error('Erreur calcul taxes:', error);
-
-      const montantTva = Math.round(montantBrut * tauxTva) / 100;
-      const montantRetenue = Math.round(montantBrut * tauxRetenue) / 100;
-      const totalTaxes = montantTva + montantRetenue;
-
-      return {
-        montant_tva: montantTva,
-        montant_retenue_source: montantRetenue,
-        montant_total_taxes: totalTaxes,
-        montant_net: montantBrut - totalTaxes
-      };
-    }
-  },
-
-  async creerFactureDefinitive(facture: Partial<FactureDefinitive>): Promise<FactureDefinitive> {
-    try {
-      const numeroFacture = await this.genererNumeroFacture();
-
-      const { data, error } = await supabase
-        .from('snp_artisan_factures_definitives')
-        .insert({
-          ...facture,
-          numero_facture: numeroFacture
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await supabase
-        .from('snp_artisan_ventes_or')
-        .update({
-          statut_paiement: 'facture_emise',
-          facture_definitive_id: data.id
-        })
-        .eq('id', facture.vente_or_id);
-
-      return data;
-    } catch (error) {
-      console.error('Erreur création facture définitive:', error);
-      throw error;
-    }
+    return result;
   },
 
   async getFactureByVenteId(venteId: string): Promise<FactureDefinitive | null> {
@@ -201,19 +328,6 @@ const artisanPaiementsService = {
     }
   },
 
-  async certifierFactureDgi(
-    factureId: string,
-    dgiReference: string,
-    documentPath: string,
-  ): Promise<void> {
-    const { error } = await (supabase as any).rpc('snp_certify_artisan_invoice', {
-      p_facture_id: factureId,
-      p_dgi_reference: dgiReference.trim(),
-      p_document_path: documentPath.trim(),
-    });
-    if (error) throw error;
-  },
-
   async getVentesEnAttentePaiement(): Promise<VenteEnAttentePaiement[]> {
     try {
       const { data, error } = await supabase
@@ -225,6 +339,8 @@ const artisanPaiementsService = {
           artisan_id,
           montant_total_fcfa,
           statut,
+          statut_paiement,
+          version,
           facture_definitive_id,
           artisan:snp_artisans_miniers!inner(
             nom,
@@ -245,7 +361,7 @@ const artisanPaiementsService = {
           if (vente.facture_definitive_id) {
             const { data: factureData } = await supabase
               .from('snp_artisan_factures_definitives')
-              .select('id, numero_facture, montant_net_a_payer, date_emission, statut, certification_dgi_status')
+              .select('id, numero_facture, montant_net_a_payer, date_emission, statut, certification_dgi_status, version')
               .eq('id', vente.facture_definitive_id)
               .maybeSingle();
 
@@ -272,9 +388,13 @@ const artisanPaiementsService = {
             numero_facture: facture?.numero_facture || null,
             montant_net_a_payer: facture?.montant_net_a_payer || vente.montant_total_fcfa,
             date_facture: facture?.date_emission || null,
-            statut_paiement: facture ? (facture.statut === 'payee' ? 'paye' : 'facture_emise') : 'non_paye',
+            statut_paiement: vente.statut_paiement
+              || (facture ? (facture.statut === 'payee' ? 'paye' : 'facture_emise') : 'non_paye'),
             certification_dgi_status: facture?.certification_dgi_status || null,
-            jours_attente: joursAttente
+            jours_attente: joursAttente,
+            vente_statut: vente.statut,
+            vente_version: vente.version,
+            facture_version: facture?.version ?? null,
           };
         })
       );
@@ -286,51 +406,62 @@ const artisanPaiementsService = {
     }
   },
 
-  async creerPaiement(paiement: Partial<PaiementArtisan>): Promise<PaiementArtisan> {
-    try {
-      const referencePaiement = await this.genererReferencePaiement();
-
-      const { data, error } = await supabase
-        .from('snp_artisan_paiements')
-        .insert({
-          ...paiement,
-          reference_paiement: referencePaiement
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Erreur création paiement:', error);
-      throw error;
+  async creerPaiement(input: CreateArtisanPaymentInput): Promise<ArtisanPaymentMutationResult> {
+    assertExpectedVersion(input.expectedInvoiceVersion);
+    const result = await callArtisanMutationRpc<ArtisanPaymentMutationResult>(
+      'snp_artisan_creer_paiement',
+      {
+        p_facture_id: input.invoiceId,
+        p_expected_facture_statut: input.expectedInvoiceStatus,
+        p_expected_facture_version: input.expectedInvoiceVersion,
+        p_moyen_paiement_id: input.paymentMethodId,
+        p_idempotency_key: input.idempotencyKey,
+        p_notes: nullableTrimmed(input.notes),
+      },
+      'payment_id',
+      input.idempotencyKey,
+    );
+    if (!result.invoice_id || !result.sale_id || !result.artisan_id
+      || !result.payment_reference || !result.payment_method_id
+      || result.payment_status !== 'en_attente'
+      || result.invoice_status !== 'en_paiement'
+      || typeof result.payment_version !== 'number'
+      || typeof result.invoice_version !== 'number'
+      || typeof result.sale_version !== 'number') {
+      throw new Error("La procédure sécurisée n'a pas confirmé la création du paiement.");
     }
+    return result;
   },
 
-  async updatePaiementStatut(
-    paiementId: string,
-    statut: PaiementArtisan['statut'],
-    options: { preuvePaiementUrl?: string; notes?: string } = {},
-  ): Promise<void> {
-    try {
-      // Les acteurs et dates sont fixés par le trigger serveur depuis auth.uid().
-      // Le navigateur ne fournit que la transition demandée et sa preuve.
-      const updateData: any = {
-        statut,
-        ...(options.preuvePaiementUrl ? { preuve_paiement_url: options.preuvePaiementUrl.trim() } : {}),
-        ...(options.notes ? { notes: options.notes.trim() } : {}),
-      };
-
-      const { error } = await supabase
-        .from('snp_artisan_paiements')
-        .update(updateData)
-        .eq('id', paiementId);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Erreur mise à jour statut paiement:', error);
-      throw error;
+  async transitionPaiement(input: TransitionArtisanPaymentInput): Promise<ArtisanPaymentMutationResult> {
+    assertExpectedVersion(input.expectedVersion);
+    if (!PAYMENT_TRANSITIONS[input.expectedStatus]?.includes(input.newStatus)) {
+      throw new Error(`Transition de paiement interdite : ${input.expectedStatus} vers ${input.newStatus}.`);
     }
+    if (['annule', 'echec'].includes(input.newStatus) && (input.notes?.trim().length || 0) < 10) {
+      throw new Error("Un motif d'au moins 10 caractères est requis pour abandonner un paiement.");
+    }
+    const result = await callArtisanMutationRpc<ArtisanPaymentMutationResult>(
+      'snp_artisan_transition_paiement',
+      {
+        p_paiement_id: input.paymentId,
+        p_expected_statut: input.expectedStatus,
+        p_expected_version: input.expectedVersion,
+        p_nouveau_statut: input.newStatus,
+        p_idempotency_key: input.idempotencyKey,
+        p_notes: nullableTrimmed(input.notes),
+      },
+      'payment_id',
+      input.idempotencyKey,
+    );
+    if (!result.invoice_id || !result.sale_id || !result.artisan_id
+      || result.payment_status !== input.newStatus
+      || typeof result.payment_version !== 'number'
+      || typeof result.invoice_version !== 'number'
+      || typeof result.sale_version !== 'number') {
+      throw new Error("La procédure sécurisée n'a pas confirmé la transition du paiement.");
+    }
+    return result;
   },
 
   async getPaiementsByFactureId(factureId: string): Promise<PaiementArtisan[]> {
@@ -444,33 +575,33 @@ const artisanPaiementsService = {
     }
   },
 
-  async updateTaxeStatutReversement(
-    taxeId: string,
-    statutReversement: TaxeRetenue['statut_reversement'],
-    reversementReference?: string
-  ): Promise<void> {
-    try {
-      const updateData: any = {
-        statut_reversement: statutReversement
-      };
-
-      if (statutReversement === 'reverse') {
-        updateData.date_reversement = new Date().toISOString();
-        if (reversementReference) {
-          updateData.reversement_reference = reversementReference;
-        }
-      }
-
-      const { error} = await supabase
-        .from('snp_artisan_taxes_retenues')
-        .update(updateData)
-        .eq('id', taxeId);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Erreur mise à jour statut reversement taxe:', error);
-      throw error;
+  async transitionTaxe(input: TransitionArtisanTaxInput): Promise<ArtisanTaxMutationResult> {
+    assertExpectedVersion(input.expectedVersion);
+    if (!TAX_TRANSITIONS[input.expectedStatus]?.includes(input.newStatus)) {
+      throw new Error(`Transition fiscale interdite : ${input.expectedStatus} vers ${input.newStatus}.`);
     }
+    if (input.newStatus === 'reverse' && !nullableTrimmed(input.remittanceReference)) {
+      throw new Error('La référence de reversement est obligatoire.');
+    }
+    const result = await callArtisanMutationRpc<ArtisanTaxMutationResult>(
+      'snp_artisan_transition_reversement_taxe',
+      {
+        p_taxe_id: input.taxId,
+        p_expected_statut: input.expectedStatus,
+        p_expected_version: input.expectedVersion,
+        p_nouveau_statut: input.newStatus,
+        p_idempotency_key: input.idempotencyKey,
+        p_reversement_reference: nullableTrimmed(input.remittanceReference),
+        p_notes: nullableTrimmed(input.notes),
+      },
+      'tax_id',
+      input.idempotencyKey,
+    );
+    if (!result.payment_id || !result.invoice_id || !result.sale_id
+      || result.tax_status !== input.newStatus || typeof result.tax_version !== 'number') {
+      throw new Error("La procédure sécurisée n'a pas confirmé la transition fiscale.");
+    }
+    return result;
   },
 
   async getResumePaiementsArtisan(artisanId: string): Promise<any> {

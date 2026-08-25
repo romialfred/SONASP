@@ -8,9 +8,12 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   getVentes: vi.fn(),
   getStats: vi.fn(),
-  calculerTaxes: vi.fn(),
-  creerFacture: vi.fn(),
+  emettreFacture: vi.fn(),
   showError: vi.fn(),
+  user: {
+    id: 'u1', role: 'customer', is_active: true,
+    capabilities: ['comptoir.manage', 'comptoir.invoices.issue', 'comptoir.payments.execute'],
+  } as Record<string, unknown>,
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -22,7 +25,7 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }));
 
 vi.mock('@/hooks/useCustomAlert', () => ({
   useCustomAlert: () => ({
@@ -38,9 +41,9 @@ vi.mock('@/services/artisanPaiementsService', () => ({
   default: {
     getVentesEnAttentePaiement: mocks.getVentes,
     getDashboardStats: mocks.getStats,
-    calculerTaxes: mocks.calculerTaxes,
-    creerFactureDefinitive: mocks.creerFacture,
+    emettreFacture: mocks.emettreFacture,
   },
+  createArtisanPaymentIdempotencyKey: () => '10000000-0000-4000-8000-000000000001',
 }));
 
 const vente = (over: Partial<VenteEnAttentePaiement>): VenteEnAttentePaiement =>
@@ -57,6 +60,9 @@ const vente = (over: Partial<VenteEnAttentePaiement>): VenteEnAttentePaiement =>
     montant_net_a_payer: 4_500_000,
     date_facture: null,
     statut_paiement: 'non_paye',
+    vente_statut: 'validee',
+    vente_version: 3,
+    facture_version: null,
     jours_attente: 12,
     ...over,
   }) as VenteEnAttentePaiement;
@@ -80,6 +86,10 @@ describe('filterVentes', () => {
 describe('PaiementsVentesDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.user = {
+      id: 'u1', role: 'customer', is_active: true,
+      capabilities: ['comptoir.manage', 'comptoir.invoices.issue', 'comptoir.payments.execute'],
+    };
     mocks.getVentes.mockResolvedValue(ventes);
     mocks.getStats.mockResolvedValue({
       total_ventes_en_attente: 3,
@@ -87,23 +97,17 @@ describe('PaiementsVentesDashboard', () => {
       paiements_en_cours: 1,
       paiements_completes: 1,
     });
-    mocks.calculerTaxes.mockResolvedValue({
-      montant_tva: 810_000,
-      montant_retenue_source: 67_500,
-      montant_total_taxes: 877_500,
-      montant_net: 3_622_500,
-    });
-    mocks.creerFacture.mockResolvedValue({ id: 'f1' });
+    mocks.emettreFacture.mockResolvedValue({ invoice_id: 'f1' });
   });
 
   it('affiche les indicateurs et les dossiers', async () => {
     render(<PaiementsVentesDashboard />);
 
-    expect(screen.getByRole('heading', { name: 'Paiements des ventes d’or' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Factures DGI et paiements' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('KABORE Awa')).toBeInTheDocument());
 
     const stats = within(screen.getByRole('region', { name: 'Indicateurs des paiements' }));
-    expect(stats.getByText('Ventes en attente')).toBeInTheDocument();
+    expect(stats.getByText('Achats à traiter')).toBeInTheDocument();
     expect(stats.getByText('13,5 M FCFA')).toBeInTheDocument();
   });
 
@@ -114,35 +118,49 @@ describe('PaiementsVentesDashboard', () => {
     );
   });
 
-  it('émet la facture puis ouvre le paiement', async () => {
+  it('émet la facture puis ouvre le dossier DGI en lecture seule', async () => {
     render(<PaiementsVentesDashboard />);
     await waitFor(() => expect(screen.getByText('KABORE Awa')).toBeInTheDocument());
 
-    fireEvent.click(screen.getAllByRole('button', { name: /Émettre et payer/ })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /Émettre la facture/ })[0]);
 
-    await waitFor(() => expect(mocks.creerFacture).toHaveBeenCalled());
-    expect(mocks.creerFacture.mock.calls[0][0]).toMatchObject({ vente_or_id: 'v1', statut: 'emise' });
-    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/paiements/v1/nouveau');
+    await waitFor(() => expect(mocks.emettreFacture).toHaveBeenCalled());
+    expect(mocks.emettreFacture).toHaveBeenCalledWith({
+      saleId: 'v1', expectedSaleStatus: 'validee', expectedSaleVersion: 3,
+      idempotencyKey: '10000000-0000-4000-8000-000000000001',
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/ventes-or/v1/facture');
   });
 
   it('n’ouvre pas le paiement si l’émission de la facture échoue', async () => {
-    mocks.creerFacture.mockRejectedValue(new Error('RPC indisponible'));
+    mocks.emettreFacture.mockRejectedValue(new Error('RPC indisponible'));
     render(<PaiementsVentesDashboard />);
     await waitFor(() => expect(screen.getByText('KABORE Awa')).toBeInTheDocument());
 
-    fireEvent.click(screen.getAllByRole('button', { name: /Émettre et payer/ })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /Émettre la facture/ })[0]);
 
     await waitFor(() => expect(mocks.showError).toHaveBeenCalled());
     expect(mocks.navigate).not.toHaveBeenCalled();
   });
 
-  it('ouvre directement le paiement quand la facture existe', async () => {
+  it('ouvre la facture non certifiée sans exposer une action DGI forgée', async () => {
     render(<PaiementsVentesDashboard />);
     await waitFor(() => expect(screen.getByText('KONE Mamadou')).toBeInTheDocument());
 
-    fireEvent.click(screen.getAllByRole('button', { name: /^Payer$/ })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Voir la facture$/ })[0]);
 
-    expect(mocks.creerFacture).not.toHaveBeenCalled();
-    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/paiements/v2/nouveau');
+    expect(mocks.emettreFacture).not.toHaveBeenCalled();
+    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/ventes-or/v2/facture');
+  });
+
+  it('reste en lecture seule sans capacité sensible autoritative', async () => {
+    mocks.user = {
+      id: 'u2', role: 'customer', is_active: true, capabilities: ['comptoir.manage'],
+    };
+    render(<PaiementsVentesDashboard />);
+    await waitFor(() => expect(screen.getByText('KABORE Awa')).toBeInTheDocument());
+
+    expect(screen.getAllByRole('button', { name: /Émettre la facture/ })[0]).toBeDisabled();
+    expect(mocks.emettreFacture).not.toHaveBeenCalled();
   });
 });

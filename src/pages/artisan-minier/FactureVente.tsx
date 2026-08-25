@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { AlertTriangle, ArrowLeft, BadgeCheck, FileCheck2, Loader2, Printer, Save, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BadgeCheck, Loader2, Printer, ShieldAlert } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
-import { Field, Infobulle, Note, PageHeader, Section } from '@/components/ui/sn';
+import { Infobulle, Note, PageHeader } from '@/components/ui/sn';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanMinierService } from '@/services/artisanMinierService';
 import { artisanFullName } from '@/utils/artisanIdentity';
@@ -11,7 +11,6 @@ import { errorMessage } from '@/lib/errorMessage';
 import { composerFacture, type Facture, type PartieFacture } from '@/services/factureVenteService';
 import artisanPaiementsService, { type FactureDefinitive } from '@/services/artisanPaiementsService';
 import { useAuth } from '@/contexts/AuthContext';
-import { CAPABILITIES, hasCapability } from '@/lib/capabilities';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
 import './facture-vente.css';
@@ -48,9 +47,6 @@ export function FactureVente() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const [factureDefinitive, setFactureDefinitive] = useState<FactureDefinitive | null>(null);
-  const [referenceDgi, setReferenceDgi] = useState('');
-  const [documentDgi, setDocumentDgi] = useState('');
-  const [certificationEnCours, setCertificationEnCours] = useState(false);
   const qrRef = useRef<string | null>(null);
 
   const charger = useCallback(async () => {
@@ -63,14 +59,10 @@ export function FactureVente() {
       try {
         const definitive = await artisanPaiementsService.getFactureByVenteId(id);
         setFactureDefinitive(definitive);
-        setReferenceDgi(definitive?.dgi_reference || '');
-        setDocumentDgi(definitive?.dgi_document_path || '');
       } catch {
         // La compatibilité avec un environnement qui n'a pas encore reçu la
         // migration DGI ne doit pas empêcher la consultation du spécimen.
         setFactureDefinitive(null);
-        setReferenceDgi('');
-        setDocumentDgi('');
       }
 
       if (donnees?.artisan_id) {
@@ -98,31 +90,6 @@ export function FactureVente() {
       setChargement(false);
     }
   }, [id]);
-
-  const certifierDgi = async () => {
-    if (!factureDefinitive?.id) {
-      setErreur('Émettez d’abord la facture définitive avant de renseigner sa certification DGI.');
-      return;
-    }
-    if (referenceDgi.trim().length < 5 || documentDgi.trim().length < 5) {
-      setErreur('La référence DGI et le chemin du justificatif sont obligatoires.');
-      return;
-    }
-    setCertificationEnCours(true);
-    setErreur(null);
-    try {
-      await artisanPaiementsService.certifierFactureDgi(
-        factureDefinitive.id,
-        referenceDgi,
-        documentDgi,
-      );
-      await charger();
-    } catch (raison) {
-      setErreur(errorMessage(raison, 'La certification DGI a été refusée.'));
-    } finally {
-      setCertificationEnCours(false);
-    }
-  };
 
   useEffect(() => {
     void charger();
@@ -197,44 +164,11 @@ export function FactureVente() {
           </Note>
         )}
 
-        {factureDefinitive
-          && factureDefinitive.certification_dgi_status !== 'certified'
-          && hasCapability(user, CAPABILITIES.COMPTOIR_MANAGE) && (
-          <Section
-            id="certification-dgi"
-            icon={FileCheck2}
-            tone="emerald"
-            title="Enregistrer la certification DGI"
-            description="Renseignez uniquement les références d’une certification réellement obtenue auprès du dispositif fiscal."
-          >
-            <div className="facture-page__dgi-fields">
-              <Field label="Référence DGI" required htmlFor="reference-dgi">
-                <input
-                  id="reference-dgi"
-                  value={referenceDgi}
-                  onChange={(event) => setReferenceDgi(event.target.value)}
-                  placeholder="DGI-2026-…"
-                />
-              </Field>
-              <Field label="Chemin du justificatif" required htmlFor="document-dgi">
-                <input
-                  id="document-dgi"
-                  value={documentDgi}
-                  onChange={(event) => setDocumentDgi(event.target.value)}
-                  placeholder="dgi/2026/facture-certifiee.pdf"
-                />
-              </Field>
-            </div>
-            <button
-              type="button"
-              className="sn-btn sn-btn--primary"
-              disabled={certificationEnCours}
-              onClick={() => void certifierDgi()}
-            >
-              {certificationEnCours ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
-              Enregistrer et verrouiller
-            </button>
-          </Section>
+        {factureDefinitive && factureDefinitive.certification_dgi_status !== 'certified' && (
+          <Note tone="warning" icon={ShieldAlert}>
+            La certification DGI est en lecture seule. Le paiement restera bloqué tant que le canal
+            sécurisé de dépôt et de vérification DGI n’aura pas rattaché une preuve canonique.
+          </Note>
         )}
 
         {erreur && (

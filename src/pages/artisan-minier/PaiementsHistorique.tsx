@@ -30,10 +30,12 @@ import {
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import artisanPaiementsService, {
+  createArtisanPaymentIdempotencyKey,
   type FactureDefinitive,
   type PaiementArtisan,
 } from '@/services/artisanPaiementsService';
 import { useAuth } from '@/contexts/AuthContext';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
 import './paiements-ventes.css';
@@ -140,12 +142,15 @@ export default function PaiementsHistorique() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isCollector = isCollectorScopedUser(user);
+  const canExecute = hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE)
+    || hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
+  const canReconcile = hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_RECONCILE)
+    || hasSensitiveCapability(user, CAPABILITIES.FINANCE_RECONCILE);
   const { workspace: collectorWorkspace } = useCollectorWorkspace();
   const [paiements, setPaiements] = useState<PaiementRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<HistoriqueFilters>(EMPTY_HISTORIQUE_FILTERS);
   const [transitioning, setTransitioning] = useState<string | null>(null);
-  const [preuves, setPreuves] = useState<Record<string, string>>({});
   const { alertState, showError, showSuccess, closeAlert } = useCustomAlert();
 
   const chargerHistorique = async () => {
@@ -198,16 +203,22 @@ export default function PaiementsHistorique() {
   );
 
   const changerStatut = async (paiement: PaiementRow, statut: Statut) => {
-    if (!paiement.id) return;
-    const preuve = preuves[paiement.id] || '';
-    if (statut === 'complete' && preuve.trim().length < 5) {
-      showError('Joignez le chemin ou l’URL de la preuve bancaire avant la clôture.');
+    if (!paiement.id || !Number.isSafeInteger(paiement.version)) {
+      showError('La version serveur du paiement est absente. Rechargez le dossier.');
+      return;
+    }
+    if (statut === 'complete') {
+      showError('Clôture indisponible tant que la preuve canonique n’est pas rattachée par le canal sécurisé.');
       return;
     }
     setTransitioning(paiement.id);
     try {
-      await artisanPaiementsService.updatePaiementStatut(paiement.id, statut, {
-        preuvePaiementUrl: statut === 'complete' ? preuve : undefined,
+      await artisanPaiementsService.transitionPaiement({
+        paymentId: paiement.id,
+        expectedStatus: paiement.statut,
+        expectedVersion: paiement.version!,
+        newStatus: statut,
+        idempotencyKey: createArtisanPaymentIdempotencyKey(),
       });
       showSuccess('La transition a été enregistrée et auditée.');
       await chargerHistorique();
@@ -282,43 +293,29 @@ export default function PaiementsHistorique() {
         if (isCollector) return <span className="paiements__muted">Lecture seule</span>;
         const busy = transitioning === paiement.id;
         if (paiement.statut === 'en_attente') {
+          if (!canExecute) return <span className="paiements__muted">Exécution AAL2 requise</span>;
           return (
-            <button type="button" className="sn-btn sn-btn--sm" disabled={busy} onClick={() => void changerStatut(paiement, 'en_traitement')}>
+            <button type="button" className="sn-btn sn-btn--sm" disabled={busy || !Number.isSafeInteger(paiement.version)} onClick={() => void changerStatut(paiement, 'en_traitement')}>
               {busy ? <Loader2 className="sn-spin" aria-hidden="true" /> : <PlayCircle aria-hidden="true" />} Prendre en charge
             </button>
           );
         }
         if (paiement.statut === 'en_traitement') {
+          if (!canReconcile) return <span className="paiements__muted">Rapprochement AAL2 requis</span>;
           if (paiement.traite_par === user?.id) {
             return <small className="paiements__muted">Validation par un autre agent</small>;
           }
           return (
-            <button type="button" className="sn-btn sn-btn--sm" disabled={busy} onClick={() => void changerStatut(paiement, 'valide')}>
+            <button type="button" className="sn-btn sn-btn--sm" disabled={busy || !Number.isSafeInteger(paiement.version)} onClick={() => void changerStatut(paiement, 'valide')}>
               {busy ? <Loader2 className="sn-spin" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />} Valider
             </button>
           );
         }
         if (paiement.statut === 'valide') {
-          const certified = paiement.facture?.certification_dgi_status === 'certified';
           return (
-            <span className="paiements__workflow-action">
-              <input
-                value={paiement.id ? preuves[paiement.id] || '' : ''}
-                onChange={(event) => paiement.id && setPreuves((current) => ({ ...current, [paiement.id!]: event.target.value }))}
-                placeholder="URL ou chemin de la preuve"
-                aria-label={`Preuve du paiement ${paiement.reference_paiement}`}
-                disabled={!certified || busy}
-              />
-              <button
-                type="button"
-                className="sn-btn sn-btn--sm sn-btn--primary"
-                disabled={!certified || busy}
-                title={certified ? undefined : 'Certification DGI requise'}
-                onClick={() => void changerStatut(paiement, 'complete')}
-              >
-                {busy ? <Loader2 className="sn-spin" aria-hidden="true" /> : <BadgeCheck aria-hidden="true" />} Clôturer
-              </button>
-            </span>
+            <small className="paiements__muted" title="La clôture exige une preuve canonique rattachée côté serveur">
+              Clôture bloquée — gateway de preuve requis
+            </small>
           );
         }
         return <span className="paiements__muted">—</span>;

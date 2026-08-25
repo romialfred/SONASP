@@ -26,6 +26,7 @@ import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import {
   BankTransferLogo,
   CashLogo,
@@ -36,6 +37,7 @@ import {
   WaveLogo,
 } from '@/components/payment/PaymentMethodLogos';
 import artisanPaiementsService, {
+  createArtisanPaymentIdempotencyKey,
   type FactureDefinitive,
   type PaiementArtisan,
 } from '@/services/artisanPaiementsService';
@@ -233,6 +235,8 @@ export default function PaiementForm() {
   const navigate = useNavigate();
   const { venteId } = useParams();
   const { user } = useAuth();
+  const canExecutePayment = hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE)
+    || hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
 
   const [vente, setVente] = useState<ArtisanGoldSale | null>(null);
   const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);
@@ -274,7 +278,8 @@ export default function PaiementForm() {
         // Les coordonnees viennent de la fiche de l'artisan : l'ecran de paiement
         // les choisit, il ne les saisit plus.
         try {
-          const liste = await artisanMoyenPaiementService.listerParArtisan(venteData.artisan_id);
+          const liste = (await artisanMoyenPaiementService.listerParArtisan(venteData.artisan_id))
+            .filter((moyen) => moyen.actif && Boolean(moyen.verifie_le));
           if (!mounted) return;
           setMoyens(liste);
           setMoyenId(moyenParDefaut(liste)?.id || '');
@@ -282,25 +287,7 @@ export default function PaiementForm() {
           if (mounted) setMoyens([]);
         }
 
-        let factureData = await artisanPaiementsService.getFactureByVenteId(venteId);
-        if (!factureData && venteData.statut === 'validee') {
-          const taxes = await artisanPaiementsService.calculerTaxes(venteData.montant_total_fcfa, 18, 1.5);
-          factureData = await artisanPaiementsService.creerFactureDefinitive({
-            vente_or_id: venteId,
-            artisan_id: venteData.artisan_id,
-            montant_brut: venteData.montant_total_fcfa,
-            montant_taxe_tva: taxes.montant_tva,
-            montant_taxe_retenue_source: taxes.montant_retenue_source,
-            montant_autres_taxes: 0,
-            montant_total_taxes: taxes.montant_total_taxes,
-            montant_net_a_payer: taxes.montant_net,
-            taux_tva: 18,
-            taux_retenue_source: 1.5,
-            date_emission: new Date().toISOString(),
-            statut: 'emise',
-            emise_par: user?.id,
-          });
-        }
+        const factureData = await artisanPaiementsService.getFactureByVenteId(venteId);
 
         if (!mounted) return;
         setFacture(factureData);
@@ -320,7 +307,7 @@ export default function PaiementForm() {
     return () => {
       mounted = false;
     };
-  }, [user?.id, venteId]);
+  }, [venteId]);
 
   const moyenRetenu = useMemo(
     () => moyens.find((moyen) => moyen.id === moyenId) || null,
@@ -359,8 +346,6 @@ export default function PaiementForm() {
       moyen_paiement_id: moyenRetenu?.id,
       numero_facture: facture?.numero_facture,
       statut: 'en_attente',
-      date_paiement: new Date().toISOString(),
-      traite_par: user?.id,
       notes,
     }) as PaiementArtisan;
 
@@ -381,18 +366,37 @@ export default function PaiementForm() {
     event.preventDefault();
     if (submitting) return; // garde-fou contre la double soumission
 
-    if (!facture) {
+    if (!facture?.id) {
       showError('Aucune facture définitive n’est rattachée à cette vente.');
       return;
     }
-    if (!moyenRetenu) {
+    if (!moyenRetenu?.id) {
       showError('Sélectionnez le moyen de paiement enregistré sur la fiche de l’artisan.');
+      return;
+    }
+    if (!canExecutePayment) {
+      showError('Une session AAL2 avec la capacité d’exécution du paiement est requise.');
+      return;
+    }
+    if (facture.certification_dgi_status !== 'certified') {
+      showError('La facture doit être certifiée par le canal DGI sécurisé avant le paiement.');
+      return;
+    }
+    if (!Number.isSafeInteger(facture.version)) {
+      showError('La version serveur de la facture est absente. Rechargez le dossier.');
       return;
     }
 
     setSubmitting(true);
     try {
-      await artisanPaiementsService.creerPaiement(paiementCourant());
+      await artisanPaiementsService.creerPaiement({
+        invoiceId: facture.id,
+        expectedInvoiceStatus: facture.statut,
+        expectedInvoiceVersion: facture.version!,
+        paymentMethodId: moyenRetenu.id,
+        idempotencyKey: createArtisanPaymentIdempotencyKey(),
+        notes,
+      });
       showSuccess('Paiement enregistré');
 
       const veutFacture = await confirmation.open({
@@ -405,8 +409,10 @@ export default function PaiementForm() {
       if (veutFacture) await telechargerFacture();
 
       navigate('/artisan-minier/paiements');
-    } catch {
-      showError("L'enregistrement du paiement a échoué. Aucune écriture n'a été effectuée.");
+    } catch (reason) {
+      showError(reason instanceof Error
+        ? reason.message
+        : "L'enregistrement du paiement a échoué. Aucune écriture n'a été effectuée.");
     } finally {
       setSubmitting(false);
     }
@@ -493,8 +499,8 @@ export default function PaiementForm() {
                   appartienne a l'artisan. */}
               {moyens.length === 0 ? (
                 <EmptyState
-                  title="Aucun moyen de paiement enregistré"
-                  description="Cet artisan n’a pas de coordonnée de règlement sur sa fiche. Ajoutez-en une avant de payer."
+                  title="Aucun moyen de paiement vérifié"
+                  description="Cet artisan n’a pas de coordonnée active et vérifiée. Faites-la contrôler sur sa fiche avant de payer."
                   action={
                     <button
                       type="button"
@@ -601,7 +607,23 @@ export default function PaiementForm() {
               <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/paiements')}>
                 Annuler
               </button>
-              <button type="submit" className="sn-btn sn-btn--primary" disabled={submitting || !moyenRetenu}>
+              <button
+                type="submit"
+                className="sn-btn sn-btn--primary"
+                disabled={
+                  submitting
+                  || !moyenRetenu?.id
+                  || !facture.id
+                  || !canExecutePayment
+                  || facture.certification_dgi_status !== 'certified'
+                  || !Number.isSafeInteger(facture.version)
+                }
+                title={!canExecutePayment
+                  ? 'Capacité sensible d’exécution du paiement requise'
+                  : facture.certification_dgi_status !== 'certified'
+                    ? 'Certification DGI sécurisée requise'
+                    : undefined}
+              >
                 {submitting ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
                 {submitting ? 'Enregistrement…' : 'Enregistrer le paiement'}
               </button>
@@ -647,6 +669,16 @@ export default function PaiementForm() {
               {!moyenRetenu && (
                 <p className="paiement-form__blocker">
                   Aucun moyen de paiement sélectionné : le règlement ne peut pas être enregistré.
+                </p>
+              )}
+              {facture.certification_dgi_status !== 'certified' && (
+                <p className="paiement-form__blocker">
+                  Paiement bloqué : la certification DGI doit être rattachée par le canal sécurisé.
+                </p>
+              )}
+              {!canExecutePayment && (
+                <p className="paiement-form__blocker">
+                  Paiement en lecture seule : session AAL2 et capacité d’exécution requises.
                 </p>
               )}
             </section>

@@ -15,6 +15,7 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import {
   Badge,
   DataTable,
@@ -28,7 +29,10 @@ import {
 } from '@/components/ui/sn';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
-import artisanPaiementsService, { type VenteEnAttentePaiement } from '@/services/artisanPaiementsService';
+import artisanPaiementsService, {
+  createArtisanPaymentIdempotencyKey,
+  type VenteEnAttentePaiement,
+} from '@/services/artisanPaiementsService';
 import './paiements-ventes.css';
 
 type StatutPaiement = 'non_paye' | 'facture_emise' | 'en_paiement' | 'paye';
@@ -89,6 +93,14 @@ export default function PaiementsVentesDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isComptoir = isComptoirScopedUser(user);
+  const canIssueInvoice = hasSensitiveCapability(
+    user,
+    isComptoir ? CAPABILITIES.COMPTOIR_INVOICES_ISSUE : CAPABILITIES.SONASP_PREPARE,
+  );
+  const canExecutePayment = hasSensitiveCapability(
+    user,
+    isComptoir ? CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE : CAPABILITIES.FINANCE_EXECUTE,
+  );
   const [ventes, setVentes] = useState<VenteEnAttentePaiement[]>([]);
   const [stats, setStats] = useState({
     total_ventes_en_attente: 0,
@@ -146,6 +158,11 @@ export default function PaiementsVentesDashboard() {
    */
   const handleProcederPaiement = async (vente: VenteEnAttentePaiement) => {
     if (vente.facture_id) {
+      const opensPayment = !isComptoir || vente.certification_dgi_status === 'certified';
+      if (opensPayment && !canExecutePayment) {
+        showError('Une session AAL2 avec la capacité d’exécution financière est requise.');
+        return;
+      }
       navigate(
         isComptoir && vente.certification_dgi_status !== 'certified'
           ? `/artisan-minier/ventes-or/${vente.vente_id}/facture`
@@ -154,24 +171,18 @@ export default function PaiementsVentesDashboard() {
       return;
     }
 
+    if (!canIssueInvoice || !Number.isSafeInteger(vente.vente_version)) {
+      showError('Émission indisponible : capacité sensible ou version serveur absente.');
+      return;
+    }
+
     setProcessing(vente.vente_id);
     try {
-      const montantBrut = vente.montant_net_a_payer || 0;
-      const taxes = await artisanPaiementsService.calculerTaxes(montantBrut);
-
-      await artisanPaiementsService.creerFactureDefinitive({
-        vente_or_id: vente.vente_id,
-        artisan_id: vente.artisan_id,
-        montant_brut: montantBrut,
-        montant_taxe_tva: taxes.montant_tva,
-        montant_taxe_retenue_source: taxes.montant_retenue_source,
-        montant_autres_taxes: 0,
-        montant_total_taxes: taxes.montant_total_taxes,
-        montant_net_a_payer: taxes.montant_net,
-        taux_tva: 18.0,
-        taux_retenue_source: 1.5,
-        date_emission: new Date().toISOString(),
-        statut: 'emise',
+      await artisanPaiementsService.emettreFacture({
+        saleId: vente.vente_id,
+        expectedSaleStatus: vente.vente_statut,
+        expectedSaleVersion: vente.vente_version,
+        idempotencyKey: createArtisanPaymentIdempotencyKey(),
       });
 
       navigate(
@@ -246,7 +257,25 @@ export default function PaiementsVentesDashboard() {
           <button
             type="button"
             className="sn-btn sn-btn--sm sn-btn--primary"
-            disabled={processing === vente.vente_id || vente.statut_paiement === 'paye'}
+            disabled={
+              processing === vente.vente_id
+              || vente.statut_paiement === 'paye'
+              || (!vente.facture_id && !canIssueInvoice)
+              || (
+                Boolean(vente.facture_id)
+                && (!isComptoir || vente.certification_dgi_status === 'certified')
+                && !canExecutePayment
+              )
+            }
+            title={
+              !vente.facture_id && !canIssueInvoice
+                ? 'Capacité sensible d’émission de facture requise'
+                : Boolean(vente.facture_id)
+                  && (!isComptoir || vente.certification_dgi_status === 'certified')
+                  && !canExecutePayment
+                  ? 'Capacité sensible d’exécution du paiement requise'
+                  : undefined
+            }
             onClick={(event) => {
               event.stopPropagation();
               void handleProcederPaiement(vente);
@@ -260,7 +289,7 @@ export default function PaiementsVentesDashboard() {
               <FileText aria-hidden="true" />
             )}
             {vente.facture_id
-              ? isComptoir && vente.certification_dgi_status !== 'certified' ? 'Certifier DGI' : 'Payer'
+              ? isComptoir && vente.certification_dgi_status !== 'certified' ? 'Voir la facture' : 'Payer'
               : isComptoir ? 'Émettre la facture' : 'Émettre et payer'}
           </button>
         </span>
@@ -326,7 +355,7 @@ export default function PaiementsVentesDashboard() {
                 Dossiers à traiter <span className="sn-count">{integer.format(results.length)}</span>
               </h3>
               <p className="sn-card__hint">
-                La facture définitive est émise automatiquement avant l’ouverture du paiement.
+                L’émission atomique calcule les taxes côté serveur avant toute ouverture du paiement.
               </p>
             </div>
           </div>

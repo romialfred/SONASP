@@ -13,13 +13,15 @@ const mocks = vi.hoisted(() => ({
   getVente: vi.fn(),
   getArtisan: vi.fn(),
   getFacture: vi.fn(),
-  calculerTaxes: vi.fn(),
-  creerFacture: vi.fn(),
   creerPaiement: vi.fn(),
   telecharger: vi.fn(),
   showSuccess: vi.fn(),
   showError: vi.fn(),
   openConfirm: vi.fn(),
+  user: {
+    id: 'u1', role: 'customer', is_active: true,
+    capabilities: ['comptoir.manage', 'comptoir.payments.execute'],
+  } as Record<string, unknown>,
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -33,7 +35,7 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 }));
 
 vi.mock('@/components/ui/CustomAlert', () => ({ CustomAlert: () => null }));
-vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'u1' } }) }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }));
 
 vi.mock('@/components/payment/PaymentMethodLogos', () => ({
   BankTransferLogo: () => null,
@@ -79,10 +81,9 @@ vi.mock('@/services/artisanMinierService', () => ({
 vi.mock('@/services/artisanPaiementsService', () => ({
   default: {
     getFactureByVenteId: mocks.getFacture,
-    calculerTaxes: mocks.calculerTaxes,
-    creerFactureDefinitive: mocks.creerFacture,
     creerPaiement: mocks.creerPaiement,
   },
+  createArtisanPaymentIdempotencyKey: () => '10000000-0000-4000-8000-000000000001',
 }));
 
 vi.mock('@/services/factureArtisanPdfService', () => ({
@@ -122,6 +123,8 @@ const facture = {
   taux_tva: 18,
   taux_retenue_source: 1.5,
   statut: 'emise',
+  certification_dgi_status: 'certified',
+  version: 2,
 } as FactureDefinitive;
 
 describe('champs par moyen de paiement', () => {
@@ -163,6 +166,10 @@ describe('buildInvoicePayload', () => {
 describe('PaiementForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.user = {
+      id: 'u1', role: 'customer', is_active: true,
+      capabilities: ['comptoir.manage', 'comptoir.payments.execute'],
+    };
     mocks.params.venteId = 'v1';
     mocks.getVente.mockResolvedValue(vente);
     mocks.getArtisan.mockResolvedValue(artisan);
@@ -177,6 +184,7 @@ describe('PaiementForm', () => {
         numero_telephone: '+22670000001',
         est_principal: true,
         actif: true,
+        verifie_le: '2026-08-24T10:00:00Z',
       },
       {
         id: 'm2',
@@ -187,6 +195,7 @@ describe('PaiementForm', () => {
         numero_compte: 'BF1234567890',
         est_principal: false,
         actif: true,
+        verifie_le: '2026-08-24T10:00:00Z',
       },
     ]);
     mocks.openConfirm.mockResolvedValue(false);
@@ -232,7 +241,7 @@ describe('PaiementForm', () => {
     mocks.listerMoyens.mockResolvedValue([]);
     render(<PaiementForm />);
 
-    await waitFor(() => expect(screen.getByText('Aucun moyen de paiement enregistré')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Aucun moyen de paiement vérifié')).toBeInTheDocument());
     // Le règlement ne peut pas être enregistré sans coordonnée.
     expect(screen.getByRole('button', { name: /Enregistrer le paiement/ })).toBeDisabled();
 
@@ -248,11 +257,13 @@ describe('PaiementForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer le paiement/ }));
 
     await waitFor(() => expect(mocks.creerPaiement).toHaveBeenCalled());
-    expect(mocks.creerPaiement.mock.calls[0][0]).toMatchObject({
-      facture_id: 'f1',
-      type_paiement: 'virement_bancaire',
-      moyen_paiement_id: 'm2',
-      montant_paye: 38_318_000,
+    expect(mocks.creerPaiement.mock.calls[0][0]).toEqual({
+      invoiceId: 'f1',
+      expectedInvoiceStatus: 'emise',
+      expectedInvoiceVersion: 2,
+      paymentMethodId: 'm2',
+      idempotencyKey: '10000000-0000-4000-8000-000000000001',
+      notes: '',
     });
     await waitFor(() => expect(mocks.openConfirm).toHaveBeenCalled());
     expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/paiements');
@@ -274,6 +285,24 @@ describe('PaiementForm', () => {
 
     await waitFor(() => expect(screen.getByText('Dossier de paiement incomplet')).toBeInTheDocument());
     expect(screen.getByText(/Validez la vente pour émettre la facture/)).toBeInTheDocument();
+  });
+
+  it('bloque le paiement sans capacité sensible AAL2', async () => {
+    mocks.user = { id: 'u2', role: 'customer', is_active: true, capabilities: ['comptoir.manage'] };
+    render(<PaiementForm />);
+    await waitFor(() => expect(screen.getByText(/Paiement en lecture seule/)).toBeInTheDocument());
+
+    expect(screen.getByRole('button', { name: /Enregistrer le paiement/ })).toBeDisabled();
+    expect(mocks.creerPaiement).not.toHaveBeenCalled();
+  });
+
+  it('bloque la création tant que la preuve DGI canonique n’est pas rattachée', async () => {
+    mocks.getFacture.mockResolvedValue({ ...facture, certification_dgi_status: 'pending' });
+    render(<PaiementForm />);
+    await waitFor(() => expect(screen.getByText(/Paiement bloqué/)).toBeInTheDocument());
+
+    expect(screen.getByRole('button', { name: /Enregistrer le paiement/ })).toBeDisabled();
+    expect(mocks.creerPaiement).not.toHaveBeenCalled();
   });
 
   it('signale une vente introuvable', async () => {

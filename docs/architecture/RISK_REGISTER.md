@@ -168,11 +168,34 @@ suppression traite le flux futur, pas l'historique.
 
 ---
 
-## R-11 — Fonctions Edge non déployées · OUVERT
+## R-11 — Fonctions Edge non déployées · réduit, partiellement bloqué
 
-**Description.** 7 fonctions ACTIVE sur 14 codées. `sensitive-upload` n'est pas
-déployée, alors que c'est la voie prévue pour le rapport de laboratoire acheteur —
-pièce maîtresse du module de conciliation.
+**Description initiale.** 7 fonctions ACTIVE sur 16 codées. `sensitive-upload`,
+voie prévue pour le rapport de laboratoire acheteur, n'était pas déployée alors que
+`src/services/sensitiveUploadGateway.ts` l'appelle : les téléversements sensibles
+échouaient donc en production.
+
+**Traité.** `sensitive-upload` et `revoke-user-sessions` sont déployées et
+vérifiées : les deux répondent `403 Requête non autorisée` sans habilitation, en
+français et sans fuite d'information. `revoke-user-sessions` est appelée par
+`src/services/userSessionService.ts` : la révocation de session était donc elle
+aussi inopérante.
+
+**Reste bloqué faute de secrets** — ces valeurs ne peuvent être inventées :
+
+| Fonction | Secrets manquants |
+|---|---|
+| `fetch-daily-lbma-prices` | `GOLD_API_KEY`, `METALS_API_KEY` |
+| `activate-account` | `ACTIVATION_RATE_LIMIT_SALT`, `SONASP_APP_URL` |
+| `public-assistance` | `ASSISTANCE_HASH_SALT`, `PUBLIC_SITE_ORIGINS` |
+| `scheduled-tasks` | `ALLOWED_ORIGIN`, `CRON_SECRET` |
+
+`fetch-daily-lbma-prices` alimente le cours de l'or, dont la conciliation a besoin
+pour figer un prix. Son déploiement suppose la fourniture des clés d'API.
+
+**Déployables sans secret mais sans appelant** : `fetch-daily-fx-rates`,
+`send-email`, `send-activation-email`. Aucun code source ne les invoque ; les
+déployer n'apporterait rien tant qu'un appelant n'existe pas.
 
 ---
 

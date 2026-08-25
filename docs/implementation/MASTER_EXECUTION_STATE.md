@@ -85,12 +85,16 @@ motif ramenant le solde à −900 000 ; devise étrangère sans taux refusée.
 En production : tables vides, 2 déclencheurs d'immuabilité, aucun droit
 d'écriture depuis l'API.
 
-### Incrément 3 — Assay exposé · **À FAIRE**
+### Incrément 3 — Assay exposé · **DÉBLOQUÉ, en cours**
 
 Exposer `snp_analyses_teneur`, qui existe et n'a jamais servi.
 
-**Dépendance externe** : `sensitive-upload` n'est pas déployée (7 fonctions Edge
-ACTIVE sur 14). C'est la voie prévue pour le rapport de laboratoire.
+**Dépendance levée** : `sensitive-upload` est déployée et vérifiée (403 sans
+habilitation). `revoke-user-sessions`, également appelée par le code et absente,
+a été déployée dans le même mouvement — la révocation de session était inopérante.
+
+Restent non déployées faute de secrets : `fetch-daily-lbma-prices`,
+`activate-account`, `public-assistance`, `scheduled-tasks`. Détail en R-11.
 
 ### Incrément 4 — Moteur de conciliation · à faire
 

@@ -6,13 +6,18 @@ import {
   ProductionStatus,
   getNextAllowedStatus
 } from '@/constants/productionStatuses';
-import { productionStatusService } from '@/services/productionStatusService';
+import {
+  createProductionTransitionRequestId,
+  productionStatusService,
+} from '@/services/productionStatusService';
 import { ProductionStatusConfirmationModal } from './ProductionStatusConfirmationModal';
 import {
   WorkflowModule,
   useStatusTransitionControl
 } from '@/hooks/useStatusTransitionControl';
 import { UnifiedStatusFlow } from '@/components/common/UnifiedStatusFlow';
+import { useAuth } from '@/contexts/AuthContext';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 
 interface ProductionDetails {
   id: string;
@@ -44,7 +49,9 @@ export function ProductionStatusWorkflow({
   onStatusChanged,
   compactButton = false
 }: ProductionStatusWorkflowProps) {
+  const { user } = useAuth();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [transitionRequestId, setTransitionRequestId] = useState<string | null>(null);
 
   // Contrôle des transitions - MODULE PRODUCTION uniquement
   const transitionControl = useStatusTransitionControl(
@@ -54,9 +61,24 @@ export function ProductionStatusWorkflow({
 
   const nextStatus = getNextAllowedStatus(currentStatus);
 
-  // Vérifier si la production est verrouillée pour ce module
-  const isLocked = !transitionControl.canChangeStatus;
+  const canValidateProduction =
+    hasSensitiveCapability(user, CAPABILITIES.MINE_OPERATE)
+    || hasSensitiveCapability(user, CAPABILITIES.SONASP_APPROVE);
+
+  // Le serveur reste l'autorité ; le bouton échoue fermé tant que la session
+  // n'expose pas une capability sensible effective (donc AAL2 validé).
+  const isLocked = !transitionControl.canChangeStatus || !canValidateProduction;
   const isReadyForCustoms = currentStatus === 'ready_for_customs';
+
+  const openConfirmation = () => {
+    setTransitionRequestId(createProductionTransitionRequestId());
+    setShowConfirmModal(true);
+  };
+
+  const closeConfirmation = () => {
+    setShowConfirmModal(false);
+    setTransitionRequestId(null);
+  };
 
   const handleUpdateStatus = async (notes?: string) => {
     if (!nextStatus) return;
@@ -65,8 +87,13 @@ export function ProductionStatusWorkflow({
       await productionStatusService.updateStatus(
         productionId,
         nextStatus,
-        notes
+        notes,
+        {
+          expectedStatus: currentStatus,
+          requestId: transitionRequestId || createProductionTransitionRequestId(),
+        },
       );
+      setTransitionRequestId(null);
       onStatusChanged();
     } catch (error: any) {
       alert(error.message || 'Erreur lors de la mise à jour du statut');
@@ -80,7 +107,7 @@ export function ProductionStatusWorkflow({
       <>
         {nextStatus && !isLocked && transitionControl.checkTransition(nextStatus) && (
           <Button
-            onClick={() => setShowConfirmModal(true)}
+            onClick={openConfirmation}
             className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg hover:shadow-xl transition-all"
             size="lg"
           >
@@ -101,7 +128,7 @@ export function ProductionStatusWorkflow({
         {nextStatus && (
           <ProductionStatusConfirmationModal
             isOpen={showConfirmModal}
-            onClose={() => setShowConfirmModal(false)}
+            onClose={closeConfirmation}
             onConfirm={handleUpdateStatus}
             currentStatus={currentStatus}
             nextStatus={nextStatus}
@@ -158,7 +185,7 @@ export function ProductionStatusWorkflow({
       {nextStatus && !isLocked && transitionControl.checkTransition(nextStatus) && (
         <div className="space-y-3">
           <Button
-            onClick={() => setShowConfirmModal(true)}
+          onClick={openConfirmation}
             className="w-full bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
             size="lg"
           >
@@ -182,7 +209,7 @@ export function ProductionStatusWorkflow({
       {nextStatus && (
         <ProductionStatusConfirmationModal
           isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
+          onClose={closeConfirmation}
           onConfirm={handleUpdateStatus}
           currentStatus={currentStatus}
           nextStatus={nextStatus}

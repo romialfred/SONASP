@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { SITE_NATIONAL } from '@/constants/site';
+import type { ProductionStatus } from '@/constants/productionStatuses';
+import {
+  productionStatusService,
+  type ProductionStatusTransitionResult,
+} from '@/services/productionStatusService';
 
 export interface DailyProduction {
   id: string;
@@ -179,6 +184,22 @@ class DailyProductionService {
   }
 
   async updateProduction(id: string, updates: Partial<DailyProduction>) {
+    const protectedFields: Array<keyof DailyProduction> = [
+      'id',
+      'status',
+      'created_by',
+      'created_at',
+      'updated_at',
+    ];
+    const forbiddenField = protectedFields.find((field) =>
+      Object.prototype.hasOwnProperty.call(updates, field)
+    );
+    if (forbiddenField) {
+      throw new Error(
+        `Le champ ${forbiddenField} est contrôlé par le serveur et ne peut pas être modifié depuis le formulaire.`,
+      );
+    }
+
     const { data, error } = await supabase
       .from('daily_production')
       .update(updates)
@@ -416,38 +437,16 @@ class DailyProductionService {
   // Status management methods
   async updateProductionStatus(
     productionId: string,
-    newStatus: 'prepared' | 'ready_for_customs' | 'shipped' | 'cancelled',
-    notes?: string
-  ): Promise<DailyProduction> {
-    try {
-      const { data, error } = await supabase
-        .from('daily_production')
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', productionId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Si des notes sont fournies, les ajouter à l'historique
-      if (notes) {
-        await supabase
-          .from('production_status_history')
-          .update({ notes })
-          .eq('production_id', productionId)
-          .eq('new_status', newStatus)
-          .order('changed_at', { ascending: false })
-          .limit(1);
-      }
-
-      return data as DailyProduction;
-    } catch (error: any) {
-      console.error('Error updating production status:', error);
-      throw new Error(`Impossible de mettre à jour le statut: ${error.message}`);
-    }
+    newStatus: ProductionStatus,
+    notes?: string,
+    options: { expectedStatus?: ProductionStatus; requestId?: string } = {},
+  ): Promise<ProductionStatusTransitionResult> {
+    return productionStatusService.updateStatus(
+      productionId,
+      newStatus,
+      notes,
+      options,
+    );
   }
 
   async getProductionStatusHistory(productionId: string) {

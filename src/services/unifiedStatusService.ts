@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase';
+import type { ProductionStatus as CanonicalProductionStatus } from '@/constants/productionStatuses';
+import { productionStatusService } from '@/services/productionStatusService';
 
 // =====================================================
 // TYPES
@@ -293,27 +295,12 @@ export async function changeProductionStatus(
       };
     }
 
-    // Update status
-    const { error: updateError } = await supabase
-      .from('daily_production')
-      .update({ status: newStatus })
-      .eq('id', productionId);
-
-    if (updateError) {
-      return { success: false, error: updateError.message };
-    }
-
-    // Add notes if provided (will be added via trigger)
-    if (notes) {
-      await supabase
-        .from('unified_status_history')
-        .update({ notes })
-        .eq('entity_type', 'production')
-        .eq('entity_id', productionId)
-        .eq('new_status', newStatus)
-        .order('changed_at', { ascending: false })
-        .limit(1);
-    }
+    await productionStatusService.updateStatus(
+      productionId,
+      newStatus as CanonicalProductionStatus,
+      notes,
+      { expectedStatus: production.status as CanonicalProductionStatus },
+    );
 
     return { success: true };
   } catch (error: any) {

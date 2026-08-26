@@ -31,17 +31,25 @@ export interface FactureDefinitive {
   version?: number;
 }
 
+export type TypePaiementArtisan =
+  | 'virement_bancaire' | 'cash' | 'orange_money' | 'mobile_money'
+  | 'moov_money' | 'wave' | 'cheque';
+export type StatutPaiementArtisan =
+  | 'en_attente' | 'en_traitement' | 'valide' | 'complete' | 'annule' | 'echec';
+export type TypeTaxeRetenue =
+  | 'tva' | 'retenue_source' | 'taxe_municipale' | 'taxe_regionale' | 'autre';
+
 export interface PaiementArtisan {
   id?: string;
   reference_paiement: string;
   facture_id: string;
   vente_or_id: string;
   artisan_id: string;
-  type_paiement: 'virement_bancaire' | 'cash' | 'orange_money' | 'mobile_money' | 'moov_money' | 'wave' | 'cheque';
+  type_paiement: TypePaiementArtisan;
   montant_paye: number;
   montant_taxes_retenues: number;
   details_paiement: any;
-  statut: 'en_attente' | 'en_traitement' | 'valide' | 'complete' | 'annule' | 'echec';
+  statut: StatutPaiementArtisan;
   date_paiement: string;
   date_validation?: string;
   date_completion?: string;
@@ -67,7 +75,7 @@ export interface TaxeRetenue {
   facture_id: string;
   vente_or_id: string;
   artisan_id: string;
-  type_taxe: 'tva' | 'retenue_source' | 'taxe_municipale' | 'taxe_regionale' | 'autre';
+  type_taxe: TypeTaxeRetenue;
   libelle_taxe: string;
   taux_taxe: number;
   montant_taxe: number;
@@ -502,8 +510,8 @@ const artisanPaiementsService = {
   },
 
   async getAllPaiements(filters?: {
-    statut?: string;
-    type_paiement?: string;
+    statut?: StatutPaiementArtisan;
+    type_paiement?: TypePaiementArtisan;
     date_debut?: string;
     date_fin?: string;
   }): Promise<PaiementArtisan[]> {
@@ -545,7 +553,7 @@ const artisanPaiementsService = {
 
   async getTaxesRetenues(filters?: {
     statut_reversement?: string;
-    type_taxe?: string;
+    type_taxe?: TypeTaxeRetenue;
     periode_fiscale?: string;
   }): Promise<TaxeRetenue[]> {
     try {

@@ -1680,6 +1680,26 @@
       "sha256": "2b7ca587db00840d02cf21b6b5a66cd01f1d0cb2d2baa1de47a8f4c082f9fa83"
     },
     {
+      "path": "supabase/migrations/20260826191258_domaines_artisan_et_client_opposables.sql",
+      "version": "20260826191258",
+      "description": "domaines_artisan_et_client_opposables",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3849,
+      "sha256": "252c07b321644fd682c4d7cb22dccde57fafeb6375cbce27e9fc415575bc8daa"
+    },
+    {
+      "path": "supabase/migrations/20260826193155_statut_paiement_artisan_obligatoire.sql",
+      "version": "20260826193155",
+      "description": "statut_paiement_artisan_obligatoire",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1651,
+      "sha256": "15aa7636d91f158544fbd111f303d1a7fc2e428e21f031afad41d8946ebff1ce"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2673,10 +2693,10 @@
       },
       {
         "digits": 14,
-        "count": 71
+        "count": 73
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "47513142380309c85b6c11d829b427e5a843c55c6d03bc417f3401b107465f6a"
+  "catalogueSha256": "4448b228a7cd2d8ae6688d50f2bd04c3379e1526c6bb19a78768e96ab5a2c916"
 }

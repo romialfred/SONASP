@@ -1323,7 +1323,7 @@ export type Database = {
           name: string
           payment_terms: string | null
           phone: string | null
-          status: string | null
+          status: 'pending' | 'active' | 'inactive' | null
           tax_id: string | null
           updated_at: string | null
         }
@@ -1340,7 +1340,7 @@ export type Database = {
           name: string
           payment_terms?: string | null
           phone?: string | null
-          status?: string | null
+          status?: 'pending' | 'active' | 'inactive' | null
           tax_id?: string | null
           updated_at?: string | null
         }
@@ -1357,7 +1357,7 @@ export type Database = {
           name?: string
           payment_terms?: string | null
           phone?: string | null
-          status?: string | null
+          status?: 'pending' | 'active' | 'inactive' | null
           tax_id?: string | null
           updated_at?: string | null
         }
@@ -7084,10 +7084,10 @@ export type Database = {
           preuve_paiement_url: string | null
           recu_paiement_url: string | null
           reference_paiement: string
-          statut: string | null
+          statut: 'en_attente' | 'en_traitement' | 'valide' | 'complete' | 'annule' | 'echec'
           terminal_reason: string | null
           traite_par: string | null
-          type_paiement: string
+          type_paiement: 'orange_money' | 'moov_money' | 'wave' | 'mobile_money' | 'virement_bancaire' | 'cheque' | 'cash'
           updated_at: string | null
           valide_par: string | null
           vente_or_id: string
@@ -7114,10 +7114,10 @@ export type Database = {
           preuve_paiement_url?: string | null
           recu_paiement_url?: string | null
           reference_paiement: string
-          statut?: string | null
+          statut?: 'en_attente' | 'en_traitement' | 'valide' | 'complete' | 'annule' | 'echec'
           terminal_reason?: string | null
           traite_par?: string | null
-          type_paiement: string
+          type_paiement: 'orange_money' | 'moov_money' | 'wave' | 'mobile_money' | 'virement_bancaire' | 'cheque' | 'cash'
           updated_at?: string | null
           valide_par?: string | null
           vente_or_id: string
@@ -7144,10 +7144,10 @@ export type Database = {
           preuve_paiement_url?: string | null
           recu_paiement_url?: string | null
           reference_paiement?: string
-          statut?: string | null
+          statut?: 'en_attente' | 'en_traitement' | 'valide' | 'complete' | 'annule' | 'echec'
           terminal_reason?: string | null
           traite_par?: string | null
-          type_paiement?: string
+          type_paiement?: 'orange_money' | 'moov_money' | 'wave' | 'mobile_money' | 'virement_bancaire' | 'cheque' | 'cash'
           updated_at?: string | null
           valide_par?: string | null
           vente_or_id?: string
@@ -7278,7 +7278,7 @@ export type Database = {
           reversement_started_by: string | null
           statut_reversement: string | null
           taux_taxe: number
-          type_taxe: string
+          type_taxe: 'tva' | 'retenue_source' | 'taxe_municipale' | 'taxe_regionale' | 'autre'
           updated_at: string | null
           vente_or_id: string
           version: number
@@ -7305,7 +7305,7 @@ export type Database = {
           reversement_started_by?: string | null
           statut_reversement?: string | null
           taux_taxe: number
-          type_taxe: string
+          type_taxe: 'tva' | 'retenue_source' | 'taxe_municipale' | 'taxe_regionale' | 'autre'
           updated_at?: string | null
           vente_or_id: string
           version?: number
@@ -7332,7 +7332,7 @@ export type Database = {
           reversement_started_by?: string | null
           statut_reversement?: string | null
           taux_taxe?: number
-          type_taxe?: string
+          type_taxe?: 'tva' | 'retenue_source' | 'taxe_municipale' | 'taxe_regionale' | 'autre'
           updated_at?: string | null
           vente_or_id?: string
           version?: number
@@ -7505,7 +7505,7 @@ export type Database = {
           taxe_dev_comm_taux: number | null
           tva_montant_fcfa: number | null
           tva_taux: number | null
-          type_or: string
+          type_or: 'poudre' | 'lingot' | 'pepites' | 'bijoux' | 'autre'
           updated_at: string
           updated_by: string | null
           version: number
@@ -7535,7 +7535,7 @@ export type Database = {
           taxe_dev_comm_taux?: number | null
           tva_montant_fcfa?: number | null
           tva_taux?: number | null
-          type_or: string
+          type_or: 'poudre' | 'lingot' | 'pepites' | 'bijoux' | 'autre'
           updated_at?: string
           updated_by?: string | null
           version?: number
@@ -7565,7 +7565,7 @@ export type Database = {
           taxe_dev_comm_taux?: number | null
           tva_montant_fcfa?: number | null
           tva_taux?: number | null
-          type_or?: string
+          type_or?: 'poudre' | 'lingot' | 'pepites' | 'bijoux' | 'autre'
           updated_at?: string
           updated_by?: string | null
           version?: number

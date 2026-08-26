@@ -1520,6 +1520,16 @@
       "sha256": "b28079c1d312d552800a962cf6a9a60c861bc9179e35cacc2b8a5f354ecb37c5"
     },
     {
+      "path": "supabase/migrations/20260826020000_vue_parametres_ventes_or.sql",
+      "version": "20260826020000",
+      "description": "vue_parametres_ventes_or",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 4543,
+      "sha256": "56fe990441f9e3d01fb1d158e2007cf3e89f840307147088ff44571716d28157"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2513,10 +2523,10 @@
       },
       {
         "digits": 14,
-        "count": 55
+        "count": 56
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "abd898057d7562c74e9f40a8fb41ad315c7536d4c82e7c60d0b70ddf75e957cd"
+  "catalogueSha256": "3885c07010dbf465165209a77d5fea7a8d23298a264b217119f78c35b97096ef"
 }

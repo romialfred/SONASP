@@ -13873,6 +13873,46 @@ export type Database = {
           },
         ]
       }
+      gold_sales_settings_view: {
+        Row: {
+          contact_person: string | null
+          created_at: string | null
+          created_by: string | null
+          created_by_name: string | null
+          customer_id: string | null
+          customer_name: string | null
+          effective_date: string | null
+          id: string | null
+          is_active: boolean | null
+          max_stock_percentage: number | null
+          mining_company_abbr: string | null
+          mining_company_id: string | null
+          mining_company_name: string | null
+          notes: string | null
+          refining_fees_paid_by_customer: boolean | null
+          sale_method: string | null
+          transport_fees_paid_by_customer: boolean | null
+          updated_at: string | null
+          updated_by: string | null
+          updated_by_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gold_sales_settings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gold_sales_settings_mining_company_id_fkey"
+            columns: ["mining_company_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shipments_for_presale: {
         Row: {
           bullion_grams: number | null

@@ -17,7 +17,7 @@ l'atteste. Les faits cités ont été observés sur le projet hébergé
 | R-09 | Barème fiscal sans validation juridique | élevé | avérée | **élevé** | ouvert |
 | R-10 | Montants financiers non arrondis en XOF | moyen | avérée | moyen | ouvert |
 | R-11 | Fonctions Edge non déployées | moyen | avérée | moyen | ouvert |
-| R-12 | Quinze objets appelés par le code et absents du schéma | **élevé** | avérée | **élevé** | ouvert, en cours |
+| R-12 | Objets appelés par le code et absents du schéma | moyen | avérée | moyen | **réduit** |
 | R-13 | Écriture anonyme sur snp_avoirs_achat | moyen | avérée | moyen | ouvert |
 
 ---
@@ -295,12 +295,39 @@ sont consommées par du code réellement monté ; seule `user_mining_company_acc
 ne l'est pas — `SiteAccessTab` et `userMiningAccessService` sont orphelins, comme
 les composants de session. La corriger n'aurait aucun effet fonctionnel.
 
-**Reste.** Quinze relations, dont les vues d'inventaire
-(`current_inventory_status`, `monthly_inventory_summary`), d'analyse de change
-(`fx_rate_comparison`, `fx_analysis_with_details`, `fx_rates_monthly`), ainsi que
-`snp_modules_actifs`, `batches`, `refining_processes`, `shipping_status_history`,
-`gold_sales_settings_view`, `depositor_contact_summary`, `user_activity_summary`
-et `v_export_licenses_summary`.
+**Écrans rétablis.** Trois lots de vues ont été créés, chacun parce que sa
+définition se déduisait sans ambiguïté : l'analyse des prix de vente
+(`v_sales_price_analysis`, `v_monthly_sales_vs_market`), la comparaison des taux
+de change (`fx_rate_comparison`) et les paramètres de vente d'or
+(`gold_sales_settings_view`). Toutes en `security_invoker`, aucune lisible sans
+authentification.
+
+**Ce dernier point n'est pas cosmétique** : `snp_creer_vente_export` s'appuie sur
+`gold_sales_settings` pour refuser une vente à un client non autorisé et
+plafonner la part de stock accessible. Ne pas pouvoir consulter ces paramètres
+revenait à piloter à l'aveugle une règle qui, elle, s'applique.
+
+**Mesure de priorité, corrigée deux fois.** Le premier comptage vérifiait si le
+fichier consommateur était importé, non si la fonction appelante l'était ; au bon
+niveau, la plupart des relations restantes servent du code mort. Ce second
+comptage a lui-même deux angles morts : un composant React est monté en JSX et
+non appelé — ce qui a failli faire manquer `fx_rate_comparison` — et quatre
+services portent une fonction `getStatusHistory` homonyme, ce qui gonflait le
+score de `shipping_status_history`.
+
+**Reste : treize relations, toutes dans du code non appelé ou non dérivables.**
+
+| Relation | Pourquoi elle n'est pas recréée |
+|---|---|
+| `user_mining_company_access` | table métier ; règles d'attribution à inventer |
+| `shipping_status_history` | table ; le code référence sa contrainte `..._changed_by_fkey` |
+| `refining_processes` | attend `document_url`, absente de toute table ; l'appelant gère déjà l'absence |
+| `current_inventory_status`, `monthly_inventory_summary` | fonctions appelantes sans appelant |
+| `fx_analysis_with_details`, `fx_rates_monthly` | idem ; `fx_rates_monthly_aggregated` existe sous un autre nom |
+| `batches`, `depositor_contact_summary`, `user_activity_summary`, `v_export_licenses_summary`, `snp_modules_actifs` | idem |
+
+Les recréer n'aurait aucun effet fonctionnel. La question à trancher pour
+celles-ci n'est pas de les écrire mais de retirer le code mort qui les appelle.
 
 ---
 

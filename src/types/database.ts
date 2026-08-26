@@ -1080,6 +1080,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_accounts_receivable_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       customer_banks: {
@@ -1530,6 +1537,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -2683,6 +2697,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "gold_inventory_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       gold_prices_daily: {
@@ -2911,6 +2932,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -3501,6 +3529,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
+          {
             foreignKeyName: "payments_seller_bank_id_fkey"
             columns: ["seller_bank_id"]
             isOneToOne: false
@@ -3627,6 +3662,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "pre_sales_converted_sale_id_fkey"
+            columns: ["converted_sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
+          {
             foreignKeyName: "pre_sales_customer_bank_id_fkey"
             columns: ["customer_bank_id"]
             isOneToOne: false
@@ -3705,6 +3747,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_sales_inventory_matches_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -4302,6 +4351,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sale_pricing_details_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       sale_quantity_recommendations: {
@@ -4639,6 +4695,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sales_allocations_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       sales_approvals: {
@@ -4719,6 +4782,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sales_approvals_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       sales_audit_trail: {
@@ -4780,6 +4850,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_audit_trail_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -4861,6 +4938,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -4946,6 +5030,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sales_documents_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       sales_line_items: {
@@ -5011,6 +5102,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_line_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -5086,6 +5184,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sales_notifications_log_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       sales_payment_schedules: {
@@ -5157,6 +5262,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_payment_schedules_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -7850,6 +7962,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_avoirs_client_sale_id_origine_fkey"
+            columns: ["sale_id_origine"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       snp_avoirs_imputations: {
@@ -7914,6 +8033,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_avoirs_imputations_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -8604,6 +8730,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_conciliations_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
           {
             foreignKeyName: "snp_conciliations_soumis_par_fkey"
@@ -10249,6 +10382,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_grand_livre_commercial_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       snp_grand_livre_fiscal: {
@@ -10360,6 +10500,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_grand_livre_fiscal_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -10658,6 +10805,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_payment_operation_ledger_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       snp_payment_proofs: {
@@ -10727,6 +10881,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_payment_proofs_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -12032,6 +12193,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "snp_ventes_evenements_audit_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
+          },
         ]
       }
       snp_ventes_lots: {
@@ -12109,6 +12277,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_ventes_lots_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_price_analysis"
+            referencedColumns: ["sale_id"]
           },
         ]
       }
@@ -13899,6 +14074,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_monthly_sales_vs_market: {
+        Row: {
+          avg_market_price: number | null
+          avg_sale_price: number | null
+          avg_variance_percent: number | null
+          avg_variance_usd: number | null
+          month: number | null
+          total_quantity_oz: number | null
+          total_sales: number | null
+          total_variance_usd: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
       v_paiements_en_attente: {
         Row: {
           artisan_id: string | null
@@ -13914,6 +14103,22 @@ export type Database = {
           statut_paiement: string | null
           telephone: string | null
           vente_id: string | null
+        }
+        Relationships: []
+      }
+      v_sales_price_analysis: {
+        Row: {
+          customer_name: string | null
+          market_price_per_oz: number | null
+          month: number | null
+          quantity_oz: number | null
+          sale_date: string | null
+          sale_id: string | null
+          sale_number: string | null
+          sale_price_per_oz: number | null
+          variance_percent: number | null
+          variance_usd: number | null
+          year: number | null
         }
         Relationships: []
       }

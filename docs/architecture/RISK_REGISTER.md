@@ -17,7 +17,7 @@ l'atteste. Les faits cités ont été observés sur le projet hébergé
 | R-09 | Barème fiscal sans validation juridique | élevé | avérée | **élevé** | ouvert |
 | R-10 | Montants financiers non arrondis en XOF | moyen | avérée | moyen | ouvert |
 | R-11 | Fonctions Edge non déployées | moyen | avérée | moyen | ouvert |
-| R-12 | Dix-sept objets appelés par le code et absents du schéma | **élevé** | avérée | **élevé** | ouvert, qualifié |
+| R-12 | Quinze objets appelés par le code et absents du schéma | **élevé** | avérée | **élevé** | ouvert, en cours |
 | R-13 | Écriture anonyme sur snp_avoirs_achat | moyen | avérée | moyen | ouvert |
 
 ---
@@ -280,9 +280,27 @@ indisponibles. Ces quatre composants sont des vestiges d'une version antérieure
 Ils ont été corrigés plutôt que supprimés : justes et inutilisés vaut mieux que
 faux et inutilisés, et la décision de les retirer revient au commanditaire.
 
-**Reste.** Quinze relations absentes, dont `user_mining_company_access`
-(`SiteAccessTab`, `userMiningAccessService`), les vues d'inventaire, d'analyse de
-change et de prix de vente.
+**Traité ensuite : l'écran des cours.** `GoldPricesPage` interrogeait
+`v_sales_price_analysis` et `v_monthly_sales_vs_market` puis faisait remonter
+l'erreur — la page entière tombait. Les deux vues sont créées : leur définition
+se déduisait sans ambiguïté, l'écran déclarant les colonnes attendues et chacune
+se rapportant à une source unique et existante. Le cours de référence retenu est
+`london_am_rate`, celui-là même que portent les ventes ; à défaut de cours publié
+le jour de la vente, le dernier cours antérieur est utilisé, jamais un cours
+postérieur. Les deux vues sont en `security_invoker` : vérifié sur le miroir, un
+compte minier n'y voit qu'une vente sur vingt et une.
+
+**Priorité établie par la mesure.** Sur les seize relations restantes, quinze
+sont consommées par du code réellement monté ; seule `user_mining_company_access`
+ne l'est pas — `SiteAccessTab` et `userMiningAccessService` sont orphelins, comme
+les composants de session. La corriger n'aurait aucun effet fonctionnel.
+
+**Reste.** Quinze relations, dont les vues d'inventaire
+(`current_inventory_status`, `monthly_inventory_summary`), d'analyse de change
+(`fx_rate_comparison`, `fx_analysis_with_details`, `fx_rates_monthly`), ainsi que
+`snp_modules_actifs`, `batches`, `refining_processes`, `shipping_status_history`,
+`gold_sales_settings_view`, `depositor_contact_summary`, `user_activity_summary`
+et `v_export_licenses_summary`.
 
 ---
 

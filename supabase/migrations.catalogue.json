@@ -1660,6 +1660,26 @@
       "sha256": "dd1e5b48b07aae3347fb27735fcadfc8794b62253d93111e78471f0433a5862f"
     },
     {
+      "path": "supabase/migrations/20260826142232_domaines_artisan_opposables.sql",
+      "version": "20260826142232",
+      "description": "domaines_artisan_opposables",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2936,
+      "sha256": "a478812c0da8aeae509daa8a20b635f7cf58a2253fc07044c07229c408705430"
+    },
+    {
+      "path": "supabase/migrations/20260826142514_domaines_societes_opposables.sql",
+      "version": "20260826142514",
+      "description": "domaines_societes_opposables",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2619,
+      "sha256": "2b7ca587db00840d02cf21b6b5a66cd01f1d0cb2d2baa1de47a8f4c082f9fa83"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2653,10 +2673,10 @@
       },
       {
         "digits": 14,
-        "count": 69
+        "count": 71
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "ecf1f55033f62504e65d958ab017a6b9094ed9f46bd00b0c631352772881ce69"
+  "catalogueSha256": "47513142380309c85b6c11d829b427e5a843c55c6d03bc417f3401b107465f6a"
 }

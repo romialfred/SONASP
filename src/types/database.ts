@@ -7754,8 +7754,8 @@ export type Database = {
           sexe: string | null
           telephone: string
           telephone_secondaire: string | null
-          type_artisan: string
-          type_personne: string
+          type_artisan: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur'
+          type_personne: 'physique' | 'morale'
           type_piece_identite: string | null
           updated_at: string | null
           updated_by: string | null
@@ -7797,8 +7797,8 @@ export type Database = {
           sexe?: string | null
           telephone: string
           telephone_secondaire?: string | null
-          type_artisan: string
-          type_personne: string
+          type_artisan: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur'
+          type_personne: 'physique' | 'morale'
           type_piece_identite?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -7840,8 +7840,8 @@ export type Database = {
           sexe?: string | null
           telephone?: string
           telephone_secondaire?: string | null
-          type_artisan?: string
-          type_personne?: string
+          type_artisan?: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur'
+          type_personne?: 'physique' | 'morale'
           type_piece_identite?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -12752,7 +12752,7 @@ export type Database = {
       transport_companies: {
         Row: {
           address: string | null
-          company_type: string
+          company_type: 'mine_to_airport' | 'airport_to_refinery' | 'both'
           contact_person: string | null
           created_at: string | null
           email: string
@@ -12764,7 +12764,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          company_type: string
+          company_type: 'mine_to_airport' | 'airport_to_refinery' | 'both'
           contact_person?: string | null
           created_at?: string | null
           email: string
@@ -12776,7 +12776,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          company_type?: string
+          company_type?: 'mine_to_airport' | 'airport_to_refinery' | 'both'
           contact_person?: string | null
           created_at?: string | null
           email?: string

@@ -296,14 +296,18 @@ export interface TabOption<T extends string> {
 }
 
 /**
- * Onglets sobres, soulignés. Les flèches déplacent la sélection, comme l'attend
- * un `tablist`.
+ * Onglets sobres. Les flèches déplacent la sélection, comme l'attend un
+ * `tablist`.
+ *
+ * `underline` sépare deux sections d'une page ; `pill` filtre une même liste et
+ * se pose donc au-dessus d'elle, à côté de la recherche.
  */
-export function Tabs<T extends string>({ value, options, onChange, ariaLabel }: {
+export function Tabs<T extends string>({ value, options, onChange, ariaLabel, variant = 'underline' }: {
   value: T;
   options: TabOption<T>[];
   onChange: (value: T) => void;
   ariaLabel: string;
+  variant?: 'underline' | 'pill';
 }) {
   const deplacer = (pas: number) => {
     const index = options.findIndex((option) => option.value === value);
@@ -313,7 +317,7 @@ export function Tabs<T extends string>({ value, options, onChange, ariaLabel }: 
   };
 
   return (
-    <div className="sn-tabs" role="tablist" aria-label={ariaLabel}>
+    <div className={`sn-tabs sn-tabs--${variant}`} role="tablist" aria-label={ariaLabel}>
       {options.map((option) => {
         const Icon = option.icon;
         const actif = option.value === value;

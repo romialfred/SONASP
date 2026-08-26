@@ -76,10 +76,10 @@ export const LIBELLES_TAXES: Record<CodeTaxe, string> = {
 };
 
 export const LIBELLES_ASSIETTES: Record<Assiette, string> = {
-  ca_ht: "Chiffre d'affaires hors taxes",
+  ca_ht: "Chiffre d’affaires hors taxes",
   produit_net: 'Produit net de la vente',
   montant_brut: 'Montant brut',
-  quantite_or_fin: "Quantité d'or fin",
+  quantite_or_fin: "Quantité d’or fin",
 };
 
 export const LIBELLES_MODES: Record<ModeCalcul, string> = {
@@ -91,7 +91,7 @@ export const LIBELLES_MODES: Record<ModeCalcul, string> = {
 
 export const LIBELLES_PROFILS: Record<ProfilVendeur, string> = {
   tous: 'Tous les vendeurs',
-  comptoir: "Comptoir d'achat",
+  comptoir: "Comptoir d’achat",
   mine_industrielle: 'Mine industrielle',
   mine_semi_mecanisee: 'Mine semi-mécanisée',
   artisan: 'Artisan minier',
@@ -104,6 +104,30 @@ export const LIBELLES_STATUTS: Record<StatutRegle, string> = {
 };
 
 export const reglesFiscalesService = {
+  /**
+   * Nom des acteurs cités par les règles, pour n'afficher un identifiant à
+   * personne. Un profil hors de portée du lecteur est simplement absent de la
+   * table de correspondance : l'écran retombe alors sur une mention neutre.
+   */
+  async nomsActeurs(ids: string[]): Promise<Record<string, string>> {
+    const uniques = [...new Set(ids.filter(Boolean))];
+    if (uniques.length === 0) return {};
+
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, email')
+      .in('id', uniques);
+
+    if (error) throw error;
+
+    const noms: Record<string, string> = {};
+    for (const profil of (data ?? []) as { id: string; full_name: string | null; email: string | null }[]) {
+      const nom = profil.full_name?.trim() || profil.email?.trim();
+      if (nom) noms[profil.id] = nom;
+    }
+    return noms;
+  },
+
   /** Toutes les règles, la plus récemment applicable en tête. */
   async lister(): Promise<RegleFiscale[]> {
     const { data, error } = await supabase

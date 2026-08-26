@@ -1,0 +1,206 @@
+/**
+ * Référentiel fiscal — habillage propre à l'écran.
+ *
+ * Aucune couleur ni aucun rayon n'est redéfini ici : tout vient des jetons
+ * `--sn-*`. La page n'ajoute que la grille de tuiles et la barre d'outils, deux
+ * formes que le socle ne portait pas encore.
+ */
+
+/* ------------------------------------------------------------ Barre d'outils */
+
+.rf-barre {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--sn-gap-lg);
+  padding: 10px 12px;
+  gap: 12px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-shadow-card);
+}
+
+.rf-barre__filtres {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 10px;
+}
+
+.rf-barre__recherche { width: min(320px, 100%); }
+
+/* ------------------------------------------------------------ Grille tuiles */
+
+.rf-tuiles {
+  display: grid;
+  gap: var(--sn-gap-lg);
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+
+.rf-tuile {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  padding: 15px 16px 14px;
+  gap: 13px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-shadow-card);
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.rf-tuile:hover {
+  transform: translateY(-1px);
+  border-color: #c9d8d1;
+  box-shadow: var(--sn-shadow-raised);
+}
+
+/* Une règle retirée ne doit pas se lire comme une règle qui s'applique. */
+.rf-tuile.is-inactive { background: var(--sn-surface-alt); }
+.rf-tuile.is-inactive .rf-tuile__valeur strong { color: var(--sn-muted); }
+
+.rf-tuile__haut { display: flex; align-items: flex-start; gap: 12px; }
+
+.rf-tuile__icone {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--sn-green);
+  background: var(--sn-green-soft);
+  border-radius: 11px;
+}
+
+.rf-tuile__icone svg { width: 18px; height: 18px; }
+.rf-tuile__icone.is-gold { color: var(--sn-gold-dark); background: var(--sn-gold-soft); }
+.rf-tuile__icone.is-violet { color: var(--sn-violet); background: var(--sn-violet-soft); }
+.rf-tuile__icone.is-neutral { color: var(--sn-muted); background: var(--sn-line-soft); }
+
+.rf-tuile__titre { min-width: 0; flex: 1; }
+
+.rf-tuile__titre h3 {
+  margin: 0;
+  color: var(--sn-navy);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rf-tuile__titre p {
+  margin: 3px 0 0;
+  overflow: hidden;
+  color: var(--sn-muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rf-tuile__valeur { flex: 0 0 auto; text-align: right; }
+.rf-tuile__valeur span { display: block; color: var(--sn-faint); font-size: 10.5px; font-weight: 600; }
+
+.rf-tuile__valeur strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--sn-green-dark);
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+/* --------------------------------------------------------------- Menu tuile */
+
+.rf-menu { position: relative; flex: 0 0 auto; }
+
+.rf-menu__liste {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 184px;
+  padding: 5px;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: var(--sn-radius);
+  box-shadow: var(--sn-shadow-pop);
+}
+
+.rf-menu__liste button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 8px 10px;
+  gap: 9px;
+  border: 0;
+  color: var(--sn-ink-soft);
+  background: transparent;
+  border-radius: var(--sn-radius-sm);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rf-menu__liste button:hover { color: var(--sn-navy); background: var(--sn-surface-alt); }
+.rf-menu__liste button svg { width: 15px; height: 15px; color: var(--sn-muted); }
+
+/* -------------------------------------------------------------- Corps tuile */
+
+.rf-tuile__faits {
+  display: grid;
+  padding-top: 12px;
+  gap: 11px 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--sn-line-soft);
+}
+
+.rf-fait { min-width: 0; }
+.rf-fait dt { color: var(--sn-faint); font-size: 10.5px; font-weight: 600; }
+
+.rf-fait dd {
+  margin: 2px 0 0;
+  color: var(--sn-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.rf-fait dd.is-vide { color: var(--sn-faint); font-weight: 500; font-style: italic; }
+
+.rf-tuile__pied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* --------------------------------------------------------------- Détail */
+
+.rf-detail { display: grid; gap: 14px; }
+
+.rf-detail__ligne {
+  display: grid;
+  padding-bottom: 11px;
+  gap: 3px;
+  border-bottom: 1px solid var(--sn-line-soft);
+}
+
+.rf-detail__ligne:last-child { padding-bottom: 0; border-bottom: 0; }
+.rf-detail__ligne dt { color: var(--sn-faint); font-size: 10.5px; font-weight: 600; }
+.rf-detail__ligne dd { margin: 0; color: var(--sn-ink); font-size: 12.5px; font-weight: 600; }
+
+@media (max-width: 900px) {
+  .rf-barre { flex-wrap: wrap; }
+  .rf-barre__filtres { justify-content: flex-start; }
+  .rf-barre__recherche { width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .rf-tuiles { grid-template-columns: minmax(0, 1fr); }
+  .rf-tuile__faits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

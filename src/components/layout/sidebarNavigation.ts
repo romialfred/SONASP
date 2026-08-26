@@ -113,11 +113,12 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       {
         id: 'conciliation',
         label: 'Conciliation',
-        path: '/conciliation/regles-fiscales',
+        path: '/conciliation',
         icon: Scale,
         color: '#635bff',
         children: [
-          { label: 'Règles fiscales', path: '/conciliation/regles-fiscales', icon: Scale, color: '#635bff' },
+          { label: 'Dossiers', path: '/conciliation', icon: Scale, color: '#635bff' },
+          { label: 'Règles fiscales', path: '/conciliation/regles-fiscales', icon: Gavel, color: '#b97f00' },
         ],
       },
 

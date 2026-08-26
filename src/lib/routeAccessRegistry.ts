@@ -188,6 +188,11 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   }),
   // Le referentiel fiscal se consulte largement et ne s'administre que par les
   // profils habilites ; l'ecriture reste gouvernee par la capacite, non par la route.
+  ...policies(['/conciliation', '/conciliation/:id'], {
+    roles: ['management', 'admin', 'manager', 'mine'], accountTypes: ['sonasp', 'mine'],
+    capabilities: [CAPABILITIES.RECONCILIATION_READ],
+    readOnly: true, national: false,
+  }),
   ...policies(['/conciliation/regles-fiscales'], {
     roles: ['management', 'admin', 'manager', 'mine'], accountTypes: ['sonasp', 'mine'],
     capabilities: [CAPABILITIES.TAX_RULES_READ, CAPABILITIES.TAX_RULES_MANAGE],

@@ -182,6 +182,8 @@ const ManagerPortalPage = lazy(() => import('./pages/manager/ManagerPortalPage')
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
 const UpdatePassword = lazy(() => import('./pages/auth/UpdatePassword'));
 const ReglesFiscalesPage = lazy(() => import('./pages/fiscalite/ReglesFiscalesPage'));
+const ConciliationsPage = lazy(() => import('./pages/conciliation/ConciliationsPage'));
+const ConciliationDetails = lazy(() => import('./pages/conciliation/ConciliationDetails'));
 
 function AppRoutes() {
   const location = useLocation();
@@ -663,6 +665,17 @@ function AppRoutes() {
             {/* Conciliation : le referentiel fiscal gouverne les taxes appliquees
                 aux ventes. Aucun taux n'est ecrit dans le code. */}
             <Route
+              path="/conciliation"
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'admin', 'manager', 'mine']}
+                  requiredAnyCapabilities={[CAPABILITIES.RECONCILIATION_READ]}
+                >
+                  <ConciliationsPage />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
               path="/conciliation/regles-fiscales"
               element={(
                 <ProtectedRoute
@@ -670,6 +683,17 @@ function AppRoutes() {
                   requiredAnyCapabilities={[CAPABILITIES.TAX_RULES_READ, CAPABILITIES.TAX_RULES_MANAGE]}
                 >
                   <ReglesFiscalesPage />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/conciliation/:id"
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'admin', 'manager', 'mine']}
+                  requiredAnyCapabilities={[CAPABILITIES.RECONCILIATION_READ]}
+                >
+                  <ConciliationDetails />
                 </ProtectedRoute>
               )}
             />

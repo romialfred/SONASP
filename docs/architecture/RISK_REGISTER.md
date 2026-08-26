@@ -346,3 +346,57 @@ avoirs client, dont la lecture anonyme a été retirée (migration
 vérifié qu'aucun appelant légitime ne s'y appuie. Non traité dans le lot en
 cours pour ne pas mêler une table d'achat à un incrément de conciliation.
 
+
+---
+
+## R-14 — Les noms de fichiers de migration ne sont pas ceux appliqués · OUVERT
+
+**Description.** Les migrations de ce chantier ont été appliquées par l'outil
+Supabase, qui attribue son propre horodatage au moment de l'exécution. Le dépôt
+porte donc `20260825170000_retirer_extension_http_de_l_api.sql` là où la
+production a enregistré `20260825172835_retirer_extension_http_de_l_api`. Vingt
+fichiers environ sont dans ce cas.
+
+**Conséquence.** Un `supabase db push` considérerait ces fichiers comme jamais
+appliqués et tenterait de les rejouer. La plupart sont rejouables et leur
+postflight les arrêterait, mais ce n'est pas vrai de toutes.
+
+**Ce qui complique la réconciliation.** La correspondance n'est pas de un à un :
+`20260825220000_rpc_conciliation_transactionnelle.sql` a été appliqué en trois
+migrations distinctes (`conciliation_journal_idempotence`,
+`rpc_conciliation_ouvrir_et_analyse`, `rpc_conciliation_valider`), et
+`20260825230000_expliciter_droits_lecture_conciliation.sql` n'a aucun homologue
+enregistré sous ce nom.
+
+**Pourquoi ce n'est pas corrigé ici.** Renommer vingt fichiers sur une
+correspondance qui n'est pas bijective demande une relecture pièce par pièce,
+sans rapport avec la livraison en cours. Le faire vite serait le faire mal.
+
+**Mitigation à faire.** Établir la table de correspondance exacte fichier →
+version appliquée, renommer les fichiers jamais appliqués sous leur propre nom
+— ce qui ne contrevient pas à la règle protégeant les migrations appliquées,
+puisque ces noms-là ne l'ont jamais été — puis vérifier par
+`supabase db push --linked --dry-run` qu'il ne reste rien en attente.
+
+**En attendant.** Ne pas lancer `supabase db push` sur ce dépôt.
+
+---
+
+## Jeu de démonstration — ce qu'il faut savoir
+
+Ajouté le 26 août 2026 à la demande expresse du commanditaire, par la migration
+`20260826081432_jeu_demonstration_conciliation.sql`.
+
+**Les taux ne sont pas une vérité juridique.** TVA 18 %, FNDL 1 %, redevance
+progressive à 3/4/5 % selon le cours : ils illustrent le moteur. Chacun porte une
+référence réglementaire commençant par « A confirmer » et devra être remplacé par
+le barème opposable avant tout usage réel.
+
+**Tout est marqué.** `DEMO-20260826` dans le commentaire des règles, dans les
+observations des dossiers. Le retrait est rappelé en fin de migration.
+
+**Ce que la démonstration ne peut pas montrer.** Les deux dossiers ont été
+ouverts au nom du propriétaire. La procédure de validation refuse qu'un acteur
+valide ce qu'il a préparé : le parcours ne va donc jusqu'au bout qu'avec un
+second compte, de rôle `management`. Cette limite est le comportement attendu,
+pas un défaut du jeu de données.

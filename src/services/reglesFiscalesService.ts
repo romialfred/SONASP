@@ -17,6 +17,9 @@ export type CodeTaxe = 'tva' | 'royalties' | 'fndl' | 'retenue_source' | 'taxe_c
 export type Assiette = 'ca_ht' | 'produit_net' | 'montant_brut' | 'quantite_or_fin';
 export type ModeCalcul = 'taux' | 'tranche' | 'forfait' | 'exoneration';
 export type StatutRegle = 'projet' | 'approuvee' | 'abrogee';
+/** Qui vend. Un profil nommé l'emporte sur la règle générale « tous ». */
+export type ProfilVendeur =
+  | 'tous' | 'comptoir' | 'mine_industrielle' | 'mine_semi_mecanisee' | 'artisan';
 
 export interface RegleFiscale {
   id: string;
@@ -30,6 +33,7 @@ export interface RegleFiscale {
   seuil_max: number | null;
   unite_seuil: string | null;
   devise_seuil: string | null;
+  profil_vendeur: ProfilVendeur;
   categorie_acheteur: string;
   date_effet: string;
   date_fin: string | null;
@@ -56,9 +60,9 @@ export interface BrouillonRegle {
   seuil_max?: number | null;
   unite_seuil?: string | null;
   devise_seuil?: string | null;
+  profil_vendeur?: ProfilVendeur;
   categorie_acheteur?: string;
   date_effet: string;
-  date_fin?: string | null;
   reference_reglementaire?: string | null;
   commentaire?: string | null;
 }
@@ -85,6 +89,14 @@ export const LIBELLES_MODES: Record<ModeCalcul, string> = {
   exoneration: 'Exonération',
 };
 
+export const LIBELLES_PROFILS: Record<ProfilVendeur, string> = {
+  tous: 'Tous les vendeurs',
+  comptoir: "Comptoir d'achat",
+  mine_industrielle: 'Mine industrielle',
+  mine_semi_mecanisee: 'Mine semi-mécanisée',
+  artisan: 'Artisan minier',
+};
+
 export const LIBELLES_STATUTS: Record<StatutRegle, string> = {
   projet: 'Projet',
   approuvee: 'Approuvée',
@@ -106,48 +118,44 @@ export const reglesFiscalesService = {
   },
 
   /**
-   * Crée une règle en projet. Elle n'entre en vigueur qu'une fois approuvée par
-   * un autre acteur.
+   * Crée une règle en projet. L'écriture directe est fermée à `authenticated` :
+   * seule la procédure écrit, après avoir vérifié l'authentification forte et la
+   * capacité `tax.rules.manage`.
    */
   async creer(brouillon: BrouillonRegle): Promise<RegleFiscale> {
-    const { data: session } = await supabase.auth.getUser();
-
-    const { data, error } = await supabase
-      .from('snp_regles_fiscales')
-      .insert({
-        ...brouillon,
-        categorie_acheteur: brouillon.categorie_acheteur || 'standard',
-        statut: 'projet',
-        cree_par: session.user?.id ?? null,
-      })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('snp_regle_fiscale_creer', {
+      p_code_taxe: brouillon.code_taxe,
+      p_libelle: brouillon.libelle,
+      p_assiette: brouillon.assiette,
+      p_mode_calcul: brouillon.mode_calcul,
+      p_taux: brouillon.taux ?? null,
+      p_montant_forfaitaire: brouillon.montant_forfaitaire ?? null,
+      p_seuil_min: brouillon.seuil_min ?? null,
+      p_seuil_max: brouillon.seuil_max ?? null,
+      p_unite_seuil: brouillon.unite_seuil ?? null,
+      p_devise_seuil: brouillon.devise_seuil ?? null,
+      p_profil_vendeur: brouillon.profil_vendeur ?? 'tous',
+      p_categorie_acheteur: brouillon.categorie_acheteur ?? 'standard',
+      p_date_effet: brouillon.date_effet,
+      p_reference_reglementaire: brouillon.reference_reglementaire ?? null,
+      p_commentaire: brouillon.commentaire ?? null,
+    });
 
     if (error) throw error;
-    return data as RegleFiscale;
+    return data as unknown as RegleFiscale;
   },
 
   /**
-   * Approuve une règle. La base refuse qu'un acteur approuve la sienne, et que
-   * deux règles se disputent la même période pour la même taxe.
+   * Approuve une règle. La procédure refuse qu'un acteur approuve la sienne, et
+   * la base refuse que deux règles se disputent la même période.
    */
   async approuver(id: string): Promise<RegleFiscale> {
-    const { data: session } = await supabase.auth.getUser();
-
-    const { data, error } = await supabase
-      .from('snp_regles_fiscales')
-      .update({
-        statut: 'approuvee',
-        approuve_par: session.user?.id ?? null,
-        approuve_le: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('snp_regle_fiscale_approuver', {
+      p_id: id,
+    });
 
     if (error) throw error;
-    return data as RegleFiscale;
+    return data as unknown as RegleFiscale;
   },
 
   /**
@@ -155,22 +163,12 @@ export const reglesFiscalesService = {
    * aux opérations qu'elle a servi à calculer.
    */
   async abroger(id: string): Promise<RegleFiscale> {
-    const { data: session } = await supabase.auth.getUser();
-
-    const { data, error } = await supabase
-      .from('snp_regles_fiscales')
-      .update({
-        statut: 'abrogee',
-        abroge_par: session.user?.id ?? null,
-        abroge_le: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('snp_regle_fiscale_abroger', {
+      p_id: id,
+    });
 
     if (error) throw error;
-    return data as RegleFiscale;
+    return data as unknown as RegleFiscale;
   },
 
   /**
@@ -182,16 +180,20 @@ export const reglesFiscalesService = {
     date: string,
     valeurSeuil?: number,
     categorieAcheteur = 'standard',
+    profilVendeur: ProfilVendeur = 'tous',
   ): Promise<RegleFiscale | null> {
     const { data, error } = await supabase.rpc('snp_resoudre_regle_fiscale', {
       p_code_taxe: codeTaxe,
       p_date: date,
       p_valeur_seuil: valeurSeuil ?? undefined,
       p_categorie_acheteur: categorieAcheteur,
+      p_profil_vendeur: profilVendeur,
     });
 
     if (error) throw error;
-    const lignes = (data ?? []) as unknown as RegleFiscale[];
-    return lignes.length > 0 ? lignes[0] : null;
+    // La procédure renvoie une ligne composite : aucune règle applicable donne
+    // une ligne vide, dont l'identifiant est nul.
+    const ligne = data as unknown as RegleFiscale | null;
+    return ligne?.id ? ligne : null;
   },
 };

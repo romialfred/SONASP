@@ -1530,6 +1530,96 @@
       "sha256": "56fe990441f9e3d01fb1d158e2007cf3e89f840307147088ff44571716d28157"
     },
     {
+      "path": "supabase/migrations/20260826065224_attribuer_capacites_conciliation_et_fiscalite.sql",
+      "version": "20260826065224",
+      "description": "attribuer_capacites_conciliation_et_fiscalite",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2243,
+      "sha256": "b862dddf1ba22600c731f80927845ae72d8e78ac52efb88cfdfa6575178ac7e4"
+    },
+    {
+      "path": "supabase/migrations/20260826065747_declarer_module_conciliation.sql",
+      "version": "20260826065747",
+      "description": "declarer_module_conciliation",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1883,
+      "sha256": "cc5df297238500c28bf9f1148a53fb8c2c46bc39083ca8ac03b2a4e3b1c8406d"
+    },
+    {
+      "path": "supabase/migrations/20260826081345_declarer_sous_module_dossiers_conciliation.sql",
+      "version": "20260826081345",
+      "description": "declarer_sous_module_dossiers_conciliation",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1118,
+      "sha256": "73ec04b53a1bea56968d8a7bb861c78fefdb9e69d19276e46de766f863327c00"
+    },
+    {
+      "path": "supabase/migrations/20260826081432_jeu_demonstration_conciliation.sql",
+      "version": "20260826081432",
+      "description": "jeu_demonstration_conciliation",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 5402,
+      "sha256": "bdd73ea8acc125917c6e8e76b555bdb68f655bc4b60336ff5af4a08ec4aa6bd9"
+    },
+    {
+      "path": "supabase/migrations/20260826082916_jeu_demonstration_conciliation_dossier_valide.sql",
+      "version": "20260826082916",
+      "description": "jeu_demonstration_conciliation_dossier_valide",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 5180,
+      "sha256": "677895f1f6195ae6bcdb7f7e42c3b406fcf02f21d2af963c3e656cd95b83e883"
+    },
+    {
+      "path": "supabase/migrations/20260826083251_conciliation_origine_et_or_fin_declares.sql",
+      "version": "20260826083251",
+      "description": "conciliation_origine_et_or_fin_declares",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 15024,
+      "sha256": "5b865fa6aa135d8d4441796098f3cac09793e226e867a52c49364b68b54237ee"
+    },
+    {
+      "path": "supabase/migrations/20260826083850_regles_fiscales_profil_vendeur_et_ecriture.sql",
+      "version": "20260826083850",
+      "description": "regles_fiscales_profil_vendeur_et_ecriture",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 14258,
+      "sha256": "525a09296ead0e7f8b5527b23ce9801a2ab1b5e25090c368843d439e4a3c277b"
+    },
+    {
+      "path": "supabase/migrations/20260826083911_baremes_fiscaux_connus.sql",
+      "version": "20260826083911",
+      "description": "baremes_fiscaux_connus",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6361,
+      "sha256": "57bc427b99c520b7b8884dbd0e2c52cefe886d8f4f646bdebd0a163d5026d6fc"
+    },
+    {
+      "path": "supabase/migrations/20260826095503_conciliation_transmettre_profil_vendeur.sql",
+      "version": "20260826095503",
+      "description": "conciliation_transmettre_profil_vendeur",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 10009,
+      "sha256": "9d06e971fb1a9f4baa130d1a9c7c289c50281ff158731fc8d6964802475b2848"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2523,10 +2613,10 @@
       },
       {
         "digits": 14,
-        "count": 56
+        "count": 65
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "3885c07010dbf465165209a77d5fea7a8d23298a264b217119f78c35b97096ef"
+  "catalogueSha256": "be2dc24da9e6cf4729ec51c791d30ef7938b782b896e480f92fe1641a38570ab"
 }

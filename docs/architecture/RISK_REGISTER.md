@@ -400,3 +400,78 @@ ouverts au nom du propriétaire. La procédure de validation refuse qu'un acteur
 valide ce qu'il a préparé : le parcours ne va donc jusqu'au bout qu'avec un
 second compte, de rôle `management`. Cette limite est le comportement attendu,
 pas un défaut du jeu de données.
+
+---
+
+## R-15 — Le barème fiscal saisi n'a pas de source vérifiable · OUVERT
+
+**Description.** La migration `20260826083911_baremes_fiscaux_connus.sql` inscrit
+un barème présenté comme « confirmé par le métier » : TVA 1,5 % pour les
+comptoirs d'achat, 0 % pour les mines industrielles, redevance 3 / 5 / 6 % sur
+des tranches de 4 000, 4 500 et 5 000 USD/oz.
+
+**Ce qui a été vérifié.** Ces valeurs ne figurent ni dans
+`Implementation-Concilliation.md`, ni dans les échanges de cette session. La
+spécification évoque 18 % pour la TVA — « NE PAS considérer 18 % comme une
+constante universelle » — et 1 % pour le FNDL, sans aucun barème de redevance
+chiffré. Seul le FNDL à 1 % concorde.
+
+**Pourquoi ce n'est pas bloquant aujourd'hui.** Les six règles sont en statut
+`projet`, sans auteur ni approbation. La résolution fiscale ne retient que les
+règles `approuvee` : aucune n'entre en vigueur tant qu'un acteur habilité ne
+l'approuve pas depuis l'écran, ce qui inscrit alors son nom au dossier. Vérifié :
+les six sont approuvables par le propriétaire, et aucune n'est en vigueur.
+
+**Ce qu'il faut faire.** Confirmer chaque taux contre le texte opposable avant
+approbation. Une fois approuvés, ils serviront à calculer des montants
+définitifs.
+
+**Effet de bord à connaître.** Les taux de démonstration ont reçu une date de fin
+au 26 août 2026. Aucune règle n'est donc en vigueur à compter de cette date : un
+dossier validé aujourd'hui signalera ses trois taxes comme non calculées. C'est
+le comportement voulu — mieux vaut un montant absent qu'un montant faux — mais il
+faut le savoir avant une démonstration.
+
+---
+
+## R-16 — Deux travaux parallèles ne se raccordaient pas · FERMÉ
+
+**Description.** Le référentiel fiscal a reçu une notion de profil du vendeur, et
+`snp_resoudre_regle_fiscale` un cinquième paramètre `p_profil_vendeur` dont le
+défaut est `'tous'`. La validation de conciliation, écrite en parallèle sans
+connaître ce changement, appelait la résolution avec trois arguments.
+
+**Conséquence mesurée.** La TVA n'existe que sous les profils `comptoir` et
+`mine_industrielle`. Résolue sous `'tous'`, elle ne renvoyait aucune règle :
+vérifié en base, `profil 'tous'` → aucune règle, `mine_industrielle` → 0 %,
+`comptoir` → 1,5 %. Chaque dossier aurait donc signalé la TVA comme non calculée,
+indéfiniment.
+
+**Correction.** `20260826095503_conciliation_transmettre_profil_vendeur.sql` lit
+le profil sur la vente : `seller_type = 'mining_company'` donne
+`mine_industrielle`. Prouvé de bout en bout : dossier validé avec
+`profil_vendeur: mine_industrielle`, trois taxes ajustées, aucune sans règle.
+
+**Ce qui reste à trancher.** `seller_type = 'sonasp'` ne correspond à aucun profil
+du référentiel — la société nationale n'est ni un comptoir ni une mine. Le profil
+`'tous'` est alors transmis, et la TVA sera signalée comme non calculée sur ces
+ventes plutôt que supposée. Le régime fiscal des ventes de la SONASP relève d'une
+décision métier.
+
+---
+
+## R-17 — Le contrat TypeScript du schéma retardait sur la base · FERMÉ
+
+**Description.** La colonne `profil_vendeur` a été ajoutée à
+`snp_regles_fiscales` et utilisée par le service et l'écran, sans être déclarée
+dans `src/types/database.ts`. Le compilateur ne signalait rien : le typage de
+cette table est trop lâche pour l'exiger.
+
+**Pourquoi cela compte.** Un contrat de types qui décrit un schéma qu'il n'a
+plus est précisément ce qui a produit le `TypeError: Cannot read properties of
+null` corrigé cette semaine. Le compilateur ne protège que ce que le contrat
+déclare honnêtement.
+
+**Correction.** La colonne est déclarée aux trois emplacements de la table —
+`Row` obligatoire, `Insert` et `Update` facultatifs, la base portant un défaut —
+ainsi qu'aux arguments et au retour de `snp_resoudre_regle_fiscale`.

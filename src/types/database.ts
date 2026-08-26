@@ -11363,6 +11363,7 @@ export type Database = {
           libelle: string
           mode_calcul: string
           montant_forfaitaire: number | null
+          profil_vendeur: string
           reference_reglementaire: string | null
           seuil_max: number | null
           seuil_min: number | null
@@ -11389,6 +11390,7 @@ export type Database = {
           libelle: string
           mode_calcul: string
           montant_forfaitaire?: number | null
+          profil_vendeur?: string
           reference_reglementaire?: string | null
           seuil_max?: number | null
           seuil_min?: number | null
@@ -11415,6 +11417,7 @@ export type Database = {
           libelle?: string
           mode_calcul?: string
           montant_forfaitaire?: number | null
+          profil_vendeur?: string
           reference_reglementaire?: string | null
           seuil_max?: number | null
           seuil_min?: number | null
@@ -16796,6 +16799,7 @@ export type Database = {
           p_categorie_acheteur?: string
           p_code_taxe: string
           p_date: string
+          p_profil_vendeur?: string
           p_valeur_seuil?: number
         }
         Returns: {
@@ -16816,6 +16820,7 @@ export type Database = {
           libelle: string
           mode_calcul: string
           montant_forfaitaire: number | null
+          profil_vendeur: string
           reference_reglementaire: string | null
           seuil_max: number | null
           seuil_min: number | null

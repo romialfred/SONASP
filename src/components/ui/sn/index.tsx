@@ -287,6 +287,75 @@ export function Segmented<T extends string>({ name, value, options, onChange, ar
   );
 }
 
+export interface TabOption<T extends string> {
+  value: T;
+  label: string;
+  icon?: LucideIcon;
+  /** Effectif affiché en pastille, quand il éclaire le choix. */
+  count?: number;
+}
+
+/**
+ * Onglets sobres, soulignés. Les flèches déplacent la sélection, comme l'attend
+ * un `tablist`.
+ */
+export function Tabs<T extends string>({ value, options, onChange, ariaLabel }: {
+  value: T;
+  options: TabOption<T>[];
+  onChange: (value: T) => void;
+  ariaLabel: string;
+}) {
+  const deplacer = (pas: number) => {
+    const index = options.findIndex((option) => option.value === value);
+    if (index < 0) return;
+    const cible = options[(index + pas + options.length) % options.length];
+    onChange(cible.value);
+  };
+
+  return (
+    <div className="sn-tabs" role="tablist" aria-label={ariaLabel}>
+      {options.map((option) => {
+        const Icon = option.icon;
+        const actif = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="tab"
+            id={`sn-tab-${option.value}`}
+            aria-selected={actif}
+            aria-controls={`sn-panneau-${option.value}`}
+            tabIndex={actif ? 0 : -1}
+            className={`sn-tabs__item${actif ? ' is-active' : ''}`}
+            onClick={() => onChange(option.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowRight') { event.preventDefault(); deplacer(1); }
+              if (event.key === 'ArrowLeft') { event.preventDefault(); deplacer(-1); }
+            }}
+          >
+            {Icon && <Icon aria-hidden="true" />}
+            {option.label}
+            {typeof option.count === 'number' && (
+              <span className="sn-tabs__count">{option.count}</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function TabPanel<T extends string>({ value, children }: {
+  value: T;
+  children: ReactNode;
+}) {
+  return (
+    <div role="tabpanel" id={`sn-panneau-${value}`} aria-labelledby={`sn-tab-${value}`}>
+      {children}
+    </div>
+  );
+}
+
 export interface ChoiceOption<T extends string> {
   value: T;
   label: string;

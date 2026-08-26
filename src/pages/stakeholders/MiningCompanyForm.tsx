@@ -42,7 +42,7 @@ interface BankAccount {
   account_number: string;
   account_currency: string;
   swift_code: string | null;
-  is_primary: boolean;
+  is_primary: boolean | null;
 }
 
 interface CompanyForm {

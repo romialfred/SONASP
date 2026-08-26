@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 
 interface FxRateComparison {
   id: string | null;
-  rate_date: string;
+  rate_date: string | null;
   currency_pair: string;
   source_id: string;
   source_name: string;

@@ -180,7 +180,7 @@ export default function FreightShipmentDetails() {
         boxType: shipment.box_type,
         description: 'Gold Doré Bars',
         metal: 'Gold (Au)',
-        netWeightKg: shipment.total_bullion_grams / 1000,
+        netWeightKg: (shipment.total_bullion_grams ?? 0) / 1000,
         weightTroyOz: shipment.total_pure_gold_oz,
         metalPriceCFAPerKg: (shipment.gold_price_usd_per_oz * 32.1507 * shipment.exchange_rate),
         estimatedValueCFA: shipment.total_value_local,

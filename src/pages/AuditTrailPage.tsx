@@ -18,7 +18,7 @@ interface AuditLog {
   module: string;
   details: string;
   ip_address: string | null;
-  status: 'success' | 'failed' | 'warning';
+  status: string | null;
 }
 
 export function AuditTrailPage() {

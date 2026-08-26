@@ -64,10 +64,12 @@ export interface ShippingProductionItem {
 
 export interface ShippingSignatory {
   id: string;
-  shipping_preparation_id: string;
-  full_name: string;
-  title: string;
-  organization?: string;
+  shipping_preparation_id: string | null;
+  /**
+   * La table porte `name` et `position`. Les champs `full_name`, `title` et
+   * `organization` appartiennent à `freight_shipment_signatories`, une autre
+   * table : ils valaient `undefined` ici.
+   */
   position: string;
   name: string;
   signature_data: string | null;
@@ -84,7 +86,7 @@ export interface ShippingIngot {
   gross_weight_grams: number;
   seal_number_1: string | null;
   seal_number_2: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 export interface ShippingDocument {

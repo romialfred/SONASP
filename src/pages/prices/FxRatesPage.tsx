@@ -51,7 +51,7 @@ interface MonthlyRate {
   avg_rate: number;
   min_rate: number;
   max_rate: number;
-  opening_rate: number;
+  opening_rate: number | null;
   closing_rate: number;
   data_points: number;
 }

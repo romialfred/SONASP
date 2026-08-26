@@ -15,7 +15,7 @@ interface DailyPrice {
   price_date: string;
   london_am_rate: number;
   london_pm_rate: number | null;
-  spot_price: number;
+  spot_price: number | null;
   average_price: number;
   high_price: number;
   low_price: number;
@@ -35,7 +35,7 @@ interface MonthlyAggregate {
 
 interface SalesPriceAnalysis {
   sale_id: string | null;
-  sale_number: string;
+  sale_number: string | null;
   sale_date: string;
   year: number;
   month: number;
@@ -49,7 +49,7 @@ interface SalesPriceAnalysis {
 
 interface MonthlySalesVsMarket {
   year: number | null;
-  month: number;
+  month: number | null;
   total_sales: number;
   total_quantity_oz: number;
   avg_sale_price: number;
@@ -170,7 +170,7 @@ export function GoldPricesPage() {
 
     // Filter out future months if viewing current year
     const filteredMonthlyData = selectedYear === currentYear
-      ? (monthlyData || []).filter(m => m.month <= currentMonth)
+      ? (monthlyData || []).filter((m) => m.month !== null && m.month <= currentMonth)
       : (monthlyData || []);
 
     setMonthlySalesVsMarket(filteredMonthlyData);
@@ -527,7 +527,7 @@ export function GoldPricesPage() {
                   <p className="text-sm text-gray-600">Total Trading Days</p>
                   <p className="text-3xl font-bold text-primary-600 mt-1">
                     {monthlyAggregates.length > 0
-                      ? monthlyAggregates.reduce((sum, m) => sum + m.total_days, 0)
+                      ? monthlyAggregates.reduce((somme, m) => somme + (m.total_days ?? 0), 0)
                       : '0'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">Across {monthlyAggregates.length} months</p>

@@ -7,7 +7,7 @@ export interface AnnualBudget {
   site_id: string;
   mining_company_id: string | null;
   created_by: string | null;
-  created_at: string;
+  created_at: string | null;
   updated_at: string;
 }
 
@@ -19,7 +19,7 @@ export interface MonthlyBudget {
   days_in_month: number;
   daily_budget_oz: number | null;
   mining_company_id: string | null;
-  created_at: string;
+  created_at: string | null;
   updated_at: string;
 }
 
@@ -34,7 +34,7 @@ export interface QuarterlyForecast {
   daily_forecast_oz: number | null;
   notes: string | null;
   mining_company_id: string | null;
-  created_by: string;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -56,7 +56,7 @@ export interface DailyTarget {
   forecast_oz: number;
   daily_budget_oz: number;
   daily_forecast_oz: number;
-  source: 'budget' | 'forecast' | 'none';
+  source: string;
 }
 
 class AnnualBudgetService {

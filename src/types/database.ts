@@ -6729,18 +6729,18 @@ export type Database = {
           dgi_reference: string | null
           emise_par: string | null
           id: string
-          montant_autres_taxes: number | null
+          montant_autres_taxes: number
           montant_brut: number
           montant_net_a_payer: number
-          montant_taxe_retenue_source: number | null
-          montant_taxe_tva: number | null
+          montant_taxe_retenue_source: number
+          montant_taxe_tva: number
           montant_total_taxes: number
           notes: string | null
           numero_facture: string
           pdf_url: string | null
           statut: string | null
-          taux_retenue_source: number | null
-          taux_tva: number | null
+          taux_retenue_source: number
+          taux_tva: number
           tax_policy_id: string | null
           updated_at: string | null
           vente_or_id: string

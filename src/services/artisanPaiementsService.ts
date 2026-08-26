@@ -6,7 +6,7 @@ export interface FactureDefinitive {
   vente_or_id: string;
   artisan_id: string;
   montant_brut: number;
-  montant_taxe_tva: number | null;
+  montant_taxe_tva: number;
   montant_taxe_retenue_source: number;
   montant_autres_taxes: number;
   montant_total_taxes: number;
@@ -50,7 +50,7 @@ export interface PaiementArtisan {
   montant_taxes_retenues: number;
   details_paiement: any;
   statut: StatutPaiementArtisan;
-  date_paiement: string;
+  date_paiement: string | null;
   date_validation?: string;
   date_completion?: string;
   preuve_paiement_url?: string;
@@ -79,7 +79,7 @@ export interface TaxeRetenue {
   libelle_taxe: string;
   taux_taxe: number;
   montant_taxe: number;
-  compte_comptable?: string;
+  compte_comptable?: string | null;
   reference_comptable?: string;
   statut_reversement: 'a_reverser' | 'en_cours' | 'reverse' | 'comptabilise';
   date_reversement?: string;
@@ -105,7 +105,7 @@ export interface VenteEnAttentePaiement {
   montant_net_a_payer: number | null;
   date_facture: string | null;
   statut_paiement: string;
-  certification_dgi_status: FactureDefinitive['certification_dgi_status'] | null;
+  certification_dgi_status: string | null;
   jours_attente: number | null;
   vente_statut: string;
   vente_version: number;

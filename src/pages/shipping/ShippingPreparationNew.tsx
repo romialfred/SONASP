@@ -27,7 +27,7 @@ interface DailyProduction {
   bullion_grams: number;
   estimated_fineness_pct: number;
   estimated_gold_pct?: number | null;
-  estimated_silver_pct?: number;
+  estimated_silver_pct?: number | null;
   silver_content_grams?: number;
   pure_gold_grams: number;
   estimated_oz: number;

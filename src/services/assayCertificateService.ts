@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { Json } from '@/types/database';
 import {
   createPrivateSignedUrl,
   PRIVATE_STORAGE_BUCKETS,
@@ -20,7 +21,7 @@ export interface AssayCertificate {
   file_name: string;
   file_size: number | null;
   mime_type: string | null;
-  parsing_status: 'pending' | 'processing' | 'completed' | 'failed' | 'manual_review';
+  parsing_status: string | null;
   parsing_error: string | null;
   parsed_at: string | null;
   approval_status: 'pending' | 'approved' | 'rejected';
@@ -53,7 +54,7 @@ export interface AssayCertificateData {
   silver_purity_percentage: number | null;
   platinum_content_ppm: number | null;
   palladium_content_ppm: number | null;
-  deleterious_elements: Record<string, number>;
+  deleterious_elements: Json;
   copper_percentage: number | null;
   iron_percentage: number | null;
   zinc_percentage: number | null;

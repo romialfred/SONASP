@@ -5,7 +5,7 @@ export interface Module {
   code: string;
   nom: string;
   description?: string | null;
-  icone?: string;
+  icone?: string | null;
   route?: string;
   parent_id?: string;
   parent_nom?: string;

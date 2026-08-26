@@ -30,7 +30,7 @@ export interface FreightShipment {
   gold_price_usd_per_oz: number;
   exchange_rate: number;
   local_currency: string;
-  total_bullion_grams: number;
+  total_bullion_grams: number | null;
   total_pure_gold_grams: number;
   total_pure_gold_oz: number;
   total_pure_silver_grams: number;

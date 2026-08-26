@@ -10,7 +10,7 @@ export interface ArtisanGoldSale {
   purete_karat: number;
   prix_kg_fcfa: number;
   montant_brut_fcfa: number;
-  tva_taux: number;
+  tva_taux: number | null;
   tva_montant_fcfa: number;
   taxe_dev_comm_taux: number;
   taxe_dev_comm_montant_fcfa: number;

@@ -14,7 +14,7 @@ import { errorMessage } from '@/lib/errorMessage';
 interface ShipmentInfo {
   id: string;
   expedition_lot_number: string | null;
-  total_net_weight_grams: number;
+  total_net_weight_grams: number | null;
   status: string;
   prepared_at: string;
 }
@@ -281,7 +281,7 @@ export function ExportLicenseDetails() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold text-gray-900">
-                          {shipment.total_net_weight_grams.toLocaleString()}g
+                          {shipment.total_net_weight_grams === null ? '—' : `${shipment.total_net_weight_grams.toLocaleString()}g`}
                         </p>
                         <span className={`text-xs px-2 py-0.5 rounded ${
                           shipment.status === 'validated_for_refinery'

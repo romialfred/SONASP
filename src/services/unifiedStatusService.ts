@@ -50,7 +50,7 @@ export interface StatusHistoryEntry {
   id: string;
   old_status: string | null;
   new_status: string;
-  change_context: StatusChangeContext;
+  change_context: string;
   changed_by: string | null;
   changed_at: string;
   action_description: string | null;

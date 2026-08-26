@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 export interface ScheduledReport {
   id: string;
-  report_type: 'executive' | 'sales' | 'batch' | 'customer' | 'financial' | 'operations';
+  report_type: string;
   frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
   schedule_time: string;
   schedule_day?: number;
@@ -23,7 +23,7 @@ export interface ReportHistory {
   report_name: string;
   generated_by?: string | null;
   generated_at: string;
-  file_size?: string;
+  file_size?: string | null;
   format: 'pdf' | 'excel' | 'csv';
   download_url?: string;
   parameters?: Record<string, any>;

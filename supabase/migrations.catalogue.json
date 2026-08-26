@@ -1710,6 +1710,16 @@
       "sha256": "72646bd28f39f072ab874810cbb2d98181e4e964c16b63564046cddce75e407f"
     },
     {
+      "path": "supabase/migrations/20260826221723_montants_taxes_facture_obligatoires.sql",
+      "version": "20260826221723",
+      "description": "montants_taxes_facture_obligatoires",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2736,
+      "sha256": "fdfe23bb23874f250ba10b67cf0e9123d18c9f8d3f62ba5bd1a09e44c7bf5461"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2703,10 +2713,10 @@
       },
       {
         "digits": 14,
-        "count": 74
+        "count": 75
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "d7f0aa6d2a46a74d8497e6d607354060f2c9a9165ba68be25ed06c4cc6bd1a11"
+  "catalogueSha256": "756794cb60900784cd0bdbe9e760e1cfea2608711af5af466649611b203c3586"
 }

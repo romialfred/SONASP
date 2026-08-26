@@ -29,7 +29,7 @@ export interface Customer {
   name: string;
   email: string;
   country: string;
-  status: 'active' | 'inactive' | 'pending';
+  status: "pending" | "active" | "inactive" | null;
 }
 
 export interface Refinery {

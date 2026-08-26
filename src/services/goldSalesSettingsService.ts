@@ -55,7 +55,7 @@ export interface AuthorizedCustomer {
   customer_id: string;
   customer_name: string;
   max_stock_percentage: number;
-  sale_method: SaleMethod;
+  sale_method: string;
   refining_fees_paid_by_customer: boolean;
   transport_fees_paid_by_customer: boolean;
 }

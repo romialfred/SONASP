@@ -673,12 +673,9 @@ export function ShippingPreparationDetailsEnhanced() {
                               </div>
                               <div className="flex-1">
                                 <p className="font-semibold text-gray-900">
-                                  {sig.full_name || sig.name}
+                                  {sig.name}
                                 </p>
-                                <p className="text-sm text-gray-600 mt-1">{sig.title || sig.position}</p>
-                                {sig.organization && (
-                                  <p className="text-xs text-gray-500 mt-1">{sig.organization}</p>
-                                )}
+                                <p className="text-sm text-gray-600 mt-1">{sig.position}</p>
                               </div>
                             </div>
                           </div>

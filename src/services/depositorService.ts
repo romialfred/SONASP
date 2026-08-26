@@ -29,7 +29,7 @@ export interface Depositor {
   cellphone: string | null;
   email: string;
   is_primary: boolean | null;
-  is_backup: boolean;
+  is_backup: boolean | null;
   group_email: string | null;
   is_active: boolean;
   notes: string | null;

@@ -631,3 +631,35 @@ plutôt qu'un montant faux présenté comme exact.
 **Décisions attendues.** Faut-il une tranche de redevance sous 4 000 USD/oz ?
 Quel régime de TVA pour les ventes de la SONASP elle-même ? Les deux se règlent
 depuis l'écran des règles fiscales, sans intervention technique.
+---
+
+## R-24 — Trois modules appliquent une TVA écrite en dur, contraire au barème · OUVERT
+
+**Constat, vérifié le 26 août 2026.** Le moteur de conciliation ne porte aucun
+taux : il les obtient tous par `snp_resoudre_regle_fiscale`. Trois autres
+chemins ne consultent rien.
+
+| Emplacement | Contenu |
+|---|---|
+| `VenteOrForm.tsx:89` | `TVA_TAUX = 18`, `TAXE_DEV_COMM_TAUX = 1` |
+| `achatMineService.ts:72` | `TVA_TAUX_DEFAUT = 18`, `TAXE_DEV_COMM_TAUX_DEFAUT = 1` |
+| `snp_repondre_demande` (SQL) | `v_tva := round(v_brut * 0.18, 2)` |
+
+**Pourquoi cela compte maintenant.** Le barème approuvé le 26 août dit 1,5 %
+pour un comptoir et 0 % pour une mine. Ces trois modules appliquent 18 % sans
+consulter le référentiel : une même opération peut porter deux TVA différentes
+selon l'écran qui la traite.
+
+**Ce qui limite les dégâts.** `snp_achats_mines`, `snp_artisan_ventes_or` et
+`snp_factures_achat` stockent le taux appliqué sur chaque ligne (`tva_taux`,
+`taxe_dev_comm_taux`). Une facture passée reste donc explicable : elle porte le
+taux qui l'a calculée. Ce qui manque, c'est que ce taux vienne du référentiel.
+
+**Ce qui bloque la correction.** Deux choses, toutes deux du ressort du métier :
+le référentiel ne connaît pas encore la taxe de développement communal, et
+passer de 18 % à 1,5 % ou 0 % change les montants des opérations à venir. C'est
+une décision fiscale, pas un correctif technique.
+
+**Travail à prévoir.** Les colonnes existent déjà pour recevoir le taux résolu ;
+il s'agit de remplacer la constante par un appel à
+`snp_resoudre_regle_fiscale`, comme le fait la conciliation.

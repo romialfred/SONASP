@@ -94,37 +94,42 @@ export default function LoginHistoryTab({ userId }: LoginHistoryTabProps) {
     {
       key: 'login_timestamp',
       label: 'Date & Heure',
-      render: (entry: LoginHistoryEntry) => (
+      render: (_valeur: unknown, entry: LoginHistoryEntry) => (
         <div>
           <div className="text-sm font-medium text-slate-900">
             {formatDate(entry.login_timestamp)}
           </div>
           {entry.logout_timestamp && (
             <div className="text-xs text-slate-500">
-              Déconnexion: {formatDate(entry.logout_timestamp)}
+              Révoquée : {formatDate(entry.logout_timestamp)}
             </div>
           )}
         </div>
       )
     },
     {
-      key: 'success',
-      label: 'Statut',
-      render: (entry: LoginHistoryEntry) => (
+      key: 'etat',
+      label: 'État',
+      render: (_valeur: unknown, entry: LoginHistoryEntry) => (
         <div className="flex items-center gap-2">
-          {entry.success ? (
+          {entry.logout_timestamp ? (
+            <>
+              <XCircle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-700 font-medium">Révoquée</span>
+            </>
+          ) : entry.is_active ? (
             <>
               <CheckCircle className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm text-emerald-700 font-medium">Succès</span>
+              <span className="text-sm text-emerald-700 font-medium">Active</span>
             </>
           ) : (
             <>
-              <XCircle className="w-4 h-4 text-red-600" />
-              <span className="text-sm text-red-700 font-medium">Échec</span>
+              <Shield className="w-4 h-4 text-slate-500" />
+              <span className="text-sm text-slate-600 font-medium">Expirée</span>
             </>
           )}
-          {entry.two_factor_verified && (
-            <Shield className="w-4 h-4 text-blue-600" title="2FA vérifié" />
+          {entry.is_current && (
+            <span className="text-xs text-blue-700">session courante</span>
           )}
         </div>
       )
@@ -132,13 +137,13 @@ export default function LoginHistoryTab({ userId }: LoginHistoryTabProps) {
     {
       key: 'device',
       label: 'Appareil',
-      render: (entry: LoginHistoryEntry) => (
+      render: (_valeur: unknown, entry: LoginHistoryEntry) => (
         <div className="flex items-center gap-2">
           {getDeviceIcon(entry.device_type)}
           <div>
-            <div className="text-sm text-slate-900">{entry.device_type || 'Unknown'}</div>
+            <div className="text-sm text-slate-900">{entry.device_type || 'Poste fixe'}</div>
             <div className="text-xs text-slate-500">
-              {entry.browser || 'Unknown'} • {entry.operating_system || 'Unknown'}
+              {entry.browser || 'Navigateur non identifié'}
             </div>
           </div>
         </div>
@@ -146,28 +151,26 @@ export default function LoginHistoryTab({ userId }: LoginHistoryTabProps) {
     },
     {
       key: 'location',
-      label: 'Localisation',
-      render: (entry: LoginHistoryEntry) => (
+      label: 'Pays',
+      render: (_valeur: unknown, entry: LoginHistoryEntry) => (
         <div className="text-sm text-slate-900">
-          {entry.location_city && entry.location_country
-            ? `${entry.location_city}, ${entry.location_country}`
-            : 'N/A'}
+          {entry.location_country || 'Non renseigné'}
         </div>
       )
     },
     {
       key: 'ip_address',
       label: 'IP',
-      render: (entry: LoginHistoryEntry) => (
+      render: (_valeur: unknown, entry: LoginHistoryEntry) => (
         <div className="text-sm font-mono text-slate-600">
-          {entry.ip_address || 'N/A'}
+          {entry.ip_address || 'Non renseignée'}
         </div>
       )
     },
     {
       key: 'session_duration',
       label: 'Durée',
-      render: (entry: LoginHistoryEntry) => (
+      render: (_valeur: unknown, entry: LoginHistoryEntry) => (
         <div className="text-sm text-slate-900">
           {formatDuration(entry.session_duration_seconds)}
         </div>
@@ -217,7 +220,6 @@ export default function LoginHistoryTab({ userId }: LoginHistoryTabProps) {
             <Table
               columns={columns}
               data={history}
-              emptyMessage="Aucun historique trouvé"
             />
           </Card>
 

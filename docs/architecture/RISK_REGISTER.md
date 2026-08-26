@@ -266,11 +266,23 @@ approche antérieure.
 de sécurité que les RPC mettent en place. Mieux vaut un écran franchement
 inopérant qu'un écran affichant des données inventées ou contournant un contrôle.
 
-**Suite.** La refonte de `LoginSessionsTab` et `UserStatsCard` vers
-`snp_sessions_lister` est un incrément à part : le composant expose `success`,
-`failure_reason`, `two_factor_used`, `logout_at` et `session_duration`, champs
-d'un modèle de tentatives de connexion qui n'a jamais existé, quand le backend
-fournit un modèle de sessions.
+**Traité.** `userLoginService` ne s'appuie plus sur `user_login_history` ni sur
+la procédure `log_user_login`, l'une et l'autre inexistantes, mais sur
+`userSessionService` et les procédures réellement en place. Réparer le service a
+réparé du même coup ses consommateurs. `LoginSessionsTab`, `LoginHistoryTab` et
+`UserStatsCard` affichent désormais l'état réel des sessions — active, révoquée,
+expirée — au lieu d'un succès et d'un second facteur sans source.
+
+**À savoir sur ces écrans.** Ils ne sont montés nulle part : `UserDetailsPage`,
+la page réellement servie, a son propre onglet « Connexions » alimenté par
+l'Edge Function `get-user-details`, déployée, et déclare elle-même ses sources
+indisponibles. Ces quatre composants sont des vestiges d'une version antérieure.
+Ils ont été corrigés plutôt que supprimés : justes et inutilisés vaut mieux que
+faux et inutilisés, et la décision de les retirer revient au commanditaire.
+
+**Reste.** Quinze relations absentes, dont `user_mining_company_access`
+(`SiteAccessTab`, `userMiningAccessService`), les vues d'inventaire, d'analyse de
+change et de prix de vente.
 
 ---
 

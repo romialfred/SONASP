@@ -403,7 +403,7 @@ pas un défaut du jeu de données.
 
 ---
 
-## R-15 — Le barème fiscal saisi n'a pas de source vérifiable · OUVERT
+## R-15 — Barème fiscal · CONFIRMÉ ET EN VIGUEUR
 
 **Description.** La migration `20260826083911_baremes_fiscaux_connus.sql` inscrit
 un barème présenté comme « confirmé par le métier » : TVA 1,5 % pour les
@@ -595,3 +595,39 @@ même travail de liaison. L'écran montre désormais moins de documents, mais to
 lui appartiennent.
 
 **Effet mesuré.** Onze erreurs de types résolues au passage ; 311 → 295.
+
+---
+
+## R-23 — Deux trous de couverture du barème fiscal · OUVERT
+
+**Contexte.** Le barème a été approuvé le 26 août 2026 à 14 h 04 depuis l'écran,
+par un acteur habilité. Les six règles sont en vigueur ; le moteur les résout.
+
+**Premier trou — la redevance sous 4 000 USD/oz.** Le barème commence à
+4 000 USD/oz. En deçà, aucune règle ne s'applique : la conciliation signale la
+redevance comme non calculée plutôt que de supposer un taux. Mesuré :
+
+| Cours | Redevance résolue |
+|---|---|
+| 3 500 et 3 999 USD/oz | aucune |
+| 4 000 à 4 499 | 3 % |
+| 4 500 à 4 999 | 5 % |
+| 5 000 et au-delà | 6 % |
+
+**Deux ventes sur dix-neuf** portent un cours inférieur à 4 000 USD/oz — le
+minimum en base est 2 365. Leur redevance ne serait pas calculée.
+
+**Second trou — la TVA des ventes SONASP.** La TVA n'existe que pour les profils
+`comptoir` et `mine_industrielle`. Une vente dont `seller_type` vaut `sonasp`
+est résolue sous le profil `tous`, pour lequel aucune règle de TVA n'existe :
+sa TVA est signalée comme non calculée. Douze ventes sur dix-neuf sont dans ce
+cas. Voir [[R-16]], où ce point était déjà relevé comme décision métier en
+attente.
+
+**Ce que la plateforme fait, et qui est correct.** Elle refuse de supposer. Un
+montant absent est signalé à l'écran — « Aucune règle en vigueur pour : tva » —
+plutôt qu'un montant faux présenté comme exact.
+
+**Décisions attendues.** Faut-il une tranche de redevance sous 4 000 USD/oz ?
+Quel régime de TVA pour les ventes de la SONASP elle-même ? Les deux se règlent
+depuis l'écran des règles fiscales, sans intervention technique.

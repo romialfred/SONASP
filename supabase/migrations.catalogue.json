@@ -1640,6 +1640,26 @@
       "sha256": "f827e1bf9d15e10e0d8ec6ce79dbb7a363c5c0f94dddeaa703a2ade97e880e1a"
     },
     {
+      "path": "supabase/migrations/20260826135839_proprietaire_peut_valider_conciliation.sql",
+      "version": "20260826135839",
+      "description": "proprietaire_peut_valider_conciliation",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1514,
+      "sha256": "c7703a6738738c4b6d24c265513bd49ee57d09f25fd4597e285bb2c0634ef062"
+    },
+    {
+      "path": "supabase/migrations/20260826140015_derogation_separation_taches_tracee.sql",
+      "version": "20260826140015",
+      "description": "derogation_separation_taches_tracee",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 11691,
+      "sha256": "dd1e5b48b07aae3347fb27735fcadfc8794b62253d93111e78471f0433a5862f"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2633,10 +2653,10 @@
       },
       {
         "digits": 14,
-        "count": 67
+        "count": 69
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "1cd0671cbcc766160bba39fe1d363137968e5d5335da740cfc903f6afbd063a7"
+  "catalogueSha256": "ecf1f55033f62504e65d958ab017a6b9094ed9f46bd00b0c631352772881ce69"
 }

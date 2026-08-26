@@ -200,6 +200,8 @@ export const conciliationService = {
   async valider(conciliationId: string): Promise<{
     reference: string;
     ecart_commercial: number;
+    /** Vrai lorsque le même acteur a préparé et validé, ce que seul le propriétaire peut faire. */
+    sans_second_regard: boolean;
     taxes_ajustees: string[];
     taxes_sans_regle: string[];
   }> {
@@ -212,6 +214,7 @@ export const conciliationService = {
     return data as {
       reference: string;
       ecart_commercial: number;
+      sans_second_regard: boolean;
       taxes_ajustees: string[];
       taxes_sans_regle: string[];
     };

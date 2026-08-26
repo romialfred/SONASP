@@ -1,0 +1,28 @@
+-- Le proprietaire peut valider une conciliation qu'il a lui-meme preparee.
+--
+-- DEMANDE
+-- Aucun compte de role « management » n'existe : le proprietaire etant seul
+-- habilite a valider, tout dossier qu'il ouvrait devenait invalidable, la
+-- procedure refusant qu'un acteur valide ce qu'il a prepare.
+--
+-- CE QUI CHANGE, ET CE QUI NE CHANGE PAS
+-- La separation des taches reste la regle pour tous les autres roles : un
+-- preparateur ne valide pas son propre dossier. Seul le proprietaire en est
+-- dispense, parce qu'il est le seul acteur de dernier ressort de la plateforme.
+--
+-- CE QUE CELA COUTE, ET COMMENT ON LE COMPENSE
+-- Un ajustement de conciliation ecrit au grand livre commercial et au grand
+-- livre fiscal, deux journaux immuables. Qu'un meme acteur le prepare et
+-- l'arrete fait disparaitre le second regard. La levee n'est donc pas
+-- silencieuse : elle est journalisee dans audit_logs et signalee dans la
+-- reponse de la procedure, que l'ecran affiche.
+--
+-- NOTE IMPORTANTE
+-- Cette migration ne suffit pas a elle seule : la separation est aussi gravee
+-- dans la contrainte de table snp_conciliations_separation_check, traitee par la
+-- migration suivante, 20260826140015_derogation_separation_taches_tracee.sql.
+-- Appliquee seule, cette migration laisse la validation echouer sur la
+-- contrainte. Les deux vont ensemble.
+--
+-- Le corps de la procedure est repris dans son etat final par la migration
+-- suivante ; on ne le duplique pas ici pour eviter deux definitions divergentes.

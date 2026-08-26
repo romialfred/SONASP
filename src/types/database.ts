@@ -8671,6 +8671,7 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           valide_le: string | null
+          validation_sans_second_regard: boolean
           valide_par: string | null
           version: number
         }
@@ -8711,6 +8712,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           valide_le?: string | null
+          validation_sans_second_regard?: boolean
           valide_par?: string | null
           version?: number
         }
@@ -8751,6 +8753,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           valide_le?: string | null
+          validation_sans_second_regard?: boolean
           valide_par?: string | null
           version?: number
         }

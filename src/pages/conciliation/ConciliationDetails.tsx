@@ -148,6 +148,9 @@ export function ConciliationDetails() {
         `Dossier ${resultat.reference} validé. Écart commercial : ${nombre(resultat.ecart_commercial)}.` +
         (sansRegle.length > 0
           ? ` Aucune règle en vigueur pour : ${sansRegle.join(', ')} — ces taxes n’ont pas été ajustées.`
+          : '') +
+        (resultat.sans_second_regard
+          ? ' Vous avez préparé et validé ce dossier : la validation est enregistrée sans second regard.'
           : ''),
       );
       await charger();

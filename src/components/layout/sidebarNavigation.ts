@@ -1,4 +1,5 @@
 import {
+  Scale,
   AlertTriangle,
   BarChart3,
   BellRing,
@@ -109,6 +110,17 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
     id: 'industrielles',
     title: 'Mines industrielles',
     groups: [
+      {
+        id: 'conciliation',
+        label: 'Conciliation',
+        path: '/conciliation/regles-fiscales',
+        icon: Scale,
+        color: '#635bff',
+        children: [
+          { label: 'Règles fiscales', path: '/conciliation/regles-fiscales', icon: Scale, color: '#635bff' },
+        ],
+      },
+
       {
         id: 'production',
         label: "Collecte de l'or",

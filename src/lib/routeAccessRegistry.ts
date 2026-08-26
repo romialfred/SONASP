@@ -186,6 +186,13 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     roles: ['management'], accountTypes: ['sonasp'], capabilities: [CAPABILITIES.FINANCE_EXECUTE],
     readOnly: false, national: true,
   }),
+  // Le referentiel fiscal se consulte largement et ne s'administre que par les
+  // profils habilites ; l'ecriture reste gouvernee par la capacite, non par la route.
+  ...policies(['/conciliation/regles-fiscales'], {
+    roles: ['management', 'admin', 'manager', 'mine'], accountTypes: ['sonasp', 'mine'],
+    capabilities: [CAPABILITIES.TAX_RULES_READ, CAPABILITIES.TAX_RULES_MANAGE],
+    readOnly: true, national: false,
+  }),
   ...policies(['/contrats', '/contrats/:id'], {
     roles: ['management', 'mine', 'customer'], accountTypes: ['sonasp', 'mine'],
     capabilities: relationReadCapabilities, readOnly: true, national: false,

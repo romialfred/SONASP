@@ -26,6 +26,19 @@ export const CAPABILITIES = {
   AIRPORT_OPERATE: 'airport.operate',
   REFINERY_OPERATE: 'refinery.operate',
   CUSTOMER_OPERATE: 'customer.operate',
+  RECONCILIATION_READ: 'reconciliation.read',
+  RECONCILIATION_CREATE: 'reconciliation.create',
+  RECONCILIATION_EDIT: 'reconciliation.edit',
+  RECONCILIATION_SUBMIT: 'reconciliation.submit',
+  RECONCILIATION_APPROVE: 'reconciliation.approve',
+  RECONCILIATION_REJECT: 'reconciliation.reject',
+  RECONCILIATION_DISPUTE: 'reconciliation.dispute',
+  RECONCILIATION_CLOSE: 'reconciliation.close',
+  RECONCILIATION_EXPORT: 'reconciliation.export',
+  RECONCILIATION_TAX_ADJUST: 'reconciliation.tax.adjust',
+  RECONCILIATION_CREDIT_APPLY: 'reconciliation.credit.apply',
+  TAX_RULES_READ: 'tax.rules.read',
+  TAX_RULES_MANAGE: 'tax.rules.manage',
 } as const;
 
 export type CapabilityCode = typeof CAPABILITIES[keyof typeof CAPABILITIES];

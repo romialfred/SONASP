@@ -181,6 +181,7 @@ const SonaspComptoirSalesInboxPage = lazy(() => import('./pages/comptoir/SonaspC
 const ManagerPortalPage = lazy(() => import('./pages/manager/ManagerPortalPage'));
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
 const UpdatePassword = lazy(() => import('./pages/auth/UpdatePassword'));
+const ReglesFiscalesPage = lazy(() => import('./pages/fiscalite/ReglesFiscalesPage'));
 
 function AppRoutes() {
   const location = useLocation();
@@ -659,6 +660,19 @@ function AppRoutes() {
 
             {/* Contrats de fourniture : le formulaire s'ouvre en page pleine, jamais
                 en tiroir. « nouveau » precede « :id » pour ne pas etre capte par lui. */}
+            {/* Conciliation : le referentiel fiscal gouverne les taxes appliquees
+                aux ventes. Aucun taux n'est ecrit dans le code. */}
+            <Route
+              path="/conciliation/regles-fiscales"
+              element={(
+                <ProtectedRoute
+                  allowedRoles={['management', 'admin', 'manager', 'mine']}
+                  requiredAnyCapabilities={[CAPABILITIES.TAX_RULES_READ, CAPABILITIES.TAX_RULES_MANAGE]}
+                >
+                  <ReglesFiscalesPage />
+                </ProtectedRoute>
+              )}
+            />
             <Route
               path="/contrats"
               element={(

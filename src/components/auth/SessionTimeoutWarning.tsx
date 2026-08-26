@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Clock, LogOut, ShieldAlert } from 'lucide-react';
+import { dureeInactiviteMs } from '@/lib/sessionPolicy';
 
 interface SessionTimeoutWarningProps {
   isOpen: boolean;
@@ -49,7 +50,8 @@ export function SessionTimeoutWarning({
             Votre session arrive à expiration
           </h2>
           <p id="session-warning-description" className="mt-3 leading-7 text-slate-600">
-            Après dix minutes sans activité, l’accès est fermé automatiquement. Confirmez que vous êtes toujours présent pour continuer.
+            Après {Math.round(dureeInactiviteMs() / 60000)} minutes sans activité, l’accès est fermé
+            automatiquement. Confirmez que vous êtes toujours présent pour continuer.
           </p>
 
           <div className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3" aria-live="polite">

@@ -16,7 +16,11 @@ import {
   SESSION_INACTIVITY_TIMEOUT_MS,
   SESSION_WARNING_BEFORE_TIMEOUT_MS,
 } from './sessionManager';
-import { SESSION_ACTIVITY_HEARTBEAT_MS } from './sessionPolicy';
+import {
+  SESSION_ACTIVITY_HEARTBEAT_MS,
+  appliquerDureeInactivite,
+  reinitialiserDureeInactivite,
+} from './sessionPolicy';
 
 describe('SessionManager', () => {
   beforeEach(() => {
@@ -29,7 +33,27 @@ describe('SessionManager', () => {
 
   afterEach(() => {
     clearSessionActivity();
+    reinitialiserDureeInactivite();
     vi.useRealTimers();
+  });
+
+  it('suit la durée définie par l’administrateur plutôt que le repli', async () => {
+    // Vingt minutes : la valeur du paramètre de plateforme.
+    appliquerDureeInactivite(20);
+    const vingtMinutes = 20 * 60 * 1000;
+
+    beginSessionActivity();
+    const timeout = vi.fn();
+    const manager = new SessionManager();
+    manager.setOnTimeout(timeout);
+    manager.start();
+
+    // À dix minutes — l'ancienne échéance codée en dur — la session tient.
+    await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+    expect(timeout).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(vingtMinutes - 10 * 60 * 1000);
+    expect(timeout).toHaveBeenCalledTimes(1);
   });
 
   it('avertit à neuf minutes puis ferme la session à dix minutes', async () => {

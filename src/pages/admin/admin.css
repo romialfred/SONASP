@@ -514,3 +514,20 @@
   font-size: 12px;
   line-height: 1.55;
 }
+
+/* Saisie d'une durée : le champ reste court, l'unité le suit. */
+.parametres__duree {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-space-2, 8px);
+}
+
+.parametres__duree .sn-input {
+  width: 8ch;
+  text-align: right;
+}
+
+.parametres__duree span {
+  color: var(--sn-ink-soft);
+  font-size: 0.9rem;
+}

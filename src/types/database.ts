@@ -16423,6 +16423,14 @@ export type Database = {
         Returns: Json
       }
       snp_paiements_preuve_reprise_lister: { Args: never; Returns: Json[] }
+      snp_parametre_session_definir: {
+        Args: { p_minutes: number }
+        Returns: Json
+      }
+      snp_parametres_session_lire: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       snp_peut_administrer_compte: {
         Args: { p_target_id: string }
         Returns: boolean

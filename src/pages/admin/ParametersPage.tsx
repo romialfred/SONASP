@@ -8,6 +8,7 @@ import {
   Settings,
   Shield,
   ShieldCheck,
+  Timer,
   UserRound,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
@@ -18,6 +19,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
 import { roleLabel, roleTone } from '@/lib/roleLabels';
+import { hasCapability, CAPABILITIES } from '@/lib/capabilities';
+import {
+  parametresPlateformeService,
+  type ParametresSession,
+} from '@/services/parametresPlateformeService';
 import './admin.css';
 
 interface UserProfile {
@@ -115,6 +121,8 @@ export function ParametersPage() {
   const [comptes, setComptes] = useState<UserProfile[]>([]);
   const [regles, setRegles] = useState<BusinessRule[]>([]);
   const [reglesEditees, setReglesEditees] = useState<Record<string, number>>({});
+  const [parametresSession, setParametresSession] = useState<ParametresSession | null>(null);
+  const [dureeSaisie, setDureeSaisie] = useState('');
   const [langue, setLangue] = useState('fr');
   const [fuseau, setFuseau] = useState('Africa/Ouagadougou');
   const [prefsChargees, setPrefsChargees] = useState(false);
@@ -197,14 +205,54 @@ export function ParametersPage() {
     }
   }, []);
 
+  const chargerParametresSession = useCallback(async () => {
+    try {
+      setParametresSession(await parametresPlateformeService.lireParametresSession());
+    } catch (reason) {
+      setErreur(errorMessage(reason, 'Impossible de lire la durée de session.'));
+      setParametresSession(null);
+    }
+  }, []);
+
   useEffect(() => {
-    if (onglet === 'authentification') void chargerComptes();
+    if (onglet === 'authentification') {
+      void chargerComptes();
+      void chargerParametresSession();
+    }
     else if (onglet === 'regles') void chargerRegles();
     else if (onglet === 'preferences' || onglet === 'notifications') void chargerPreferences();
-  }, [onglet, chargerComptes, chargerRegles, chargerPreferences]);
+  }, [onglet, chargerComptes, chargerRegles, chargerPreferences, chargerParametresSession]);
 
+  // La valeur saisie suit celle du serveur tant que l'utilisateur n'y touche pas.
+  useEffect(() => {
+    if (parametresSession) setDureeSaisie(String(parametresSession.inactiviteMinutes));
+  }, [parametresSession]);
+
+  const peutModifierParametres = hasCapability(user, CAPABILITIES.PLATFORM_SETTINGS_MANAGE);
   const groupes = useMemo(() => grouperRegles(regles), [regles]);
   const reglesModifiees = Object.keys(reglesEditees).length > 0;
+
+  const enregistrerDureeSession = async () => {
+    if (saving) return;
+    const minutes = Number(dureeSaisie);
+    if (!Number.isInteger(minutes)) {
+      showError('Saisissez un nombre entier de minutes.');
+      return;
+    }
+    setSaving(true);
+    setErreur(null);
+    try {
+      const misAJour = await parametresPlateformeService.definirDureeSession(minutes);
+      setParametresSession(misAJour);
+      showSuccess(
+        `Durée d'inactivité fixée à ${misAJour.inactiviteMinutes} minutes. Elle s'applique dès la prochaine mesure d'activité.`,
+      );
+    } catch (reason) {
+      showError(errorMessage(reason, 'La durée de session n’a pas pu être enregistrée.'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const enregistrerPreferences = async () => {
     if (!userId || saving) return;
@@ -426,6 +474,67 @@ export function ParametersPage() {
               </>
             )}
           </>
+        )}
+
+        {onglet === 'authentification' && (
+          <Section
+            id="duree-session"
+            icon={Timer}
+            tone="violet"
+            title="Durée des sessions"
+            description="Temps d’inactivité au terme duquel un compte est déconnecté. Le serveur applique cette durée ; il ne se contente pas de l’afficher."
+          >
+            {!parametresSession ? (
+              <div className="admin-page__loading">
+                <Loader2 className="sn-spin" aria-hidden="true" /> Lecture du paramètre…
+              </div>
+            ) : (
+              <>
+                <Field
+                  label="Inactivité avant déconnexion"
+                  hint={`Entre ${parametresSession.minimumMinutes} et ${parametresSession.maximumMinutes} minutes.`}
+                >
+                  <div className="parametres__duree">
+                    <input
+                      type="number"
+                      className="sn-input"
+                      inputMode="numeric"
+                      min={parametresSession.minimumMinutes}
+                      max={parametresSession.maximumMinutes}
+                      step={1}
+                      value={dureeSaisie}
+                      disabled={!peutModifierParametres || saving}
+                      onChange={(event) => setDureeSaisie(event.target.value)}
+                    />
+                    <span>minutes</span>
+                  </div>
+                </Field>
+
+                {peutModifierParametres ? (
+                  <div className="sn-form-actions">
+                    <button
+                      type="button"
+                      className="sn-btn sn-btn--primary"
+                      onClick={() => void enregistrerDureeSession()}
+                      disabled={saving || dureeSaisie === String(parametresSession.inactiviteMinutes)}
+                    >
+                      {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                      Enregistrer la durée
+                    </button>
+                  </div>
+                ) : (
+                  <Note tone="info">
+                    Vous consultez ce paramètre. Sa modification demande l’habilitation correspondante.
+                  </Note>
+                )}
+
+                <Note tone="info" icon={ShieldCheck}>
+                  Un avertissement est affiché une minute avant l’échéance. La durée retenue ne
+                  dépasse jamais la validité du jeton d’authentification.
+                </Note>
+              </>
+            )}
+          </Section>
         )}
 
         {onglet === 'authentification' && (

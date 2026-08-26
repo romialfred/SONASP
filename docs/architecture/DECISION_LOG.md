@@ -249,3 +249,75 @@ l'horodatage de leur application, non avec le préfixe du fichier du dépôt. Ex
 `20260825170000_retirer_extension_http_de_l_api.sql` est enregistrée en production
 sous la version `20260825172835`. Les noms concordent, les versions non. À prendre en
 compte lors de tout rapprochement local/distant.
+
+---
+
+## D-011 — La durée de session devient un paramètre de plateforme · 26 août 2026
+
+**Demande.** Porter l'expiration à vingt minutes, et faire de cette valeur un
+paramètre que l'administrateur définit depuis la plateforme.
+
+**Ce que l'inspection a montré.** Dix minutes étaient écrites à deux endroits qui
+devaient s'accorder : la constante `SESSION_INACTIVITY_TIMEOUT_MS` du navigateur
+et `interval '10 minutes'` dans `snp_session_current_expiry()`. C'est la seconde
+qui décide : elle fixe `user_sessions.expires_at` à l'enregistrement de la
+session comme à chaque battement d'activité. Ne changer que le navigateur aurait
+affiché vingt minutes tout en faisant expirer la session à dix.
+
+**Décision.** Une seule source, `system_parameters`, lue par
+`snp_session_timeout_minutes()`. Le serveur s'y adosse ; le navigateur la lit au
+démarrage de session pour que son minuteur annonce la même échéance.
+
+**Bornes, et pourquoi elles s'appliquent à la lecture.** [5, 120] minutes,
+ramenées à la lecture et non seulement à l'écriture : une valeur aberrante déjà
+présente en base ne peut donc pas produire une session perpétuelle. La constante
+du navigateur devient un repli de dix minutes, employé tant que la valeur du
+serveur n'est pas connue — plus prudent que la valeur réelle, jamais plus
+permissif.
+
+**Écriture.** `system_parameters` réservait l'écriture au rôle `management`,
+qu'aucun compte ne détient : le paramètre aurait été immodifiable. Elle passe
+donc par une procédure de confiance, qui exige l'authentification forte et la
+capacité `platform.settings.manage`, borne la valeur et journalise le changement.
+
+**Limite connue.** La migration sème la valeur avec `ON CONFLICT DO UPDATE` : la
+rejouer volontairement sur un environnement déjà servi ramènerait la durée à
+vingt minutes, écrasant le choix de l'administrateur. Le cas ne se produit pas
+au fil de l'eau, la migration étant enregistrée comme appliquée, et vingt
+minutes reste la valeur d'amorçage voulue sur un environnement neuf. La
+migration n'est pas retouchée : le dépôt ne modifie pas une migration déjà
+appliquée.
+
+**Au passage.** La table accordait `INSERT`, `UPDATE` et `DELETE` à `anon`. RLS
+l'en empêchait, mais le privilège n'avait aucune raison d'exister. Retiré.
+
+---
+
+## D-012 — Le second facteur n'est pas désactivé sur le compte propriétaire · 26 août 2026
+
+**Demande.** Désactiver le MFA sur `romuald.tiegnan@gmail.com`, la
+ré-authentification étant épuisante en développement.
+
+**Ce que l'inspection a montré, et qui change la question.**
+
+1. Le second facteur n'est demandé qu'une fois par session, à la connexion :
+   `MandatoryMfaGate` laisse passer dès que la session est en `aal2`. La fatigue
+   ne vient donc pas du MFA lui-même mais de l'expiration de session qui oblige à
+   se reconnecter. Porter la durée de dix à vingt minutes divise cette fréquence
+   par deux, et le paramètre monte jusqu'à cent vingt minutes depuis l'écran.
+
+2. Retirer le facteur ne suffirait pas. `MandatoryMfaGate` ne laisse passer que
+   lorsque l'état vaut `pret` ; un compte sans enrôlement obtient `enrolement` et
+   se voit imposer l'écran d'enrôlement à la connexion suivante. Il faudrait donc
+   affaiblir la barrière elle-même, c'est-à-dire changer la politique MFA de la
+   plateforme en production, et non le réglage d'un compte.
+
+3. `snp_mfa_satisfaite()` renvoie `true` pour un compte sans `mfa_enrolled_at`.
+   Un compte désenrôlé conserverait donc toutes ses capacités sensibles. Le
+   propriétaire, que `snp_actor_has_capability()` autorise sur tout, deviendrait
+   accessible par mot de passe seul sur la base de production.
+
+**Décision.** Non traité sans instruction explicite après ces éléments. La
+demande porte sur le compte le plus privilégié d'une plateforme nationale en
+production, et le geste demandé n'aurait pas l'effet escompté sans une seconde
+modification, celle-là de portée générale.

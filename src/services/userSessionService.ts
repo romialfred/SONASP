@@ -1,11 +1,13 @@
 import { supabase } from '@/lib/supabase';
-import {
-  SESSION_ACTIVITY_HEARTBEAT_MS,
-  SESSION_INACTIVITY_TIMEOUT_MS,
-} from '@/lib/sessionPolicy';
+import { SESSION_ACTIVITY_HEARTBEAT_MS } from '@/lib/sessionPolicy';
 
-export const SESSION_SERVER_INACTIVITY_TIMEOUT_MS = SESSION_INACTIVITY_TIMEOUT_MS;
 export { SESSION_ACTIVITY_HEARTBEAT_MS };
+
+// `SESSION_SERVER_INACTIVITY_TIMEOUT_MS` a été retiré : il valait la constante
+// du navigateur et annonçait la borne du serveur. Les deux coïncidaient tant que
+// dix minutes étaient écrites des deux côtés ; depuis que la durée est un
+// paramètre de plateforme, la borne du serveur se lit par
+// `snp_parametres_session_lire()`. Aucun appelant ne s'y référait.
 
 export interface UserSessionSummary {
   id: string;

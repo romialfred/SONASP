@@ -3,6 +3,8 @@ import { Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { configureAuthPersistence, supabase } from '@/lib/supabase';
 import { UserProfile, AuthState } from '@/types/auth';
 import { beginSessionActivity, clearSessionActivity, SessionManager } from '@/lib/sessionManager';
+import { dureeInactiviteMs, reinitialiserDureeInactivite } from '@/lib/sessionPolicy';
+import { parametresPlateformeService } from '@/services/parametresPlateformeService';
 import { withTimeout, withRetry } from '@/lib/withTimeout';
 import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
 import {
@@ -63,7 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       serverSessionIdRef.current = null;
       if (sessionId) {
         try {
-          await userSessionService.revoke(sessionId, 'Expiration après dix minutes d’inactivité');
+          await userSessionService.revoke(
+            sessionId,
+            `Expiration après ${Math.round(dureeInactiviteMs() / 60000)} minutes d’inactivité`,
+          );
         } catch {
           // La fermeture locale reste obligatoire même si le réseau est perdu.
         }
@@ -76,6 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isTerminalCurrentSessionError(error)) await closeRejectedSession('local');
       }
     });
+    // La durée d'inactivité est un paramètre de plateforme. On la lit sans
+    // bloquer le démarrage : tant que la réponse n'est pas là, le minuteur
+    // applique son repli de dix minutes, plus prudent que la valeur réelle.
+    void parametresPlateformeService.synchroniserDureeSession();
+
     manager.start();
     sessionManagerRef.current = manager;
   };
@@ -249,6 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       clearSessionActivity();
+      reinitialiserDureeInactivite();
       serverSessionIdRef.current = null;
       serverSessionRegistrationRef.current = null;
       await supabase.auth.signOut({ scope });
@@ -369,6 +380,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       clearSessionActivity();
+      reinitialiserDureeInactivite();
 
       const serverSessionId = serverSessionIdRef.current;
       serverSessionIdRef.current = null;
@@ -702,6 +714,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionManagerRef.current = null;
           }
           clearSessionActivity();
+          reinitialiserDureeInactivite();
           serverSessionIdRef.current = null;
           serverSessionRegistrationRef.current = null;
           setShowTimeoutWarning(false);

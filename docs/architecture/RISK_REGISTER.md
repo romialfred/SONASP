@@ -475,3 +475,29 @@ déclare honnêtement.
 **Correction.** La colonne est déclarée aux trois emplacements de la table —
 `Row` obligatoire, `Insert` et `Update` facultatifs, la base portant un défaut —
 ainsi qu'aux arguments et au retour de `snp_resoudre_regle_fiscale`.
+
+---
+
+## R-18 — La porte `typecheck` n'atteint jamais le compilateur · OUVERT
+
+**Description.** `npm run typecheck` enchaîne deux étapes :
+`typecheck:database` puis `typecheck:compiler`. La première échoue sur les treize
+relations fantômes de R-12 et interrompt la chaîne. `typecheck:compiler`, qui
+lance `tsc --noEmit -p tsconfig.app.json`, n'est donc jamais exécuté.
+
+**Aggravant.** `tsconfig.json` porte `"files": []` : lancer
+`tsc --noEmit -p tsconfig.json` ne vérifie aucun fichier et rend « 0 erreur »
+quel que soit l'état du code. Un contrôle mené ainsi ne démontre rien. Ce piège
+a effectivement produit de faux constats de conformité le 26 août 2026.
+
+**Ce que cela a laissé passer.** L'écran des paramètres référençait l'icône
+`Timer` sans l'importer. Le build Vite a réussi, les faux contrôles de types
+aussi ; seule la suite de tests a levé le `ReferenceError` au rendu du composant.
+
+**Mitigation à faire.** Traiter R-12 pour débloquer la chaîne — les treize
+relations n'existent pas en base et servent du code non appelé, la question est
+de retirer ce code plutôt que de créer les objets. À défaut, exécuter
+`typecheck:compiler` indépendamment de `typecheck:database`.
+
+**En attendant.** Vérifier les types avec `tsconfig.app.json` explicitement,
+jamais avec `tsconfig.json`.

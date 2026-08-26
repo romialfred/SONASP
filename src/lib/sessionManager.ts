@@ -1,8 +1,8 @@
 import { supabase } from './supabase';
 import {
   SESSION_ACTIVITY_HEARTBEAT_MS,
-  SESSION_INACTIVITY_TIMEOUT_MS,
   SESSION_WARNING_BEFORE_TIMEOUT_MS,
+  dureeInactiviteMs,
 } from './sessionPolicy';
 
 export { SESSION_INACTIVITY_TIMEOUT_MS, SESSION_WARNING_BEFORE_TIMEOUT_MS } from './sessionPolicy';
@@ -123,12 +123,12 @@ export class SessionManager {
     if (!this.isActive) return;
     const inactivityDuration = this.getInactivityDuration();
 
-    if (inactivityDuration >= SESSION_INACTIVITY_TIMEOUT_MS) {
+    if (inactivityDuration >= dureeInactiviteMs()) {
       await this.handleTimeout();
       return;
     }
 
-    if (inactivityDuration >= SESSION_INACTIVITY_TIMEOUT_MS - SESSION_WARNING_BEFORE_TIMEOUT_MS) {
+    if (inactivityDuration >= dureeInactiviteMs() - SESSION_WARNING_BEFORE_TIMEOUT_MS) {
       this.warningShown = true;
       this.onWarning?.(Math.max(0, Math.ceil(this.getRemainingTime() / 1000)));
     }
@@ -156,12 +156,12 @@ export class SessionManager {
   }
 
   public getRemainingTime(): number {
-    const remaining = SESSION_INACTIVITY_TIMEOUT_MS - this.getInactivityDuration();
+    const remaining = dureeInactiviteMs() - this.getInactivityDuration();
     return Math.max(0, remaining);
   }
 
   public getTimeUntilWarning(): number {
-    const remaining = SESSION_INACTIVITY_TIMEOUT_MS
+    const remaining = dureeInactiviteMs()
       - SESSION_WARNING_BEFORE_TIMEOUT_MS
       - this.getInactivityDuration();
     return Math.max(0, remaining);

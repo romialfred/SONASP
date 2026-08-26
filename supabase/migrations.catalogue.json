@@ -1700,6 +1700,16 @@
       "sha256": "15aa7636d91f158544fbd111f303d1a7fc2e428e21f031afad41d8946ebff1ce"
     },
     {
+      "path": "supabase/migrations/20260826212705_combler_trous_bareme_fiscal.sql",
+      "version": "20260826212705",
+      "description": "combler_trous_bareme_fiscal",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3619,
+      "sha256": "72646bd28f39f072ab874810cbb2d98181e4e964c16b63564046cddce75e407f"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2693,10 +2703,10 @@
       },
       {
         "digits": 14,
-        "count": 73
+        "count": 74
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "4448b228a7cd2d8ae6688d50f2bd04c3379e1526c6bb19a78768e96ab5a2c916"
+  "catalogueSha256": "d7f0aa6d2a46a74d8497e6d607354060f2c9a9165ba68be25ed06c4cc6bd1a11"
 }

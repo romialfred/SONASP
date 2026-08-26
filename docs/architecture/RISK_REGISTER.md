@@ -563,3 +563,35 @@ ramènerait des centaines d'erreurs de types.
 
 **Mitigation à faire.** Faire de la régénération une étape outillée qui réapplique
 ces ajustements, ou corriger le générateur en amont.
+
+---
+
+## R-22 — Le détail d'un paiement rassemblait des documents d'autres ventes · FERMÉ
+
+**Description.** `collectPaymentDocuments` réunissait six sources de pièces
+justificatives. Seules deux étaient rattachées au paiement : la preuve bancaire
+et la facture de la vente. Les quatre autres — documents de production,
+certificats d'analyse, pièces d'expédition, licences d'export — prenaient les
+lignes les plus récentes de leur table, sans aucun filtre : cent pièces
+d'expédition, dix certificats, cinq licences. Un opérateur consultant un paiement
+aurait vu des documents appartenant à d'autres ventes.
+
+**Ce qui a empêché que cela se voie.** Ces mêmes blocs interrogeaient des
+colonnes inexistantes : `batch_number` sur `daily_production`, `document_type`,
+`document_url` et `uploaded_at` sur `production_documents`, `certificate_url` sur
+`assay_certificates`. Les requêtes échouaient, les résultats étaient ignorés,
+l'écran n'affichait rien. Le défaut de rattachement n'a jamais eu l'occasion de
+se manifester.
+
+**Pourquoi les blocs ont été retirés plutôt que réparés.** Corriger les noms de
+colonnes aurait produit l'inverse du résultat cherché : des documents qui
+s'affichent enfin, et qui sont les mauvais. Sur une plateforme où les pièces
+fondent des paiements, l'erreur serait passée pour une amélioration.
+
+**Ce qui reste à concevoir.** `daily_production` ne porte aucun lien vers une
+vente : le rattachement des documents de production à un paiement n'existe pas
+dans le schéma. Les certificats, pièces d'expédition et licences demandent le
+même travail de liaison. L'écran montre désormais moins de documents, mais tous
+lui appartiennent.
+
+**Effet mesuré.** Onze erreurs de types résolues au passage ; 311 → 295.

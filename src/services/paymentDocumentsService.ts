@@ -73,129 +73,26 @@ export async function collectPaymentDocuments(paymentId: string): Promise<Paymen
     const sale = payment.sale;
     if (!sale) return documents;
 
-    // 3. Get production documents from batches related to this sale
-    const { data: productions } = await supabase
-      .from('daily_production')
-      .select('id, batch_number, production_date')
-      .eq('status', 'sold')
-      .order('production_date', { ascending: false });
-
-    if (productions && productions.length > 0) {
-      // For each production, get documents
-      const { data: prodDocs } = await supabase
-        .from('production_documents')
-        .select('*')
-        .in('production_id', productions.map(p => p.id));
-
-      if (prodDocs) {
-        for (const doc of prodDocs) {
-          const production = productions.find(p => p.id === doc.production_id);
-          documents.push({
-            id: doc.id,
-            name: doc.document_name || doc.document_type || 'Production Document',
-            type: 'production',
-            url: doc.document_url,
-            uploadedAt: doc.uploaded_at,
-            metadata: {
-              batchNumber: production?.batch_number,
-              description: `Production document from batch ${production?.batch_number}`,
-            },
-          });
-        }
-      }
-    }
-
-    // 4. Get assay certificates (approved only)
-    const { data: assayCerts } = await supabase
-      .from('assay_certificates')
-      .select('*')
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (assayCerts) {
-      for (const cert of assayCerts) {
-        if (cert.certificate_url) {
-          try {
-            const signedUrl = await createPrivateSignedUrl(
-              PRIVATE_STORAGE_BUCKETS.assayCertificates,
-              cert.certificate_url,
-            );
-            documents.push({
-              id: cert.id,
-              name: `Assay Certificate ${cert.certificate_number || ''}`,
-              type: 'assay_certificate',
-              url: signedUrl,
-              uploadedAt: cert.created_at,
-              metadata: {
-                certificateNumber: cert.certificate_number,
-                description: `Assay certificate ${cert.certificate_number}`,
-              },
-            });
-          } catch {
-            // Une référence privée invalide ne doit jamais redevenir une URL publique.
-          }
-        }
-      }
-    }
-
-    // 5. Get shipping documents through the RLS-protected metadata table.
-    // The database stores canonical object paths (and can still contain legacy
-    // public URLs); both forms are normalized before a short-lived URL is signed.
-    const { data: shippingFiles } = await supabase
-      .from('shipping_documents')
-      .select('id, title, file_name, document_url, file_size, created_at')
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (shippingFiles) {
-      for (const file of shippingFiles) {
-        try {
-          const signedUrl = await createPrivateSignedUrl(
-            PRIVATE_STORAGE_BUCKETS.shippingDocuments,
-            file.document_url,
-          );
-          documents.push({
-            id: `shipping-${file.id}`,
-            name: file.title || file.file_name,
-            type: 'shipping',
-            url: signedUrl,
-            uploadedAt: file.created_at,
-            size: file.file_size,
-            metadata: {
-              description: 'Shipping documentation',
-            },
-          });
-        } catch {
-          // Ignore les références historiques invalides plutôt que de les ouvrir.
-        }
-      }
-    }
-
-    // 6. Get export licenses
-    const { data: licenses } = await supabase
-      .from('export_licenses')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    if (licenses) {
-      for (const license of licenses) {
-        if (license.document_url) {
-          documents.push({
-            id: license.id,
-            name: `Export License ${license.license_number || ''}`,
-            type: 'export_license',
-            url: license.document_url,
-            uploadedAt: license.created_at,
-            metadata: {
-              licenseNumber: license.license_number,
-              description: `Export license ${license.license_number}`,
-            },
-          });
-        }
-      }
-    }
+    // CE QUI A ETE RETIRE ICI, ET POURQUOI
+    //
+    // Quatre blocs rassemblaient des documents de production, des certificats
+    // d'analyse, des pieces d'expedition et des licences d'export. Aucun n'etait
+    // rattache au paiement ni meme a la vente : ils prenaient les lignes les plus
+    // recentes de chaque table — cent pieces d'expedition, dix certificats, cinq
+    // licences — et les attachaient telles quelles. Un operateur consultant un
+    // paiement voyait donc des documents appartenant a d'autres ventes.
+    //
+    // Ils interrogeaient de surcroit des colonnes inexistantes : batch_number sur
+    // daily_production, document_type, document_url et uploaded_at sur
+    // production_documents, certificate_url sur assay_certificates. La requete
+    // echouait, le resultat etait ignore, et l'ecran n'affichait rien : le defaut
+    // de rattachement n'a donc jamais eu l'occasion de se voir.
+    //
+    // Les corriger colonne par colonne aurait produit l'inverse — des documents
+    // qui s'affichent enfin, et qui sont les mauvais. daily_production ne porte
+    // aucun lien vers une vente : le rattachement n'existe pas, il reste a
+    // concevoir. Seules subsistent ci-dessous les pieces reellement liees au
+    // paiement : la preuve bancaire et la facture de la vente.
 
     // Les documents de raffinage ne sont pas rattaches ici. Le code precedent
     // interrogeait `refining_processes`, une table qui n'existe pas, et sans

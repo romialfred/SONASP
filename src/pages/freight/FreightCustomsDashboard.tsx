@@ -45,7 +45,7 @@ export default function FreightCustomsDashboard() {
   const filteredOperations = operations.filter(op => {
     const matchesSearch =
       op.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.shipping_preparation?.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      op.shipping_preparation?.expedition_lot_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.awb_number?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || op.status === statusFilter;
@@ -173,7 +173,7 @@ export default function FreightCustomsDashboard() {
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">
                       <span className="text-xs text-gray-900">
-                        {operation.shipping_preparation?.reference_number || '-'}
+                        {operation.shipping_preparation?.expedition_lot_number || '-'}
                       </span>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">

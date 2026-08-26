@@ -409,7 +409,7 @@ export function ShippingPreparationDetailsEnhanced() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Expédition {preparation.reference_number || preparation.expedition_number}
+                  Expédition {preparation.expedition_lot_number || 'sans numéro de lot'}
                 </h1>
                 <ShippingStatusBadge
                   status={preparation.status as ShippingStatus}

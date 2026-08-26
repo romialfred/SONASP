@@ -31,6 +31,25 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
   const [generating, setGenerating] = useState(false);
 
   const shipping = operation.shipping_preparation;
+  /**
+   * Référence de l'expédition. La table porte `expedition_lot_number` ; le champ
+   * `reference_number` employé jusqu'ici n'existe pas et valait `undefined`, ce
+   * qui faisait échouer la génération de la facture d'exportation sur un
+   * `.replace()`. À défaut de numéro de lot, on retombe sur la référence de
+   * l'opération de fret, qui existe toujours.
+   */
+  const referenceExpedition: string = shipping?.expedition_lot_number || operation.reference_number;
+  /**
+   * Date d'expédition. `shipment_date` n'existe pas non plus : la table porte
+   * `shipped_at`, et `prepared_at` tant que le colis n'est pas parti. Sans
+   * garde, `new Date(undefined)` produisait « Invalid Date » sur la facture.
+   */
+  const dateExpedition: Date | null = (() => {
+    const brut = shipping?.shipped_at || shipping?.prepared_at;
+    if (!brut) return null;
+    const d = new Date(brut);
+    return Number.isNaN(d.getTime()) ? null : d;
+  })();
   const miningCompany = shipping?.mining_companies;
   const savedInvoice = operation.invoice_data;
 
@@ -104,7 +123,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         return {
           barNo: prod.bar_reference || '',
           datePoured: new Date(prod.production_date).toLocaleDateString('en-GB'),
-          dateShipped: new Date(shipping.shipment_date).toLocaleDateString('en-GB'),
+          dateShipped: dateExpedition ? dateExpedition.toLocaleDateString('en-GB') : '',
           doreWeight: prod.bullion_grams || 0,
           smkGoldAssay: prod.estimated_fineness_pct || 0,
           smkSilverAssay: prod.estimated_silver_pct || 0,
@@ -119,7 +138,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
       const summaryData: BullionSummaryData = {
         issuerName: miningCompany.name,
         reportDate: bullionFormData.reportDate,
-        shipmentNumber: shipping.reference_number,
+        shipmentNumber: referenceExpedition,
         bars,
         signatures: [
           { position: 'Gold Room Operator', name: bullionFormData.operatorName },
@@ -130,13 +149,13 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
       // Générer PDF
       const doc = freightInvoiceGenerationService.generateBullionSummary(summaryData);
       const blob = freightInvoiceGenerationService.getPDFBlob(doc);
-      const file = new File([blob], `Bullion_Summary_${shipping.reference_number}.pdf`, { type: 'application/pdf' });
+      const file = new File([blob], `Bullion_Summary_${referenceExpedition}.pdf`, { type: 'application/pdf' });
 
       // Upload
       await freightCustomsService.uploadDocument(
         operation.id,
         'bullion_summary',
-        `Bullion Summary - ${shipping.reference_number}`,
+        `Bullion Summary - ${referenceExpedition}`,
         file,
         'Généré automatiquement'
       );
@@ -191,8 +210,8 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
       const boxReferences = `${firstBar} to ${lastBar}`;
 
       const invoiceData: ExportInvoiceData = {
-        shipmentDate: new Date(shipping.shipment_date).toLocaleDateString('en-GB').replace(/\//g, '/'),
-        invoiceNumber: shipping.reference_number,
+        shipmentDate: dateExpedition ? dateExpedition.toLocaleDateString('en-GB') : '',
+        invoiceNumber: referenceExpedition,
 
         senderName: invoiceFormData.senderName,
         senderAddress: invoiceFormData.senderAddress,
@@ -209,8 +228,8 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         countryOfOrigin: invoiceFormData.senderCountry,
         mineName: invoiceFormData.mineName || miningCompany?.name || '',
 
-        awbNumber: operation.awb_number || shipping.reference_number.replace('SHIP', ''),
-        lotNumber: shipping.reference_number.split('-')[1] || '2025',
+        awbNumber: operation.awb_number || referenceExpedition.replace('SHIP', ''),
+        lotNumber: referenceExpedition.split('-')[1] || '2025',
         numberOfBoxes: invoiceFormData.numberOfBoxes,
         boxType: invoiceFormData.boxType,
         description: 'Dore: Gold, Silver, ingot packed in boxes',
@@ -248,13 +267,13 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
       // Générer PDF
       const doc = freightInvoiceGenerationService.generateExportInvoice(invoiceData);
       const blob = freightInvoiceGenerationService.getPDFBlob(doc);
-      const file = new File([blob], `Export_Invoice_${shipping.reference_number}.pdf`, { type: 'application/pdf' });
+      const file = new File([blob], `Export_Invoice_${referenceExpedition}.pdf`, { type: 'application/pdf' });
 
       // Upload
       await freightCustomsService.uploadDocument(
         operation.id,
         'export_invoice',
-        `Invoice - ${shipping.reference_number}`,
+        `Invoice - ${referenceExpedition}`,
         file,
         'Facture d\'exportation pour besoins de la douane'
       );
@@ -276,7 +295,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
           <div>
             <h2 className="text-xl font-bold text-gray-900">Générer Facture d'Exportation</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Expédition: {shipping?.reference_number}
+              Expédition: {referenceExpedition}
             </p>
           </div>
           <button

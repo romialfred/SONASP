@@ -170,7 +170,7 @@ export default function FreightCustomsDetails() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{operation.reference_number}</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Expédition: {shipping?.reference_number || 'N/A'}
+              Expédition: {shipping?.expedition_lot_number || 'N/A'}
             </p>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function FreightCustomsDetails() {
               <div>
                 <label className="text-xs font-medium text-gray-500 uppercase">Date d'Expédition</label>
                 <p className="text-sm text-gray-900 mt-1">
-                  {shipping?.shipment_date ? new Date(shipping.shipment_date).toLocaleDateString('fr-FR') : '-'}
+                  {shipping?.shipped_at ? new Date(shipping.shipped_at).toLocaleDateString('fr-FR') : '-'}
                 </p>
               </div>
               <div>

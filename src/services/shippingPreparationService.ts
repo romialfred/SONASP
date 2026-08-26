@@ -12,18 +12,15 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 
 export interface ShippingPreparation {
   id: string;
-  reference_number: string;
-  expedition_number: string;
-  shipment_date: string;
-  production_date: string;
   daily_production_id: string | null;
   mining_company_id: string | null;
   export_license_id: string | null;  // Primary license field
   refinery_id: string | null;        // UUID reference to refineries
   freight_company_id: string | null; // UUID reference to transport_companies
+  /** Référence de l'expédition. La table n'en porte pas d'autre. */
   expedition_lot_number: string | null;
+  /** Un seul numéro de scellé : la table ne stocke pas de liste. */
   seal_number: string | null;
-  seal_numbers: string[];
   packing_list_url: string | null;
   packing_list_document_id: string | null;
   shipped_to_company: string | null;  // Legacy TEXT field (keep for backward compatibility)
@@ -33,12 +30,12 @@ export interface ShippingPreparation {
   prepared_at: string | null;
   shipped_at: string | null;
   notes: string | null;
-  total_net_weight_grams: number;
-  total_gross_weight_grams: number;
-  total_weight_oz: number;
-  total_boxes: number;
-  created_at: string;
-  updated_at: string;
+  total_net_weight_grams: number | null;
+  total_gross_weight_grams: number | null;
+  total_weight_oz: number | null;
+  total_boxes: number | null;
+  created_at: string | null;
+  updated_at: string | null;
   created_by: string | null;
   mining_company_name?: string | null;
   mining_companies?: { name: string } | null;

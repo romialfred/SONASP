@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { NotificationDialog } from '@/components/ui/NotificationDialog';
 
 interface NotificationOptions {

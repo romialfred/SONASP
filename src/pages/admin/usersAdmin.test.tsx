@@ -59,7 +59,6 @@ vi.mock('@/lib/supabase', () => ({
 vi.mock('@/components/admin/UserStatsCard', () => ({ default: () => <div>Statistiques du compte</div> }));
 vi.mock('@/components/admin/LoginSessionsTab', () => ({ default: () => <div>Sessions de connexion</div> }));
 vi.mock('@/components/admin/ActivityHistoryTab', () => ({ default: () => <div>Journal des actions</div> }));
-vi.mock('@/components/admin/SiteAccessTab', () => ({ default: () => <div>Sites accessibles</div> }));
 vi.mock('@/components/admin/UserPermissionsTab', () => ({ default: () => <div>Permissions détaillées</div> }));
 
 function stub(table: string) {

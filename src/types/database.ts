@@ -22,10 +22,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
+          extensions?: Json | null
+          operationName?: string | null
+          query?: string | null
+          variables?: Json | null
         }
         Returns: Json
       }
@@ -6896,6 +6896,86 @@ export type Database = {
           response?: Json | null
         }
         Relationships: []
+      }
+      snp_artisan_infractions: {
+        Row: {
+          artisan_id: string
+          conclusion: string | null
+          created_at: string
+          created_by: string | null
+          date_cloture: string | null
+          date_infraction: string
+          description: string
+          documents: string[]
+          id: string
+          lieu: string | null
+          remarques: string | null
+          statut_traitement: string
+          type_infraction: string
+          updated_at: string
+        }
+        Insert: {
+          artisan_id: string
+          conclusion?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_cloture?: string | null
+          date_infraction: string
+          description: string
+          documents?: string[]
+          id?: string
+          lieu?: string | null
+          remarques?: string | null
+          statut_traitement?: string
+          type_infraction: string
+          updated_at?: string
+        }
+        Update: {
+          artisan_id?: string
+          conclusion?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_cloture?: string | null
+          date_infraction?: string
+          description?: string
+          documents?: string[]
+          id?: string
+          lieu?: string | null
+          remarques?: string | null
+          statut_traitement?: string
+          type_infraction?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_artisan_infractions_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_infractions_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_artisan_paiements_resume"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_infractions_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "v_paiements_en_attente"
+            referencedColumns: ["artisan_id"]
+          },
+          {
+            foreignKeyName: "snp_artisan_infractions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       snp_artisan_moyens_paiement: {
         Row: {
@@ -14267,9 +14347,9 @@ export type Database = {
       }
       calculate_sale_proceeds: {
         Args: {
-          freight_cost?: number
+          freight_cost?: number | null
           london_am_rate: number
-          other_costs?: number
+          other_costs?: number | null
           quantity_oz: number
         }
         Returns: Record<string, unknown>
@@ -14290,8 +14370,8 @@ export type Database = {
       calculer_taxes_vente: {
         Args: {
           p_montant_brut: number
-          p_taux_retenue_source?: number
-          p_taux_tva?: number
+          p_taux_retenue_source?: number | null
+          p_taux_tva?: number | null
         }
         Returns: {
           montant_net: number
@@ -14379,7 +14459,7 @@ export type Database = {
         Args: {
           p_artisan_id: string
           p_date_vente: string
-          p_observations?: string
+          p_observations?: string | null
           p_prix_kg_fcfa: number
           p_purete_karat: number
           p_quantite_grammes: number
@@ -14390,7 +14470,7 @@ export type Database = {
       create_virtual_payment: {
         Args: {
           p_amount: number
-          p_approved_date?: string
+          p_approved_date?: string | null
           p_currency: string
           p_customer_id: string
           p_mechanism_type: string
@@ -14401,8 +14481,8 @@ export type Database = {
       current_user_role: { Args: never; Returns: string }
       generate_activation_token: {
         Args: {
-          p_created_by?: string
-          p_temporary_password?: string
+          p_created_by?: string | null
+          p_temporary_password?: string | null
           p_token_type: string
           p_user_id: string
         }
@@ -14624,10 +14704,10 @@ export type Database = {
       is_management_user: { Args: { user_id: string }; Returns: boolean }
       log_security_event: {
         Args: {
-          p_details?: Json
+          p_details?: Json | null
           p_event_type: string
-          p_ip_address?: string
-          p_user_agent?: string
+          p_ip_address?: string | null
+          p_user_agent?: string | null
           p_user_id: string
         }
         Returns: undefined
@@ -14635,13 +14715,13 @@ export type Database = {
       log_user_activity: {
         Args: {
           p_action_type: string
-          p_changes_summary?: Json
+          p_changes_summary?: Json | null
           p_description: string
-          p_ip_address?: string
+          p_ip_address?: string | null
           p_module_name: string
           p_resource_id: string
           p_resource_type: string
-          p_user_agent?: string
+          p_user_agent?: string | null
           p_user_id: string
         }
         Returns: string
@@ -14656,7 +14736,7 @@ export type Database = {
           p_license_id: string
           p_quantity: number
           p_shipping_id: string
-          p_user_id?: string
+          p_user_id?: string | null
         }
         Returns: boolean
       }
@@ -14832,7 +14912,7 @@ export type Database = {
         Args: {
           p_accuse_par: string
           p_notification_id: string
-          p_preuve?: string
+          p_preuve?: string | null
         }
         Returns: {
           accuse_le: string | null
@@ -14883,7 +14963,7 @@ export type Database = {
       }
       snp_admin_compte_finaliser_action: {
         Args: {
-          p_error_code?: string
+          p_error_code?: string | null
           p_idempotency_key: string
           p_success: boolean
         }
@@ -14918,7 +14998,7 @@ export type Database = {
         Args: {
           p_facture_id: string
           p_montant: number
-          p_observations?: string
+          p_observations?: string | null
           p_reglement_id: string
         }
         Returns: {
@@ -14931,7 +15011,7 @@ export type Database = {
         Args: {
           p_facture_id: string
           p_montant: number
-          p_observations?: string
+          p_observations?: string | null
           p_reglement_id: string
         }
         Returns: {
@@ -14942,13 +15022,13 @@ export type Database = {
       }
       snp_ajouter_preuve_reglement: {
         Args: {
-          p_banque_emettrice?: string
-          p_commentaire?: string
-          p_date_emission?: string
-          p_empreinte_sha256?: string
+          p_banque_emettrice?: string | null
+          p_commentaire?: string | null
+          p_date_emission?: string | null
+          p_empreinte_sha256?: string | null
           p_fichier_url: string
           p_nom_origine: string
-          p_reference_document?: string
+          p_reference_document?: string | null
           p_reglement_id: string
           p_taille_octets: number
           p_type_document: string
@@ -15044,17 +15124,17 @@ export type Database = {
           p_facture_id: string
           p_idempotency_key: string
           p_moyen_paiement_id: string
-          p_notes?: string
+          p_notes?: string | null
         }
         Returns: Json
       }
       snp_artisan_emettre_facture: {
         Args: {
-          p_date_echeance?: string
+          p_date_echeance?: string | null
           p_expected_vente_statut: string
           p_expected_vente_version: number
           p_idempotency_key: string
-          p_notes?: string
+          p_notes?: string | null
           p_vente_id: string
         }
         Returns: Json
@@ -15064,7 +15144,7 @@ export type Database = {
           p_expected_statut: string
           p_expected_version: number
           p_idempotency_key: string
-          p_notes?: string
+          p_notes?: string | null
           p_nouveau_statut: string
           p_paiement_id: string
         }
@@ -15075,9 +15155,9 @@ export type Database = {
           p_expected_statut: string
           p_expected_version: number
           p_idempotency_key: string
-          p_notes?: string
+          p_notes?: string | null
           p_nouveau_statut: string
-          p_reversement_reference?: string
+          p_reversement_reference?: string | null
           p_taxe_id: string
         }
         Returns: Json
@@ -15104,7 +15184,7 @@ export type Database = {
       }
       snp_assign_user_organization: {
         Args: {
-          p_is_primary?: boolean
+          p_is_primary?: boolean | null
           p_membership_role: string
           p_organization_id: string
           p_reason: string
@@ -15158,9 +15238,9 @@ export type Database = {
       }
       snp_changer_statut_contrat: {
         Args: {
-          p_commentaire?: string
+          p_commentaire?: string | null
           p_contrat_id: string
-          p_motif?: string
+          p_motif?: string | null
           p_statut: string
         }
         Returns: {
@@ -15247,9 +15327,9 @@ export type Database = {
       }
       snp_changer_statut_contrat_legacy_4b: {
         Args: {
-          p_commentaire?: string
+          p_commentaire?: string | null
           p_contrat_id: string
-          p_motif?: string
+          p_motif?: string | null
           p_statut: string
         }
         Returns: {
@@ -15344,8 +15424,8 @@ export type Database = {
       }
       snp_changer_statut_requisition: {
         Args: {
-          p_commentaire?: string
-          p_motif?: string
+          p_commentaire?: string | null
+          p_motif?: string | null
           p_requisition_id: string
           p_statut: string
         }
@@ -15417,8 +15497,8 @@ export type Database = {
       }
       snp_changer_statut_requisition_legacy_4b: {
         Args: {
-          p_commentaire?: string
-          p_motif?: string
+          p_commentaire?: string | null
+          p_motif?: string | null
           p_requisition_id: string
           p_statut: string
         }
@@ -15567,7 +15647,7 @@ export type Database = {
         Args: {
           p_full_name: string
           p_is_active: boolean
-          p_mining_company_id?: string
+          p_mining_company_id?: string | null
           p_phone: string
           p_role: string
           p_user_id: string
@@ -15645,12 +15725,12 @@ export type Database = {
       }
       snp_convertir_requisition_en_achat: {
         Args: {
-          p_observations?: string
+          p_observations?: string | null
           p_prix_once_fcfa: number
-          p_quantite_imputee?: number
+          p_quantite_imputee?: number | null
           p_requisition_id: string
-          p_taxe_dev_comm_taux?: number
-          p_tva_taux?: number
+          p_taxe_dev_comm_taux?: number | null
+          p_tva_taux?: number | null
         }
         Returns: {
           contrat_id: string | null
@@ -15713,7 +15793,7 @@ export type Database = {
       }
       snp_creer_configuration_courriel: {
         Args: {
-          p_activer?: boolean
+          p_activer?: boolean | null
           p_expediteur_courriel: string
           p_expediteur_nom: string
           p_hote: string
@@ -15728,12 +15808,12 @@ export type Database = {
       snp_creer_vente_export: {
         Args: {
           p_customer_id: string
-          p_freight_cost?: number
-          p_in_process_refinery_id?: string
+          p_freight_cost?: number | null
+          p_in_process_refinery_id?: string | null
           p_london_am_rate: number
-          p_lots?: Json
-          p_mechanism_type?: string
-          p_other_costs?: number
+          p_lots?: Json | null
+          p_mechanism_type?: string | null
+          p_other_costs?: number | null
           p_quantity_oz: number
           p_seller_id: string
         }
@@ -15742,11 +15822,11 @@ export type Database = {
       snp_creer_vente_export_mine: {
         Args: {
           p_customer_id: string
-          p_freight_cost?: number
-          p_in_process_refinery_id?: string
+          p_freight_cost?: number | null
+          p_in_process_refinery_id?: string | null
           p_london_am_rate: number
-          p_mechanism_type?: string
-          p_other_costs?: number
+          p_mechanism_type?: string | null
+          p_other_costs?: number | null
           p_quantity_oz: number
         }
         Returns: Json
@@ -15760,9 +15840,9 @@ export type Database = {
       }
       snp_decider_imputation_requisition: {
         Args: {
-          p_contrat_id?: string
+          p_contrat_id?: string | null
           p_imputation: string
-          p_motif?: string
+          p_motif?: string | null
           p_requisition_id: string
         }
         Returns: {
@@ -15841,7 +15921,7 @@ export type Database = {
           p_capability_code: string
           p_reason: string
           p_user_id: string
-          p_valid_until?: string
+          p_valid_until?: string | null
         }
         Returns: undefined
       }
@@ -15857,14 +15937,14 @@ export type Database = {
       snp_enregistrer_connexion: { Args: never; Returns: undefined }
       snp_enregistrer_reglement: {
         Args: {
-          p_affecter_fifo?: boolean
-          p_banque?: string
-          p_date?: string
+          p_affecter_fifo?: boolean | null
+          p_banque?: string | null
+          p_date?: string | null
           p_mining_company_id: string
-          p_mode?: string
+          p_mode?: string | null
           p_montant: number
-          p_observations?: string
-          p_reference_bancaire?: string
+          p_observations?: string | null
+          p_reference_bancaire?: string | null
         }
         Returns: {
           montant_affecte: number
@@ -15875,14 +15955,14 @@ export type Database = {
       }
       snp_enregistrer_reglement_legacy_4b: {
         Args: {
-          p_affecter_fifo?: boolean
-          p_banque?: string
-          p_date?: string
+          p_affecter_fifo?: boolean | null
+          p_banque?: string | null
+          p_date?: string | null
           p_mining_company_id: string
-          p_mode?: string
+          p_mode?: string | null
           p_montant: number
-          p_observations?: string
-          p_reference_bancaire?: string
+          p_observations?: string | null
+          p_reference_bancaire?: string | null
         }
         Returns: {
           montant_affecte: number
@@ -15894,15 +15974,15 @@ export type Database = {
       snp_enregistrer_resultat_analyse: {
         Args: {
           p_analyse_id: string
-          p_analyste?: string
-          p_argent_pct?: number
-          p_certificat?: string
-          p_date_analyse?: string
-          p_document_chemin?: string
+          p_analyste?: string | null
+          p_argent_pct?: number | null
+          p_certificat?: string | null
+          p_date_analyse?: string | null
+          p_document_chemin?: string | null
           p_laboratoire: string
-          p_laboratoire_independant?: boolean
-          p_methode?: string
-          p_observations?: string
+          p_laboratoire_independant?: boolean | null
+          p_methode?: string | null
+          p_observations?: string | null
           p_teneur_pct: number
         }
         Returns: {
@@ -16189,7 +16269,7 @@ export type Database = {
       }
       snp_fret_transitionner_operation: {
         Args: {
-          p_details?: Json
+          p_details?: Json | null
           p_expected_status: string
           p_new_status: string
           p_operation_id: string
@@ -16258,7 +16338,7 @@ export type Database = {
           p_hote: string
           p_identifiant: string
           p_libelle: string
-          p_mot_de_passe?: string
+          p_mot_de_passe?: string | null
           p_port: number
           p_securise: boolean
           p_uid: string
@@ -16277,17 +16357,17 @@ export type Database = {
       }
       snp_notifier: {
         Args: {
-          p_chemin?: string
-          p_cle_dedoublonnage?: string
+          p_chemin?: string | null
+          p_cle_dedoublonnage?: string | null
           p_destinataire_id: string
-          p_faits?: Json
-          p_gravite?: string
+          p_faits?: Json | null
+          p_gravite?: string | null
           p_message: string
-          p_objet_domaine?: string
-          p_objet_id?: string
-          p_par_courriel?: boolean
+          p_objet_domaine?: string | null
+          p_objet_id?: string | null
+          p_par_courriel?: boolean | null
           p_titre: string
-          p_type?: string
+          p_type?: string | null
         }
         Returns: {
           chemin: string | null
@@ -16319,8 +16399,8 @@ export type Database = {
           p_contenu: string
           p_destinataires: string
           p_objet: string
-          p_preuve_envoi?: string
-          p_relance_de?: string
+          p_preuve_envoi?: string | null
+          p_relance_de?: string | null
           p_requisition_id: string
         }
         Returns: {
@@ -16348,17 +16428,17 @@ export type Database = {
       }
       snp_notifier_roles: {
         Args: {
-          p_chemin?: string
-          p_cle_dedoublonnage?: string
-          p_faits?: Json
-          p_gravite?: string
+          p_chemin?: string | null
+          p_cle_dedoublonnage?: string | null
+          p_faits?: Json | null
+          p_gravite?: string | null
           p_message: string
-          p_objet_domaine?: string
-          p_objet_id?: string
-          p_par_courriel?: boolean
+          p_objet_domaine?: string | null
+          p_objet_id?: string | null
+          p_par_courriel?: boolean | null
           p_roles: string[]
           p_titre: string
-          p_type?: string
+          p_type?: string | null
         }
         Returns: number
       }
@@ -16473,9 +16553,9 @@ export type Database = {
       snp_portail_mine_declarer_production: {
         Args: {
           p_date_production: string
-          p_notes?: string
+          p_notes?: string | null
           p_poids_brut_grammes: number
-          p_reference_barre?: string
+          p_reference_barre?: string | null
           p_teneur_estimee_pct: number
         }
         Returns: string
@@ -16483,10 +16563,10 @@ export type Database = {
       snp_portail_mine_modifier_production: {
         Args: {
           p_date_production: string
-          p_notes?: string
+          p_notes?: string | null
           p_poids_brut_grammes: number
           p_production_id: string
-          p_reference_barre?: string
+          p_reference_barre?: string | null
           p_teneur_estimee_pct: number
         }
         Returns: string
@@ -16608,7 +16688,7 @@ export type Database = {
         Args: {
           p_annee: number
           p_mois: number
-          p_notes?: string
+          p_notes?: string | null
           p_prevision_oz: number
         }
         Returns: string
@@ -16621,12 +16701,12 @@ export type Database = {
         Args: {
           p_affectations: Json
           p_compte_bancaire_id: string
-          p_date_execution_prevue?: string
+          p_date_execution_prevue?: string | null
           p_mining_company_id: string
           p_montant: number
-          p_objet?: string
-          p_observations?: string
-          p_reference_interne?: string
+          p_objet?: string | null
+          p_observations?: string | null
+          p_reference_interne?: string | null
         }
         Returns: {
           r_affecte: number
@@ -16639,12 +16719,12 @@ export type Database = {
         Args: {
           p_affectations: Json
           p_compte_bancaire_id: string
-          p_date_execution_prevue?: string
+          p_date_execution_prevue?: string | null
           p_mining_company_id: string
           p_montant: number
-          p_objet?: string
-          p_observations?: string
-          p_reference_interne?: string
+          p_objet?: string | null
+          p_observations?: string | null
+          p_reference_interne?: string | null
         }
         Returns: {
           r_affecte: number
@@ -16670,10 +16750,10 @@ export type Database = {
           p_movement_type: string
           p_organization_id: string
           p_quantity_grams: number
-          p_reason?: string
-          p_reverses_entry_id?: string
-          p_source_id?: string
-          p_source_type?: string
+          p_reason?: string | null
+          p_reverses_entry_id?: string | null
+          p_source_id?: string | null
+          p_source_type?: string | null
         }
         Returns: string
       }
@@ -16683,8 +16763,8 @@ export type Database = {
           p_aggregate_id: string
           p_aggregate_type: string
           p_capability_code: string
-          p_context?: Json
-          p_reason?: string
+          p_context?: Json | null
+          p_reason?: string | null
           p_status_after: string
           p_status_before: string
         }
@@ -16726,8 +16806,8 @@ export type Database = {
       snp_renouveler_carte_professionnelle: {
         Args: {
           p_artisan_id: string
-          p_date_expiration?: string
-          p_observations?: string
+          p_date_expiration?: string | null
+          p_observations?: string | null
         }
         Returns: {
           artisan_id: string
@@ -16804,11 +16884,11 @@ export type Database = {
       }
       snp_resoudre_regle_fiscale: {
         Args: {
-          p_categorie_acheteur?: string
+          p_categorie_acheteur?: string | null
           p_code_taxe: string
           p_date: string
-          p_profil_vendeur?: string
-          p_valeur_seuil?: number
+          p_profil_vendeur?: string | null
+          p_valeur_seuil?: number | null
         }
         Returns: {
           abroge_le: string | null
@@ -16895,10 +16975,10 @@ export type Database = {
       snp_session_current_hash: { Args: never; Returns: string }
       snp_session_enregistrer: {
         Args: {
-          p_browser?: string
-          p_device_type?: string
-          p_location_country?: string
-          p_user_agent?: string
+          p_browser?: string | null
+          p_device_type?: string | null
+          p_location_country?: string | null
+          p_user_agent?: string | null
         }
         Returns: Database["public"]["CompositeTypes"]["snp_session_public"]
         SetofOptions: {
@@ -16960,9 +17040,9 @@ export type Database = {
       }
       snp_sessions_revoquer_toutes: {
         Args: {
-          p_excepter_session_courante?: boolean
-          p_motif?: string
-          p_user_id?: string
+          p_excepter_session_courante?: boolean | null
+          p_motif?: string | null
+          p_user_id?: string | null
         }
         Returns: number
       }
@@ -17010,15 +17090,15 @@ export type Database = {
       }
       snp_sonasp_decider_demande_licence_export: {
         Args: {
-          p_commentaires?: string
-          p_date_debut?: string
-          p_date_fin?: string
+          p_commentaires?: string | null
+          p_date_debut?: string | null
+          p_date_fin?: string | null
           p_decision: string
           p_demande_id: string
-          p_institution_emettrice?: string
-          p_motif_decision?: string
-          p_numero_licence?: string
-          p_quantite_autorisee_grammes?: number
+          p_institution_emettrice?: string | null
+          p_motif_decision?: string | null
+          p_numero_licence?: string | null
+          p_quantite_autorisee_grammes?: number | null
         }
         Returns: {
           comment: string | null
@@ -17047,16 +17127,16 @@ export type Database = {
       }
       snp_sonasp_modifier_licence_export: {
         Args: {
-          p_authorized_quantity_grams?: number
-          p_comments?: string
-          p_end_date?: string
+          p_authorized_quantity_grams?: number | null
+          p_comments?: string | null
+          p_end_date?: string | null
           p_expected_updated_at: string
-          p_issuing_institution?: string
+          p_issuing_institution?: string | null
           p_license_id: string
-          p_notes?: string
-          p_reason?: string
-          p_start_date?: string
-          p_status?: string
+          p_notes?: string | null
+          p_reason?: string | null
+          p_start_date?: string | null
+          p_status?: string | null
         }
         Returns: {
           authorized_quantity_grams: number
@@ -17117,7 +17197,7 @@ export type Database = {
       }
       snp_submit_comptoir_sale_to_sonasp: {
         Args: {
-          p_notes?: string
+          p_notes?: string | null
           p_quantity_grams: number
           p_unit_price_fcfa: number
         }
@@ -17133,11 +17213,11 @@ export type Database = {
       }
       snp_tracer_acces_document: {
         Args: {
-          p_action?: string
+          p_action?: string | null
           p_chemin: string
-          p_document_id?: string
+          p_document_id?: string | null
           p_domaine: string
-          p_objet_id?: string
+          p_objet_id?: string | null
         }
         Returns: undefined
       }
@@ -17188,7 +17268,7 @@ export type Database = {
         Args: {
           p_carte_id: string
           p_expected_statut: string
-          p_motif?: string
+          p_motif?: string | null
           p_nouveau_statut: string
         }
         Returns: {
@@ -17231,7 +17311,7 @@ export type Database = {
         Args: {
           p_expected_status: string
           p_new_status: string
-          p_notes?: string
+          p_notes?: string | null
           p_production_id: string
           p_request_id: string
         }
@@ -17257,16 +17337,16 @@ export type Database = {
       snp_troy_ounces_to_grams: { Args: { p_ounces: number }; Returns: number }
       snp_upsert_artisan_moyen_paiement: {
         Args: {
-          p_actif?: boolean
+          p_actif?: boolean | null
           p_artisan_id: string
-          p_banque?: string
-          p_code_swift?: string
-          p_est_principal?: boolean
-          p_libelle?: string
-          p_moyen_id?: string
-          p_numero_compte?: string
-          p_numero_telephone?: string
-          p_observations?: string
+          p_banque?: string | null
+          p_code_swift?: string | null
+          p_est_principal?: boolean | null
+          p_libelle?: string | null
+          p_moyen_id?: string | null
+          p_numero_compte?: string | null
+          p_numero_telephone?: string | null
+          p_observations?: string | null
           p_titulaire: string
           p_type: string
         }

@@ -37,7 +37,6 @@ export function MonthlyProductionBarChart({ data }: MonthlyProductionBarChartPro
     );
   }
 
-  const maxValue = Math.max(...data.map(d => d.total_oz));
   const totalProduction = data.reduce((sum, d) => sum + d.total_oz, 0);
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -103,7 +102,7 @@ export function MonthlyProductionBarChart({ data }: MonthlyProductionBarChartPro
               radius={[0, 8, 8, 0]}
               maxBarSize={35}
             >
-              {data.map((entry, index) => (
+              {data.map((_entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={COLORS[index % COLORS.length]}

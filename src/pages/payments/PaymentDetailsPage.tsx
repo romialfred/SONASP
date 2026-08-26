@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { Loading } from '@/components/ui/Loading';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';
 import { collectPaymentDocuments, PaymentDocument } from '@/services/paymentDocumentsService';
 
@@ -26,7 +25,6 @@ interface TimelineEvent {
 export function PaymentDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { addToast } = useToast();
 
   const [payment, setPayment] = useState<any>(null);
@@ -132,13 +130,6 @@ export function PaymentDetailsPage() {
       status: payment?.status === 'approved' ? 'completed' : 'pending',
     },
   ];
-
-  const documentsByCategory = documents.reduce((acc, doc) => {
-    const category = doc.type;
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(doc);
-    return acc;
-  }, {} as Record<string, PaymentDocument[]>);
 
   if (loading) {
     return (

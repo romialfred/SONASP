@@ -141,7 +141,7 @@ export function formatDateRange(
 /**
  * Formatte une date relative: "il y a 2 jours", "dans 3 jours"
  */
-export function formatDateRelative(date: Date | string | null | undefined, locale: string = 'fr'): string {
+export function formatDateRelative(date: Date | string | null | undefined, _locale: string = 'fr'): string {
   if (!date) return '';
 
   try {

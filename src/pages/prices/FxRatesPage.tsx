@@ -25,7 +25,7 @@ interface FxRateSource {
   id: string;
   name: string;
   code: string;
-  is_active: boolean;
+  is_active: boolean | null;
 }
 
 interface DailyRate {

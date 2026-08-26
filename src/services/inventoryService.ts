@@ -190,38 +190,6 @@ export async function getAllInventoryEntries(filters?: {
   }
 }
 
-export async function getCurrentInventoryStatus() {
-  try {
-    const { data, error } = await supabase
-      .from('current_inventory_status')
-      .select('*')
-      .order('entry_date', { ascending: false });
-
-    if (error) throw error;
-
-    return { success: true, data: data || [] };
-  } catch (error) {
-    console.error('Error fetching current inventory status:', error);
-    return { success: false, data: [], error };
-  }
-}
-
-export async function getMonthlyInventorySummary() {
-  try {
-    const { data, error } = await supabase
-      .from('monthly_inventory_summary')
-      .select('*')
-      .order('month', { ascending: false });
-
-    if (error) throw error;
-
-    return { success: true, data: data || [] };
-  } catch (error) {
-    console.error('Error fetching monthly summary:', error);
-    return { success: false, data: [], error };
-  }
-}
-
 export async function getInventoryTransactions(inventoryId?: string) {
   try {
     let query = supabase

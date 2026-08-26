@@ -95,20 +95,6 @@ export async function createFxAnalysis(data: CreateFxAnalysisData) {
   return { success: true, data: analysis };
 }
 
-export async function getFxAnalysisHistory(filters?: any) {
-  let query = supabase.from('fx_analysis_with_details').select('*').order('analysis_date', { ascending: false });
-
-  if (filters?.startDate) query = query.gte('analysis_date', filters.startDate);
-  if (filters?.endDate) query = query.lte('analysis_date', filters.endDate);
-  if (filters?.customerId) query = query.eq('customer_id', filters.customerId);
-  if (filters?.currencyPair) query = query.eq('currency_pair', filters.currencyPair);
-
-  const { data, error } = await query;
-  if (error) throw error;
-
-  return { success: true, data };
-}
-
 export async function getCurrentFxRates(currencyPair: string) {
   const today = new Date().toISOString().split('T')[0];
 

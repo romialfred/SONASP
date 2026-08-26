@@ -52,27 +52,6 @@ function isOptimisticConflict(error: ShippingStatusRpcError): boolean {
 }
 
 class ShippingStatusService {
-  async getStatusHistory(shippingId: string): Promise<ShippingStatusHistoryEntry[]> {
-    const { data, error } = await supabase
-      .from('shipping_status_history')
-      .select(`
-        *,
-        user:users!shipping_status_history_changed_by_fkey(email)
-      `)
-      .eq('shipping_preparation_id', shippingId)
-      .order('changed_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching shipping status history:', error);
-      throw error;
-    }
-
-    return (data || []).map(entry => ({
-      ...entry,
-      user_email: entry.user?.email || 'Système',
-    }));
-  }
-
   async changeStatus(
     shippingId: string,
     oldStatus: ShippingStatus,

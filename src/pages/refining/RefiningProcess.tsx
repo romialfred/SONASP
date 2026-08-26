@@ -251,9 +251,14 @@ export function RefiningProcess() {
     return ['received_at_refinery', 'processing', 'processed'].includes(status);
   };
 
-  const handleExport = (selectedColumns: string[]) => {
+  const handleExport = (selectedColumns: string[], format: 'excel' | 'csv' = 'excel') => {
     setVisibleColumns(selectedColumns);
-    exportToExcel(filteredShipments as any,selectedColumns, 'processus_raffinage');
+    if (format === 'csv') {
+      exportToCSV(filteredShipments as any, selectedColumns, 'processus_raffinage');
+      showSuccess('Export réussi', 'Le fichier CSV a été téléchargé avec succès');
+      return;
+    }
+    exportToExcel(filteredShipments as any, selectedColumns, 'processus_raffinage');
     showSuccess('Export réussi', 'Le fichier Excel a été téléchargé avec succès');
   };
 

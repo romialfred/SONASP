@@ -1630,6 +1630,16 @@
       "sha256": "f68a43f395a0dbeae831124f33262a06ee8858f631410f46df119b04069a3113"
     },
     {
+      "path": "supabase/migrations/20260826125518_table_infractions_artisans.sql",
+      "version": "20260826125518",
+      "description": "table_infractions_artisans",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6552,
+      "sha256": "f827e1bf9d15e10e0d8ec6ce79dbb7a363c5c0f94dddeaa703a2ade97e880e1a"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2623,10 +2633,10 @@
       },
       {
         "digits": 14,
-        "count": 66
+        "count": 67
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "4f1f52558ffbdd72240cece2e691fa7e4f7c9a3e78f189211485eb733f7f333d"
+  "catalogueSha256": "1cd0671cbcc766160bba39fe1d363137968e5d5335da740cfc903f6afbd063a7"
 }

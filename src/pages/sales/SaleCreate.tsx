@@ -30,7 +30,7 @@ import { mineStockService, type MineExportableStock } from '@/services/mineStock
 interface MiningCompany {
   id: string;
   name: string;
-  abbreviation: string;
+  abbreviation: string | null;
   country: string;
 }
 

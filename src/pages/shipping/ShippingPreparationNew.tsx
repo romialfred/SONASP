@@ -46,7 +46,7 @@ interface TransportCompany {
   name: string;
   address: string | null;
   company_type: string;
-  is_active: boolean;
+  is_active: boolean | null;
 }
 
 interface Refinery {

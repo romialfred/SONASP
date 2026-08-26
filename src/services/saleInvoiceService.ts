@@ -392,7 +392,7 @@ export async function uploadInvoicePDF(
     const fileName = `invoice_${invoiceNumber}_${Date.now()}.pdf`;
     const filePath = `sales/${saleId}/${fileName}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('sale-documents')
       .upload(filePath, pdfBlob, {
         contentType: 'application/pdf',

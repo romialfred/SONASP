@@ -197,29 +197,10 @@ export async function collectPaymentDocuments(paymentId: string): Promise<Paymen
       }
     }
 
-    // 7. Get refining documents if applicable
-    const { data: refiningDocs } = await supabase
-      .from('refining_processes')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    if (refiningDocs) {
-      for (const doc of refiningDocs) {
-        if (doc.document_url) {
-          documents.push({
-            id: doc.id,
-            name: 'Refining Process Document',
-            type: 'refining',
-            url: doc.document_url,
-            uploadedAt: doc.created_at,
-            metadata: {
-              description: 'Refining process documentation',
-            },
-          });
-        }
-      }
-    }
+    // Les documents de raffinage ne sont pas rattaches ici. Le code precedent
+    // interrogeait `refining_processes`, une table qui n'existe pas, et sans
+    // aucun lien avec le paiement : il prenait les cinq lignes les plus
+    // recentes, quelle que soit la vente. Le rattachement reste a concevoir.
 
     // 8. Get sale documents (invoices, contracts, etc.)
     if (sale.invoice_url) {

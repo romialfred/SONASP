@@ -105,29 +105,6 @@ class DepositorService {
 
     return await query;
   }
-
-  /**
-   * Get depositor contact summary (with mining company name)
-   */
-  async getDepositorSummary(filters?: {
-    mining_company_id?: string;
-    category?: DepositorCategory;
-  }): Promise<{ data: DepositorContactSummary[] | null; error: any }> {
-    let query = supabase
-      .from('depositor_contact_summary')
-      .select('*');
-
-    if (filters?.mining_company_id) {
-      query = query.eq('mining_company_id', filters.mining_company_id);
-    }
-
-    if (filters?.category) {
-      query = query.eq('category', filters.category);
-    }
-
-    return await query;
-  }
-
   /**
    * Get depositor by ID
    */

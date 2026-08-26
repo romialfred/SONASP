@@ -58,7 +58,7 @@ export const AVAILABLE_COLUMNS: ColumnConfig[] = [
 interface ColumnSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (selectedColumns: string[]) => void;
+  onConfirm: (selectedColumns: string[], format: 'excel' | 'csv') => void;
   currentColumns: string[];
   previewData?: any[];
 }
@@ -120,7 +120,10 @@ export function ColumnSelectorModal({
   };
 
   const handleConfirm = (format: 'excel' | 'csv') => {
-    onConfirm(selectedColumns);
+    // Les deux boutons du pied de page proposent un format distinct ; il doit
+    // parvenir à l'appelant, sans quoi « CSV » et « Excel » produisent le même
+    // fichier.
+    onConfirm(selectedColumns, format);
     onClose();
   };
 

@@ -34,17 +34,6 @@ const date = (value: string) =>
 const fileName = (context: BIExportContext, extension: string) =>
   `sonasp-${viewNames[context.view]}-${context.period.startDate}-${context.period.endDate}.${extension}`;
 
-const download = (blob: Blob, name: string) => {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = name;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-};
-
 const filterRows = (context: BIExportContext) => [
   { Filtre: 'Période', Valeur: `${date(context.period.startDate)} au ${date(context.period.endDate)}` },
   { Filtre: 'Région', Valeur: context.filters.region === 'all' ? 'Toutes' : context.filters.region },

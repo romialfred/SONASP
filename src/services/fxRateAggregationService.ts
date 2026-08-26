@@ -127,30 +127,6 @@ export async function fetchMultipleFxRates(
 
   return results;
 }
-
-/**
- * Record intraday FX rate for aggregation
- */
-function recordIntradayFxRate(currencyPair: string, rate: number): void {
-  let tracking = intradayRates.get(currencyPair);
-
-  if (!tracking) {
-    tracking = {
-      rates: [],
-      high: rate,
-      low: rate,
-      open: rate,
-      close: rate,
-    };
-    intradayRates.set(currencyPair, tracking);
-  }
-
-  tracking.rates.push(rate);
-  tracking.high = Math.max(tracking.high, rate);
-  tracking.low = Math.min(tracking.low, rate);
-  tracking.close = rate;
-}
-
 /**
  * Save end-of-day FX rate snapshot
  */
@@ -163,7 +139,11 @@ export async function saveEndOfDayFxSnapshot(
     const tracking = intradayRates.get(currencyPair);
 
     if (!tracking || tracking.rates.length === 0) {
-      // Fetch current rate if no tracking
+      // Aucun releve intrajournalier n'est enregistre : la fonction qui
+      // alimentait `intradayRates` n'etait appelee de nulle part et a ete
+      // retiree. Ce chemin est donc le seul emprunte, et l'instantane
+      // quotidien porte un point unique — ouverture, plus haut, plus bas et
+      // cloture y sont egaux.
       const liveRate = await fetchLiveFxRate(currencyPair);
       if (!liveRate) {
         return { success: false, error: 'No rate data available' };
@@ -231,72 +211,6 @@ export async function saveEndOfDayFxSnapshot(
     return { success: false, error: error.message };
   }
 }
-
-/**
- * Generate monthly FX aggregate
- */
-export async function generateMonthlyFxAggregate(
-  year: number,
-  month: number,
-  currencyPair: string,
-  sourceId: string
-): Promise<{ success: boolean; data?: MonthlyFxAggregate; error?: string }> {
-  try {
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = month === 12
-      ? `${year + 1}-01-01`
-      : `${year}-${String(month + 1).padStart(2, '0')}-01`;
-
-    const { data: dailyRates, error } = await supabase
-      .from('fx_rates_daily')
-      .select('*')
-      .eq('currency_pair', currencyPair)
-      .eq('source_id', sourceId)
-      .gte('rate_date', startDate)
-      .lt('rate_date', endDate)
-      .order('rate_date', { ascending: true });
-
-    if (error || !dailyRates || dailyRates.length === 0) {
-      return { success: false, error: 'No daily data available' };
-    }
-
-    const rates = dailyRates.map(d => d.avg_rate);
-    const avgRate = rates.reduce((sum, r) => sum + r, 0) / rates.length;
-    const minRate = Math.min(...dailyRates.map(d => d.low_rate));
-    const maxRate = Math.max(...dailyRates.map(d => d.high_rate));
-
-    // Calculate volatility
-    const variance = rates.reduce((sum, r) => sum + Math.pow(r - avgRate, 2), 0) / rates.length;
-    const volatility = Math.sqrt(variance);
-
-    const aggregate: MonthlyFxAggregate = {
-      year,
-      month,
-      currency_pair: currencyPair,
-      source_id: sourceId,
-      avg_rate: parseFloat(avgRate.toFixed(6)),
-      min_rate: parseFloat(minRate.toFixed(6)),
-      max_rate: parseFloat(maxRate.toFixed(6)),
-      opening_rate: dailyRates[0].opening_rate,
-      closing_rate: dailyRates[dailyRates.length - 1].closing_rate,
-      data_points: dailyRates.length,
-      volatility: parseFloat(volatility.toFixed(6)),
-    };
-
-    const { error: upsertError } = await supabase
-      .from('fx_rates_monthly')
-      .upsert(aggregate, { onConflict: 'year,month,currency_pair,source_id' });
-
-    if (upsertError) {
-      return { success: false, error: upsertError.message };
-    }
-
-    return { success: true, data: aggregate };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
 /**
  * Save all end-of-day snapshots for configured pairs
  */

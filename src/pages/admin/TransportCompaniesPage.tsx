@@ -17,7 +17,7 @@ export interface TransportCompany {
   company_type: TransportType;
   address: string | null;
   contact_person: string | null;
-  is_active: boolean;
+  is_active: boolean | null;
   created_at: string;
 }
 

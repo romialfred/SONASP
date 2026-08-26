@@ -66,8 +66,6 @@ export function InvoicePreviewPanel({ data, isVisible }: InvoicePreviewPanelProp
 
   // Format conversion values
   const troyOzToGrams = 31.1034768;
-  const gramsToKg = 1000;
-
   return (
     <div className="fixed right-0 top-0 h-screen w-[580px] bg-white border-l border-gray-300 shadow-2xl z-50 overflow-y-auto">
       {/* Sticky Header */}

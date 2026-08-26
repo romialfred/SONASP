@@ -95,7 +95,7 @@ export function ShippingStatusHistory({ history, siteCountry }: ShippingStatusHi
 
       <div className="space-y-4">
         {sortedHistory.map((entry, index) => {
-          const { date, time, full } = formatDateTime(entry.changed_at);
+          const { full } = formatDateTime(entry.changed_at);
           const isFirst = index === 0;
           const isLast = index === sortedHistory.length - 1;
 

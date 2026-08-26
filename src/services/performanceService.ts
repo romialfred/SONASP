@@ -36,7 +36,7 @@ class PerformanceService {
     const startOfMonth = new Date(currentYear, now.getMonth(), 1);
     const startOfYear = new Date(currentYear, 0, 1);
 
-    const { budget, monthlyBudgets, quarterlyForecasts } =
+    const { monthlyBudgets, quarterlyForecasts } =
       await annualBudgetService.getMonthlyBudgetWithForecasts(currentYear, siteId);
 
     let actualStartDate = startDate;
@@ -146,7 +146,7 @@ class PerformanceService {
     quarterlyForecasts: QuarterlyForecast[],
     monthlyBudgets: MonthlyBudget[],
     currentMonth: number,
-    currentQuarter: number,
+    _currentQuarter: number,
     now: Date
   ): number {
     const currentMonthForecast = quarterlyForecasts.find(

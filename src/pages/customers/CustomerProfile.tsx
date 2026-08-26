@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Mail, Phone, MapPin, TrendingUp } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -43,7 +42,6 @@ interface Customer {
 }
 
 export function CustomerProfile() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
 

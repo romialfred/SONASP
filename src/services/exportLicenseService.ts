@@ -599,16 +599,6 @@ class ExportLicenseService {
   /**
    * Récupérer le résumé des licences (via vue)
    */
-  async getLicensesSummary() {
-    const { data, error } = await supabase
-      .from('v_export_licenses_summary')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
-  }
-
   /**
    * Générer un numéro de licence automatique
    */

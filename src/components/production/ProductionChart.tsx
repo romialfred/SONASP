@@ -44,7 +44,7 @@ export function ProductionChart({ productions, groupByCompany = false, miningCom
     const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
     const monthlyData = Array.from(monthlyMap.entries())
-      .map(([key, value]) => ({
+      .map(([, value]) => ({
         month: `${monthNames[value.monthNum]} ${value.year}`,
         total_oz: value.total_oz,
         monthNum: value.year * 12 + value.monthNum

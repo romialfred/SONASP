@@ -85,7 +85,6 @@ export const freightInvoiceGenerationService = {
   generateBullionSummary(data: BullionSummaryData): jsPDF {
     const doc = new jsPDF('landscape', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
 
     // L'émetteur provient du dossier d'expédition. Aucun exploitant n'est
     // présélectionné dans un document officiel.

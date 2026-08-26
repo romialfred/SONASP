@@ -81,7 +81,6 @@ export function SalesWorkflowProgressPanel({
             const Icon = step.icon;
             const completed = isCompleted(index);
             const current = isCurrent(step.status);
-            const pending = !completed && !current;
 
             return (
               <div key={step.status} className="relative">

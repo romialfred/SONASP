@@ -180,8 +180,6 @@ export function GoldPricesPage() {
   const priceChange = latestPrice && previousPrice ? latestPrice.london_am_rate - previousPrice.london_am_rate : 0;
   const priceChangePercent = previousPrice ? (priceChange / previousPrice.london_am_rate) * 100 : 0;
 
-  const currentMonthAggregate = monthlyAggregates.find(m => m.month === selectedMonth);
-
   if (loading) {
     return (
       <MainLayout>

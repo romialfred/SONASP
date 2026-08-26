@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { getBusinessRuleValue } from './businessRulesService';
 
 export async function validateReceiving(
-  batchId: string,
+  _batchId: string,
   actualWeight: number,
   expectedWeight: number,
   location: 'airport' | 'refinery' = 'airport'

@@ -383,8 +383,7 @@ export function AssayCertificatesModern() {
 
                 // Border animation colors based on approval status
                 const hasApproved = shipping.certificates.some(c => c.approval_status === 'approved');
-                const hasPending = shipping.certificates.some(c => c.approval_status === 'pending');
-                const borderAnimationColor = hasApproved ? 'hover:shadow-emerald-400/50' : 'hover:shadow-red-400/50';
+                            const borderAnimationColor = hasApproved ? 'hover:shadow-emerald-400/50' : 'hover:shadow-red-400/50';
 
                 return (
                   <Card

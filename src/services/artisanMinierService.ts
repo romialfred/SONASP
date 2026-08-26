@@ -4,7 +4,8 @@ import { genererNumeroCarte } from './carteNumberService';
 
 export interface ArtisanMinier {
   id: string;
-  numero_carte: string;
+  /** Nullable en base : la carte est attribuée après enregistrement. */
+  numero_carte: string | null;
   type_personne: 'physique' | 'morale';
   type_artisan: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur';
 

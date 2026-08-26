@@ -501,3 +501,65 @@ de retirer ce code plutôt que de créer les objets. À défaut, exécuter
 
 **En attendant.** Vérifier les types avec `tsconfig.app.json` explicitement,
 jamais avec `tsconfig.json`.
+
+---
+
+## R-19 — Deux fonctionnalités étaient en panne sans le dire · FERMÉ
+
+**Infractions d'artisans.** `artisanInfractionsService` interrogeait
+`snp_artisan_infractions`, qui n'existait sous aucun nom. Trois pages vivantes
+l'appellent au chargement : le dossier de l'artisan, le détail d'un constat, le
+formulaire de constat. Toutes trois passent par `Promise.allSettled`, si bien que
+l'échec ne plantait rien : **le dossier affichait « aucune infraction » alors que
+la table n'existait pas**. Un agent en aurait conclu qu'un artisan est
+irréprochable. La table est créée, cloisonnée par `snp_can_access_artisan()`
+comme ses tables sœurs, avec ses contraintes de cohérence vérifiées.
+
+**Export du raffinage.** Le sélecteur de colonnes offrait deux boutons, « CSV »
+et « Excel ». Le format choisi n'était pas transmis à l'appelant : les deux
+produisaient un fichier Excel, et le message de succès annonçait « Excel » dans
+les deux cas. Le format traverse désormais jusqu'à l'export.
+
+**Comment elles ont été trouvées.** Ni l'une ni l'autre par une lecture du code :
+la première par le contrôle de couverture du schéma, la seconde par un paramètre
+déclaré et jamais lu — une erreur `TS6133` que la porte `typecheck` n'atteignait
+jamais (voir [[R-18]]).
+
+---
+
+## R-20 — Deux manques de conception, mis au jour en retirant du code mort · OUVERT
+
+**Suivi intrajournalier des taux de change.** `intradayRates` est lu par
+`saveEndOfDayFxSnapshot`, mais la seule fonction qui l'alimentait n'était appelée
+de nulle part. L'instantané quotidien retombe donc toujours sur son chemin de
+repli : ouverture, plus haut, plus bas et clôture y sont égaux à un relevé
+unique. La fonction morte a été retirée et le repli porte désormais un
+commentaire disant la vérité. **Rétablir un vrai suivi demande de brancher un
+relevé périodique** — décision à prendre.
+
+**Documents de raffinage sur un paiement.** Le code interrogeait
+`refining_processes`, une table inexistante, et sans aucun lien avec le paiement :
+il prenait les cinq lignes les plus récentes, quelle que soit la vente. Le bloc
+est retiré. **Le rattachement reste à concevoir.**
+
+---
+
+## R-21 — Les corrections de `src/types/database.ts` sont fragiles · OUVERT
+
+**Description.** Le fichier est généré, mais il est en pratique maintenu à la
+main dans ce dépôt. Y figurent désormais : la colonne `profil_vendeur`, deux
+procédures de session, la table `snp_artisan_infractions`, et surtout
+**158 paramètres de procédure élargis à `null`**.
+
+**Pourquoi cet élargissement.** Le générateur déclare un paramètre à défaut SQL
+comme simplement optionnel (`p_motif?: string`), ce qui nie que SQL accepte
+`NULL`. Réécrire les appels aurait été plus durable, mais dangereux : plusieurs
+procédures ont un défaut qui n'est pas `NULL` — `snp_notifier` retombe sur
+`'normale'`, `snp_enregistrer_reglement` sur `'virement'`. Omettre le paramètre
+aurait silencieusement changé le calcul.
+
+**Le risque.** Une régénération brute du fichier effacerait ces corrections et
+ramènerait des centaines d'erreurs de types.
+
+**Mitigation à faire.** Faire de la régénération une étape outillée qui réapplique
+ces ajustements, ou corriger le générateur en amont.

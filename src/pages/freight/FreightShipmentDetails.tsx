@@ -26,7 +26,6 @@ export default function FreightShipmentDetails() {
   const navigate = useNavigate();
   const { showError, showSuccess } = useNotification();
   const {
-    showAlert,
     showConfirm,
     alertState,
     confirmState,

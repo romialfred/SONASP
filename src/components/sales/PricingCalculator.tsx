@@ -39,10 +39,6 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
     return unit === 'oz' ? qty : qty / GRAMS_PER_OZ;
   };
 
-  const getDisplayQuantity = (oz: number): string => {
-    return unit === 'oz' ? oz.toFixed(2) : (oz * GRAMS_PER_OZ).toFixed(2);
-  };
-
   const handleCalculate = async () => {
     const qtyInOz = getQuantityInOz();
 
@@ -111,7 +107,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
     return <DollarSign className="w-5 h-5" />;
   };
 
-  const getMechanismBadge = (index: number, totalMechanisms: number, isRecommended: boolean) => {
+  const getMechanismBadge = (index: number) => {
     if (index === 0) {
       return (
         <span className="px-2 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded">
@@ -122,7 +118,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
     return null;
   };
 
-  const getCardBackgroundColor = (index: number, totalMechanisms: number) => {
+  const getCardBackgroundColor = (index: number) => {
     if (index === 0) {
       // Best option - light green
       return 'bg-emerald-50/80';
@@ -229,7 +225,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
               const isRecommended = mechanism.mechanism === comparison.recommendedMechanism;
               const isSelected = mechanism.mechanism === selectedMechanism;
               const isBestOption = index === 0;
-              const bgColor = getCardBackgroundColor(index, comparison.mechanisms.length);
+              const bgColor = getCardBackgroundColor(index);
 
               return (
                 <Card
@@ -252,7 +248,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                           <p className="text-xs text-gray-500">{mechanism.settlementDays} days</p>
                         </div>
                       </div>
-                      {getMechanismBadge(index, comparison.mechanisms.length, isRecommended)}
+                      {getMechanismBadge(index)}
                     </div>
 
                     <div className="space-y-1.5">

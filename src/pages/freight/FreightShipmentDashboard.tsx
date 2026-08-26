@@ -50,7 +50,7 @@ const STATUS_LABELS: Record<FreightShipmentStatus, { label: string; color: strin
 
 export default function FreightShipmentDashboard() {
   const navigate = useNavigate();
-  const { showError, showSuccess } = useNotification();
+  const { showError } = useNotification();
   const [shipments, setShipments] = useState<FreightShipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

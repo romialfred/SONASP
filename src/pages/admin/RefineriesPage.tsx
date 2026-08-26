@@ -16,7 +16,7 @@ export interface Refinery {
   phone: string | null;
   contact_person: string | null;
   capacity_grams_per_month: number | null;
-  is_active: boolean;
+  is_active: boolean | null;
   created_at: string;
 }
 

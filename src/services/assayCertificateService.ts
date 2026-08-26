@@ -218,12 +218,6 @@ function mapAssayDataFromText(
     raw_text: text,
   };
 
-  // Legacy fallback code below (keeping for compatibility)
-  const legacyData: Partial<AssayCertificateData> = {
-    deleterious_elements: {},
-    extraction_confidence: 0.0,
-  };
-
   // Certificate number patterns
   const certNumberPatterns = [
     /Certificate\s+(?:No|Number|#)[:\s]+([A-Z0-9-]+)/i,

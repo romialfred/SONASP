@@ -37,7 +37,7 @@ interface Customer {
 interface MiningCompany {
   id: string;
   name: string;
-  abbreviation: string;
+  abbreviation: string | null;
   country: string;
   code: string;
   company_type: 'production_mine' | 'institution' | 'parent_company';

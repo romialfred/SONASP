@@ -13,7 +13,7 @@ interface ProductionMetricsProps {
   miningCompanyId?: string;
 }
 
-export function ProductionMetrics({ productions, dateRange, miningCompanyId }: ProductionMetricsProps) {
+export function ProductionMetrics({ dateRange, miningCompanyId }: ProductionMetricsProps) {
   const [wtdSummary, setWtdSummary] = useState<ProductionSummary | null>(null);
   const [mtdSummary, setMtdSummary] = useState<ProductionSummary | null>(null);
   const [ytdSummary, setYtdSummary] = useState<ProductionSummary | null>(null);
@@ -56,11 +56,6 @@ export function ProductionMetrics({ productions, dateRange, miningCompanyId }: P
     }
   };
 
-  const calculateVariance = (actual: number, target: number) => actual - target;
-  const calculatePercentage = (actual: number, target: number) => {
-    if (target === 0) return 0;
-    return ((actual / target) * 100) - 100;
-  };
 
   const renderPerformanceCard = (
     title: string,

@@ -27,7 +27,8 @@ interface GoldSalesSettingFormPanelProps {
 interface MiningCompany {
   id: string;
   name: string;
-  abbreviation: string;
+  /** Nullable en base : toutes les sociétés n'ont pas de sigle. */
+  abbreviation: string | null;
   country: string;
 }
 
@@ -303,7 +304,7 @@ export function GoldSalesSettingFormPanel({
                   <option value="">Sélectionner une mine...</option>
                   {miningCompanies.map((mine) => (
                     <option key={mine.id} value={mine.id}>
-                      {mine.name} ({mine.abbreviation})
+                      {mine.abbreviation ? `${mine.name} (${mine.abbreviation})` : mine.name}
                     </option>
                   ))}
                 </Select>
@@ -319,7 +320,7 @@ export function GoldSalesSettingFormPanel({
                         <p className="text-sm font-semibold text-amber-900">{selectedMine.name}</p>
                         <div className="mt-1 space-y-1">
                           <p className="text-xs text-amber-700">
-                            <span className="font-medium">Abréviation:</span> {selectedMine.abbreviation}
+                            <span className="font-medium">Abréviation:</span> {selectedMine.abbreviation ?? '—'}
                           </p>
                           <p className="text-xs text-amber-700">
                             <span className="font-medium">Pays:</span> {selectedMine.country}

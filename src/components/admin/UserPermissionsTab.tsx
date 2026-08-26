@@ -336,7 +336,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   ]
 };
 
-export default function UserPermissionsTab({ userId, userRole }: UserPermissionsTabProps) {
+export default function UserPermissionsTab({ userRole }: UserPermissionsTabProps) {
   const rolePermissions = ROLE_PERMISSIONS[userRole.toLowerCase()] || [];
 
   const hasPermission = (permissionId: string) => {

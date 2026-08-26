@@ -19,7 +19,6 @@ export default function FreightShipmentsRefining() {
   const navigate = useNavigate();
   const { showError, showSuccess } = useNotification();
   const {
-    showAlert,
     showConfirm,
     alertState,
     confirmState,

@@ -43,7 +43,7 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
 
   // Label sur chaque segment du Pie Chart (sur le contour externe)
   const renderCustomLabel = (props: any) => {
-    const { cx, cy, midAngle, outerRadius, value, percentage } = props;
+    const { cx, cy, midAngle, outerRadius, value } = props;
     const RADIAN = Math.PI / 180;
 
     // Position à l'extérieur du donut
@@ -116,7 +116,7 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
                   label={renderCustomLabel}
                   labelLine={false}
                 >
-                  {chartData.map((entry, index) => (
+                  {chartData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

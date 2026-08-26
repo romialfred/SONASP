@@ -35,20 +35,6 @@ export const modulesService = {
     }
   },
 
-  async getActive(): Promise<Module[]> {
-    try {
-      const { data, error } = await supabase
-        .from('snp_modules_actifs')
-        .select('*');
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching active modules:', error);
-      throw error;
-    }
-  },
-
   async getById(id: string): Promise<Module | null> {
     try {
       const { data, error } = await supabase
@@ -101,28 +87,6 @@ export const modulesService = {
       throw error;
     }
   },
-
-  async getActiveHierarchy(): Promise<Module[]> {
-    try {
-      const allModules = await this.getActive();
-
-      const parentModules = allModules.filter(m => !m.parent_id && m.est_actif && m.est_visible_menu);
-      const childModules = allModules.filter(m => m.parent_id && m.est_actif && m.est_visible_menu);
-
-      const hierarchy = parentModules.map(parent => ({
-        ...parent,
-        submodules: childModules
-          .filter(child => child.parent_id === parent.id)
-          .sort((a, b) => a.ordre - b.ordre)
-      }));
-
-      return hierarchy.sort((a, b) => a.ordre - b.ordre);
-    } catch (error) {
-      console.error('Error fetching active module hierarchy:', error);
-      throw error;
-    }
-  },
-
   async create(module: Partial<Module>): Promise<Module> {
     try {
       const { data, error } = await supabase

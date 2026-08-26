@@ -142,20 +142,6 @@ export const userActivityService = {
   /**
    * Get activity summary for all users
    */
-  async getActivitySummaries(): Promise<ActivitySummary[]> {
-    const { data, error } = await supabase
-      .from('user_activity_summary')
-      .select('*')
-      .order('total_actions', { ascending: false });
-
-    if (error) {
-      console.error('[userActivityService] Error fetching activity summaries:', error);
-      throw error;
-    }
-
-    return data || [];
-  },
-
   /**
    * Get activity statistics for a specific module
    */

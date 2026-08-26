@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   getStats: vi.fn(),
   showSuccess: vi.fn(),
   showError: vi.fn(),
+  pourAchat: vi.fn(),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -32,6 +33,12 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+
+// L'écran refuse d'enregistrer tant qu'une taxe n'a pas de règle en vigueur.
+// Le référentiel est donc simulé ici, comme la base le renverrait.
+vi.mock('@/services/tauxAchatService', () => ({
+  tauxAchatService: { pourAchat: mocks.pourAchat },
+}));
 
 vi.mock('@/components/prices/LiveGoldPricePanel', () => ({ LiveGoldPricePanel: () => null }));
 
@@ -111,6 +118,12 @@ describe('VenteOrForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.params.id = undefined;
+    mocks.pourAchat.mockResolvedValue({
+      tvaPourcent: 18,
+      taxeCommunalePourcent: 1,
+      taxesSansRegle: [],
+      reglesRetenues: {},
+    });
     mocks.getAllArtisans.mockResolvedValue(artisans);
     mocks.getStats.mockResolvedValue({
       artisan_id: 'a1',

@@ -18,6 +18,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { genererNumeroRecu } from '@/services/venteRecuNumberService';
+import { tauxAchatService, type TauxAchat } from '@/services/tauxAchatService';
 import { ecartAuCours, useCoursOr } from '@/hooks/useCoursOr';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -86,8 +87,8 @@ const KARAT_PRESETS = [18, 20, 21, 22, 24];
 /** Statuts verrouillant la modification d'une vente. */
 export const STATUTS_VERROUILLES: Statut[] = ['validee', 'payee'];
 
-const TVA_TAUX = 18;
-const TAXE_DEV_COMM_TAUX = 1;
+// Les taux ne sont plus écrits ici : ils viennent du barème, résolus pour le
+// profil du vendeur — un artisan — à la date de l'opération.
 
 const integer = new Intl.NumberFormat('fr-FR');
 const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -232,16 +233,30 @@ export default function VenteOrForm() {
    * alors que la vente enregistrée valait brut + TVA + taxe de développement : le
    * montant présenté était inférieur de 19 % à celui écrit en base.
    */
+  const [taux, setTaux] = useState<TauxAchat | null>(null);
+  const [tauxErreur, setTauxErreur] = useState<string | null>(null);
+
+  useEffect(() => {
+    let actif = true;
+    const dateOperation = new Date().toISOString().slice(0, 10);
+    tauxAchatService
+      .pourAchat('artisan', dateOperation)
+      .then((resolu) => { if (actif) { setTaux(resolu); setTauxErreur(null); } })
+      .catch(() => { if (actif) setTauxErreur('Les taux applicables n’ont pas pu être lus.'); });
+    return () => { actif = false; };
+  }, []);
+
   const taxes = useMemo(
     () =>
       artisanGoldSalesService.calculateTaxes(
         form.quantite_grammes,
         form.prix_unitaire_fcfa * 1000,
-        TVA_TAUX,
-        TAXE_DEV_COMM_TAUX
+        taux?.tvaPourcent ?? 0,
+        taux?.taxeCommunalePourcent ?? 0
       ),
-    [form.prix_unitaire_fcfa, form.quantite_grammes]
+    [form.prix_unitaire_fcfa, form.quantite_grammes, taux]
   );
+  const taxesSansRegle = taux?.taxesSansRegle ?? [];
 
   const ecart = ecartAuCours(form.prix_unitaire_fcfa, prixGrammeFcfa);
   const quantiteOnces = form.quantite_grammes / TROY_OZ_GRAMS;
@@ -278,6 +293,14 @@ export default function VenteOrForm() {
     event.preventDefault();
     if (saving) return; // garde-fou contre la double soumission
 
+    if (taxesSansRegle.length > 0) {
+      showError(
+        `Aucune règle fiscale en vigueur pour : ${taxesSansRegle.join(', ')}. `
+        + 'Renseignez le barème avant d’enregistrer cette vente.',
+      );
+      return;
+    }
+
     const message = validate();
     if (message) {
       showError(message);
@@ -294,9 +317,9 @@ export default function VenteOrForm() {
         purete_karat: Math.round(form.purete_karat),
         prix_kg_fcfa: form.prix_unitaire_fcfa * 1000,
         montant_brut_fcfa: taxes.montant_brut_fcfa,
-        tva_taux: TVA_TAUX,
+        tva_taux: taux?.tvaPourcent ?? 0,
         tva_montant_fcfa: taxes.tva_montant_fcfa,
-        taxe_dev_comm_taux: TAXE_DEV_COMM_TAUX,
+        taxe_dev_comm_taux: taux?.taxeCommunalePourcent ?? 0,
         taxe_dev_comm_montant_fcfa: taxes.taxe_dev_comm_montant_fcfa,
         montant_total_fcfa: taxes.montant_total_fcfa,
         observations: form.observations,
@@ -570,7 +593,16 @@ export default function VenteOrForm() {
                 <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/ventes-or')}>
                   Annuler
                 </button>
-                <button type="submit" className="sn-btn sn-btn--primary" disabled={saving || Boolean(validationError)}>
+                <button
+                  type="submit"
+                  className="sn-btn sn-btn--primary"
+                  disabled={
+                    saving
+                    || Boolean(validationError)
+                    || taxesSansRegle.length > 0
+                    || taux === null
+                  }
+                >
                   {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
                   {saving ? 'Enregistrement…' : isEditMode ? 'Mettre à jour la vente' : 'Enregistrer la vente'}
                 </button>
@@ -591,11 +623,11 @@ export default function VenteOrForm() {
                     <dd>{formatFcfa(taxes.montant_brut_fcfa)}</dd>
                   </div>
                   <div>
-                    <dt>TVA ({TVA_TAUX} %)</dt>
+                    <dt>TVA ({taux?.tvaPourcent ?? '—'} %)</dt>
                     <dd>{formatFcfa(taxes.tva_montant_fcfa)}</dd>
                   </div>
                   <div>
-                    <dt>Taxe de développement ({TAXE_DEV_COMM_TAUX} %)</dt>
+                    <dt>Taxe de développement ({taux?.taxeCommunalePourcent ?? '—'} %)</dt>
                     <dd>{formatFcfa(taxes.taxe_dev_comm_montant_fcfa)}</dd>
                   </div>
                   <div className="is-total">

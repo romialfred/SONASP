@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   lister: vi.fn(),
   creer: vi.fn(),
   changerStatut: vi.fn(),
+  pourAchat: vi.fn(),
   prixGrammeFcfa: { valeur: 45_000 as number | null },
 }));
 
@@ -17,6 +18,12 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 
 vi.mock('@/hooks/useCoursOr', () => ({
   useCoursOr: () => ({ prixGrammeFcfa: mocks.prixGrammeFcfa.valeur }),
+}));
+
+// L'écran refuse d'enregistrer tant qu'une taxe n'a pas de règle en vigueur.
+// Le référentiel est donc simulé ici, comme la base le renverrait.
+vi.mock('@/services/tauxAchatService', () => ({
+  tauxAchatService: { pourAchat: mocks.pourAchat },
 }));
 
 vi.mock('@/services/achatMineService', async () => {
@@ -48,6 +55,15 @@ beforeEach(() => {
   mocks.lister.mockResolvedValue([]);
   mocks.creer.mockResolvedValue({ id: 'a1' });
   mocks.changerStatut.mockResolvedValue({ id: 'a1' });
+  mocks.pourAchat.mockResolvedValue({
+    tvaPourcent: 0,
+    taxeCommunalePourcent: 1,
+    taxesSansRegle: [],
+    reglesRetenues: {
+      tva: 'TVA des mines industrielles',
+      taxe_communale: 'Taxe de developpement communal',
+    },
+  });
 });
 
 describe('périodeMoisPrecedent', () => {
@@ -139,5 +155,24 @@ describe('AchatsMines', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Nouvel achat/ }));
     expect((screen.getByLabelText(/Prix à l’once/) as HTMLInputElement).value).toBe('');
+  });
+
+  it('refuse d’enregistrer quand une taxe n’a aucune règle en vigueur', async () => {
+    // Un montant calculé à zéro faute de règle passerait pour une exonération.
+    mocks.pourAchat.mockResolvedValue({
+      tvaPourcent: null,
+      taxeCommunalePourcent: 1,
+      taxesSansRegle: ['tva'],
+      reglesRetenues: {},
+    });
+
+    render(<AchatsMines />);
+    await screen.findByText('SEMAFO Boungou Gold Mine');
+    fireEvent.click(screen.getByRole('button', { name: /Nouvel achat/ }));
+
+    await screen.findByText(/Aucune règle fiscale en vigueur pour : tva/);
+    const bouton = screen.getByRole('button', { name: /Enregistrer l’achat/ });
+    expect(bouton).toBeDisabled();
+    expect(mocks.creer).not.toHaveBeenCalled();
   });
 });

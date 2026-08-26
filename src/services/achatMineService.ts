@@ -69,9 +69,6 @@ export interface StockMine {
   declarations: number;
 }
 
-export const TVA_TAUX_DEFAUT = 18;
-export const TAXE_DEV_COMM_TAUX_DEFAUT = 1;
-
 export interface Valorisation {
   montantBrut: number;
   tva: number;
@@ -83,12 +80,17 @@ export interface Valorisation {
  * Valorisation d'un achat.
  * Les taxes s'ajoutent au montant brut, comme sur l'achat aux artisans : c'est
  * la SONASP qui les acquitte en sus du prix versé au vendeur.
+ *
+ * Les deux taux sont exigés, sans valeur par défaut. Ils portaient auparavant
+ * 18 % et 1 % écrits dans le code : un appel qui les omettait appliquait donc en
+ * silence des taux contraires au barème. Ils se résolvent désormais par
+ * `tauxAchatService`, qui interroge le référentiel.
  */
 export function valoriser(
   quantiteOz: number,
   prixOnceFcfa: number,
-  tvaTaux = TVA_TAUX_DEFAUT,
-  taxeDevCommTaux = TAXE_DEV_COMM_TAUX_DEFAUT
+  tvaTaux: number,
+  taxeDevCommTaux: number
 ): Valorisation {
   const arrondi = (valeur: number) => Math.round(valeur * 100) / 100;
   const montantBrut = arrondi(Math.max(0, quantiteOz) * Math.max(0, prixOnceFcfa));

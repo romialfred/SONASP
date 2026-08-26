@@ -18,10 +18,9 @@ import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { useCoursOr } from '@/hooks/useCoursOr';
 import { errorMessage } from '@/lib/errorMessage';
+import { tauxAchatService, type TauxAchat } from '@/services/tauxAchatService';
 import {
   LIBELLES_STATUT_ACHAT,
-  TAXE_DEV_COMM_TAUX_DEFAUT,
-  TVA_TAUX_DEFAUT,
   achatMineService,
   validerAchat,
   valoriser,
@@ -106,9 +105,30 @@ export default function AchatsMines() {
     [stocks, societeId]
   );
 
+  const [taux, setTaux] = useState<TauxAchat | null>(null);
+  const [tauxErreur, setTauxErreur] = useState<string | null>(null);
+
+  // Les taux ne sont plus écrits dans le code : ils viennent du barème, résolus
+  // pour le profil du vendeur — ici une mine industrielle — à la date du jour.
+  useEffect(() => {
+    let actif = true;
+    const dateAchat = new Date().toISOString().slice(0, 10);
+    tauxAchatService
+      .pourAchat('mine_industrielle', dateAchat)
+      .then((resolu) => { if (actif) { setTaux(resolu); setTauxErreur(null); } })
+      .catch(() => { if (actif) setTauxErreur('Les taux applicables n’ont pas pu être lus.'); });
+    return () => { actif = false; };
+  }, []);
+
   const quantiteOz = Number(String(quantite).replace(',', '.')) || 0;
   const prix = Number(String(prixOnce).replace(',', '.')) || 0;
-  const valorisation = valoriser(quantiteOz, prix);
+  const valorisation = valoriser(
+    quantiteOz,
+    prix,
+    taux?.tvaPourcent ?? 0,
+    taux?.taxeCommunalePourcent ?? 0,
+  );
+  const taxesSansRegle = taux?.taxesSansRegle ?? [];
 
   const messageValidation = validerAchat(
     {
@@ -140,6 +160,14 @@ export default function AchatsMines() {
 
   const soumettre = async (evenement: FormEvent) => {
     evenement.preventDefault();
+    if (taxesSansRegle.length > 0) {
+      showError(
+        `Aucune règle fiscale en vigueur pour : ${taxesSansRegle.join(', ')}. `
+        + 'Renseignez le barème avant d’enregistrer cet achat.',
+      );
+      return;
+    }
+
     if (messageValidation) {
       showError(messageValidation);
       return;
@@ -155,9 +183,9 @@ export default function AchatsMines() {
         quantite_oz: quantiteOz,
         prix_once_fcfa: prix,
         montant_brut_fcfa: valorisation.montantBrut,
-        tva_taux: TVA_TAUX_DEFAUT,
+        tva_taux: taux?.tvaPourcent ?? 0,
         tva_montant_fcfa: valorisation.tva,
-        taxe_dev_comm_taux: TAXE_DEV_COMM_TAUX_DEFAUT,
+        taxe_dev_comm_taux: taux?.taxeCommunalePourcent ?? 0,
         taxe_dev_comm_montant_fcfa: valorisation.taxeDevComm,
         montant_total_fcfa: valorisation.montantTotal,
         statut: 'en_attente',
@@ -334,11 +362,11 @@ export default function AchatsMines() {
                   <dd>{fcfa(valorisation.montantBrut)}</dd>
                 </div>
                 <div>
-                  <dt>TVA ({TVA_TAUX_DEFAUT} %)</dt>
+                  <dt>TVA ({taux?.tvaPourcent ?? '—'} %)</dt>
                   <dd>{fcfa(valorisation.tva)}</dd>
                 </div>
                 <div>
-                  <dt>Taxe de développement communal ({TAXE_DEV_COMM_TAUX_DEFAUT} %)</dt>
+                  <dt>Taxe de développement communal ({taux?.taxeCommunalePourcent ?? '—'} %)</dt>
                   <dd>{fcfa(valorisation.taxeDevComm)}</dd>
                 </div>
                 <div className="is-total">
@@ -349,13 +377,24 @@ export default function AchatsMines() {
 
               <footer className="sn-form-actions">
                 {messageValidation && <span className="achats-mines__blocage">{messageValidation}</span>}
+                {tauxErreur && <span className="achats-mines__blocage">{tauxErreur}</span>}
+                {taxesSansRegle.length > 0 && (
+                  <span className="achats-mines__blocage">
+                    Aucune règle fiscale en vigueur pour : {taxesSansRegle.join(', ')}.
+                  </span>
+                )}
                 <button type="button" className="sn-btn" onClick={() => setFormOuvert(false)}>
                   Annuler
                 </button>
                 <button
                   type="submit"
                   className="sn-btn sn-btn--primary"
-                  disabled={enregistrement || Boolean(messageValidation)}
+                  disabled={
+                    enregistrement
+                    || Boolean(messageValidation)
+                    || taxesSansRegle.length > 0
+                    || taux === null
+                  }
                 >
                   {enregistrement ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
                   {enregistrement ? 'Enregistrement…' : 'Enregistrer l’achat'}

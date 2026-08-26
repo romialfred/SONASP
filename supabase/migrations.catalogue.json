@@ -1720,6 +1720,26 @@
       "sha256": "fdfe23bb23874f250ba10b67cf0e9123d18c9f8d3f62ba5bd1a09e44c7bf5461"
     },
     {
+      "path": "supabase/migrations/20260826223937_taxe_communale_au_referentiel.sql",
+      "version": "20260826223937",
+      "description": "taxe_communale_au_referentiel",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2075,
+      "sha256": "3eef27c7c74edc0bedc7a77fc35b5155e423f833b4a814b25eaca70df4bb306d"
+    },
+    {
+      "path": "supabase/migrations/20260826225050_reponse_demande_lit_le_bareme.sql",
+      "version": "20260826225050",
+      "description": "reponse_demande_lit_le_bareme",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 8602,
+      "sha256": "0fea3a05286bc0c5b5cb6f42169d2263c95e42a8ec06fb6f59f7b06a15865ae1"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2713,10 +2733,10 @@
       },
       {
         "digits": 14,
-        "count": 75
+        "count": 77
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "756794cb60900784cd0bdbe9e760e1cfea2608711af5af466649611b203c3586"
+  "catalogueSha256": "5ef0c19cd15ebf53eea910486cd68749c7dd487510572d1682073f5bea57ad92"
 }

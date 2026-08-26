@@ -10,8 +10,8 @@ import {
 
 describe('valoriser', () => {
   it('ajoute les taxes au montant brut', () => {
-    // 100 oz à 2 500 000 FCFA → 250 000 000 brut, TVA 18 %, taxe 1 %.
-    const v = valoriser(100, 2_500_000);
+    // 100 oz à 2 500 000 FCFA → 250 000 000 brut, aux taux qu'on lui donne.
+    const v = valoriser(100, 2_500_000, 18, 1);
     expect(v.montantBrut).toBe(250_000_000);
     expect(v.tva).toBe(45_000_000);
     expect(v.taxeDevComm).toBe(2_500_000);
@@ -24,8 +24,8 @@ describe('valoriser', () => {
   });
 
   it('ne produit rien de négatif', () => {
-    expect(valoriser(-5, 1_000).montantBrut).toBe(0);
-    expect(valoriser(5, -1_000).montantBrut).toBe(0);
+    expect(valoriser(-5, 1_000, 18, 1).montantBrut).toBe(0);
+    expect(valoriser(5, -1_000, 18, 1).montantBrut).toBe(0);
   });
 });
 

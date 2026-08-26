@@ -23,7 +23,7 @@ interface GenerateInvoiceModalProps {
 }
 
 export function GenerateInvoiceModal({ operation, onClose, onSuccess }: GenerateInvoiceModalProps) {
-  const { showNotification } = useNotification();
+  const { showError, showSuccess } = useNotification();
   const { user } = useAuth();
   const canPrepare = hasFreightCapability(user, FREIGHT_CAPABILITIES.PREPARE);
   const canManageInvoice = hasFreightCapability(user, FREIGHT_CAPABILITIES.INVOICE_MANAGE);
@@ -72,22 +72,22 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
   const generateBullionSummary = async () => {
     if (!canPrepare) {
-      showNotification('error', 'Une session AAL2 avec la capacité de préparation fret est requise.');
+      showError('Erreur', 'Une session AAL2 avec la capacité de préparation fret est requise.');
       return;
     }
     if (!bullionFormData.operatorName || !bullionFormData.financeName) {
-      showNotification('error', 'Veuillez remplir les noms pour les signatures');
+      showError('Erreur', 'Veuillez remplir les noms pour les signatures');
       return;
     }
 
     if (!shipping?.items || shipping.items.length === 0) {
-      showNotification('error', 'Aucune barre trouvée dans l\'expédition');
+      showError('Erreur', 'Aucune barre trouvée dans l\'expédition');
       return;
     }
 
     if (!miningCompany?.name) {
-      showNotification(
-        'error',
+      showError(
+        'Erreur',
         'La société minière d’origine doit être renseignée avant de générer le document.',
       );
       return;
@@ -141,10 +141,10 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         'Généré automatiquement'
       );
 
-      showNotification('success', 'Bullion Summary généré et ajouté aux documents');
+      showSuccess('Succès', 'Bullion Summary généré et ajouté aux documents');
       onSuccess();
     } catch (error: any) {
-      showNotification('error', 'Erreur lors de la génération: ' + error.message);
+      showError('Erreur', 'Erreur lors de la génération: ' + error.message);
     } finally {
       setGenerating(false);
     }
@@ -152,11 +152,11 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
   const generateExportInvoice = async () => {
     if (!canManageInvoice || !canPrepare) {
-      showNotification('error', 'Les capacités AAL2 de facturation et de préparation fret sont requises.');
+      showError('Erreur', 'Les capacités AAL2 de facturation et de préparation fret sont requises.');
       return;
     }
     if (!invoiceFormData.senderName || !invoiceFormData.recipientName) {
-      showNotification('error', 'Veuillez remplir les informations expéditeur et destinataire');
+      showError('Erreur', 'Veuillez remplir les informations expéditeur et destinataire');
       return;
     }
 
@@ -165,15 +165,15 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
       invoiceFormData.metalPriceCFAPerKg <= 0 ||
       invoiceFormData.numberOfBoxes <= 0
     ) {
-      showNotification(
-        'error',
+      showError(
+        'Erreur',
         'Renseignez un taux de change, un prix du métal et un nombre de boîtes strictement positifs.',
       );
       return;
     }
 
     if (!shipping) {
-      showNotification('error', 'Données d\'expédition manquantes');
+      showError('Erreur', 'Données d\'expédition manquantes');
       return;
     }
 
@@ -259,10 +259,10 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         'Facture d\'exportation pour besoins de la douane'
       );
 
-      showNotification('success', 'Facture d\'exportation générée et ajoutée aux documents');
+      showSuccess('Succès', 'Facture d\'exportation générée et ajoutée aux documents');
       onSuccess();
     } catch (error: any) {
-      showNotification('error', 'Erreur lors de la génération: ' + error.message);
+      showError('Erreur', 'Erreur lors de la génération: ' + error.message);
     } finally {
       setGenerating(false);
     }

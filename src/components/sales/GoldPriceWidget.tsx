@@ -88,11 +88,16 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
     return 'bg-gray-50 border-gray-200';
   };
 
-  const calculateVariance = () => {
-    if (!goldPrice) return { value: 0, percentage: 0 };
-    const variance = goldPrice.closing_price - goldPrice.opening_price;
-    const percentage = (variance / goldPrice.opening_price) * 100;
-    return { value: variance, percentage };
+  /**
+   * Variation de la séance : du fixing du matin à celui de l'après-midi.
+   * Tant que le fixing de l'après-midi n'est pas publié, il n'y a pas de
+   * variation à annoncer — et surtout pas un zéro qui passerait pour stable.
+   */
+  const calculateVariance = (): { value: number; percentage: number } | null => {
+    if (!goldPrice || goldPrice.london_pm_rate === null) return null;
+    const variance = goldPrice.london_pm_rate - goldPrice.london_am_rate;
+    if (goldPrice.london_am_rate === 0) return { value: variance, percentage: 0 };
+    return { value: variance, percentage: (variance / goldPrice.london_am_rate) * 100 };
   };
 
   const variance = calculateVariance();
@@ -140,42 +145,57 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
               <div className="text-xs font-semibold text-gray-700 mb-3">Today's Statistics</div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-white/60 p-2 rounded">
-                  <div className="text-gray-500 text-xs">Open Price</div>
+                  <div className="text-gray-500 text-xs">Fixing du matin</div>
                   <div className="font-semibold text-gray-900">
-                    ${goldPrice.opening_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    ${goldPrice.london_am_rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
                 <div className="bg-white/60 p-2 rounded">
-                  <div className="text-gray-500 text-xs">Close Price</div>
+                  <div className="text-gray-500 text-xs">Fixing de l’après-midi</div>
                   <div className="font-semibold text-gray-900">
-                    ${goldPrice.closing_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {goldPrice.london_pm_rate === null
+                      ? 'non publié'
+                      : `$${goldPrice.london_pm_rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                   </div>
                 </div>
                 <div className="bg-green-50 p-2 rounded border border-green-200">
                   <div className="text-gray-500 text-xs">High (24h)</div>
                   <div className="font-semibold text-green-700">
-                    ${goldPrice.high_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {goldPrice.high_price === null
+                      ? '—'
+                      : `$${goldPrice.high_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                   </div>
                 </div>
                 <div className="bg-red-50 p-2 rounded border border-red-200">
                   <div className="text-gray-500 text-xs">Low (24h)</div>
                   <div className="font-semibold text-red-700">
-                    ${goldPrice.low_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {goldPrice.low_price === null
+                      ? '—'
+                      : `$${goldPrice.low_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                   </div>
                 </div>
-                <div className={`col-span-2 p-2 rounded border ${
-                  variance.value >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-                }`}>
-                  <div className="text-gray-500 text-xs">Day Variance</div>
-                  <div className="flex items-center justify-between">
-                    <div className={`font-bold ${variance.value >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                      {variance.value >= 0 ? '+' : ''}${variance.value.toFixed(2)}
-                    </div>
-                    <div className={`text-sm font-semibold ${variance.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {variance.percentage >= 0 ? '+' : ''}{variance.percentage.toFixed(2)}%
+                {variance === null ? (
+                  <div className="col-span-2 p-2 rounded border bg-gray-50 border-gray-200">
+                    <div className="text-gray-500 text-xs">Variation du jour</div>
+                    <div className="text-sm text-gray-600">
+                      Le fixing de l’après-midi n’est pas encore publié.
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className={`col-span-2 p-2 rounded border ${
+                    variance.value >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                  }`}>
+                    <div className="text-gray-500 text-xs">Variation du jour</div>
+                    <div className="flex items-center justify-between">
+                      <div className={`font-bold ${variance.value >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                        {variance.value >= 0 ? '+' : ''}${variance.value.toFixed(2)}
+                      </div>
+                      <div className={`text-sm font-semibold ${variance.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {variance.percentage >= 0 ? '+' : ''}{variance.percentage.toFixed(2)}%
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -2,12 +2,15 @@ import { supabase } from '@/lib/supabase';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import { genererNumeroCarte } from './carteNumberService';
 
+export type TypeArtisan = 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur';
+export type TypePersonne = 'physique' | 'morale';
+
 export interface ArtisanMinier {
   id: string;
   /** Nullable en base : la carte est attribuée après enregistrement. */
   numero_carte: string | null;
-  type_personne: 'physique' | 'morale';
-  type_artisan: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur';
+  type_personne: TypePersonne;
+  type_artisan: TypeArtisan;
 
   nom?: string;
   prenoms?: string;
@@ -106,7 +109,7 @@ export const artisanMinierService = {
     return data;
   },
 
-  async getByTypeArtisan(typeArtisan: string) {
+  async getByTypeArtisan(typeArtisan: TypeArtisan) {
     const { data, error } = await supabase
       .from('snp_artisans_miniers')
       .select(`

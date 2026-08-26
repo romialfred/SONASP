@@ -21,7 +21,7 @@ interface ChangeStatusModalProps {
 }
 
 export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatusModalProps) {
-  const { showNotification } = useNotification();
+  const { showError } = useNotification();
   const { user } = useAuth();
   const transitionAccess = getFreightTransitionAccess(user, operation);
   const newStatus = transitionAccess.nextStatus;
@@ -39,11 +39,11 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!transitionAccess.allowed || !newStatus) {
-      showNotification('error', transitionAccess.reason || 'Cette transition n’est pas autorisée.');
+      showError('Erreur', transitionAccess.reason || 'Cette transition n’est pas autorisée.');
       return;
     }
     if (newStatus === 'shipped_to_refinery' && !formData.awb_number.trim()) {
-      showNotification('error', 'Le numéro AWB est requis pour constater l’expédition.');
+      showError('Erreur', 'Le numéro AWB est requis pour constater l’expédition.');
       return;
     }
 
@@ -74,7 +74,7 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
         : error instanceof Error
           ? error.message
           : 'La transition fret a été refusée.';
-      showNotification('error', message);
+      showError('Erreur', message);
     } finally {
       setSaving(false);
     }

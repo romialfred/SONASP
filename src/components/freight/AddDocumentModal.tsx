@@ -14,7 +14,7 @@ interface AddDocumentModalProps {
 }
 
 export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumentModalProps) {
-  const { showNotification } = useNotification();
+  const { showError } = useNotification();
   const [formData, setFormData] = useState({
     documentType: 'other' as FreightDocumentType,
     title: '',
@@ -27,11 +27,11 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
     const file = e.target.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        showNotification('error', 'Seuls les fichiers PDF sont acceptés');
+        showError('Erreur', 'Seuls les fichiers PDF sont acceptés');
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
-        showNotification('error', 'Le fichier ne doit pas dépasser 10 MB');
+        showError('Erreur', 'Le fichier ne doit pas dépasser 10 MB');
         return;
       }
       setSelectedFile(file);
@@ -42,12 +42,12 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      showNotification('error', 'Le titre est requis');
+      showError('Erreur', 'Le titre est requis');
       return;
     }
 
     if (!selectedFile) {
-      showNotification('error', 'Veuillez sélectionner un fichier PDF');
+      showError('Erreur', 'Veuillez sélectionner un fichier PDF');
       return;
     }
 
@@ -62,7 +62,7 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
       );
       onSuccess();
     } catch (error: any) {
-      showNotification('error', 'Erreur lors de l\'upload: ' + error.message);
+      showError('Erreur', 'Erreur lors de l\'upload: ' + error.message);
     } finally {
       setUploading(false);
     }

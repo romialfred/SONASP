@@ -27,8 +27,9 @@ interface MonthlyAggregate {
   average_price: number;
   high_price: number;
   low_price: number;
-  opening_price: number;
-  closing_price: number;
+  /** Nullables en base : un mois peut n'avoir ni ouverture ni clôture. */
+  opening_price: number | null;
+  closing_price: number | null;
   total_days: number;
 }
 
@@ -585,8 +586,14 @@ export function GoldPricesPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {monthlyAggregates.slice().reverse().map((agg, index, arr) => {
                         const prevAgg = arr[index + 1];
-                        const change = prevAgg ? parseFloat(agg.closing_price.toString()) - parseFloat(prevAgg.closing_price.toString()) : 0;
-                        const changePercent = prevAgg ? (change / parseFloat(prevAgg.closing_price.toString())) * 100 : 0;
+                        const clotureCourante = agg.closing_price === null ? null : Number(agg.closing_price);
+                        const cloturePrecedente = prevAgg?.closing_price == null ? null : Number(prevAgg.closing_price);
+                        const change = clotureCourante !== null && cloturePrecedente !== null
+                          ? clotureCourante - cloturePrecedente
+                          : 0;
+                        const changePercent = change !== 0 && cloturePrecedente
+                          ? (change / cloturePrecedente) * 100
+                          : 0;
                         return (
                           <tr key={`${agg.year}-${agg.month}`} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -602,10 +609,10 @@ export function GoldPricesPage() {
                               ${parseFloat(agg.low_price.toString()).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              ${parseFloat(agg.opening_price.toString()).toFixed(2)}
+                              {agg.opening_price === null ? '—' : `$${Number(agg.opening_price).toFixed(2)}`}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              ${parseFloat(agg.closing_price.toString()).toFixed(2)}
+                              {agg.closing_price === null ? '—' : `$${Number(agg.closing_price).toFixed(2)}`}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                               {agg.total_days}

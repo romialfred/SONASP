@@ -1,17 +1,24 @@
 import { supabase } from '@/lib/supabase';
 import { fetchLiveGoldPrice } from './liveGoldPriceService';
 
+/**
+ * Un relevé quotidien, tel que `gold_prices_daily` le porte.
+ *
+ * Cette interface déclarait `opening_price` et `closing_price`, deux colonnes
+ * que la table ne possède pas : elles valaient donc `undefined` à chaque
+ * lecture. Le cours d'ouverture et de clôture d'une journée, ce sont les deux
+ * fixings de Londres — `london_am_rate` le matin, `london_pm_rate` l'après-midi,
+ * ce dernier pouvant manquer tant que la séance n'est pas close.
+ */
 export interface GoldPrice {
   id: string;
   price_date: string;
-  opening_price: number;
-  closing_price: number;
-  high_price: number;
-  low_price: number;
+  high_price: number | null;
+  low_price: number | null;
   london_am_rate: number;
-  london_pm_rate: number;
-  source: string;
-  currency: string;
+  london_pm_rate: number | null;
+  source: string | null;
+  currency: string | null;
 }
 
 export interface GoldPriceStats {

@@ -32,7 +32,7 @@ interface DailyRate {
   id: string;
   rate_date: string;
   currency_pair: string;
-  source_id: string;
+  source_id: string | null;
   source_name?: string;
   rate: number;
   bid_rate: number | null;
@@ -46,7 +46,7 @@ interface MonthlyRate {
   year: number;
   month: number;
   currency_pair: string;
-  source_id: string;
+  source_id: string | null;
   source_name?: string;
   avg_rate: number;
   min_rate: number;
@@ -58,7 +58,7 @@ interface MonthlyRate {
 
 interface CustomerRate {
   id: string;
-  customer_id: string;
+  customer_id: string | null;
   customer_name?: string;
   transaction_date: string;
   currency_pair: string;

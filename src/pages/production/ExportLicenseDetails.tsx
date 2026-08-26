@@ -13,7 +13,7 @@ import { errorMessage } from '@/lib/errorMessage';
 
 interface ShipmentInfo {
   id: string;
-  expedition_lot_number: string;
+  expedition_lot_number: string | null;
   total_net_weight_grams: number;
   status: string;
   prepared_at: string;

@@ -9,7 +9,7 @@ export interface ArtisanInfraction {
   date_infraction: string;
   type_infraction: string;
   description: string;
-  lieu?: string;
+  lieu?: string | null;
   statut_traitement: StatutTraitementInfraction;
   conclusion?: ConclusionInfraction;
   remarques?: string;

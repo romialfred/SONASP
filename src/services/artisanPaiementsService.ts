@@ -6,7 +6,7 @@ export interface FactureDefinitive {
   vente_or_id: string;
   artisan_id: string;
   montant_brut: number;
-  montant_taxe_tva: number;
+  montant_taxe_tva: number | null;
   montant_taxe_retenue_source: number;
   montant_autres_taxes: number;
   montant_total_taxes: number;

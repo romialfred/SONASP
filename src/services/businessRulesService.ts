@@ -10,7 +10,7 @@ export interface BusinessRule {
   rule_type?: string;
   description: string | null;
   unit: string | null;
-  updated_at: string;
+  updated_at: string | null;
   updated_by: string | null;
 }
 

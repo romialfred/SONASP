@@ -19,7 +19,7 @@ export interface AssayCertificate {
   file_path: string;
   file_name: string;
   file_size: number | null;
-  mime_type: string;
+  mime_type: string | null;
   parsing_status: 'pending' | 'processing' | 'completed' | 'failed' | 'manual_review';
   parsing_error: string | null;
   parsed_at: string | null;

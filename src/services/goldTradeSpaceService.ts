@@ -28,7 +28,7 @@ export interface ForwardRate {
   id: string;
   forward_days: number;
   adjustment_rate_percentage: number;
-  is_premium: boolean;
+  is_premium: boolean | null;
 }
 
 export interface QuantityRecommendation {

@@ -17,7 +17,7 @@ interface MiningCompany {
   region?: string | null;
   province?: string | null;
   localite?: string | null;
-  city: string;
+  city: string | null;
   contact_person_name: string;
   contact_person_email: string;
   contact_person_phone: string;

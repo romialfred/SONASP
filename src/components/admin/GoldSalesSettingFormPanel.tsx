@@ -35,7 +35,7 @@ interface MiningCompany {
 interface Customer {
   id: string;
   name: string;
-  contact_person?: string;
+  contact_person?: string | null;
   email?: string;
   country?: string;
 }

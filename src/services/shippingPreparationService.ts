@@ -78,7 +78,7 @@ export interface ShippingSignatory {
 
 export interface ShippingIngot {
   id: string;
-  shipping_preparation_id: string;
+  shipping_preparation_id: string | null;
   ingot_box_number: string;
   net_weight_grams: number;
   gross_weight_grams: number;
@@ -96,7 +96,7 @@ export interface ShippingDocument {
   file_size: number | null;
   mime_type: string | null;
   uploaded_by: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 function isUploadedShippingDocument(

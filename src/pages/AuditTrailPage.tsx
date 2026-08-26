@@ -11,7 +11,7 @@ import { formatStatusFr } from '@/utils/statusFormatter';
 
 interface AuditLog {
   id: string;
-  created_at: string;
+  created_at: string | null;
   user_id: string | null;
   user_email: string | null;
   action: string;

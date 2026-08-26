@@ -20,10 +20,11 @@ export interface GoldSalesSetting {
 }
 
 export interface GoldSalesSettingView extends GoldSalesSetting {
-  mining_company_name: string;
-  mining_company_abbr: string;
-  customer_name: string;
-  contact_person?: string;
+  /** Ces libellés viennent d'une jointure : la vue les rend nullables. */
+  mining_company_name: string | null;
+  mining_company_abbr: string | null;
+  customer_name: string | null;
+  contact_person?: string | null;
   created_by_name?: string;
   updated_by_name?: string;
 }

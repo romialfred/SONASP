@@ -91,7 +91,7 @@ export interface CustomerBank {
   bank_name: string;
   country: string;
   currency: string;
-  account_number: string;
+  account_number: string | null;
   swift_code?: string;
   is_primary: boolean;
 }
@@ -104,7 +104,7 @@ export interface SellerBank {
   bank_name: string;
   bank_country: string;
   account_currency: string;
-  swift_code?: string;
+  swift_code?: string | null;
   is_primary: boolean;
 }
 
@@ -113,7 +113,7 @@ export interface Payment {
   sale_id: string;
   amount: number;
   currency: string;
-  fx_rate: number;
+  fx_rate: number | null;
   expected_date: string;
   actual_date?: string;
   bank_name: string;

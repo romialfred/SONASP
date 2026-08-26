@@ -31,7 +31,7 @@ interface UserProfile {
   email: string;
   full_name: string | null;
   role: string;
-  two_factor_enabled: boolean;
+  two_factor_enabled: boolean | null;
   is_active: boolean;
 }
 
@@ -43,7 +43,7 @@ export interface BusinessRule {
   rule_category: string;
   description: string | null;
   unit: string | null;
-  updated_at: string;
+  updated_at: string | null;
 }
 
 type OngletId = 'preferences' | 'regles' | 'authentification' | 'notifications';

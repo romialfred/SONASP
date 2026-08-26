@@ -12,7 +12,7 @@ export interface ArtisanMinier {
   type_personne: TypePersonne;
   type_artisan: TypeArtisan;
 
-  nom?: string;
+  nom?: string | null;
   prenoms?: string;
   date_naissance?: string;
   lieu_naissance?: string;

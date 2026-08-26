@@ -89,7 +89,7 @@ export function CustomerProfile() {
         .from('sales')
         .select('quantity_oz, final_proceeds, created_at, status')
         .eq('customer_id', id)
-        .in('status', ['approved', 'customer_approved', 'payment_received', 'completed']);
+        .in('status', ['customer_approved', 'payment_received', 'completed']);
 
       if (salesError) {
         console.error('Error fetching sales:', salesError);
@@ -98,14 +98,14 @@ export function CustomerProfile() {
       // Calculate metrics
       const sales = salesData || [];
       const totalPurchases = sales.length;
-      const totalSpent = sales.reduce((sum, sale) => sum + parseFloat(sale.final_proceeds || '0'), 0);
+      const totalSpent = sales.reduce((somme, vente) => somme + Number(vente.final_proceeds ?? 0), 0);
       const averageOrderValue = totalPurchases > 0 ? totalSpent / totalPurchases : 0;
 
       // Find last purchase date
-      const sortedSales = sales.sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      const lastPurchaseDate = sortedSales.length > 0 ? sortedSales[0].created_at : undefined;
+      const horodatage = (vente: { created_at: string | null }) =>
+        vente.created_at ? new Date(vente.created_at).getTime() : 0;
+      const sortedSales = [...sales].sort((a, b) => horodatage(b) - horodatage(a));
+      const lastPurchaseDate = sortedSales[0]?.created_at ?? undefined;
 
       // Payment rate (placeholder - would need payment data to calculate)
       const paymentRate = 0;
@@ -115,7 +115,12 @@ export function CustomerProfile() {
         .from('sales')
         .select('id, sale_number, status, final_proceeds')
         .eq('customer_id', id)
-        .in('status', ['pending', 'customer_pending', 'approved', 'customer_approved'])
+        .in('status', [
+          'pending_management_approval',
+          'management_approved',
+          'pending_for_customer_approval',
+          'customer_approved',
+        ])
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -128,7 +133,7 @@ export function CustomerProfile() {
         id: sale.id,
         saleNumber: sale.sale_number,
         status: sale.status,
-        amount: parseFloat(sale.final_proceeds || '0')
+        amount: Number(sale.final_proceeds ?? 0)
       }));
 
       setCustomer({

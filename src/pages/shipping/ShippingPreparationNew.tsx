@@ -26,7 +26,7 @@ interface DailyProduction {
   production_date: string;
   bullion_grams: number;
   estimated_fineness_pct: number;
-  estimated_gold_pct?: number;
+  estimated_gold_pct?: number | null;
   estimated_silver_pct?: number;
   silver_content_grams?: number;
   pure_gold_grams: number;
@@ -54,14 +54,14 @@ interface Refinery {
   name: string;
   location: string;
   country: string;
-  is_active: boolean;
+  is_active: boolean | null;
 }
 
 interface MiningCompany {
   id: string;
   name: string;
   code: string;
-  is_active: boolean;
+  is_active: boolean | null;
 }
 
 interface SelectedProductionData {

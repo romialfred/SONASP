@@ -26,7 +26,7 @@ export interface FreightShipment {
   shipment_date: string;
   destination_refinery_id?: string | null;
   number_of_boxes: number;
-  box_type: string;
+  box_type: string | null;
   gold_price_usd_per_oz: number;
   exchange_rate: number;
   local_currency: string;
@@ -85,7 +85,7 @@ export interface FreightShipmentSignatory {
   display_order: number;
   signature_data?: string | null;
   signed_at?: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 export interface AvailableShippingPreparation {

@@ -4,7 +4,7 @@ export interface Module {
   id: string;
   code: string;
   nom: string;
-  description?: string;
+  description?: string | null;
   icone?: string;
   route?: string;
   parent_id?: string;

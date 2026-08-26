@@ -28,7 +28,7 @@ export interface Depositor {
   telephone: string | null;
   cellphone: string | null;
   email: string;
-  is_primary: boolean;
+  is_primary: boolean | null;
   is_backup: boolean;
   group_email: string | null;
   is_active: boolean;

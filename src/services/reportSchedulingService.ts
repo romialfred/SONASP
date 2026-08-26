@@ -21,7 +21,7 @@ export interface ReportHistory {
   id: string;
   report_type: string;
   report_name: string;
-  generated_by?: string;
+  generated_by?: string | null;
   generated_at: string;
   file_size?: string;
   format: 'pdf' | 'excel' | 'csv';

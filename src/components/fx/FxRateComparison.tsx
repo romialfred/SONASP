@@ -8,7 +8,7 @@ import { RefreshCw, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface FxRateComparison {
-  id: string;
+  id: string | null;
   rate_date: string;
   currency_pair: string;
   source_id: string;

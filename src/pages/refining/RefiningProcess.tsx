@@ -19,7 +19,7 @@ interface FreightShipment {
   id: string;
   reference_number: string;
   status: FreightShipmentStatus;
-  total_pure_gold_grams: number;
+  total_pure_gold_grams: number | null;
   total_pure_gold_oz: number;
   total_pure_silver_grams: number;
   gold_price_usd_per_oz: number;

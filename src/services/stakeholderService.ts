@@ -12,7 +12,7 @@ export interface MiningCompany {
   abbreviation?: string | null;
   code: string;
   country: string;
-  is_active: boolean;
+  is_active: boolean | null;
   company_type?: string | null;
   region?: string | null;
   province?: string | null;
@@ -37,14 +37,14 @@ export interface Refinery {
   name: string;
   location: string;
   country: string;
-  is_active: boolean;
+  is_active: boolean | null;
 }
 
 export interface TransportCompany {
   id: string;
   name: string;
   company_type: 'mine_to_airport' | 'airport_to_refinery' | 'both';
-  is_active: boolean;
+  is_active: boolean | null;
 }
 
 /**

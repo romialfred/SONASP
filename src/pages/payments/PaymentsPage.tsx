@@ -34,7 +34,7 @@ export interface Paiement {
   sale_number: string;
   client: string;
   categorie: CategoriePaiement;
-  created_at: string;
+  created_at: string | null;
 }
 
 export const LIBELLES_CATEGORIE: Record<CategoriePaiement, string> = {

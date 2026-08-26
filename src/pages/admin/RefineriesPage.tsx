@@ -17,7 +17,7 @@ export interface Refinery {
   contact_person: string | null;
   capacity_grams_per_month: number | null;
   is_active: boolean | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 /** Capacité mensuelle en kilogrammes, ou « — » si elle n'est pas déclarée. */

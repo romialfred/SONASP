@@ -41,7 +41,7 @@ interface BankAccount {
   bank_country: string;
   account_number: string;
   account_currency: string;
-  swift_code: string;
+  swift_code: string | null;
   is_primary: boolean;
 }
 

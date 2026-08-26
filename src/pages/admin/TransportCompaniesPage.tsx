@@ -18,7 +18,7 @@ export interface TransportCompany {
   address: string | null;
   contact_person: string | null;
   is_active: boolean | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 const TYPES: Record<TransportType, string> = {

@@ -14,7 +14,7 @@ import { LiveGoldMarketPanel } from '@/components/sales/LiveGoldMarketPanel';
 interface DailyPrice {
   price_date: string;
   london_am_rate: number;
-  london_pm_rate: number;
+  london_pm_rate: number | null;
   spot_price: number;
   average_price: number;
   high_price: number;
@@ -30,11 +30,11 @@ interface MonthlyAggregate {
   /** Nullables en base : un mois peut n'avoir ni ouverture ni clôture. */
   opening_price: number | null;
   closing_price: number | null;
-  total_days: number;
+  total_days: number | null;
 }
 
 interface SalesPriceAnalysis {
-  sale_id: string;
+  sale_id: string | null;
   sale_number: string;
   sale_date: string;
   year: number;
@@ -48,7 +48,7 @@ interface SalesPriceAnalysis {
 }
 
 interface MonthlySalesVsMarket {
-  year: number;
+  year: number | null;
   month: number;
   total_sales: number;
   total_quantity_oz: number;

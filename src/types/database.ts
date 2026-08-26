@@ -13841,6 +13841,38 @@ export type Database = {
           },
         ]
       }
+      fx_rate_comparison: {
+        Row: {
+          ask_rate: number | null
+          avg_rate: number | null
+          bid_ask_spread: number | null
+          bid_rate: number | null
+          currency_pair: string | null
+          deviation_from_avg_pct: number | null
+          id: string | null
+          market_spread: number | null
+          max_rate: number | null
+          min_rate: number | null
+          notes: string | null
+          rate: number | null
+          rate_date: string | null
+          rate_position: string | null
+          source_code: string | null
+          source_count: number | null
+          source_country: string | null
+          source_id: string | null
+          source_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fx_rates_daily_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "fx_rate_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shipments_for_presale: {
         Row: {
           bullion_grams: number | null

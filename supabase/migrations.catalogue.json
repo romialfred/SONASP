@@ -1510,6 +1510,16 @@
       "sha256": "d8ff3b3b2a99ed46b1e098117dd5908349c4ad13eafa2230c0bb5a121c4252b8"
     },
     {
+      "path": "supabase/migrations/20260826010000_vue_comparaison_taux_change.sql",
+      "version": "20260826010000",
+      "description": "vue_comparaison_taux_change",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 4748,
+      "sha256": "b28079c1d312d552800a962cf6a9a60c861bc9179e35cacc2b8a5f354ecb37c5"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2503,10 +2513,10 @@
       },
       {
         "digits": 14,
-        "count": 54
+        "count": 55
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "7ef83cbe363f3aded602a60be91d5f595cdc48ef1ba9b4e3c0af26f3fbf09a0a"
+  "catalogueSha256": "abd898057d7562c74e9f40a8fb41ad315c7536d4c82e7c60d0b70ddf75e957cd"
 }

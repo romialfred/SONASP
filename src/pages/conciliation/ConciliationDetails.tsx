@@ -11,6 +11,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { hasCapability, CAPABILITIES } from '@/lib/capabilities';
 import { errorMessage } from '@/lib/errorMessage';
+import { DossierComplet } from '@/components/dossier/DossierComplet';
 import {
   conciliationService, LIBELLES_STATUTS_CONCILIATION, LIBELLES_PARAMETRES,
   type Conciliation, type EcartConciliation, type StatutConciliation,
@@ -307,6 +308,8 @@ export function ConciliationDetails() {
           </FormActions>
         </Section>
       )}
+      {id && <DossierComplet type="conciliation" id={id} />}
+
     </NationalDashboardLayout>
   );
 }

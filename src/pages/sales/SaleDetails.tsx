@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DossierComplet } from '@/components/dossier/DossierComplet';
 import { supabase } from '@/lib/supabase';
 import { Loading } from '@/components/ui/Loading';
 import type { LucideIcon } from 'lucide-react';
@@ -1151,7 +1152,9 @@ export function SaleDetails() {
             </Card>
           </div>
         )}
+        {id && <DossierComplet type="vente" id={id} />}
       </div>
+
     </MainLayout>
   );
 }

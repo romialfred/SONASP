@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { DossierComplet } from '@/components/dossier/DossierComplet';
 import { ArrowLeft, Edit, Calendar, Package, FileText, History, Users, Ship, Check, ClipboardList, FlaskConical, Receipt, Truck, Paperclip } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -839,7 +840,9 @@ export function ShippingPreparationDetailsEnhanced() {
             </div>
           </Card>
         )}
+        {id && <DossierComplet type="expedition" id={id} />}
       </div>
+
     </MainLayout>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { DossierComplet } from '@/components/dossier/DossierComplet';
 import { ArrowLeft, Package, Calendar, DollarSign, FileText, User, Send, Eye, Download, CheckCircle2, Plane, Loader2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/Card';
@@ -845,6 +846,9 @@ export default function FreightShipmentDetails() {
           onConfirm={handleConfirmAction}
           onCancel={closeConfirm}
         />
+        {shipment?.shipping_preparation_id && (
+          <DossierComplet type="expedition" id={shipment.shipping_preparation_id} />
+        )}
       </div>
     </MainLayout>
   );

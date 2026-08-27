@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DossierComplet } from '@/components/dossier/DossierComplet';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -457,6 +458,8 @@ export function ProductionDetails() {
         onClose={() => setTeleversementOuvert(false)}
         onUpload={televerser}
       />
+      {id && <DossierComplet type="production" id={id} />}
+
     </NationalDashboardLayout>
   );
 }

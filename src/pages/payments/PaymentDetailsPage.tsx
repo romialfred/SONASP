@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { DossierComplet } from '@/components/dossier/DossierComplet';
 import {
   ArrowLeft, Package, FileText, Calendar, DollarSign,
   User, Clock, Download, Eye, CheckCircle,
@@ -544,7 +545,9 @@ export function PaymentDetailsPage() {
             </Card>
           </div>
         </div>
+      {id && <DossierComplet type="paiement" id={id} />}
       </div>
+
     </MainLayout>
   );
 }

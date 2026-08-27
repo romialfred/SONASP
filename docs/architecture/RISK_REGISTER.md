@@ -663,3 +663,48 @@ une décision fiscale, pas un correctif technique.
 **Travail à prévoir.** Les colonnes existent déjà pour recevoir le taux résolu ;
 il s'agit de remplacer la constante par un appel à
 `snp_resoudre_regle_fiscale`, comme le fait la conciliation.
+---
+
+## R-25 — Constats de la reconnaissance traçabilité du 27 août · OUVERT
+
+La cartographie parallèle de neuf sous-systèmes (dix agents, synthèse versée au
+dossier de reconnaissance) a mis au jour des faits que le chantier « dossier
+complet » n'a pas traités et qui restent dus :
+
+**Fuites et privilèges.**
+- `sales.invoice_url` pointe vers une URL publique permanente du bucket
+  `sale-documents` (saleInvoiceService.ts:406-408). Toute facture de vente est
+  accessible sans authentification à qui possède l'URL.
+- `snp_ventes_lots` reste en `SELECT USING(true)` : lisible de tout connecté.
+- `snp_achats_mines` porte des politiques d'écriture `USING(true)`.
+- L'historique des réquisitions est lisible par la mine, motifs internes SONASP
+  compris.
+
+**Ruptures de chaîne restantes** (le pont vente-expédition est posé, ceux-ci non) :
+- vente d'une mine sans lots : `snp_creer_vente_export_mine` n'écrit aucune
+  ligne `snp_ventes_lots` — l'or vendu par une mine n'est pas rattaché aux
+  achats qui l'ont constitué ;
+- aucun lien achat -> production : deux achats sur périodes chevauchantes
+  peuvent compter la même production ;
+- `snp_analyses_teneur` sans lien vers une expédition ; certificat_reference en
+  texte libre ;
+- cessions comptoirs absentes de `snp_ventes_lots` et du stock central ;
+- les paiements du flux 4H n'écrivent pas au grand livre commercial : deux
+  comptabilités non réconciliées ;
+- `freight_shipments` et `freight_customs_operations` sont deux modules
+  parallèles sans lien, consommant les mêmes préparations.
+
+**Écrans et intégrité.**
+- `freightCustomsService` interroge des colonnes inexistantes de
+  `shipping_preparations` : le module /freight-customs est cassé.
+- `freight_shipments.updateStatus` et `achatMineService.changerStatut` posent
+  acteurs et horodatages depuis le navigateur, sans RPC.
+- Les paiements exigent le montant intégral (écart 0,5 % max) : l'avance
+  partielle du jour de l'expédition, décrite par le métier, n'est pas encore
+  possible par ce flux ; `sales_payment_schedules` et
+  `customer_accounts_receivable` sont orphelines.
+- La frise de production affiche neuf phases pour une énumération qui en a
+  trois ; `certificate_approvals` existe en base mais n'est peuplée par rien.
+
+Chacun de ces points est une décision ou un lot à part entière ; aucun n'a été
+traité en silence dans le chantier dossier.

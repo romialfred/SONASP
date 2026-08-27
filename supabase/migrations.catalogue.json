@@ -1740,6 +1740,46 @@
       "sha256": "0fea3a05286bc0c5b5cb6f42169d2263c95e42a8ec06fb6f59f7b06a15865ae1"
     },
     {
+      "path": "supabase/migrations/20260827073910_relier_vente_a_expedition.sql",
+      "version": "20260827073910",
+      "description": "relier_vente_a_expedition",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 4540,
+      "sha256": "4c068faee4deaa561520ec13694f68115378bf77bdfeca1e4683e26876ae070b"
+    },
+    {
+      "path": "supabase/migrations/20260827074406_fonction_dossier_complet.sql",
+      "version": "20260827074406",
+      "description": "fonction_dossier_complet",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 26966,
+      "sha256": "1c1009c0fa031b3dd105ff074c01a6f2869d91dd05aafd89ee88e0871dcf6456"
+    },
+    {
+      "path": "supabase/migrations/20260827081206_chronologie_reelle_du_dossier.sql",
+      "version": "20260827081206",
+      "description": "chronologie_reelle_du_dossier",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3722,
+      "sha256": "8f8e768e4cf6521b418f3f23f7526c195689bfc228f9b4481fecbf98d511be01"
+    },
+    {
+      "path": "supabase/migrations/20260827093033_corrections_revue_dossier.sql",
+      "version": "20260827093033",
+      "description": "corrections_revue_dossier",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 32741,
+      "sha256": "16917c892c1fc74eb5d33cd1b0d73765ba0e3415c4c2d87507a5f8f565913b6c"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2733,10 +2773,10 @@
       },
       {
         "digits": 14,
-        "count": 77
+        "count": 81
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "5ef0c19cd15ebf53eea910486cd68749c7dd487510572d1682073f5bea57ad92"
+  "catalogueSha256": "e1ee4a96b827590096726533c801b0cc8ed06bb3546eafb71cc86c7c627a3042"
 }

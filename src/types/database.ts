@@ -4471,6 +4471,7 @@ export type Database = {
           salesperson_name: string | null
           seller_id: string | null
           seller_type: string | null
+          shipping_preparation_id: string | null
           spot_pricing_date: string | null
           spot_value_date: string | null
           status: Database["public"]["Enums"]["sale_status"]
@@ -4536,6 +4537,7 @@ export type Database = {
           salesperson_name?: string | null
           seller_id?: string | null
           seller_type?: string | null
+          shipping_preparation_id?: string | null
           spot_pricing_date?: string | null
           spot_value_date?: string | null
           status?: Database["public"]["Enums"]["sale_status"]
@@ -4601,6 +4603,7 @@ export type Database = {
           salesperson_name?: string | null
           seller_id?: string | null
           seller_type?: string | null
+          shipping_preparation_id?: string | null
           spot_pricing_date?: string | null
           spot_value_date?: string | null
           status?: Database["public"]["Enums"]["sale_status"]
@@ -15608,6 +15611,10 @@ export type Database = {
           p_operation: string
           p_request: Json
         }
+        Returns: Json
+      }
+      snp_dossier_complet: {
+        Args: { p_type: string; p_id: string }
         Returns: Json
       }
       snp_conciliation_valider: {

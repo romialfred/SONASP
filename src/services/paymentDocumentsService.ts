@@ -99,19 +99,9 @@ export async function collectPaymentDocuments(paymentId: string): Promise<Paymen
     // aucun lien avec le paiement : il prenait les cinq lignes les plus
     // recentes, quelle que soit la vente. Le rattachement reste a concevoir.
 
-    // 8. Get sale documents (invoices, contracts, etc.)
-    if (sale.invoice_url) {
-      documents.push({
-        id: `sale-invoice-${sale.id}`,
-        name: `Invoice ${sale.sale_number}`,
-        type: 'sale',
-        url: sale.invoice_url,
-        uploadedAt: sale.created_at,
-        metadata: {
-          description: `Sales invoice ${sale.sale_number}`,
-        },
-      });
-    }
+    // La facture de vente n'est plus referencee ici : sales.invoice_url
+    // n'existe pas dans le schema, et l'ancien flux la publiait en URL
+    // publique permanente. L'archivage passera par sales_documents.
 
     // Sort documents by upload date (newest first)
     return documents.sort((a, b) =>

@@ -630,12 +630,19 @@ export async function getSellerBanks(
   stakeholderId?: string,
 ): Promise<{ success: boolean; data?: SellerBank[]; error?: string }> {
   try {
+    // Les vendeurs (SONASP nationale comme mines industrielles) vivent dans
+    // mining_companies : leurs comptes portent stakeholder_type
+    // 'mining_company'. Un appelant passe parfois sales.seller_type ('sonasp'),
+    // valeur ininsérable dans stakeholder_bank_accounts — on la normalise.
+    // Le statut vérifié canonique est 'verifie' (contrainte CHECK de la table).
+    const typeNormalise =
+      stakeholderType === 'sonasp' ? 'mining_company' : stakeholderType;
     let query = supabase
       .from('stakeholder_bank_accounts')
       .select('*')
-      .eq('stakeholder_type', stakeholderType)
+      .eq('stakeholder_type', typeNormalise)
       .eq('is_active', true)
-      .eq('verification_status', 'verified');
+      .eq('verification_status', 'verifie');
 
     if (stakeholderId) {
       query = query.eq('stakeholder_id', stakeholderId);

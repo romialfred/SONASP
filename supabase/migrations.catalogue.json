@@ -1780,6 +1780,76 @@
       "sha256": "16917c892c1fc74eb5d33cd1b0d73765ba0e3415c4c2d87507a5f8f565913b6c"
     },
     {
+      "path": "supabase/migrations/20260827102555_hygiene_policies_ventes_lots.sql",
+      "version": "20260827102555",
+      "description": "hygiene_policies_ventes_lots",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1862,
+      "sha256": "d0e377ef539cf90da865f505248653aae77c5fb9abfac140764a0f80393f91e7"
+    },
+    {
+      "path": "supabase/migrations/20260827103211_rattacher_analyses_teneur_expedition.sql",
+      "version": "20260827103211",
+      "description": "rattacher_analyses_teneur_expedition",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2810,
+      "sha256": "49db1d91b1fc213fd312c426575295f8b95c155bf2b2fd54c9e3d22eec97ac37"
+    },
+    {
+      "path": "supabase/migrations/20260827103734_avances_partielles_paiement_international.sql",
+      "version": "20260827103734",
+      "description": "avances_partielles_paiement_international",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 26758,
+      "sha256": "0c229c09474f82eb981dfbd37dafa516a0ad3ea846112a608827b88cca58a25a"
+    },
+    {
+      "path": "supabase/migrations/20260827105814_corriger_eligibilite_compte_receveur_4h.sql",
+      "version": "20260827105814",
+      "description": "corriger_eligibilite_compte_receveur_4h",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2991,
+      "sha256": "233730ae5084c77a10649ee9e13ae96f39e57a5e309105fd6ec84d88f6e704ca"
+    },
+    {
+      "path": "supabase/migrations/20260827110036_retirer_contrainte_statut_paiement_obsolete.sql",
+      "version": "20260827110036",
+      "description": "retirer_contrainte_statut_paiement_obsolete",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1125,
+      "sha256": "d89b2a3a31195bd82bac23eb62718e91f4c63433aa01bc7722aba5be6f8d8351"
+    },
+    {
+      "path": "supabase/migrations/20260827111822_preuve_par_versement_approbation_4h.sql",
+      "version": "20260827111822",
+      "description": "preuve_par_versement_approbation_4h",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2807,
+      "sha256": "5242786ba0005f6770a7dc0b6089cf13d221e3459b566d05636b4171960c2eed"
+    },
+    {
+      "path": "supabase/migrations/20260827112903_lier_achats_mines_a_la_production.sql",
+      "version": "20260827112903",
+      "description": "lier_achats_mines_a_la_production",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 8840,
+      "sha256": "eb308ad0ecf105c439474e36e9a94f8178f343bc2f1cf320754ed3f692421354"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2773,10 +2843,10 @@
       },
       {
         "digits": 14,
-        "count": 81
+        "count": 88
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "e1ee4a96b827590096726533c801b0cc8ed06bb3546eafb71cc86c7c627a3042"
+  "catalogueSha256": "722e7875421bf6e11f7038f9e1d3708102e84608de2419997dbfb096120819c0"
 }

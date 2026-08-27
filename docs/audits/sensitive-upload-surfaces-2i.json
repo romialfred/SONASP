@@ -5,7 +5,10 @@
     {
       "file": "src/services/shippingPreparationService.ts",
       "bucket": "shipping-documents",
-      "callers": ["src/components/shipping/DocumentUploadSection.tsx", "src/pages/shipping/ShippingPreparationNew.tsx"],
+      "callers": [
+        "src/components/shipping/DocumentUploadSection.tsx",
+        "src/pages/shipping/ShippingPreparationNew.tsx"
+      ],
       "profile": "shipping-document",
       "gatewayCall": "uploadSensitiveFile(",
       "deleteGatewayCall": "deleteSensitiveResource(",
@@ -17,7 +20,10 @@
     {
       "file": "src/services/productionDocumentService.ts",
       "bucket": "production-documents",
-      "callers": ["src/components/production/DailyProductionFormEnhanced.tsx", "src/pages/production/ProductionDetails.tsx"],
+      "callers": [
+        "src/components/production/DailyProductionFormEnhanced.tsx",
+        "src/pages/production/ProductionDetails.tsx"
+      ],
       "profile": "production-document",
       "gatewayCall": "uploadSensitiveFile(",
       "deleteGatewayCall": "deleteSensitiveResource(",
@@ -29,7 +35,10 @@
     {
       "file": "src/services/freightCustomsService.ts",
       "bucket": "freight-customs-documents",
-      "callers": ["src/components/freight/AddDocumentModal.tsx", "src/components/freight/GenerateInvoiceModal.tsx"],
+      "callers": [
+        "src/components/freight/AddDocumentModal.tsx",
+        "src/components/freight/GenerateInvoiceModal.tsx"
+      ],
       "profile": "freight-customs-document",
       "gatewayCall": "uploadFreightCustomsBinary(",
       "deleteGatewayCall": "deleteFreightCustomsBinary(",
@@ -41,7 +50,9 @@
     {
       "file": "src/services/miningCompanyDocumentService.ts",
       "bucket": "mining-company-documents",
-      "callers": ["src/pages/stakeholders/MiningCompanyForm.tsx"],
+      "callers": [
+        "src/pages/stakeholders/MiningCompanyForm.tsx"
+      ],
       "profile": "mining-company-document",
       "gatewayCall": "uploadSensitiveFile(",
       "deleteGatewayCall": "deleteSensitiveResource(",
@@ -65,10 +76,22 @@
     {
       "file": "src/services/paymentService.ts",
       "bucket": "payment-proofs",
-      "callers": ["src/pages/payments/PaymentCreate.tsx"],
+      "callers": [
+        "src/pages/payments/PaymentCreate.tsx"
+      ],
       "profile": "international-payment-proof",
       "gatewayCall": "uploadSensitiveFile(",
       "status": "gateway-rpc-2l-private-metadata-backed-signed-idempotent",
+      "directClientUpload": false,
+      "directClientDelete": false,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/services/saleInvoiceService.ts",
+      "bucket": "sale-documents",
+      "callers": [],
+      "gatewayCall": "downloadInvoicePDF(",
+      "status": "code-mort-retire-2026-08-27-upload-direct-et-url-publique-supprimes-bucket-et-colonnes-inexistants",
       "directClientUpload": false,
       "directClientDelete": false,
       "getPublicUrl": false
@@ -78,7 +101,9 @@
     {
       "file": "src/services/freightDocumentService.ts",
       "bucket": "freight-documents",
-      "callers": ["src/pages/freight/FreightShipmentDetails.tsx"],
+      "callers": [
+        "src/pages/freight/FreightShipmentDetails.tsx"
+      ],
       "priority": "P2",
       "status": "fail-closed-private-bucket-no-client-policy-no-server-attachment-rpc",
       "requiredContract": "Create a server RPC that locks freight_shipments.id, derives mining_company_id, requires an AAL2 freight capability, accepts a closed document kind, stores only freight-documents/<shipment>/<uuid>.pdf, and audits the attachment; make freight-documents private with metadata-backed SELECT and no authenticated writes before re-enabling.",
@@ -89,7 +114,9 @@
     {
       "file": "src/services/artisanMinierService.ts",
       "bucket": "artisan-documents",
-      "callers": ["src/components/artisan/ArtisanMinierForm.tsx"],
+      "callers": [
+        "src/components/artisan/ArtisanMinierForm.tsx"
+      ],
       "priority": "P1",
       "status": "public-url-schema-and-all-image-consumers-require-atomic-signed-url-migration",
       "directClientUpload": true,
@@ -99,7 +126,9 @@
     {
       "file": "src/services/artisanInfractionsService.ts",
       "bucket": "snp-infraction-documents",
-      "callers": ["src/pages/artisan-minier/InfractionForm.tsx"],
+      "callers": [
+        "src/pages/artisan-minier/InfractionForm.tsx"
+      ],
       "priority": "P1",
       "status": "no-server-validation-private-bucket-or-final-parent-storage-policy",
       "directClientUpload": true,
@@ -120,7 +149,10 @@
     {
       "file": "src/pages/production/ExportLicenseForm.tsx",
       "bucket": "export-license-documents",
-      "callers": ["route:/production/licenses/new", "route:/production/licenses/edit/:id"],
+      "callers": [
+        "route:/production/licenses/new",
+        "route:/production/licenses/edit/:id"
+      ],
       "priority": "P1",
       "status": "page-local-public-upload-private-bucket-and-parent-contract-not-provisioned",
       "directClientUpload": true,
@@ -143,16 +175,6 @@
       "callers": [],
       "priority": "P2",
       "status": "generated-pdf-png-public-identification-assets",
-      "directClientUpload": true,
-      "directClientDelete": false,
-      "getPublicUrl": true
-    },
-    {
-      "file": "src/services/saleInvoiceService.ts",
-      "bucket": "sale-documents",
-      "callers": [],
-      "priority": "P2",
-      "status": "generated-pdf-public-url-excluded-from-lot-sales-files",
       "directClientUpload": true,
       "directClientDelete": false,
       "getPublicUrl": true

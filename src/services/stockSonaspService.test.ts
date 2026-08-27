@@ -58,4 +58,24 @@ describe('calculerStockSonasp', () => {
     const stock = calculerStockSonasp([], [], []);
     expect(stock).toMatchObject({ entreesOz: 0, venduOz: 0, disponibleOz: 0, decouvert: false });
   });
+
+  it('compte les cessions comptoirs acceptées ou payées, pas les autres', () => {
+    // La vente des comptoirs à la SONASP est obligatoire : l'or cédé entre au
+    // bilan matière dès l'acceptation, payé ou non.
+    const stock = calculerStockSonasp(
+      [],
+      [],
+      [],
+      [
+        { quantity_grams: GRAMMES_PAR_ONCE * 5, status: 'accepted' },
+        { quantity_grams: GRAMMES_PAR_ONCE * 3, status: 'paid' },
+        { quantity_grams: GRAMMES_PAR_ONCE * 100, status: 'submitted' },
+        { quantity_grams: GRAMMES_PAR_ONCE * 100, status: 'rejected' },
+        { quantity_grams: GRAMMES_PAR_ONCE * 100, status: 'cancelled' },
+      ]
+    );
+    expect(stock.cessionComptoirsOz).toBeCloseTo(8, 3);
+    expect(stock.entreesOz).toBeCloseTo(8, 3);
+    expect(stock.disponibleOz).toBeCloseTo(8, 3);
+  });
 });

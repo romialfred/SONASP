@@ -277,7 +277,7 @@ export function GoldTradeSpace() {
                 </div>
 
                 {stockExport && (
-                  <div className="mt-4 pt-4 border-t border-amber-100 grid grid-cols-3 gap-4 text-xs">
+                  <div className="mt-4 pt-4 border-t border-amber-100 grid grid-cols-2 gap-4 text-xs sm:grid-cols-4">
                     <div>
                       <p className="text-gray-600">Acheté aux mines</p>
                       <p className="text-gray-900">{stockExport.achatMinesOz.toFixed(3)} oz</p>
@@ -285,6 +285,10 @@ export function GoldTradeSpace() {
                     <div>
                       <p className="text-gray-600">Acheté aux artisans</p>
                       <p className="text-gray-900">{stockExport.achatArtisansOz.toFixed(3)} oz</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Cédé par les comptoirs</p>
+                      <p className="text-gray-900">{stockExport.cessionComptoirsOz.toFixed(3)} oz</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Déjà vendu à l’export</p>

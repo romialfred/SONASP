@@ -1,5 +1,4 @@
 import { jsPDF } from 'jspdf';
-import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/utils/salesUtils';
 
 declare module 'jspdf' {
@@ -382,87 +381,19 @@ export async function generateSaleInvoicePDF(invoiceData: InvoiceData): Promise<
 
   return doc.output('blob');
 }
-
-export async function uploadInvoicePDF(
-  saleId: string,
-  invoiceNumber: string,
-  pdfBlob: Blob
-): Promise<{ success: boolean; url?: string; path?: string; error?: string }> {
-  try {
-    const fileName = `invoice_${invoiceNumber}_${Date.now()}.pdf`;
-    const filePath = `sales/${saleId}/${fileName}`;
-
-    const { error } = await supabase.storage
-      .from('sale-documents')
-      .upload(filePath, pdfBlob, {
-        contentType: 'application/pdf',
-        upsert: false
-      });
-
-    if (error) {
-      console.error('Error uploading invoice PDF:', error);
-      return { success: false, error: error.message };
-    }
-
-    const { data: urlData } = supabase.storage
-      .from('sale-documents')
-      .getPublicUrl(filePath);
-
-    return {
-      success: true,
-      url: urlData.publicUrl,
-      path: filePath
-    };
-  } catch (error: any) {
-    console.error('Error uploading invoice PDF:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to upload invoice PDF'
-    };
-  }
-}
-
-export async function generateAndUploadSaleInvoice(
-  saleId: string,
-  invoiceData: InvoiceData
-): Promise<{ success: boolean; url?: string; path?: string; error?: string }> {
-  try {
-    // Generate PDF
-    const pdfBlob = await generateSaleInvoicePDF(invoiceData);
-
-    // Upload to Supabase Storage
-    const uploadResult = await uploadInvoicePDF(saleId, invoiceData.invoiceNumber, pdfBlob);
-
-    if (!uploadResult.success) {
-      return uploadResult;
-    }
-
-    // Update sale record with invoice path
-    const { error: updateError } = await supabase
-      .from('sales')
-      .update({
-        invoice_pdf_path: uploadResult.path,
-        invoice_pdf_url: uploadResult.url
-      })
-      .eq('id', saleId);
-
-    if (updateError) {
-      console.error('Error updating sale with invoice path:', updateError);
-      return {
-        success: false,
-        error: 'PDF generated but failed to update sale record'
-      };
-    }
-
-    return uploadResult;
-  } catch (error: any) {
-    console.error('Error generating and uploading invoice:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to generate and upload invoice'
-    };
-  }
-}
+/*
+ * Le televersement des factures a ete retire, deliberement.
+ *
+ * L'ancien code deposait le PDF dans un bucket 'sale-documents' et en
+ * publiait l'URL PUBLIQUE PERMANENTE via getPublicUrl : quiconque possedait
+ * l'URL lisait la facture sans authentification. Le chemin etait d'ailleurs
+ * mort de bout en bout : aucun appelant, bucket inexistant, colonnes
+ * invoice_pdf_path/invoice_pdf_url absentes de la table sales.
+ *
+ * Si l'archivage des factures devient un besoin, il passe par la table
+ * sales_documents, le profil 'sensitive-upload' et le garde
+ * snp_storage_can_read_object — jamais par une URL publique.
+ */
 
 export function downloadInvoicePDF(pdfBlob: Blob, invoiceNumber: string) {
   const url = URL.createObjectURL(pdfBlob);

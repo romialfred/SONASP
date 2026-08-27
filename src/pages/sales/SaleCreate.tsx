@@ -559,7 +559,7 @@ export function SaleCreate() {
                       </div>
 
                       {stockExport && !loadingInventory && (
-                        <div className="mt-3 pt-3 border-t border-amber-200 grid grid-cols-3 gap-3 text-xs">
+                        <div className="mt-3 pt-3 border-t border-amber-200 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
                           <div>
                             <p className="text-gray-600">Acheté aux mines</p>
                             <p className="text-gray-900">{stockExport.achatMinesOz.toFixed(3)} oz</p>
@@ -567,6 +567,10 @@ export function SaleCreate() {
                           <div>
                             <p className="text-gray-600">Acheté aux artisans</p>
                             <p className="text-gray-900">{stockExport.achatArtisansOz.toFixed(3)} oz</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Cédé par les comptoirs</p>
+                            <p className="text-gray-900">{stockExport.cessionComptoirsOz.toFixed(3)} oz</p>
                           </div>
                           <div>
                             <p className="text-gray-600">Déjà vendu à l’export</p>

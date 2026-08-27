@@ -665,46 +665,82 @@ il s'agit de remplacer la constante par un appel à
 `snp_resoudre_regle_fiscale`, comme le fait la conciliation.
 ---
 
-## R-25 — Constats de la reconnaissance traçabilité du 27 août · OUVERT
+## R-25 — Constats de la reconnaissance traçabilité du 27 août · PARTIELLEMENT TRAITÉ
 
 La cartographie parallèle de neuf sous-systèmes (dix agents, synthèse versée au
-dossier de reconnaissance) a mis au jour des faits que le chantier « dossier
-complet » n'a pas traités et qui restent dus :
+dossier de reconnaissance) a mis au jour les faits ci-dessous. Le lot correctif
+du 27 août (migrations `20260827102555` → `20260827112903`) en a traité une
+partie ; l'état de chaque constat est annoté.
 
 **Fuites et privilèges.**
-- `sales.invoice_url` pointe vers une URL publique permanente du bucket
-  `sale-documents` (saleInvoiceService.ts:406-408). Toute facture de vente est
-  accessible sans authentification à qui possède l'URL.
-- `snp_ventes_lots` reste en `SELECT USING(true)` : lisible de tout connecté.
-- `snp_achats_mines` porte des politiques d'écriture `USING(true)`.
-- L'historique des réquisitions est lisible par la mine, motifs internes SONASP
-  compris.
+- CLOS — `sales.invoice_url` : le constat visait du code mort. La colonne
+  n'existe pas en base, le bucket `sale-documents` non plus : la fuite était un
+  chemin jamais exécutable, pas une exposition active. `uploadInvoicePDF` et
+  `generateAndUploadSaleInvoice` (sans appelant) ont été retirés de
+  `saleInvoiceService.ts` ; `paymentDocumentsService.ts` ne lit plus la colonne
+  fantôme. Tout archivage futur passera par `sales_documents` + gateway
+  sensible + `snp_storage_can_read_object`, jamais par une URL publique.
+- CLOS — `snp_ventes_lots` : les trois politiques permissives `USING(true)`
+  sont retirées ; la lecture suit le périmètre de la vente
+  (`snp_peut_consulter_vente`) — migration `20260827102555`.
+- PÉRIMÉ — `snp_achats_mines` en écriture `USING(true)` : constat inexact, les
+  politiques vivantes sont déjà conditionnées par capabilities (vérifié en
+  base le 27 août).
+- OUVERT — l'historique des réquisitions reste lisible par la mine, motifs
+  internes SONASP compris. Décision de cloisonnement à prendre.
 
-**Ruptures de chaîne restantes** (le pont vente-expédition est posé, ceux-ci non) :
-- vente d'une mine sans lots : `snp_creer_vente_export_mine` n'écrit aucune
-  ligne `snp_ventes_lots` — l'or vendu par une mine n'est pas rattaché aux
-  achats qui l'ont constitué ;
-- aucun lien achat -> production : deux achats sur périodes chevauchantes
-  peuvent compter la même production ;
-- `snp_analyses_teneur` sans lien vers une expédition ; certificat_reference en
-  texte libre ;
-- cessions comptoirs absentes de `snp_ventes_lots` et du stock central ;
-- les paiements du flux 4H n'écrivent pas au grand livre commercial : deux
-  comptabilités non réconciliées ;
-- `freight_shipments` et `freight_customs_operations` sont deux modules
-  parallèles sans lien, consommant les mêmes préparations.
+**Ruptures de chaîne.**
+- OUVERT — vente d'une mine sans lots : `snp_creer_vente_export_mine` n'écrit
+  aucune ligne `snp_ventes_lots`.
+- CLOS — lien achat → production : jonction `snp_achats_productions`,
+  allocation FIFO serveur par date de production, somme des allocations d'une
+  production bornée par sa quantité déclarée, validation refusée sans
+  couverture complète, libération à l'annulation, backfill des 54 achats
+  (7 découverts historiques consignés, rien d'inventé) — migration
+  `20260827112903`, prouvée en transaction annulée (achat chevauchant refusé).
+- CLOS — `snp_analyses_teneur.shipping_preparation_id` et
+  `snp_analyses_resultats.assay_certificate_id` posés (le texte libre
+  `certificat_reference` demeure en héritage) — migration `20260827103211`.
+- PARTIEL — cessions comptoirs : le bilan matière SONASP les compte désormais
+  (4e source de `stockSonaspService`, statuts `accepted`/`paid`). Leur
+  rattachement lot à lot dans `snp_ventes_lots` reste OUVERT.
+- OUVERT (différé) — les paiements 4H n'écrivent pas au grand livre
+  commercial. Question préalable consignée : la contrainte de conversion du
+  grand livre exige XOF ou (montant_xof + taux + horodatage), or le flux 4H
+  est en devise de vente.
+- OUVERT — `freight_shipments` et `freight_customs_operations` restent deux
+  modules parallèles sans lien.
 
 **Écrans et intégrité.**
-- `freightCustomsService` interroge des colonnes inexistantes de
+- OUVERT — `freightCustomsService` interroge des colonnes inexistantes de
   `shipping_preparations` : le module /freight-customs est cassé.
-- `freight_shipments.updateStatus` et `achatMineService.changerStatut` posent
-  acteurs et horodatages depuis le navigateur, sans RPC.
-- Les paiements exigent le montant intégral (écart 0,5 % max) : l'avance
-  partielle du jour de l'expédition, décrite par le métier, n'est pas encore
-  possible par ce flux ; `sales_payment_schedules` et
-  `customer_accounts_receivable` sont orphelines.
-- La frise de production affiche neuf phases pour une énumération qui en a
-  trois ; `certificate_approvals` existe en base mais n'est peuplée par rien.
+- OUVERT — `freight_shipments.updateStatus` et `achatMineService.changerStatut`
+  posent acteurs et horodatages depuis le navigateur. Atténuation partielle :
+  l'allocation achat↔production est désormais rejouée par trigger serveur à
+  chaque changement de statut, quel que soit le chemin d'écriture.
+- CLOS — avances partielles : `snp_paiement_international_executer` accepte un
+  versement partiel (engagement réduit du montant versé, refus du dépassement
+  cumulatif, engagement soldé au dernier versement), le rejet restitue le
+  montant à l'engagement, la vente passe `payment_received` quand le cumul
+  approuvé couvre le produit net — migrations `20260827103734`,
+  `20260827111822` (preuve bancaire PAR VERSEMENT : l'égalité mono-paiement
+  `sales.payment_proof_url` est retirée de l'invariant d'approbation, le lien
+  preuve↔paiement et la concordance Storage restent entiers). Prouvé de bout
+  en bout en transaction annulée le 27 août. `sales_payment_schedules` et
+  `customer_accounts_receivable` restent orphelines (OUVERT).
+- OUVERT — la frise de production affiche neuf phases pour une énumération qui
+  en a trois ; `certificate_approvals` n'est peuplée par rien.
 
-Chacun de ces points est une décision ou un lot à part entière ; aucun n'a été
-traité en silence dans le chantier dossier.
+**Causes racines découvertes en corrigeant** (le flux 4H n'avait jamais pu
+s'exécuter en production) :
+- CLOS — l'éligibilité du compte receveur exigeait `stakeholder_type='sonasp'`
+  et `verification_status='verified'`, deux valeurs ininsérables au regard des
+  contraintes CHECK de `stakeholder_bank_accounts` : aucun compte ne pouvait
+  passer. Corrigé (`'mining_company'` + `'verifie'`) — migration
+  `20260827105814` ; même correction côté écran (`getSellerBanks`).
+- CLOS — la contrainte héritée `payments_status_check` (3 statuts) contredisait
+  le jeu canonique 4H (6 statuts) : tout passage à `processing` était refusé.
+  L'obsolète est retirée, la canonique validée — migration `20260827110036`.
+
+Chaque point OUVERT est une décision ou un lot à part entière ; aucun n'est
+traité en silence.

@@ -268,7 +268,7 @@ function PublicLayoutInner() {
           <div>
             <h2>{content.footer.institution}</h2>
             <a href="/#apropos">{content.navigation.about}</a>
-            <Link to="/actualites">{content.navigation.news}</Link>
+
             <Link to="/assistance">{content.navigation.assistance}</Link>
           </div>
           <div>

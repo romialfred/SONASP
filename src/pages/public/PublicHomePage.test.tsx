@@ -1,12 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import PublicHomePage from './PublicHomePage';
 import { PublicLocaleProvider, usePublicLocale } from './PublicLocaleContext';
-
-vi.mock('./publicNews', () => ({
-  loadPublicNews: vi.fn().mockResolvedValue([]),
-}));
 
 function renderHome() {
   return render(
@@ -67,9 +63,6 @@ describe('vitrine publique SONASP', () => {
     expect(heroFlow?.closest('.public-hero__content')).toBeInTheDocument();
     expect(heroFlow?.closest('.public-hero__showcase')).toBeNull();
 
-    await waitFor(() => {
-      expect(screen.getByText('Aucune publication n’est disponible pour le moment.')).toBeInTheDocument();
-    });
   });
 
   it('permet de sélectionner une étape du flux et expose son état actif', () => {

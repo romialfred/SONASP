@@ -24,7 +24,7 @@ import {
   Ship,
   Truck,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageMetadata } from '../../components/seo/PageMetadata';
 import {
@@ -38,7 +38,6 @@ import {
 } from './PublicComponents';
 import { usePublicLocale } from './PublicLocaleContext';
 import { PublicProcessWorkflow } from './PublicProcessWorkflow';
-import { loadPublicNews, type PublicNewsItem } from './publicNews';
 import './public-site.css';
 
 function HeroSection() {
@@ -560,49 +559,6 @@ function StakeholdersSection() {
   );
 }
 
-function NewsSection() {
-  const { content, locale } = usePublicLocale();
-  const [items, setItems] = useState<PublicNewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadPublicNews(controller.signal)
-      .then(setItems)
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
-    return () => controller.abort();
-  }, []);
-
-  return (
-    <section className="public-section public-news" id="actualites">
-      <div className="public-shell">
-        <div className="public-news__heading">
-          <SectionHeading {...content.news} />
-          <Link className="public-text-link" to="/actualites">{content.news.all}<ArrowRight aria-hidden="true" /></Link>
-        </div>
-        {loading ? (
-          <p className="public-empty-state" role="status">{content.news.loading}</p>
-        ) : items.length === 0 ? (
-          <p className="public-empty-state">{content.news.empty}</p>
-        ) : (
-          <div className="public-news__grid">
-            {items.slice(0, 3).map((item) => (
-              <article className="public-news-card" key={item.id}>
-                <span>{item.category}</span>
-                <time dateTime={item.published_at}>{new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date(item.published_at))}</time>
-                <h3><Link to={`/actualites/${item.slug}`}>{item.title}</Link></h3>
-                <p>{item.summary}</p>
-                <Link to={`/actualites/${item.slug}`}>Lire la publication<ArrowRight aria-hidden="true" /></Link>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
 function AssistanceSection() {
   const { content } = usePublicLocale();
   const items = [
@@ -664,7 +620,6 @@ export default function PublicHomePage() {
       <SecuritySection />
       <BenefitsSection />
       <StakeholdersSection />
-      <NewsSection />
       <AssistanceSection />
       <FinalCallToAction />
     </>

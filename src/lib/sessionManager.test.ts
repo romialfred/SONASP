@@ -27,6 +27,7 @@ describe('SessionManager', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-22T12:00:00Z'));
     window.sessionStorage.clear();
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
     mocks.signOut.mockReset().mockResolvedValue({ error: null });
     mocks.from.mockReset();
   });
@@ -151,5 +152,40 @@ describe('SessionManager', () => {
     expect(synchronize).toHaveBeenCalledTimes(1);
     expect(manager.getRemainingTime()).toBe(SESSION_INACTIVITY_TIMEOUT_MS);
     manager.stop();
+  });
+
+  it('vérifie silencieusement la session au retour visible sans réinitialiser l’activité', async () => {
+    beginSessionActivity();
+    const timeout = vi.fn();
+    const manager = new SessionManager();
+    manager.setOnTimeout(timeout);
+    manager.start();
+
+    vi.setSystemTime(new Date('2026-08-22T12:00:20Z'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(timeout).not.toHaveBeenCalled();
+    expect(mocks.signOut).not.toHaveBeenCalled();
+    expect(manager.getInactivityDuration()).toBe(20_000);
+    manager.stop();
+  });
+
+  it('ferme une seule fois une session réellement expirée au retour visible', async () => {
+    beginSessionActivity();
+    const timeout = vi.fn();
+    const manager = new SessionManager();
+    manager.setOnTimeout(timeout);
+    manager.start();
+
+    vi.setSystemTime(new Date(Date.now() + SESSION_INACTIVITY_TIMEOUT_MS));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(timeout).toHaveBeenCalledTimes(1);
+    expect(mocks.signOut).toHaveBeenCalledTimes(1);
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
   });
 });

@@ -287,6 +287,18 @@ const lancerSiErreur = <T>({ data, error }: { data: T; error: unknown }): T => {
   return data;
 };
 
+type ReponseRpcNullable = { data: unknown; error: unknown };
+const appelerRpcNullable = (
+  fonction: string,
+  parametres: Record<string, unknown>,
+): PromiseLike<ReponseRpcNullable> => {
+  const appeler = supabase.rpc.bind(supabase) as unknown as (
+    nom: string,
+    args: Record<string, unknown>,
+  ) => PromiseLike<ReponseRpcNullable>;
+  return appeler(fonction, parametres);
+};
+
 export const achatsIndustrielsService = {
   /* ------------------------------------------------------------- Plans -- */
 
@@ -429,7 +441,7 @@ export const achatsIndustrielsService = {
    * approbation renvoie les mêmes identifiants sans rien dupliquer.
    */
   async repondreDemande(demandeId: string, decision: 'approuvee' | 'rejetee' | 'modification_demandee', motif?: string) {
-    const reponse = await supabase.rpc('snp_repondre_demande', {
+    const reponse = await appelerRpcNullable('snp_repondre_demande', {
       p_demande_id: demandeId,
       p_decision: decision,
       p_motif: motif ?? null,
@@ -587,7 +599,7 @@ export const achatsIndustrielsService = {
   /* ------------------------------------------------ Suivi et comptabilité */
 
   async balanceAgee(societeId?: string, date?: string): Promise<LigneBalanceAgee[]> {
-    const reponse = await supabase.rpc('snp_balance_agee', {
+    const reponse = await appelerRpcNullable('snp_balance_agee', {
       p_date: date ?? new Date().toISOString().slice(0, 10),
       p_mining_company_id: societeId && societeId !== 'all' ? societeId : null,
     });
@@ -595,7 +607,7 @@ export const achatsIndustrielsService = {
   },
 
   async releve(societeId: string, debut?: string, fin?: string): Promise<LigneReleve[]> {
-    const reponse = await supabase.rpc('snp_releve_societe', {
+    const reponse = await appelerRpcNullable('snp_releve_societe', {
       p_mining_company_id: societeId,
       p_debut: debut ?? null,
       p_fin: fin ?? new Date().toISOString().slice(0, 10),

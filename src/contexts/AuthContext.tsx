@@ -6,6 +6,11 @@ import { beginSessionActivity, clearSessionActivity, SessionManager } from '@/li
 import { dureeInactiviteMs, reinitialiserDureeInactivite } from '@/lib/sessionPolicy';
 import { parametresPlateformeService } from '@/services/parametresPlateformeService';
 import { withTimeout, withRetry } from '@/lib/withTimeout';
+import { BUSINESS_RESPONSIBILITIES, moduleDomain } from '@/lib/accessControl';
+import {
+  PLATFORM_MODULE_BY_CODE,
+  type PlatformModuleCode,
+} from '@/lib/platformModuleCatalog';
 import { SessionTimeoutWarning } from '@/components/auth/SessionTimeoutWarning';
 import {
   isTerminalCurrentSessionError,
@@ -27,6 +32,13 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const profileRequests = new Map<string, Promise<UserProfile | null>>();
+const responsibilityCodes = new Set<string>(
+  BUSINESS_RESPONSIBILITIES.map(({ code }) => code),
+);
+
+function isPlatformModuleCode(code: string | null): code is PlatformModuleCode {
+  return code !== null && PLATFORM_MODULE_BY_CODE.has(code as PlatformModuleCode);
+}
 
 export const isMissingUserProfileError = (
   error: { code?: string } | null | undefined
@@ -165,14 +177,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('[Profile] Site assignments fetch failed (non-fatal):', error);
         }
 
-        // La liste vient de la fonction SECURITY DEFINER qui applique compte
-        // actif, overrides, périmètre et AAL2. En cas de migration non encore
-        // disponible, `undefined` conserve seulement la matrice de compatibilité
-        // locale ; une réponse vide explicite reste en revanche un refus total.
-        let capabilities: string[] | undefined;
+        // La liste vient du resolver serveur autoritatif. Une indisponibilité
+        // ferme les accès au lieu de reconstruire des privilèges dans le client.
+        let capabilities: string[] = [];
         try {
-          const { data, error } = await withTimeout(
-            (supabase as any).rpc('snp_actor_capabilities'),
+          const { data, error } = await withTimeout<{ data: Array<{ capability_code?: unknown }> | null; error: any }>(
+            (supabase as any).rpc('snp_actor_capabilities') as PromiseLike<{ data: Array<{ capability_code?: unknown }> | null; error: any }>,
             2500,
             'Actor-Capabilities'
           );
@@ -181,7 +191,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .map((row: { capability_code?: unknown }) => row.capability_code)
             .filter((code: unknown): code is string => typeof code === 'string');
         } catch (error) {
-          console.warn('[Profile] Actor capabilities unavailable; compatibility mode enabled:', error);
+          console.warn('[Profile] Actor capabilities unavailable; access denied by default:', error);
+        }
+
+        let organizationId: string | null = null;
+        let organizationType: string | null = null;
+        // Le resolver serveur retourne déjà les seules capacités effectives de
+        // l'acteur. Leur intersection avec le catalogue des responsabilités
+        // évite une lecture directe de la table IAM, absente des schémas plus
+        // anciens, sans jamais reconstituer de privilège côté client.
+        const responsibilities = capabilities.filter((code) => responsibilityCodes.has(code));
+        let moduleDomains: string[] = [];
+        let moduleCodes: string[] = [];
+        try {
+          const [membershipResult, permissionsResult] = await Promise.all([
+            withTimeout<{ data: any; error: any }>(
+              (supabase as any)
+                .from('snp_user_organization_memberships')
+                .select('organization_id, snp_organizations(organization_type)')
+                .eq('user_id', userId)
+                .eq('is_primary', true)
+                .is('valid_until', null)
+                .maybeSingle() as PromiseLike<{ data: any; error: any }>,
+              2500,
+              'Organization-Membership',
+            ),
+            withTimeout<{ data: Array<{ modules?: { name?: unknown; access_domain?: unknown; is_active?: unknown } | null }> | null; error: any }>(
+              (supabase as any)
+                .from('user_permissions')
+                .select('modules(name, access_domain, is_active)')
+                .eq('user_id', userId)
+                .eq('can_view', true) as PromiseLike<{ data: Array<{ modules?: { name?: unknown } | null }> | null; error: any }>,
+              2500,
+              'Effective-Modules',
+            ),
+          ]);
+          if (membershipResult.error) throw membershipResult.error;
+          if (permissionsResult.error) throw permissionsResult.error;
+          organizationId = membershipResult.data?.organization_id ?? null;
+          organizationType = membershipResult.data?.snp_organizations?.organization_type ?? null;
+          const activePermissions = (permissionsResult.data ?? []).filter(
+            (row) => row.modules?.is_active !== false,
+          );
+          moduleCodes = [...new Set(activePermissions
+            .map((row) => typeof row.modules?.name === 'string' ? row.modules.name : null)
+            .filter(isPlatformModuleCode))];
+          moduleDomains = [...new Set(activePermissions
+            .map((row) => moduleDomain({
+              name: typeof row.modules?.name === 'string' ? row.modules.name : undefined,
+              access_domain: typeof row.modules?.access_domain === 'string'
+                ? row.modules.access_domain
+                : undefined,
+            }))
+            .filter((domain) => domain !== 'unknown'))];
+        } catch (error) {
+          console.warn('[Profile] Access perimeter unavailable; scoped profile remains closed:', error);
         }
 
         return {
@@ -189,19 +253,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: profile.email,
           full_name: profile.full_name,
           phone: profile.phone,
-          role: profile.role,
+          role: profile.role as UserProfile['role'],
           mining_company_id: profile.mining_company_id ?? null,
+          organization_id: organizationId,
+          organization_type: organizationType,
+          responsibilities,
+          module_domains: moduleDomains,
+          module_codes: moduleCodes,
           site_ids: siteIds,
-          is_active: profile.is_active,
+          is_active: profile.is_active === true,
           capabilities,
           is_sales_approver: profile.is_sales_approver ?? false,
-          two_factor_enabled: profile.two_factor_enabled,
+          two_factor_enabled: profile.two_factor_enabled === true,
           language: profile.language,
-          email_notifications: profile.email_notifications,
-          batch_notifications: profile.batch_notifications,
-          approval_notifications: profile.approval_notifications,
-          created_at: profile.created_at,
-          updated_at: profile.updated_at,
+          email_notifications: profile.email_notifications === true,
+          batch_notifications: (profile as any).batch_notifications === true,
+          approval_notifications: profile.approval_notifications === true,
+          created_at: profile.created_at ?? '',
+          updated_at: profile.updated_at ?? '',
         };
       },
       {
@@ -239,7 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     details?: any
   ) => {
     try {
-      await supabase.rpc('log_security_event', {
+      await (supabase as any).rpc('log_security_event', {
         p_user_id: userId,
         p_event_type: eventType,
         p_ip_address: null,
@@ -473,8 +542,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     setState(prev => ({
       ...prev,
-      user: null,
-      profileLoading: true,
+      // Un profil déjà autorisé reste affiché pendant sa revalidation. Seul le
+      // bootstrap sans profil utilise le loader bloquant.
+      profileLoading: !prev.user,
       profileError: null,
     }));
 
@@ -492,7 +562,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setState(prev => ({
         ...prev,
-        user: resolvedProfile,
+        // Une panne transitoire ne détruit pas le shell ni le formulaire en
+        // cours. Les contrôles serveur/RLS restent l'autorité d'accès.
+        user: resolvedProfile ?? prev.user,
         profileLoading: false,
         profileError: error,
       }));
@@ -643,20 +715,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('[Auth] User signed in');
 
           const currentState = stateRef.current;
-          const isSameInitializedUser =
+          const isSameInitializedPrincipal =
             currentState.initialized
-            && currentState.session?.user.id === session.user.id
-            && currentState.user?.id === session.user.id;
+            && currentState.session?.user.id === session.user.id;
 
-          if (isSameInitializedUser) {
+          if (isSameInitializedPrincipal) {
             // Une reprise d'onglet ou une session rafraîchie ne doit jamais
-            // remettre l'application en écran d'attente ni relancer le profil.
-            setState(prev => ({
-              ...prev,
-              session,
-              loading: false,
-              initialized: true,
-            }));
+            // republier le contexte global. Supabase conserve déjà le nouveau
+            // jeton dans son client ; les consommateurs React n'utilisent ici
+            // que l'identité et la présence de la session, restées inchangées.
             return;
           }
 
@@ -728,8 +795,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           console.log('[Auth] Token refreshed successfully, updating session');
-          // Conserver intégralement l'état du profil : un rafraîchissement de
-          // jeton est transparent pour l'écran actuellement consulté.
+          const currentState = stateRef.current;
+          if (
+            currentState.initialized
+            && currentState.session?.user.id === session.user.id
+          ) {
+            // Le client Supabase a déjà mémorisé le jeton renouvelé. Ne pas le
+            // recopier dans le contexte évite de rerendre tous les écrans au
+            // retour d'onglet alors que l'identité n'a pas changé.
+            return;
+          }
+
+          // Cas défensif d'un changement de principal pendant le bootstrap.
           setState(prev => ({
             ...prev,
             session,
@@ -740,8 +817,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('[Auth] User updated, refreshing profile');
           setState(prev => ({
             ...prev,
-            user: null,
-            profileLoading: true,
+            session,
+            profileLoading: !prev.user || prev.user.id !== session.user.id,
             profileError: null,
           }));
           let profile: UserProfile | null = null;
@@ -753,7 +830,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { profile: resolvedProfile, error } = resolveProfileResult(profile);
           setState(prev => ({
             ...prev,
-            user: resolvedProfile,
+            user: resolvedProfile
+              ?? (prev.user?.id === session.user.id ? prev.user : null),
             session,
             loading: false,
             initialized: true,

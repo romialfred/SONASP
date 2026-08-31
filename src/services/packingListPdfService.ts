@@ -53,8 +53,8 @@ export class PackingListPdfService {
     }).replace(/ /g, '-');
 
     // Couleurs
-    const goldColor = [198, 156, 61]; // #C69C3D
-    const lightBlueColor = [173, 216, 230]; // #ADD8E6
+    const goldColor: [number, number, number] = [198, 156, 61]; // #C69C3D
+    const lightBlueColor: [number, number, number] = [173, 216, 230]; // #ADD8E6
 
     let yPos = margin;
 

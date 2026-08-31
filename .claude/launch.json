@@ -2,24 +2,29 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "SONASP Local",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start"
+      ],
+      "port": 5180
+    },
+    {
       "name": "SONASP Dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
         "dev"
       ],
-      "port": 5180,
-      "autoPort": true
+      "port": 5181
     },
     {
       "name": "SONASP Test",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "npm",
       "runtimeArgs": [
-        "vite",
-        "preview",
-        "--port",
-        "5190",
-        "--strictPort"
+        "run",
+        "preview:stable"
       ],
       "port": 5190
     }

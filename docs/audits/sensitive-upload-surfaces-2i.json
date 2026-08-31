@@ -87,6 +87,20 @@
       "getPublicUrl": false
     },
     {
+      "file": "src/services/reserveAllocationService.ts",
+      "bucket": "reserve-documents",
+      "callers": [
+        "src/pages/inventory/ReserveAllocationForm.tsx"
+      ],
+      "profile": "reserve-allocation-document",
+      "gatewayCall": "uploadSensitiveFile(",
+      "deleteGatewayCall": "deleteSensitiveResource(",
+      "status": "gateway-enforced-private-signed-compensated-delete",
+      "directClientUpload": false,
+      "directClientDelete": false,
+      "getPublicUrl": false
+    },
+    {
       "file": "src/services/saleInvoiceService.ts",
       "bucket": "sale-documents",
       "callers": [],

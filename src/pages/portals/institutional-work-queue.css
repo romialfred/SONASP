@@ -1,0 +1,11 @@
+.institutional-work-queue { display: grid; gap: 18px; }
+.institutional-work-queue__button,
+.institutional-work-queue__actions button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid #0f7a56; border-radius: 9px; color: #fff; background: #0f7a56; font-weight: 700; cursor: pointer; }
+.institutional-work-queue__button svg { width: 17px; height: 17px; }
+.institutional-work-queue__button:disabled,
+.institutional-work-queue__actions button:disabled { cursor: not-allowed; opacity: 0.5; }
+.institutional-work-queue__comment { display: grid; gap: 8px; color: var(--sn-navy); font-size: 13px; font-weight: 700; }
+.institutional-work-queue__comment textarea { width: 100%; padding: 12px; border: 1px solid var(--sn-line); border-radius: 9px; color: var(--sn-navy); background: var(--sn-surface); font: inherit; font-weight: 400; resize: vertical; }
+.institutional-work-queue__comment textarea:focus-visible { outline: 3px solid rgb(15 122 86 / 18%); border-color: #0f7a56; }
+.institutional-work-queue__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.institutional-work-queue__actions .is-danger { border-color: #b42318; background: #b42318; }

@@ -58,15 +58,13 @@ export async function createReceivingRecord(data: {
     const { data: record, error } = await supabase
       .from('receiving_records')
       .insert({
-        batch_id: data.batch_id,
-        location: data.location,
         expected_weight_grams: data.expected_weight,
         actual_weight_grams: data.actual_weight,
+        variance_grams: data.actual_weight - data.expected_weight,
         variance_percentage: data.variance,
         received_by: data.received_by,
         received_at: new Date().toISOString(),
-        notes: data.notes,
-        status: Math.abs(data.variance) > threshold ? 'pending_approval' : 'approved',
+        is_significant_variance: Math.abs(data.variance) > threshold,
       })
       .select()
       .single();
@@ -85,9 +83,8 @@ export async function approveReceiving(recordId: string, approvedBy: string) {
     const { data, error } = await supabase
       .from('receiving_records')
       .update({
-        status: 'approved',
-        approved_by: approvedBy,
-        approved_at: new Date().toISOString(),
+        reconciliation_approved_by: approvedBy,
+        reconciliation_approved_at: new Date().toISOString(),
       })
       .eq('id', recordId)
       .select()
@@ -107,10 +104,9 @@ export async function approveVariance(recordId: string, approvedBy: string, note
     const { data, error } = await supabase
       .from('receiving_records')
       .update({
-        status: 'approved',
-        approved_by: approvedBy,
-        approved_at: new Date().toISOString(),
-        approval_notes: notes,
+        reconciliation_approved_by: approvedBy,
+        reconciliation_approved_at: new Date().toISOString(),
+        reconciliation_comments: notes,
       })
       .eq('id', recordId)
       .select()

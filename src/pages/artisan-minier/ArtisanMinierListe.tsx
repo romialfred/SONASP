@@ -39,6 +39,7 @@ import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMini
 import { carteProfessionnelleService, type CarteProfessionnelle } from '@/services/carteProfessionnelleService';
 import { latestCardByArtisan, provinceOfArtisan } from '@/services/artisanTerritoryInsights';
 import { BURKINA_PROVINCES } from '@/data/burkinaProvinces';
+import { normaliserArtisan } from './artisanRow';
 import './artisan-minier-liste.css';
 
 type TypeArtisan = 'collecteur' | 'fournisseur' | 'exploitant' | 'intermediaire';
@@ -118,7 +119,7 @@ const displayName = (artisan: ArtisanMinier) =>
     ? artisan.raison_sociale || 'Société sans raison sociale'
     : [artisan.nom, artisan.prenoms].filter(Boolean).join(' ') || 'Artisan sans nom';
 
-const formatDate = (value?: string) => {
+const formatDate = (value?: string | null) => {
   if (!value) return '—';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
@@ -128,7 +129,7 @@ const formatDate = (value?: string) => {
 const formatMillions = (value: number) => `${decimal.format(value / 1_000_000)}M FCFA`;
 
 /** Échéance de la carte : date d'expiration réelle, sinon un an après l'ouverture du dossier. */
-function timeUntilExpiration(expiration?: string, created?: string) {
+function timeUntilExpiration(expiration?: string | null, created?: string | null) {
   const reference = expiration
     ? new Date(expiration)
     : created
@@ -183,14 +184,17 @@ export default function ArtisanMinierListe() {
       const cardByArtisan = latestCardByArtisan((cards || []) as CarteProfessionnelle[]);
 
       setArtisans(
-        ((list || []) as ArtisanRow[]).map((artisan) => ({
-          ...artisan,
-          province: provinceOfArtisan(artisan),
-          carte: cardByArtisan.get(artisan.id),
-          quantite_or_vendu_grammes: artisan.quantite_or_vendu_grammes || 0,
-          chiffre_affaires_fcfa: artisan.chiffre_affaires_fcfa || 0,
-          total_taxes_fcfa: artisan.total_taxes_fcfa || 0,
-        }))
+        (list || []).map((row): ArtisanRow => {
+          const artisan = normaliserArtisan(row);
+          return {
+            ...artisan,
+            province: provinceOfArtisan(artisan),
+            carte: cardByArtisan.get(artisan.id),
+            quantite_or_vendu_grammes: row.quantite_or_vendu_grammes || 0,
+            chiffre_affaires_fcfa: row.chiffre_affaires_fcfa || 0,
+            total_taxes_fcfa: 0,
+          };
+        })
       );
     } catch {
       setArtisans([]);

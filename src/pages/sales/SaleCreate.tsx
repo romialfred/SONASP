@@ -258,7 +258,7 @@ export function SaleCreate() {
     const previewData: InvoicePreviewData = {
       // Seller Information
       sellerName: miningCompanyData?.name || selectedMiningCompany.name,
-      sellerAddress: miningCompanyData?.abbreviation || selectedMiningCompany.abbreviation,
+      sellerAddress: miningCompanyData?.abbreviation || selectedMiningCompany.abbreviation || '',
       sellerCity: miningCompanyData?.city || '',
       sellerCountry: miningCompanyData?.country || selectedMiningCompany.country,
       sellerPhone: miningCompanyData?.contact_person_phone || '',
@@ -266,7 +266,7 @@ export function SaleCreate() {
       // Customer Information
       customerName: selectedCustomer.customer_name,
       customerAddress: customerData?.address || '',
-      customerCity: customerData?.city || '',
+      customerCity: '',
       customerCountry: customerData?.country || '',
       customerPhone: customerData?.phone || '',
 

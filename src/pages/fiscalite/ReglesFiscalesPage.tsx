@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Scale, Plus, ShieldCheck, Archive, AlertTriangle, FileText, Clock,
+  Scale, Plus, ShieldCheck, Archive, AlertTriangle, FileText,
   Calculator, CalendarDays, ArrowLeft, MoreVertical, Eye, Search,
-  SlidersHorizontal, X, LayoutGrid, Rows3, Receipt, Coins, Landmark,
-  Banknote, Building2,
+  SlidersHorizontal, X, LayoutGrid, Rows3, Receipt, Percent,
+  Banknote, Building2, Loader2,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import {
-  PageHeader, Section, Field, DataTable, Note, EmptyState, StatGrid, Badge,
-  FormActions, SelectControl, Segmented, Tabs, TabPanel, type Column, type StatTone,
+  PageHeader, Section, Field, Note, EmptyState, Badge,
+  FormActions, SelectControl, Tabs, TabPanel,
 } from '@/components/ui/sn';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasCapability, CAPABILITIES } from '@/lib/capabilities';
@@ -26,12 +26,21 @@ type Vue = 'tuiles' | 'tableau';
 
 /** Chaque taxe porte son icône et sa teinte, pour se reconnaître d'un coup d'œil. */
 const SIGNES_TAXES: Record<CodeTaxe, { icone: typeof Receipt; teinte: string }> = {
-  tva: { icone: Receipt, teinte: '' },
-  royalties: { icone: Coins, teinte: 'is-gold' },
-  fndl: { icone: Landmark, teinte: 'is-violet' },
+  tva: { icone: Receipt, teinte: 'is-tva' },
+  royalties: { icone: Percent, teinte: 'is-royalty' },
+  fndl: { icone: Building2, teinte: 'is-development' },
   retenue_source: { icone: Banknote, teinte: 'is-neutral' },
-  taxe_communale: { icone: Building2, teinte: 'is-neutral' },
+  taxe_communale: { icone: Building2, teinte: 'is-development' },
 };
+
+function IconeTaxe({ code, className = '' }: { code: CodeTaxe; className?: string }) {
+  const { icone: Icone, teinte } = SIGNES_TAXES[code];
+  return (
+    <span className={`${className} rf-icone-taxe ${teinte}`.trim()} aria-hidden="true">
+      {code === 'tva' ? <span className="rf-icone-taxe__tva">TVA</span> : <Icone />}
+    </span>
+  );
+}
 
 const TON_STATUT: Record<string, 'success' | 'warning' | 'neutral'> = {
   approuvee: 'success',
@@ -109,7 +118,7 @@ function afficherTranche(regle: RegleFiscale): string | null {
     return `de ${formatNombre(regle.seuil_min)} à ${formatNombre(regle.seuil_max)}${unite}`;
   }
   if (regle.seuil_min !== null) return `à partir de ${formatNombre(regle.seuil_min)}${unite}`;
-  if (regle.seuil_max !== null) return `jusqu’à ${formatNombre(regle.seuil_max)}${unite}`;
+  if (regle.seuil_max !== null) return `de 0 à ${formatNombre(regle.seuil_max)}${unite}`;
   return null;
 }
 
@@ -179,7 +188,7 @@ export function ReglesFiscalesPage() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [onglet, setOnglet] = useState<Onglet>('vigueur');
-  const [vue, setVue] = useState<Vue>('tuiles');
+  const [vue, setVue] = useState<Vue>('tableau');
   const [filtres, setFiltres] = useState<Filtres>(FILTRES_INITIAUX);
   const [filtresOuverts, setFiltresOuverts] = useState(false);
   const [detail, setDetail] = useState<RegleFiscale | null>(null);
@@ -232,13 +241,6 @@ export function ReglesFiscalesPage() {
       historique: regles.filter((r) => r.statut !== 'projet' && !estApplicable(r, aujourdhui)),
     };
   }, [regles]);
-
-  const derniereMaj = useMemo(() => {
-    if (regles.length === 0) return null;
-    const recente = [...regles].sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0];
-    const acteur = recente.abroge_par ?? recente.approuve_par ?? recente.cree_par;
-    return { date: recente.updated_at, par: acteur ? noms[acteur] : undefined };
-  }, [regles, noms]);
 
   const filtresActifs =
     (filtres.taxe !== 'toutes' ? 1 : 0) + (filtres.vendeur !== 'tous_profils' ? 1 : 0);
@@ -351,61 +353,6 @@ export function ReglesFiscalesPage() {
     return actions;
   };
 
-  const colonnes: Column<RegleFiscale>[] = [
-    {
-      key: 'code_taxe',
-      header: 'Taxe',
-      render: (r) => (
-        <div>
-          <div style={{ fontWeight: 600 }}>{LIBELLES_TAXES[r.code_taxe]}</div>
-          <div className="sn-muted" style={{ fontSize: 12 }}>{r.libelle}</div>
-        </div>
-      ),
-    },
-    {
-      key: 'profil_vendeur',
-      header: 'Vendeur',
-      render: (r) => LIBELLES_PROFILS[r.profil_vendeur] ?? r.profil_vendeur,
-    },
-    {
-      key: 'assiette',
-      header: 'Assiette',
-      render: (r) => (
-        <div>
-          <div>{LIBELLES_ASSIETTES[r.assiette]}</div>
-          {afficherTranche(r) && (
-            <div className="sn-muted" style={{ fontSize: 12 }}>{afficherTranche(r)}</div>
-          )}
-        </div>
-      ),
-    },
-    { key: 'taux', header: 'Valeur', numeric: true, render: afficherValeur },
-    {
-      key: 'date_effet',
-      header: 'Effet',
-      render: (r) => (
-        <div>
-          <div>{afficherDate(r.date_effet)}</div>
-          {r.date_fin && (
-            <div className="sn-muted" style={{ fontSize: 12 }}>
-              jusqu’au {afficherDate(r.date_fin)}
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'reference',
-      header: 'Référence',
-      render: (r) => r.reference_reglementaire || <span className="sn-muted">non renseignée</span>,
-    },
-    {
-      key: 'actions',
-      header: 'Action',
-      render: (r) => <MenuRegle actions={actionsPour(r)} />,
-    },
-  ];
-
   const vides: Record<Onglet, { titre: string; texte: string }> = {
     vigueur: {
       titre: 'Aucune règle en vigueur',
@@ -421,54 +368,17 @@ export function ReglesFiscalesPage() {
     },
   };
 
-  const indicateurs = [
-    {
-      label: 'Règles en vigueur',
-      value: String(parStatut.vigueur.length),
-      hint: 'Actives à ce jour',
-      icon: ShieldCheck,
-      tone: 'green' as StatTone,
-      onClick: () => setOnglet('vigueur'),
-    },
-    {
-      label: 'En projet',
-      value: String(parStatut.projet.length),
-      hint: 'En attente d’approbation',
-      icon: Clock,
-      tone: 'gold' as StatTone,
-      onClick: () => setOnglet('projet'),
-    },
-    {
-      label: 'Historique',
-      value: String(parStatut.historique.length),
-      hint: 'Abrogées ou expirées',
-      icon: Archive,
-      tone: 'violet' as StatTone,
-      onClick: () => setOnglet('historique'),
-    },
-    {
-      label: 'Dernière mise à jour',
-      value: derniereMaj ? afficherDate(derniereMaj.date) : '—',
-      hint: derniereMaj?.par ? `Par ${derniereMaj.par}` : 'Aucune écriture',
-      icon: CalendarDays,
-      tone: 'blue' as StatTone,
-    },
-  ];
-
   const modeTranche = brouillon.mode_calcul === 'tranche';
   const modeTaux = brouillon.mode_calcul === 'taux' || modeTranche;
 
   const rendreTuile = (regle: RegleFiscale) => {
-    const { icone: Icone, teinte } = SIGNES_TAXES[regle.code_taxe];
     const inactive = onglet === 'historique';
     const tranche = afficherTranche(regle);
 
     return (
       <article key={regle.id} className={`rf-tuile${inactive ? ' is-inactive' : ''}`}>
         <div className="rf-tuile__haut">
-          <span className={`rf-tuile__icone ${teinte}`.trim()}>
-            <Icone aria-hidden="true" />
-          </span>
+          <IconeTaxe code={regle.code_taxe} className="rf-tuile__icone" />
           <div className="rf-tuile__titre">
             <h3>{LIBELLES_TAXES[regle.code_taxe]}</h3>
             <p title={regle.libelle}>{regle.libelle}</p>
@@ -520,7 +430,7 @@ export function ReglesFiscalesPage() {
 
   return (
     <NationalDashboardLayout>
-      <div className="sn-page">
+      <div className="sn-page rf-page">
         <PageHeader
           title="Règles fiscales"
           subtitle="Taux et barèmes appliqués aux ventes, versionnés par date d’effet."
@@ -709,8 +619,6 @@ export function ReglesFiscalesPage() {
               </Note>
             )}
 
-            <StatGrid items={indicateurs} ariaLabel="État du référentiel fiscal" sober />
-
             <div className="rf-barre">
               <Tabs<Onglet>
                 value={onglet}
@@ -730,35 +638,65 @@ export function ReglesFiscalesPage() {
                   <input
                     value={filtres.recherche}
                     onChange={(e) => setFiltres((f) => ({ ...f, recherche: e.target.value }))}
-                    placeholder="Rechercher une règle, une taxe, un vendeur…"
+                    placeholder="Rechercher une règle, une taxe, un vendeur..."
                     aria-label="Rechercher une règle fiscale"
                   />
                 </div>
 
+                <span className="rf-barre__separateur" aria-hidden="true" />
+
                 <button
                   type="button"
-                  className={`sn-btn sn-btn--sm${filtresActifs > 0 ? ' is-filtered' : ''}`}
+                  className={`sn-btn rf-barre__bouton-filtre${filtresActifs > 0 ? ' is-filtered' : ''}`}
                   onClick={() => setFiltresOuverts(true)}
                 >
                   <SlidersHorizontal aria-hidden="true" />
                   Filtres{filtresActifs > 0 ? ` (${filtresActifs})` : ''}
                 </button>
 
-                <Segmented<Vue>
-                  name="vue-regles"
-                  value={vue}
-                  onChange={setVue}
-                  ariaLabel="Mode d’affichage"
-                  options={[
-                    { value: 'tuiles', label: 'Tuiles', icon: LayoutGrid },
-                    { value: 'tableau', label: 'Tableau', icon: Rows3 },
-                  ]}
-                />
+                <span className="rf-barre__separateur" aria-hidden="true" />
+
+                <div className="rf-vues" role="radiogroup" aria-label="Mode d’affichage">
+                  <label
+                    className={vue === 'tuiles' ? 'is-active' : ''}
+                    title="Vue en tuiles"
+                  >
+                    <input
+                      type="radio"
+                      name="vue-regles"
+                      value="tuiles"
+                      checked={vue === 'tuiles'}
+                      onChange={() => setVue('tuiles')}
+                      aria-label="Vue en tuiles"
+                    />
+                    <LayoutGrid aria-hidden="true" />
+                  </label>
+                  <label
+                    className={vue === 'tableau' ? 'is-active' : ''}
+                    title="Vue tableau"
+                  >
+                    <input
+                      type="radio"
+                      name="vue-regles"
+                      value="tableau"
+                      checked={vue === 'tableau'}
+                      onChange={() => setVue('tableau')}
+                      aria-label="Vue tableau"
+                    />
+                    <Rows3 aria-hidden="true" />
+                  </label>
+                </div>
               </div>
             </div>
 
             <TabPanel value={onglet}>
-              {!chargement && visibles.length === 0 ? (
+              {chargement ? (
+                <div className="rf-table-wrap rf-table-wrap--loading">
+                  <p className="rf-table-message">
+                    <Loader2 className="sn-spin" aria-hidden="true" /> Chargement des règles…
+                  </p>
+                </div>
+              ) : visibles.length === 0 ? (
                 <EmptyState
                   title={parStatut[onglet].length === 0 ? vides[onglet].titre : 'Aucun résultat'}
                   description={
@@ -781,13 +719,69 @@ export function ReglesFiscalesPage() {
               ) : vue === 'tuiles' ? (
                 <div className="rf-tuiles">{visibles.map(rendreTuile)}</div>
               ) : (
-                <DataTable
-                  columns={colonnes}
-                  rows={visibles}
-                  loading={chargement}
-                  caption="Règles fiscales"
-                  empty="Aucune règle"
-                />
+                <div className="rf-table-wrap">
+                  <table className="rf-table">
+                    <caption className="sr-only">Règles fiscales</caption>
+                    <colgroup>
+                      <col className="rf-table__col-icon" />
+                      <col className="rf-table__col-taxe" />
+                      <col className="rf-table__col-vendeur" />
+                      <col className="rf-table__col-assiette" />
+                      <col className="rf-table__col-valeur" />
+                      <col className="rf-table__col-date" />
+                      <col className="rf-table__col-reference" />
+                      <col className="rf-table__col-action" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th><span className="sr-only">Type de taxe</span></th>
+                        <th>Taxe</th>
+                        <th>Vendeur</th>
+                        <th>Assiette</th>
+                        <th>Valeur</th>
+                        <th>Date d’effet</th>
+                        <th>Référence</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibles.map((regle) => {
+                        const tranche = afficherTranche(regle);
+                        return (
+                          <tr key={regle.id}>
+                            <td className="rf-table__icone-cell">
+                              <IconeTaxe code={regle.code_taxe} className="rf-table__icone" />
+                            </td>
+                            <td className="rf-table__taxe">
+                              <strong>{LIBELLES_TAXES[regle.code_taxe]}</strong>
+                              <span>{regle.libelle}</span>
+                            </td>
+                            <td>{LIBELLES_PROFILS[regle.profil_vendeur] ?? regle.profil_vendeur}</td>
+                            <td className="rf-table__assiette">
+                              <span>{LIBELLES_ASSIETTES[regle.assiette]}</span>
+                              {tranche && <span>{tranche}</span>}
+                            </td>
+                            <td className="rf-table__valeur">{afficherValeur(regle)}</td>
+                            <td className="rf-table__date">
+                              <span>{afficherDate(regle.date_effet)}</span>
+                              {regle.date_fin && <small>jusqu’au {afficherDate(regle.date_fin)}</small>}
+                            </td>
+                            <td>
+                              {regle.reference_reglementaire ? (
+                                <span className="rf-table__reference" title={regle.reference_reglementaire}>
+                                  {regle.reference_reglementaire}
+                                </span>
+                              ) : (
+                                <span className="rf-table__reference is-empty">non renseignée</span>
+                              )}
+                            </td>
+                            <td className="rf-table__action"><MenuRegle actions={actionsPour(regle)} /></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </TabPanel>
           </>

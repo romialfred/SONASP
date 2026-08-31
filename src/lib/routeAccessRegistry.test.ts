@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CAPABILITIES } from '@/lib/capabilities';
+import { CAPABILITIES, hasAnyCapability } from '@/lib/capabilities';
 import type { UserProfile, UserRole } from '@/types/auth';
+import { PLATFORM_MODULE_CATALOG, platformModuleCodeForPath } from './platformModuleCatalog';
 import {
   PARTNER_ACCOUNT_TYPES,
   PRIVATE_ROUTE_REGISTRY,
@@ -23,9 +24,13 @@ function profile(
   capabilities?: string[],
   miningCompanyId: string | null = null,
 ): UserProfile {
+  const institutionalOrganization = role === 'dgmg' || role === 'dgi'
+    ? { organization_id: `${role}-organization`, organization_type: role }
+    : {};
   return {
     id: `${role}-user`, email: `${role}@example.bf`, full_name: role, phone: null,
     role, mining_company_id: miningCompanyId, site_ids: [], is_active: true,
+    ...institutionalOrganization,
     capabilities, is_sales_approver: false, two_factor_enabled: true, language: 'fr',
     email_notifications: true, batch_notifications: true, approval_notifications: true,
     created_at: '2026-01-01', updated_at: '2026-01-01',
@@ -37,11 +42,11 @@ const profiles: Record<Exclude<AccountType, 'unknown'>, UserProfile> = {
   admin: profile('admin', Object.values(CAPABILITIES)),
   direction: profile('manager', [CAPABILITIES.REPORTS_READ, CAPABILITIES.SONASP_WORKFLOW_READ]),
   sonasp: profile('management', Object.values(CAPABILITIES)),
+  dgmg: profile('dgmg', [CAPABILITIES.DGMG_SUPERVISE]),
+  dgi: profile('dgi', [CAPABILITIES.DGI_FISCAL_CONTROL]),
   mine: profile('mine', [CAPABILITIES.MINE_OPERATE], '9b3fcaaa-9367-4c91-a82d-788f043f33f1'),
-  comptoir: profile('customer', [CAPABILITIES.CUSTOMER_OPERATE, CAPABILITIES.COMPTOIR_MANAGE]),
-  collector: profile('customer', [
-    CAPABILITIES.CUSTOMER_OPERATE,
-    CAPABILITIES.COMPTOIR_MANAGE,
+  comptoir: profile('comptoir', [CAPABILITIES.COMPTOIR_MANAGE]),
+  collector: profile('collector', [
     CAPABILITIES.COLLECTOR_OPERATE,
   ]),
   factory: profile('factory', [CAPABILITIES.FACTORY_OPERATE]),
@@ -95,9 +100,8 @@ describe('registre contractuel des routes privées', () => {
       Object.entries(profiles).forEach(([type, user]) => {
         const accountType = type as Exclude<AccountType, 'unknown'>;
         const hasDeclaredCapability = policy.capabilities.length === 0
-          || policy.capabilities.some((capability) => user.capabilities?.includes(capability));
-        const expected = accountType === 'owner'
-          || (
+          || hasAnyCapability(user, [...policy.capabilities]);
+        const expected = accountType === 'owner' || (
             policy.roles.includes(user.role)
             && policy.accountTypes.includes(accountType)
             && hasDeclaredCapability
@@ -109,6 +113,103 @@ describe('registre contractuel des routes privées', () => {
           `${type} / ${policy.route}`,
         ).toBe(expected);
       });
+    });
+  });
+
+  it('ouvre au Owner actif toutes les routes privées enregistrées, et seulement celles-ci', () => {
+    PRIVATE_ROUTE_REGISTRY.forEach(({ route }) => {
+      expect(
+        evaluatePrivateRouteAccess(profiles.owner, materialize(route)).allowed,
+        route,
+      ).toBe(true);
+    });
+    expect(evaluatePrivateRouteAccess(profiles.owner, '/route-non-enregistree').allowed).toBe(false);
+    expect(evaluatePrivateRouteAccess({ ...profiles.owner, is_active: false }, '/dashboard').allowed).toBe(false);
+  });
+
+  it('ouvre à l’Administrateur les modules nationaux explicitement attribués, jamais les portails partenaires', () => {
+    const administrator = {
+      ...profiles.admin,
+      module_codes: ['mining_sites', 'administration'],
+    };
+
+    expect(evaluatePrivateRouteAccess(administrator, '/artisan-sites').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(administrator, '/admin/permissions').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(administrator, '/admin/audit').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(administrator, '/sales').allowed).toBe(false);
+    expect(evaluatePrivateRouteAccess(administrator, '/portail-mine').allowed).toBe(false);
+  });
+
+  it('ouvre tous les écrans nationaux attribués à Admin, dont le raffinage de la capture', () => {
+    const administrator = { ...profiles.admin, module_codes: PLATFORM_MODULE_CATALOG.map(({ code }) => code) };
+    for (const policy of PRIVATE_ROUTE_REGISTRY) {
+      const path = materialize(policy.route);
+      if (!path.startsWith('/portail-') && platformModuleCodeForPath(path)) {
+        expect(evaluatePrivateRouteAccess(administrator, path).allowed, path).toBe(true);
+      }
+    }
+    expect(evaluatePrivateRouteAccess(administrator, '/refining').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess({ ...administrator, module_codes: [] }, '/refining')).toMatchObject({
+      allowed: false, reason: 'module',
+    });
+    expect(evaluatePrivateRouteAccess({ ...administrator, is_active: false }, '/refining').allowed).toBe(false);
+  });
+
+  it('refuse aussi une URL directe lorsque le module canonique n’est pas attribué', () => {
+    const agent = {
+      ...profiles.sonasp,
+      module_codes: ['dashboard', 'production'],
+    };
+
+    expect(evaluatePrivateRouteAccess(agent, '/production/daily').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(agent, '/national-reserve/allocations')).toMatchObject({
+      allowed: false,
+      reason: 'module',
+    });
+    expect(evaluatePrivateRouteAccess(agent, '/sales')).toMatchObject({
+      allowed: false,
+      reason: 'module',
+    });
+  });
+
+  it('oppose les modules attribués aux portails DGI et DGMG, y compris par URL directe', () => {
+    const dgi = { ...profiles.dgi, module_codes: ['dashboard', 'conciliation'] };
+    const dgmg = { ...profiles.dgmg, module_codes: ['dashboard', 'mining_sites'] };
+
+    expect(evaluatePrivateRouteAccess(dgi, '/portail-dgi').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(dgi, '/conciliation').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(dgi, '/artisan-minier/paiements/historique')).toMatchObject({
+      allowed: false,
+      reason: 'module',
+    });
+    expect(evaluatePrivateRouteAccess(dgmg, '/artisan-sites').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(dgmg, '/production/daily')).toMatchObject({
+      allowed: false,
+      reason: 'module',
+    });
+  });
+
+  it('ferme le portail institutionnel si le rattachement est absent ou incompatible', () => {
+    const dgiSansOrganisation = {
+      ...profiles.dgi,
+      organization_id: null,
+      organization_type: null,
+    };
+    const dgmgDansUneOrganisationDgi = {
+      ...profiles.dgmg,
+      organization_id: 'dgi-organization',
+      organization_type: 'dgi',
+    };
+
+    expect(accountTypeFor(dgiSansOrganisation)).toBe('unknown');
+    expect(accountTypeFor(dgmgDansUneOrganisationDgi)).toBe('unknown');
+    expect(evaluatePrivateRouteAccess(dgiSansOrganisation, '/portail-dgi')).toMatchObject({
+      allowed: false,
+      reason: 'unknown-profile',
+    });
+    expect(evaluatePrivateRouteAccess(dgmgDansUneOrganisationDgi, '/portail-dgmg')).toMatchObject({
+      allowed: false,
+      reason: 'unknown-profile',
     });
   });
 
@@ -150,6 +251,44 @@ describe('registre contractuel des routes privées', () => {
     expect(evaluatePrivateRouteAccess(mine, '/requisitions/nouvelle').allowed).toBe(false);
     expect(evaluatePrivateRouteAccess(mine, '/production/achats-mines').allowed).toBe(false);
     expect(evaluatePrivateRouteAccess(mine, '/production/licenses/requests').allowed).toBe(false);
+  });
+
+  it('réserve la mutation des affectations nationales à la SONASP', () => {
+    expect(evaluatePrivateRouteAccess(profiles.owner, '/national-reserve/allocations/new').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(profiles.sonasp, '/national-reserve/allocations/new').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(profiles.dgmg, '/national-reserve/allocations').allowed).toBe(false);
+    expect(evaluatePrivateRouteAccess(profiles.dgmg, '/national-reserve/allocations/new').allowed).toBe(false);
+    expect(evaluatePrivateRouteAccess(profiles.mine, '/national-reserve/allocations').allowed).toBe(false);
+    expect(routePolicyFor('/national-reserve/allocations/new')).toMatchObject({
+      accountTypes: ['sonasp'], national: true, readOnly: false,
+    });
+  });
+
+  it('ouvre à la DGMG uniquement la file niveau 1 attribuée, jamais les routes patrimoniales', () => {
+    const validator = {
+      ...profiles.dgmg,
+      capabilities: [
+        CAPABILITIES.DGMG_SUPERVISE,
+        CAPABILITIES.RESERVE_ALLOCATIONS_VALIDATE_LEVEL_1,
+      ],
+      module_codes: ['dashboard', 'national_reserve'],
+    };
+    const noModule = { ...validator, module_codes: ['dashboard'] };
+    const noCapability = {
+      ...validator,
+      capabilities: [CAPABILITIES.DGMG_SUPERVISE],
+    };
+
+    expect(evaluatePrivateRouteAccess(validator, '/portail-dgmg/reserve-validations').allowed).toBe(true);
+    expect(evaluatePrivateRouteAccess(noModule, '/portail-dgmg/reserve-validations')).toMatchObject({
+      allowed: false, reason: 'module',
+    });
+    expect(evaluatePrivateRouteAccess(noCapability, '/portail-dgmg/reserve-validations')).toMatchObject({
+      allowed: false, reason: 'capability',
+    });
+    expect(evaluatePrivateRouteAccess(validator, '/national-reserve')).toMatchObject({ allowed: false });
+    expect(evaluatePrivateRouteAccess(validator, '/national-reserve/allocations')).toMatchObject({ allowed: false });
+    expect(evaluatePrivateRouteAccess(validator, '/national-reserve/audit')).toMatchObject({ allowed: false });
   });
 
   it('réserve la boîte des demandes de licences au périmètre national SONASP approbateur', () => {

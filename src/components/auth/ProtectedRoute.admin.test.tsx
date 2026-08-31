@@ -11,6 +11,7 @@ vi.mock('@/contexts/AuthContext', () => ({
       role: 'admin',
       mining_company_id: null,
       is_active: true,
+      module_domains: ['sites', 'settings'],
     },
     session: { access_token: 'session' },
     loading: false,
@@ -22,7 +23,7 @@ vi.mock('@/contexts/AuthContext', () => ({
 }));
 
 describe('ProtectedRoute Administrateur', () => {
-  it('n’ouvre plus un module métier limité à la Direction', () => {
+  it('ouvre en consultation un module national explicitement attribué', () => {
     render(
       <MemoryRouter initialEntries={['/artisan-sites']}>
         <ProtectedRoute allowedRoles={['management']}>
@@ -31,8 +32,7 @@ describe('ProtectedRoute Administrateur', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByText('Sites artisanaux')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Accès refusé' })).toBeInTheDocument();
+    expect(screen.getByText('Sites artisanaux')).toBeInTheDocument();
   });
 
   it('conserve les référentiels techniques historiquement déclarés Direction', () => {

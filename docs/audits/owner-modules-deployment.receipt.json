@@ -1,0 +1,22 @@
+{
+  "mode": "apply",
+  "project": "yyverzuhkdonjjuficor",
+  "checkedAt": "2026-08-30T07:37:32.134179+00:00",
+  "appliedVersions": ["20260829203000", "20260830070000"],
+  "incompleteOwnerPermissions": 0,
+  "permissionModules": 45,
+  "reserveSubmodulesActiveAndVisible": 6,
+  "migrations": [
+    {
+      "name": "20260829203000_separer_stock_et_reserve_nationale.sql",
+      "checksum": "99a4e7800414645646395d416e2e2cb6d532b0468d81d6551c717328442bc385"
+    },
+    {
+      "name": "20260830070000_acces_owner_et_audit_modules.sql",
+      "checksum": "6b1e3d5b7f430a09fa7d365f17381ff6900ebbc69bd776c3c3fef965f352ee8b"
+    }
+  ],
+  "sqlTestsPassed": 35,
+  "businessDataUnchanged": true,
+  "backupDirectory": "C:/Users/romia/AppData/Local/Temp/sonasp-owner-modules-xRi5dQ"
+}

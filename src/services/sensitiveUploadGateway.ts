@@ -8,6 +8,7 @@ export type SensitiveUploadProfile =
   | 'shipping-document'
   | 'production-document'
   | 'freight-customs-document'
+  | 'reserve-allocation-document'
   | 'international-payment-proof';
 
 export type SensitiveDeleteProfile = Exclude<SensitiveUploadProfile, 'international-payment-proof'>;

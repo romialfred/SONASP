@@ -43,6 +43,7 @@ import artisanPaiementsService, {
 } from '@/services/artisanPaiementsService';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { normaliserArtisan } from './artisanRow';
 import {
   LIBELLES_MOYEN,
   artisanMoyenPaiementService,
@@ -218,9 +219,9 @@ export function buildInvoicePayload(
     artisan: {
       nom: artisan?.nom || artisan?.raison_sociale || '',
       prenom: artisan?.prenoms || '',
-      adresse: artisan?.adresse,
+      adresse: artisan?.adresse ?? undefined,
       telephone: artisan?.telephone,
-      numero_carte: artisan?.numero_carte,
+      numero_carte: artisan?.numero_carte ?? undefined,
     },
     venteOr: {
       poids_grammes: vente.quantite_grammes,
@@ -270,7 +271,7 @@ export default function PaiementForm() {
         setVente(venteData);
 
         try {
-          setArtisan(await artisanMinierService.getById(venteData.artisan_id));
+          setArtisan(normaliserArtisan(await artisanMinierService.getById(venteData.artisan_id)));
         } catch {
           setArtisan(null);
         }

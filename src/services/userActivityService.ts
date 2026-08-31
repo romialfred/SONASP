@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { Json } from '@/types/database';
 
 export interface LogActivityParams {
   actionType: 'create' | 'update' | 'delete' | 'view' | 'export' | 'approve' | 'reject';
@@ -6,7 +7,7 @@ export interface LogActivityParams {
   resourceType: string;
   resourceId?: string;
   description: string;
-  changesSummary?: Record<string, any>;
+  changesSummary?: Json;
 }
 
 export interface ActivityLog {
@@ -14,16 +15,16 @@ export interface ActivityLog {
   user_id: string;
   action_type: string;
   module_name: string;
-  resource_type: string;
+  resource_type: string | null;
   resource_id: string | null;
   description: string;
-  changes_summary: Record<string, any> | null;
+  changes_summary: Json | null;
   ip_address: string | null;
   user_agent: string | null;
-  status: string;
+  status: string | null;
   error_message: string | null;
-  duration_ms: number | null;
-  created_at: string;
+  duration_ms?: number | null;
+  created_at: string | null;
 }
 
 export interface ActivityFilters {
@@ -52,6 +53,23 @@ export interface ActivitySummary {
   last_action_at: string | null;
 }
 
+const activityRpc = supabase as unknown as {
+  rpc(
+    functionName: 'log_user_activity',
+    parameters: {
+      p_user_id: string;
+      p_action_type: string;
+      p_module_name: string;
+      p_resource_type: string;
+      p_resource_id: string | null;
+      p_description: string;
+      p_changes_summary: Json | null;
+      p_ip_address: string | null;
+      p_user_agent: string;
+    },
+  ): PromiseLike<{ data: string | null; error: { message: string } | null }>;
+};
+
 export const userActivityService = {
   /**
    * Log a user activity
@@ -67,12 +85,12 @@ export const userActivityService = {
       // Get IP and user agent from browser
       const userAgent = navigator.userAgent;
 
-      const { data, error } = await supabase.rpc('log_user_activity', {
+      const { data, error } = await activityRpc.rpc('log_user_activity', {
         p_user_id: user.id,
         p_action_type: params.actionType,
         p_module_name: params.moduleName,
         p_resource_type: params.resourceType,
-        p_resource_id: params.resourceId || null,
+        p_resource_id: params.resourceId ?? null,
         p_description: params.description,
         p_changes_summary: params.changesSummary || null,
         p_ip_address: null, // IP will be captured server-side if needed
@@ -84,7 +102,7 @@ export const userActivityService = {
         throw error;
       }
 
-      return data;
+      return data ?? '';
     } catch (error) {
       console.error('[userActivityService] Failed to log activity:', error);
       // Don't throw - logging should not break the main operation

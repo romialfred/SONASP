@@ -68,6 +68,7 @@ export function CustomerForm() {
   }, [id, isEditMode]);
 
   const fetchCustomerData = async () => {
+    if (!id) return;
     try {
       setIsLoading(true);
 
@@ -96,8 +97,8 @@ export function CustomerForm() {
           currency: bank.currency,
           country: bank.country,
           city: bank.city,
-          isPrimary: bank.is_primary,
-          isActive: bank.is_active,
+          isPrimary: bank.is_primary ?? false,
+          isActive: bank.is_active ?? true,
         })) || [];
 
         setFormData({

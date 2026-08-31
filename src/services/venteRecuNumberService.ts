@@ -62,24 +62,19 @@ export function compteurSuivant(numerosExistants: string[], prefixe: string): nu
 }
 
 /**
- * Attribue le prochain numéro de reçu.
+ * Réserve le prochain numéro auprès de la base.
  *
- * Une erreur de lecture est remontée plutôt qu'avalée : attribuer un numéro sans
- * connaître ceux déjà pris produirait un doublon sur une pièce comptable.
+ * Le compteur atomique côté serveur garantit que deux écrans ouverts au même
+ * instant ne peuvent pas annoncer la même référence. Une réservation abandonnée
+ * peut créer un trou, mais jamais un doublon sur une pièce comptable.
  */
-export async function genererNumeroRecu(maintenant = new Date()): Promise<string> {
-  const prefixe = prefixePourPeriode(maintenant);
-
-  const { data, error } = await supabase
-    .from('snp_artisan_ventes_or')
-    .select('numero_recu')
-    .like('numero_recu', `${prefixe}-%`);
-
+export async function genererNumeroRecu(): Promise<string> {
+  const { data, error } = await supabase.rpc('generate_numero_recu_vente_or');
   if (error) throw error;
 
-  const existants = (data || [])
-    .map((ligne) => (ligne as { numero_recu?: string | null }).numero_recu)
-    .filter((numero): numero is string => Boolean(numero));
-
-  return composerNumeroRecu(maintenant, compteurSuivant(existants, prefixe));
+  const numero = typeof data === 'string' ? data : '';
+  if (!estNumeroRecuValide(numero)) {
+    throw new Error('La base a renvoyé une référence de vente invalide.');
+  }
+  return numero;
 }

@@ -1,0 +1,33 @@
+.organisations { display: grid; align-content: start; gap: 12px; }
+.organisations .sn-page__head { margin-bottom: 0; }
+.organisations .sn-stats { margin: 0; }
+.organisations .admin-page__filtres { margin-top: 0; }
+.organisations .admin-page__filtres .sn-field--wide { flex: 1 1 320px; }
+.organisations__table { overflow: hidden; }
+.organisations__identity { display: flex; align-items: center; gap: 10px; min-width: 230px; }
+.organisations__identity > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  color: var(--sn-green);
+  background: var(--sn-green-soft);
+  border-radius: 9px;
+}
+.organisations__identity svg { width: 16px; height: 16px; }
+.organisations__table code { color: var(--sn-ink); font-size: 11.5px; font-weight: 700; }
+.organisations__table .sn-btn--icon { width: 30px; height: 30px; }
+
+.organisation-form__type-help {
+  display: block;
+  margin: 7px 0 0;
+  color: var(--sn-muted);
+  font-size: 11px;
+}
+.organisation-form__status { align-self: end; }
+
+@media (max-width: 700px) {
+  .organisations .sn-page__actions,
+  .organisations .sn-page__actions .sn-btn { width: 100%; }
+}

@@ -7,6 +7,7 @@ import { ArtisanMinierForm } from '@/components/artisan/ArtisanMinierForm';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { normaliserArtisan } from './artisanRow';
 import { artisanFullName } from '@/utils/artisanIdentity';
 
 export default function ArtisanMinierEdit() {
@@ -25,7 +26,7 @@ export default function ArtisanMinierEdit() {
       try {
         const data = id ? await artisanMinierService.getById(id) : null;
         if (!active) return;
-        setArtisan(data);
+        setArtisan(data ? normaliserArtisan(data) : null);
         if (!data) showError('Impossible de charger la fiche de cet artisan');
       } catch (reason) {
         if (!active) return;

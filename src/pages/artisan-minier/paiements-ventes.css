@@ -73,3 +73,91 @@
 }
 
 .paiements__workflow-action input:disabled { background: #f3f6f5; cursor: not-allowed; }
+
+/* Registre des dossiers de paiement. */
+.paiements-registry__notice,
+.paiements-registry__stats { margin-top: 14px; }
+
+.paiements-registry__panel {
+  overflow: hidden;
+  border-color: #dbe5eb;
+  box-shadow: 0 2px 8px rgb(12 38 63 / 5%);
+}
+
+.paiements-registry__head { padding-bottom: 12px; }
+
+.paiements-registry__read-hint {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  gap: 6px;
+  color: #517087;
+  background: #f4f8fa;
+  border-radius: 7px;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.paiements-registry__read-hint svg { width: 14px; height: 14px; color: #0a7d53; }
+.paiements-registry__filters { padding-top: 2px; padding-bottom: 13px; border-bottom: 1px solid #e7edf1; }
+.paiements-registry__filters > .sn-search { max-width: 500px; }
+
+.paiements-registry__status-bar {
+  padding: 11px 16px;
+  overflow-x: auto;
+  border-bottom: 1px solid #e7edf1;
+  background: #fbfcfd;
+}
+
+.paiements-registry__status-bar .sn-chips { flex-wrap: nowrap; }
+.paiements-registry__table { padding: 0; }
+.paiements-registry__table .sn-table-wrap { border: 0; border-radius: 0; }
+.paiements-registry__table .sn-table { min-width: 1240px; }
+.paiements-registry__table .sn-table th { padding-top: 11px; padding-bottom: 11px; background: #f6f8fa; }
+.paiements-registry__table .sn-table td { padding-top: 11px; padding-bottom: 11px; vertical-align: middle; }
+.paiements-registry__table .sn-table tr.is-clickable { transition: background 120ms ease, box-shadow 120ms ease; }
+.paiements-registry__table .sn-table tr.is-clickable:hover { background: #f5fbf8; box-shadow: inset 3px 0 #0a7d53; }
+
+.paiements__reference,
+.paiements__next-step {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.paiements__reference { min-width: 128px; }
+.paiements__reference strong { color: #0b2947; font-size: 11.5px; font-weight: 750; }
+.paiements__reference small { color: #7d91a3; font-size: 9.5px; }
+.paiements__reference.is-secondary { min-width: 110px; }
+.paiements__reference.is-secondary strong { font-size: 10.5px; }
+
+.paiements__next-step { min-width: 225px; max-width: 275px; }
+.paiements__next-step strong { color: #294c68; font-size: 10.5px; font-weight: 700; }
+.paiements__next-step small { color: #7c8fa1; font-size: 9.2px; line-height: 1.35; }
+
+.paiements__open {
+  display: inline-flex;
+  min-width: 62px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px 3px;
+  gap: 5px;
+  border: 0;
+  color: #08794e;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.paiements__open svg { width: 14px; height: 14px; transition: transform 120ms ease; }
+.paiements__open:hover svg { transform: translateX(2px); }
+
+@media (max-width: 767px) {
+  .paiements-registry__head { align-items: flex-start; flex-direction: column; }
+  .paiements-registry__filters { align-items: stretch; flex-direction: column; }
+  .paiements__field .sn-select select { width: 100%; }
+  .paiements__dates > div { justify-content: space-between; }
+}

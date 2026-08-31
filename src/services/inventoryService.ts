@@ -1,4 +1,19 @@
 import { supabase } from '@/lib/supabase';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
+
+type InventoryRpcName =
+  | 'snp_register_gold_inventory_entry';
+
+const invokeInventoryRpc = async <T>(
+  name: InventoryRpcName,
+  args?: Record<string, string | number>,
+): Promise<PostgrestSingleResponse<T>> => {
+  const rpc = supabase.rpc as unknown as (
+    functionName: string,
+    parameters?: Record<string, string | number>,
+  ) => PromiseLike<PostgrestSingleResponse<T>>;
+  return rpc(name, args);
+};
 
 export interface GoldInventoryEntry {
   id?: string;
@@ -62,28 +77,30 @@ export interface MonthlyInventorySummary {
 
 export async function addInventoryEntry(entry: GoldInventoryEntry) {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    if (!entry.freight_shipment_id?.trim()) {
       return {
         success: false,
         error: {
-          message: 'Vous devez être connecté pour effectuer cette action.',
-          technicalDetails: userError?.message || 'User not authenticated'
-        }
+          message: 'Une expédition traitée doit être sélectionnée avant l’entrée en stock.',
+          technicalDetails: 'freight_shipment_id is required',
+        },
       };
     }
 
-    const inventoryData = {
-      ...entry,
-      transaction_type: 'entry',
-      created_by: user.id
-    };
-
-    const { data, error } = await supabase
-      .from('gold_inventory')
-      .insert(inventoryData)
-      .select()
-      .single();
+    const { data, error } = await invokeInventoryRpc<GoldInventoryEntry>(
+      'snp_register_gold_inventory_entry',
+      {
+        p_freight_shipment_id: entry.freight_shipment_id,
+        p_weight_before_melting_grams: entry.weight_before_melting_grams,
+        p_weight_after_melting_grams: entry.weight_after_melting_grams,
+        p_fineness_percentage: entry.fineness_percentage,
+        p_metal_retained_percentage: entry.metal_retained_percentage,
+        p_silver_percentage: entry.silver_percentage ?? 0,
+        p_processing_location: entry.processing_location ?? '',
+        p_certificate_number: entry.certificate_number ?? '',
+        p_notes: entry.notes ?? '',
+      },
+    );
 
     if (error) {
       // Customize error messages for common database errors
@@ -106,27 +123,14 @@ export async function addInventoryEntry(entry: GoldInventoryEntry) {
       };
     }
 
-    // Update freight shipment status to 'in_inventory' or another appropriate status
-    if (entry.freight_shipment_id) {
-      const { error: shipmentUpdateError } = await supabase
-        .from('freight_shipments')
-        .update({
-          status: 'in_stock',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', entry.freight_shipment_id);
-
-      if (shipmentUpdateError) console.error('Error updating shipment status:', shipmentUpdateError);
-    }
-
     return { success: true, data };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error adding inventory entry:', error);
     return {
       success: false,
       error: {
         message: 'Une erreur inattendue est survenue. Veuillez réessayer ou contacter le support technique.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: error instanceof Error ? error.message : String(error)
       }
     };
   }
@@ -134,11 +138,18 @@ export async function addInventoryEntry(entry: GoldInventoryEntry) {
 
 export async function getInventoryBalance() {
   try {
-    const { data, error } = await supabase.rpc('get_available_inventory_balance');
+    const { data, error } = await supabase
+      .from('gold_inventory')
+      .select('quantity_available_oz')
+      .eq('transaction_type', 'entry');
 
     if (error) throw error;
 
-    return { success: true, balance: data || 0 };
+    const balance = (data || []).reduce(
+      (total, item) => total + Number(item.quantity_available_oz || 0),
+      0,
+    );
+    return { success: true, balance };
   } catch (error) {
     console.error('Error getting inventory balance:', error);
     return { success: false, balance: 0, error };
@@ -219,68 +230,33 @@ export async function getInventoryTransactions(inventoryId?: string) {
 }
 
 export async function allocateInventoryToSale(saleId: string, quantityOz: number) {
-  try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) throw new Error('User not authenticated');
-
-    const { data, error } = await supabase.rpc('allocate_inventory_to_sale', {
-      p_sale_id: saleId,
-      p_quantity_oz: quantityOz,
-      p_user_id: user.id
-    });
-
-    if (error) throw error;
-
-    return { success: true, data };
-  } catch (error) {
-    console.error('Error allocating inventory to sale:', error);
-    return { success: false, error };
-  }
+  void saleId;
+  void quantityOz;
+  return {
+    success: false,
+    error: new Error('Utilisez la création atomique de vente et ses lots de traçabilité.'),
+  };
 }
 
 export async function releaseInventoryAllocation(saleId: string) {
-  try {
-    const { error } = await supabase.rpc('release_inventory_allocation', {
-      p_sale_id: saleId
-    });
-
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error releasing inventory allocation:', error);
-    return { success: false, error };
-  }
+  void saleId;
+  return {
+    success: false,
+    error: new Error('La libération des lots est gouvernée par le statut serveur de la vente.'),
+  };
 }
 
 export async function completeInventorySale(saleId: string) {
-  try {
-    const { error } = await supabase.rpc('complete_inventory_sale', {
-      p_sale_id: saleId
-    });
-
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error completing inventory sale:', error);
-    return { success: false, error };
-  }
+  void saleId;
+  return {
+    success: false,
+    error: new Error('La finalisation du stock est gouvernée par le workflow serveur de la vente.'),
+  };
 }
 
 export async function checkInventorySufficient(quantityOz: number): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.rpc('check_inventory_sufficient', {
-      p_quantity_oz: quantityOz
-    });
-
-    if (error) throw error;
-
-    return data === true;
-  } catch (error) {
-    console.error('Error checking inventory sufficiency:', error);
-    return false;
-  }
+  void quantityOz;
+  return false;
 }
 
 export async function getInventoryForShipment(shipmentId: string) {

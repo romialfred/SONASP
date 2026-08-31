@@ -109,7 +109,8 @@ export default function ActivityHistoryTab({ userId }: ActivityHistoryTabProps) 
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '—';
     return new Date(dateString).toLocaleString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
@@ -283,7 +284,6 @@ export default function ActivityHistoryTab({ userId }: ActivityHistoryTabProps) 
             <Table
               columns={columns}
               data={history}
-              emptyMessage="Aucune activité trouvée"
             />
           </Card>
 

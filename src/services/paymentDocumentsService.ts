@@ -60,7 +60,7 @@ export async function collectPaymentDocuments(paymentId: string): Promise<Paymen
           name: 'Preuve bancaire privée',
           type: 'payment_proof',
           url: signedUrl,
-          uploadedAt: payment.updated_at || payment.created_at,
+          uploadedAt: payment.created_at ?? '',
           metadata: {
             description: 'Preuve de paiement accessible par URL signée courte',
           },

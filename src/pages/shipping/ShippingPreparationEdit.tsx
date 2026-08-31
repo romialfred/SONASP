@@ -359,13 +359,13 @@ export default function ShippingPreparationEdit() {
         message={errorMessage}
       />
 
-      {/* Success Dialog */}
       <SuccessDialog
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}
-        title="Succès"
-        message="L'expédition a été mise à jour avec succès!"
+        title="Expédition mise à jour"
+        message="La préparation a été enregistrée avec succès."
       />
+
     </MainLayout>
   );
 }

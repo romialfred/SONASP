@@ -5,20 +5,17 @@ import { EmptyState, Note, PageHeader, Section, Segmented, StatGrid } from '@/co
 import { ApprovalRequestCard } from '@/components/approval/ApprovalRequestCard';
 import { SalesApprovalCard } from '@/components/approval/SalesApprovalCard';
 import { SalesApprovalWorkflowPanel } from '@/components/sales/SalesApprovalWorkflowPanel';
+import type { ApprovalRequest as ApprovalRequestRecord } from '@/services/approvalService';
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
 import './admin.css';
 
 export type ApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
-export interface ApprovalRequest {
-  id: string;
-  status: string;
-  request_type: string;
-  entity_id: string | null;
-  requested_at: string | null;
-  [key: string]: unknown;
-}
+export type ApprovalRequest = Pick<
+  ApprovalRequestRecord,
+  'id' | 'status' | 'request_type' | 'entity_id' | 'requested_at'
+>;
 
 const FILTRES: Array<{ value: ApprovalFilter; label: string }> = [
   { value: 'pending', label: 'En attente' },
@@ -43,11 +40,11 @@ export function compterParStatut(demandes: ApprovalRequest[]) {
   };
 }
 
-export const filtrerDemandes = (demandes: ApprovalRequest[], filtre: ApprovalFilter) =>
+export const filtrerDemandes = <T extends ApprovalRequest>(demandes: T[], filtre: ApprovalFilter): T[] =>
   filtre === 'all' ? demandes : demandes.filter((demande) => demande.status === filtre);
 
 export function ApprovalsDashboard() {
-  const [demandes, setDemandes] = useState<ApprovalRequest[]>([]);
+  const [demandes, setDemandes] = useState<ApprovalRequestRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [filtre, setFiltre] = useState<ApprovalFilter>('pending');
@@ -66,7 +63,7 @@ export function ApprovalsDashboard() {
         .order('requested_at', { ascending: false });
       if (error) throw error;
 
-      const lignes = (data || []) as ApprovalRequest[];
+      const lignes = data || [];
       setDemandes(lignes);
 
       const premiereVente = lignes.find(

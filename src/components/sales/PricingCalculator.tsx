@@ -222,7 +222,6 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
 
           <div className="grid grid-cols-4 gap-3">
             {comparison.mechanisms.map((mechanism, index) => {
-              const isRecommended = mechanism.mechanism === comparison.recommendedMechanism;
               const isSelected = mechanism.mechanism === selectedMechanism;
               const isBestOption = index === 0;
               const bgColor = getCardBackgroundColor(index);

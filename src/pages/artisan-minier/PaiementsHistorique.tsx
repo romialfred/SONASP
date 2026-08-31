@@ -2,14 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  BadgeCheck,
+  ArrowRight,
   Banknote,
   Calendar,
   CheckCircle2,
   Clock3,
-  FileText,
-  Loader2,
-  PlayCircle,
+  FileSearch,
   RefreshCw,
   ShieldCheck,
   Wallet,
@@ -24,62 +22,48 @@ import {
   SearchInput,
   SelectControl,
   StatGrid,
-  type BadgeTone,
   type Column,
 } from '@/components/ui/sn';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import artisanPaiementsService, {
-  createArtisanPaymentIdempotencyKey,
   type FactureDefinitive,
   type PaiementArtisan,
 } from '@/services/artisanPaiementsService';
 import { useAuth } from '@/contexts/AuthContext';
-import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
+import {
+  ARTISAN_PAYMENT_ACTIVE_STATUSES,
+  ARTISAN_PAYMENT_NEXT_STEPS,
+  ARTISAN_PAYMENT_STATUS_LABELS,
+  ARTISAN_PAYMENT_STATUS_ORDER,
+  ARTISAN_PAYMENT_STATUS_SHORT_LABELS,
+  ARTISAN_PAYMENT_STATUS_TONES,
+  ARTISAN_PAYMENT_TYPE_LABELS,
+  artisanPaymentHolderName,
+  artisanPaymentSaleReference,
+} from './artisan-payment-presentation';
 import './paiements-ventes.css';
 
 type Statut = PaiementArtisan['statut'];
 type TypePaiement = PaiementArtisan['type_paiement'];
 
 interface PaiementRow extends PaiementArtisan {
-  artisan?: { nom?: string; prenoms?: string; raison_sociale?: string; numero_carte?: string } | null;
+  artisan?: {
+    nom?: string | null;
+    prenoms?: string | null;
+    raison_sociale?: string | null;
+    numero_carte?: string | null;
+  } | null;
   facture?: FactureDefinitive | null;
+  vente?: {
+    id?: string;
+    reference_vente?: string | null;
+    numero_recu?: string | null;
+    date_vente?: string | null;
+  } | null;
 }
-
-const STATUT_LABELS: Record<Statut, string> = {
-  en_attente: 'En attente',
-  en_traitement: 'En traitement',
-  valide: 'Validé',
-  complete: 'Complété',
-  annule: 'Annulé',
-  echec: 'Échec',
-};
-
-const STATUT_TONES: Record<Statut, BadgeTone> = {
-  en_attente: 'neutral',
-  en_traitement: 'info',
-  valide: 'warning',
-  complete: 'success',
-  annule: 'danger',
-  echec: 'danger',
-};
-
-const TYPE_LABELS: Record<TypePaiement, string> = {
-  virement_bancaire: 'Virement bancaire',
-  cash: 'Espèces',
-  orange_money: 'Orange Money',
-  mobile_money: 'Mobile Money',
-  moov_money: 'Moov Money',
-  wave: 'Wave',
-  cheque: 'Chèque',
-};
-
-const STATUT_ORDER: Statut[] = ['en_attente', 'en_traitement', 'valide', 'complete', 'annule', 'echec'];
-/** Statuts considérés comme en cours de traitement (ni soldés, ni abandonnés). */
-export const STATUTS_EN_COURS: Statut[] = ['en_attente', 'en_traitement', 'valide'];
-
 const integer = new Intl.NumberFormat('fr-FR');
 const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -90,16 +74,10 @@ const formatFcfa = (value?: number) => {
     : `${integer.format(Math.round(amount))} FCFA`;
 };
 
-const formatDate = (value?: string) => {
+const formatDate = (value?: string | null) => {
   if (!value) return '—';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
-};
-
-const holderName = (paiement: PaiementRow) => {
-  const artisan = paiement.artisan;
-  if (!artisan) return 'Artisan inconnu';
-  return artisan.raison_sociale || [artisan.nom, artisan.prenoms].filter(Boolean).join(' ') || 'Artisan';
 };
 
 export interface HistoriqueFilters {
@@ -118,7 +96,7 @@ export const EMPTY_HISTORIQUE_FILTERS: HistoriqueFilters = {
   to: '',
 };
 
-/** Filtrage combinable de l'historique ; les bornes de date sont inclusives. */
+/** Filtrage combinable du registre ; les bornes de date sont inclusives. */
 export function filterPaiements(paiements: PaiementRow[], filters: HistoriqueFilters): PaiementRow[] {
   const query = filters.search.trim().toLocaleLowerCase('fr');
   return paiements.filter((paiement) => {
@@ -130,7 +108,13 @@ export function filterPaiements(paiements: PaiementRow[], filters: HistoriqueFil
     if (filters.to && date > filters.to) return false;
 
     if (!query) return true;
-    return [paiement.reference_paiement, holderName(paiement), paiement.artisan?.numero_carte]
+    return [
+      paiement.reference_paiement,
+      artisanPaymentHolderName(paiement),
+      paiement.artisan?.numero_carte,
+      paiement.facture?.numero_facture,
+      artisanPaymentSaleReference(paiement),
+    ]
       .filter(Boolean)
       .join(' ')
       .toLocaleLowerCase('fr')
@@ -142,16 +126,11 @@ export default function PaiementsHistorique() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isCollector = isCollectorScopedUser(user);
-  const canExecute = hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE)
-    || hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
-  const canReconcile = hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_RECONCILE)
-    || hasSensitiveCapability(user, CAPABILITIES.FINANCE_RECONCILE);
   const { workspace: collectorWorkspace } = useCollectorWorkspace();
   const [paiements, setPaiements] = useState<PaiementRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<HistoriqueFilters>(EMPTY_HISTORIQUE_FILTERS);
-  const [transitioning, setTransitioning] = useState<string | null>(null);
-  const { alertState, showError, showSuccess, closeAlert } = useCustomAlert();
+  const { alertState, showError, closeAlert } = useCustomAlert();
 
   const chargerHistorique = async () => {
     setLoading(true);
@@ -159,7 +138,7 @@ export default function PaiementsHistorique() {
       const data = await artisanPaiementsService.getAllPaiements();
       setPaiements((data || []) as PaiementRow[]);
     } catch {
-      showError("Impossible de charger l'historique des paiements");
+      showError('Impossible de charger les dossiers de paiement');
       setPaiements([]);
     } finally {
       setLoading(false);
@@ -181,168 +160,139 @@ export default function PaiementsHistorique() {
   const stats = useMemo(
     () => ({
       total: visiblePaiements.length,
-      completes: visiblePaiements.filter((p) => p.statut === 'complete').length,
-      enCours: visiblePaiements.filter((p) => STATUTS_EN_COURS.includes(p.statut)).length,
+      enCours: visiblePaiements.filter((payment) => ARTISAN_PAYMENT_ACTIVE_STATUSES.includes(payment.statut)).length,
+      aControler: visiblePaiements.filter((payment) => payment.statut === 'en_traitement').length,
       montantRegle: visiblePaiements
-        .filter((p) => p.statut === 'complete')
-        .reduce((sum, p) => sum + (p.montant_paye || 0), 0),
+        .filter((payment) => payment.statut === 'complete')
+        .reduce((sum, payment) => sum + (payment.montant_paye || 0), 0),
       taxesRetenues: visiblePaiements
-        .filter((p) => p.statut === 'complete')
-        .reduce((sum, p) => sum + (p.montant_taxes_retenues || 0), 0),
+        .filter((payment) => payment.statut === 'complete')
+        .reduce((sum, payment) => sum + (payment.montant_taxes_retenues || 0), 0),
     }),
-    [visiblePaiements]
+    [visiblePaiements],
   );
 
   const countByStatut = useMemo(
-    () =>
-      STATUT_ORDER.reduce(
-        (counters, key) => ({ ...counters, [key]: visiblePaiements.filter((p) => p.statut === key).length }),
-        {} as Record<Statut, number>
-      ),
-    [visiblePaiements]
+    () => ARTISAN_PAYMENT_STATUS_ORDER.reduce(
+      (counters, key) => ({
+        ...counters,
+        [key]: visiblePaiements.filter((payment) => payment.statut === key).length,
+      }),
+      {} as Record<Statut, number>,
+    ),
+    [visiblePaiements],
   );
 
-  const changerStatut = async (paiement: PaiementRow, statut: Statut) => {
-    if (!paiement.id || !Number.isSafeInteger(paiement.version)) {
-      showError('La version serveur du paiement est absente. Rechargez le dossier.');
-      return;
-    }
-    if (statut === 'complete') {
-      showError('Clôture indisponible tant que la preuve canonique n’est pas rattachée par le canal sécurisé.');
-      return;
-    }
-    setTransitioning(paiement.id);
-    try {
-      await artisanPaiementsService.transitionPaiement({
-        paymentId: paiement.id,
-        expectedStatus: paiement.statut,
-        expectedVersion: paiement.version!,
-        newStatus: statut,
-        idempotencyKey: createArtisanPaymentIdempotencyKey(),
-      });
-      showSuccess('La transition a été enregistrée et auditée.');
-      await chargerHistorique();
-    } catch (reason) {
-      showError(reason instanceof Error ? reason.message : 'La transition a été refusée.');
-    } finally {
-      setTransitioning(null);
-    }
+  const ouvrirDossier = (paiement: PaiementRow) => {
+    if (paiement.id) navigate(`/artisan-minier/paiements/historique/${paiement.id}`);
   };
-
 
   const columns: Column<PaiementRow & { id?: string }>[] = [
     {
       key: 'reference_paiement',
-      header: 'Référence',
-      render: (paiement) => <strong>{paiement.reference_paiement || '—'}</strong>,
-    },
-    { key: 'date_paiement', header: 'Date', render: (paiement) => formatDate(paiement.date_paiement) },
-    {
-      key: 'artisan',
-      header: 'Artisan',
-      render: (paiement) => (
-        <span className="paiements__artisan">
-          <strong>{holderName(paiement)}</strong>
-          <small>{paiement.artisan?.numero_carte || '—'}</small>
+      header: 'Dossier',
+      render: (payment) => (
+        <span className="paiements__reference">
+          <strong>{payment.reference_paiement || '—'}</strong>
+          <small>{artisanPaymentSaleReference(payment)}</small>
         </span>
       ),
     },
     {
-      key: 'type_paiement',
-      header: 'Moyen',
-      render: (paiement) => TYPE_LABELS[paiement.type_paiement] || paiement.type_paiement,
+      key: 'artisan',
+      header: 'Bénéficiaire',
+      render: (payment) => (
+        <span className="paiements__artisan">
+          <strong>{artisanPaymentHolderName(payment)}</strong>
+          <small>{payment.artisan?.numero_carte || 'Carte non renseignée'}</small>
+        </span>
+      ),
     },
-    { key: 'montant_paye', header: 'Montant payé', numeric: true, render: (paiement) => formatFcfa(paiement.montant_paye) },
     {
-      key: 'taxes',
-      header: 'Taxes retenues',
+      key: 'facture',
+      header: 'Facture',
+      render: (payment) => (
+        <span className="paiements__reference is-secondary">
+          <strong>{payment.facture?.numero_facture || payment.numero_facture || '—'}</strong>
+          <small>{formatDate(payment.facture?.date_emission)}</small>
+        </span>
+      ),
+    },
+    {
+      key: 'date_paiement',
+      header: 'Préparé le',
+      render: (payment) => formatDate(payment.date_paiement),
+    },
+    {
+      key: 'type_paiement',
+      header: 'Canal',
+      render: (payment) => ARTISAN_PAYMENT_TYPE_LABELS[payment.type_paiement],
+    },
+    {
+      key: 'montant_paye',
+      header: 'Net à verser',
       numeric: true,
-      render: (paiement) => formatFcfa(paiement.montant_taxes_retenues),
+      render: (payment) => <strong>{formatFcfa(payment.montant_paye)}</strong>,
     },
     {
       key: 'statut',
-      header: 'Statut',
-      render: (paiement) => (
-        <Badge tone={STATUT_TONES[paiement.statut] || 'neutral'}>
-          {STATUT_LABELS[paiement.statut] || paiement.statut}
+      header: 'État du dossier',
+      render: (payment) => (
+        <Badge tone={ARTISAN_PAYMENT_STATUS_TONES[payment.statut]}>
+          {ARTISAN_PAYMENT_STATUS_LABELS[payment.statut]}
         </Badge>
       ),
     },
     {
-      key: 'preuve',
-      header: 'Justificatif',
-      render: (paiement) =>
-        paiement.recu_paiement_url || paiement.preuve_paiement_url ? (
-          <a
-            className="sn-btn sn-btn--sm"
-            href={paiement.recu_paiement_url || paiement.preuve_paiement_url}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <FileText aria-hidden="true" /> Ouvrir
-          </a>
-        ) : (
-          <span className="paiements__muted">Aucun</span>
-        ),
+      key: 'prochaine_etape',
+      header: 'Prochaine étape',
+      render: (payment) => (
+        <span className="paiements__next-step">
+          <strong>{ARTISAN_PAYMENT_NEXT_STEPS[payment.statut].title}</strong>
+          <small>{ARTISAN_PAYMENT_NEXT_STEPS[payment.statut].description}</small>
+        </span>
+      ),
     },
     {
-      key: 'workflow',
-      header: 'Traitement',
-      render: (paiement) => {
-        if (isCollector) return <span className="paiements__muted">Lecture seule</span>;
-        const busy = transitioning === paiement.id;
-        if (paiement.statut === 'en_attente') {
-          if (!canExecute) return <span className="paiements__muted">Exécution AAL2 requise</span>;
-          return (
-            <button type="button" className="sn-btn sn-btn--sm" disabled={busy || !Number.isSafeInteger(paiement.version)} onClick={() => void changerStatut(paiement, 'en_traitement')}>
-              {busy ? <Loader2 className="sn-spin" aria-hidden="true" /> : <PlayCircle aria-hidden="true" />} Prendre en charge
-            </button>
-          );
-        }
-        if (paiement.statut === 'en_traitement') {
-          if (!canReconcile) return <span className="paiements__muted">Rapprochement AAL2 requis</span>;
-          if (paiement.traite_par === user?.id) {
-            return <small className="paiements__muted">Validation par un autre agent</small>;
-          }
-          return (
-            <button type="button" className="sn-btn sn-btn--sm" disabled={busy || !Number.isSafeInteger(paiement.version)} onClick={() => void changerStatut(paiement, 'valide')}>
-              {busy ? <Loader2 className="sn-spin" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />} Valider
-            </button>
-          );
-        }
-        if (paiement.statut === 'valide') {
-          return (
-            <small className="paiements__muted" title="La clôture exige une preuve canonique rattachée côté serveur">
-              Clôture bloquée — gateway de preuve requis
-            </small>
-          );
-        }
-        return <span className="paiements__muted">—</span>;
-      },
+      key: 'ouvrir',
+      header: '',
+      render: (payment) => (
+        <button
+          type="button"
+          className="paiements__open"
+          aria-label={`Voir le dossier ${payment.reference_paiement}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            ouvrirDossier(payment);
+          }}
+        >
+          <span>Voir</span><ArrowRight aria-hidden="true" />
+        </button>
+      ),
     },
   ];
 
   return (
     <NationalDashboardLayout>
-      <div className="sn-page">
+      <div className="sn-page paiements-registry">
         <CustomAlert {...alertState} onClose={closeAlert} />
 
         <PageHeader
           icon={Wallet}
-          title="Historique des paiements"
-          subtitle="Traçabilité des règlements effectués auprès des artisans miniers."
+          title="Dossiers de paiement"
+          subtitle="Suivez chaque règlement depuis sa préparation jusqu’à la confirmation du versement."
           breadcrumb={[
-            { label: isCollector ? 'Collecteur' : 'Artisans miniers', to: isCollector ? '/portail-collecteur' : '/artisan-minier' },
-            ...(isCollector ? [] : [{ label: 'Paiements des ventes', to: '/artisan-minier/paiements' }]),
-            { label: 'Historique' },
+            { label: isCollector ? 'Collecteur' : 'Marché d’or artisanal', to: isCollector ? '/portail-collecteur' : '/artisan-minier/ventes-or' },
+            { label: 'Paiements' },
           ]}
           actions={
             <>
-              {!isCollector && <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/paiements')}>
-                <ArrowLeft aria-hidden="true" /> Dossiers en attente
-              </button>}
-              <button type="button" className="sn-btn" onClick={() => void chargerHistorique()}>
+              {!isCollector && (
+                <button type="button" className="sn-btn" onClick={() => navigate('/artisan-minier/paiements')}>
+                  <ArrowLeft aria-hidden="true" /> Ventes à régler
+                </button>
+              )}
+              <button type="button" className="sn-btn sn-btn--primary" onClick={() => void chargerHistorique()}>
                 <RefreshCw aria-hidden="true" /> Actualiser
               </button>
             </>
@@ -350,40 +300,41 @@ export default function PaiementsHistorique() {
         />
 
         {isCollector && (
-          <div style={{ marginTop: 16 }}>
+          <div className="paiements-registry__notice">
             <Note tone="info" icon={ShieldCheck}>
-              Les règlements et justificatifs des orpailleurs assignés sont consultables. Les transitions de paiement restent réservées aux agents habilités.
+              Vous consultez uniquement les paiements des artisans qui vous sont rattachés. Les contrôles financiers sont réalisés par les agents habilités.
             </Note>
           </div>
         )}
 
-        <div style={{ marginTop: 16 }}>
+        <div className="paiements-registry__stats">
           <StatGrid
-            ariaLabel="Indicateurs de l’historique"
+            ariaLabel="Indicateurs des dossiers de paiement"
             items={[
-              { label: 'Paiements enregistrés', value: integer.format(stats.total), icon: Banknote, tone: 'blue' },
-              { label: 'Règlements finalisés', value: integer.format(stats.completes), icon: BadgeCheck, tone: 'green' },
-              { label: 'En cours de traitement', value: integer.format(stats.enCours), icon: Clock3, tone: 'gold' },
-              { label: 'Montant réglé', value: formatFcfa(stats.montantRegle), hint: `${formatFcfa(stats.taxesRetenues)} de taxes retenues`, icon: CheckCircle2, tone: 'violet' },
+              { label: 'Dossiers enregistrés', value: integer.format(stats.total), icon: Banknote, tone: 'blue' },
+              { label: 'À contrôler', value: integer.format(stats.aControler), hint: 'Double contrôle indépendant', icon: ShieldCheck, tone: 'gold' },
+              { label: 'Paiements en cours', value: integer.format(stats.enCours), icon: Clock3, tone: 'violet' },
+              { label: 'Versements confirmés', value: formatFcfa(stats.montantRegle), hint: `${formatFcfa(stats.taxesRetenues)} de retenues`, icon: CheckCircle2, tone: 'green' },
             ]}
           />
         </div>
 
-        <section className="sn-card paiements__panel" aria-label="Historique des règlements">
-          <div className="sn-card__head">
+        <section className="sn-card paiements__panel paiements-registry__panel" aria-label="Registre des paiements">
+          <div className="sn-card__head paiements-registry__head">
             <div>
               <h3>
-                Règlements <span className="sn-count">{integer.format(results.length)}</span>
+                Registre des règlements <span className="sn-count">{integer.format(results.length)}</span>
               </h3>
-              <p className="sn-card__hint">Filtres combinables : statut, moyen de paiement et période.</p>
+              <p className="sn-card__hint">Cliquez sur une ligne pour consulter le dossier, ses montants et sa chronologie.</p>
             </div>
+            <span className="paiements-registry__read-hint"><FileSearch aria-hidden="true" /> Détail disponible</span>
           </div>
 
-          <div className="paiements__filters">
+          <div className="paiements__filters paiements-registry__filters">
             <SearchInput
               value={filters.search}
               onChange={(search) => setFilters((current) => ({ ...current, search }))}
-              placeholder="Rechercher par référence, artisan ou numéro de carte"
+              placeholder="Référence, vente, facture, artisan ou carte"
             />
             <label className="paiements__field">
               <span>Moyen de paiement</span>
@@ -393,26 +344,26 @@ export default function PaiementsHistorique() {
                 ariaLabel="Filtrer par moyen de paiement"
               >
                 <option value="tous">Tous les moyens</option>
-                {(Object.keys(TYPE_LABELS) as TypePaiement[]).map((type) => (
-                  <option key={type} value={type}>{TYPE_LABELS[type]}</option>
+                {(Object.keys(ARTISAN_PAYMENT_TYPE_LABELS) as TypePaiement[]).map((type) => (
+                  <option key={type} value={type}>{ARTISAN_PAYMENT_TYPE_LABELS[type]}</option>
                 ))}
               </SelectControl>
             </label>
             <label className="paiements__field paiements__dates">
-              <span>Période</span>
+              <span>Période de préparation</span>
               <div>
                 <Calendar aria-hidden="true" />
                 <input
                   type="date"
                   value={filters.from}
-                  aria-label="Payé à partir du"
+                  aria-label="Préparé à partir du"
                   onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))}
                 />
                 <i aria-hidden="true">–</i>
                 <input
                   type="date"
                   value={filters.to}
-                  aria-label="Payé jusqu’au"
+                  aria-label="Préparé jusqu’au"
                   onChange={(event) => setFilters((current) => ({ ...current, to: event.target.value }))}
                 />
               </div>
@@ -426,8 +377,8 @@ export default function PaiementsHistorique() {
             </button>
           </div>
 
-          <div className="paiements__filters" style={{ paddingTop: 0 }}>
-            <div className="sn-chips" role="group" aria-label="Statut du règlement">
+          <div className="paiements-registry__status-bar">
+            <div className="sn-chips" role="group" aria-label="État du dossier de paiement">
               <button
                 type="button"
                 className={filters.statut === 'tous' ? 'is-active' : ''}
@@ -435,14 +386,14 @@ export default function PaiementsHistorique() {
               >
                 Tous <b>({integer.format(visiblePaiements.length)})</b>
               </button>
-              {STATUT_ORDER.map((key) => (
+              {ARTISAN_PAYMENT_STATUS_ORDER.map((key) => (
                 <button
                   key={key}
                   type="button"
                   className={filters.statut === key ? 'is-active' : ''}
                   onClick={() => setFilters((current) => ({ ...current, statut: key }))}
                 >
-                  {STATUT_LABELS[key]} <b>({integer.format(countByStatut[key] || 0)})</b>
+                  {ARTISAN_PAYMENT_STATUS_SHORT_LABELS[key]} <b>({integer.format(countByStatut[key] || 0)})</b>
                 </button>
               ))}
             </div>
@@ -450,17 +401,18 @@ export default function PaiementsHistorique() {
 
           {!loading && visiblePaiements.length === 0 ? (
             <EmptyState
-              title="Aucun paiement enregistré"
-              description="L’historique se remplit dès le premier règlement effectué auprès d’un artisan."
+              title="Aucun dossier de paiement"
+              description="Un dossier apparaîtra ici dès qu’un règlement sera préparé à partir d’une facture."
             />
           ) : (
-            <div style={{ padding: '0 16px 16px' }}>
+            <div className="paiements-registry__table">
               <DataTable
                 columns={columns}
-                rows={results.map((paiement) => ({ ...paiement, id: paiement.id || paiement.reference_paiement }))}
+                rows={results.map((payment) => ({ ...payment, id: payment.id || payment.reference_paiement }))}
                 loading={loading}
-                empty="Aucun règlement ne correspond aux filtres sélectionnés."
-                caption="Historique des paiements aux artisans"
+                empty="Aucun dossier ne correspond aux filtres sélectionnés."
+                caption="Registre des paiements aux artisans"
+                onRowClick={ouvrirDossier}
               />
             </div>
           )}

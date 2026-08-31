@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ProductionStatus } from '@/constants/productionStatuses';
+import type { Database } from '@/types/database';
 import {
   bornesPeriodes,
   cumulerObjectif,
@@ -69,8 +70,10 @@ interface LigneProduction {
   estimated_oz: number | null;
   estimated_fineness_pct: number | null;
   bar_reference: string | null;
-  status: string;
+  status: Database['public']['Enums']['production_status_v2'];
 }
+
+type StatutProductionCoffre = Database['public']['Enums']['production_status_v2'];
 
 const entier = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -94,11 +97,16 @@ const STATUT_EXCLU = 'cancelled';
  * la table sans rien expliquer. Un filtre qui ne peut rien trouver n'est pas un
  * filtre.
  */
-const STATUTS_FILTRABLES: Array<{ valeur: string; libelle: string }> = [
+const STATUTS_FILTRABLES: Array<{ valeur: StatutProductionCoffre | 'all'; libelle: string }> = [
   { valeur: 'all', libelle: 'Tous les statuts' },
   { valeur: 'prepared', libelle: 'Préparé' },
   { valeur: 'ready_for_customs', libelle: 'Prêt pour la douane' },
 ];
+
+const estStatutProductionCoffre = (
+  valeur: string
+): valeur is StatutProductionCoffre | 'all' =>
+  STATUTS_FILTRABLES.some((statut) => statut.valeur === valeur);
 
 export function ProductionInSafe() {
   const { user } = useAuth();
@@ -117,7 +125,7 @@ export function ProductionInSafe() {
 
   const [filtresOuverts, setFiltresOuverts] = useState(false);
   const [compagnieFiltre, setCompagnieFiltre] = useState(mineCompanyId || 'all');
-  const [statutFiltre, setStatutFiltre] = useState('all');
+  const [statutFiltre, setStatutFiltre] = useState<StatutProductionCoffre | 'all'>('all');
 
   const parDefaut = useMemo(() => bornesPeriodes(), []);
   const [periode, setPeriode] = useState<Periode>(parDefaut.annee);
@@ -422,7 +430,14 @@ export function ProductionInSafe() {
                 )}
                 <label className="sn-field">
                   <span className="sn-field__label">Statut</span>
-                  <select value={statutFiltre} onChange={(evenement) => setStatutFiltre(evenement.target.value)}>
+                  <select
+                    value={statutFiltre}
+                    onChange={(evenement) => {
+                      if (estStatutProductionCoffre(evenement.target.value)) {
+                        setStatutFiltre(evenement.target.value);
+                      }
+                    }}
+                  >
                     {STATUTS_FILTRABLES.map((statut) => (
                       <option key={statut.valeur} value={statut.valeur}>
                         {statut.libelle}

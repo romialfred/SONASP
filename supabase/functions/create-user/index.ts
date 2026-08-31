@@ -1,21 +1,11 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.57.4';
 import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
 import { niveauAssurance } from '../_shared/assurance.ts';
-import { isInteractiveAccountRole } from '../_shared/account-role-policy.ts';
+import { accountOrganizationType, canCreateAccountRole, isInteractiveAccountRole } from '../_shared/account-role-policy.ts';
 import { urlModificationMotDePasse, urlRecuperationCompte } from '../_shared/application-url.ts';
+import { verifierSessionAdministration } from '../_shared/admin-account-edge.ts';
 
 const ROLES_CREATEURS = new Set(['owner', 'admin']);
-const NIVEAUX_ROLE: Record<string, number> = {
-  owner: 100,
-  admin: 80,
-  management: 60,
-  manager: 40,
-  mine: 20,
-  factory: 20,
-  airport: 20,
-  refinery: 20,
-  customer: 20,
-};
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 interface PermissionModule {
@@ -41,6 +31,8 @@ interface RequeteCreation {
   organization_name?: unknown;
   permissions?: unknown;
   capabilities?: unknown;
+  responsibilities?: unknown;
+  collector_id?: unknown;
 }
 
 const CAPACITES_OPERATIONNELLES = new Set([
@@ -49,12 +41,38 @@ const CAPACITES_OPERATIONNELLES = new Set([
   'sonasp.finance.execute',
   'sonasp.finance.reconcile',
   'comptoir.manage',
+  'comptoir.invoices.issue',
+  'comptoir.payments.execute',
+  'comptoir.payments.reconcile',
+  'comptoir.tax.execute',
   'collectors.manage',
   'collector.operate',
+  'dgmg.supervise',
+  'dgmg.production.validate',
+  'dgi.fiscal.control',
+  'dgi.fiscal.reconcile',
+  'mine.production.manage',
+  'refining.supervise',
+  'reconciliation.manage',
 ]);
 
+const RESPONSABILITES_PAR_ROLE: Readonly<Record<string, readonly string[]>> = {
+  admin: [],
+  management: ['sonasp.prepare','sonasp.approve','sonasp.finance.execute','sonasp.finance.reconcile','refining.supervise','reconciliation.manage','collectors.manage'],
+  dgmg: ['dgmg.supervise','dgmg.production.validate','collectors.manage'],
+  dgi: ['dgi.fiscal.control','dgi.fiscal.reconcile'],
+  mine: ['mine.production.manage','refining.supervise'],
+  comptoir: ['comptoir.manage','refining.supervise','comptoir.invoices.issue','comptoir.payments.execute','comptoir.payments.reconcile','comptoir.tax.execute'],
+  collector: ['collector.operate'],
+  customer: [],
+};
+const RESPONSABILITES_OBLIGATOIRES: Readonly<Record<string, readonly string[]>> = {
+  dgmg: ['dgmg.supervise'], dgi: ['dgi.fiscal.control'], mine: ['mine.production.manage'],
+  comptoir: ['comptoir.manage'], collector: ['collector.operate'],
+};
+
 function normaliserCapacites(brut: unknown, role: string): Array<{ code: string; allowed: boolean }> {
-  if (brut === undefined || brut === null) return [];
+  if (brut === undefined || brut === null) brut = {};
   if (typeof brut !== 'object' || Array.isArray(brut)) {
     throw new ErreurPublique(400, 'Les responsabilités métier sont illisibles.');
   }
@@ -65,6 +83,19 @@ function normaliserCapacites(brut: unknown, role: string): Array<{ code: string;
   }
   if (role === 'manager' && entries.some(([, allowed]) => allowed)) {
     throw new ErreurPublique(400, 'Le profil Manager est strictement limité à la lecture.');
+  }
+  const plafond = new Set(RESPONSABILITES_PAR_ROLE[role] ?? []);
+  if (entries.some(([code, allowed]) => allowed && !plafond.has(code))) {
+    throw new ErreurPublique(403, 'Une responsabilité métier dépasse le plafond du rôle.');
+  }
+  const selection = new Map(entries.map(([code, allowed]) => [code, Boolean(allowed)]));
+  if ((RESPONSABILITES_OBLIGATOIRES[role] ?? []).some((code) => !selection.get(code))) {
+    throw new ErreurPublique(400, 'Une responsabilité obligatoire est absente.');
+  }
+  if ((selection.get('sonasp.prepare') && selection.get('sonasp.approve'))
+    || (selection.get('sonasp.finance.execute') && selection.get('sonasp.finance.reconcile'))
+    || (selection.get('comptoir.payments.execute') && selection.get('comptoir.payments.reconcile'))) {
+    throw new ErreurPublique(403, 'Séparation des fonctions : responsabilités incompatibles.');
   }
   return entries.map(([code, allowed]) => ({ code, allowed: allowed as boolean }));
 }
@@ -139,9 +170,25 @@ function normaliserPermissions(brut: unknown, role: string): PermissionModule[] 
 }
 
 async function annulerCreation(admin: SupabaseClient, utilisateurId: string): Promise<void> {
-  await admin.from('user_permissions').delete().eq('user_id', utilisateurId);
-  await admin.from('user_profiles').delete().eq('id', utilisateurId);
-  await admin.auth.admin.deleteUser(utilisateurId);
+  const erreurs: string[] = [];
+  const suppressions = [
+    ['comptes collecteur', admin.from('snp_collector_accounts').delete().eq('user_id', utilisateurId)],
+    ['rattachements organisationnels', admin.from('snp_user_organization_memberships').delete().eq('user_id', utilisateurId)],
+    ['responsabilités', admin.from('snp_user_responsibilities').delete().eq('user_id', utilisateurId)],
+    ['capacités explicites', admin.from('snp_user_capabilities').delete().eq('user_id', utilisateurId)],
+    ['habilitations', admin.from('user_permissions').delete().eq('user_id', utilisateurId)],
+    ['profil', admin.from('user_profiles').delete().eq('id', utilisateurId)],
+  ] as const;
+
+  for (const [libelle, requete] of suppressions) {
+    const { error } = await requete;
+    if (error) erreurs.push(`${libelle}: ${error.message}`);
+  }
+  const { error: erreurAuth } = await admin.auth.admin.deleteUser(utilisateurId);
+  if (erreurAuth) erreurs.push(`identité Auth: ${erreurAuth.message}`);
+  if (erreurs.length > 0) {
+    throw new Error(`Retour arrière incomplet (${erreurs.join(' ; ')})`);
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -150,7 +197,8 @@ Deno.serve(async (req: Request) => {
 
   const urlSupabase = Deno.env.get('SUPABASE_URL');
   const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!urlSupabase || !cleService) {
+  const cleAnon = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!urlSupabase || !cleService || !cleAnon) {
     console.error('[create-user] Configuration Supabase incomplète.');
     return reponseJson(req, { success: false, error: 'Le service de création de compte est indisponible.' }, 503);
   }
@@ -171,6 +219,14 @@ Deno.serve(async (req: Request) => {
       throw new ErreurPublique(401, 'Votre session n’est plus valide. Reconnectez-vous.');
     }
     const acteur = donneesAuth.user;
+    const clientActeur = createClient(urlSupabase, cleAnon, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: autorisation } },
+    });
+    const sessionAdministration = await verifierSessionAdministration(clientActeur);
+    if (!sessionAdministration.ok) {
+      throw new ErreurPublique(sessionAdministration.status, 'Votre session administrative n’est plus autorisée.');
+    }
 
     const { data: profilActeur, error: erreurProfilActeur } = await admin
       .from('user_profiles')
@@ -208,22 +264,17 @@ Deno.serve(async (req: Request) => {
     const codeOrganisation = texte(corps.organization_code, 20).toUpperCase() || null;
     const nomOrganisation = texte(corps.organization_name, 160) || null;
     const actif = corps.is_active !== false;
+    const collecteurId = texte(corps.collector_id, 64) || null;
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new ErreurPublique(400, 'Renseignez une adresse e-mail valide.');
     }
     if (!nomComplet) throw new ErreurPublique(400, 'Le nom complet est obligatoire.');
-    if (role === 'owner') {
-      throw new ErreurPublique(
-        403,
-        'Le rôle Propriétaire est réservé au script sécurisé de continuité.',
-      );
-    }
     if (!isInteractiveAccountRole(role)) {
       throw new ErreurPublique(400, 'Le rôle sélectionné n’est pas reconnu ou attribuable.');
     }
-    if ((NIVEAUX_ROLE[role] ?? Number.POSITIVE_INFINITY) > (NIVEAUX_ROLE[roleActeur] ?? -1)) {
-      throw new ErreurPublique(403, 'Vous ne pouvez pas créer un compte d’un niveau supérieur au vôtre.');
+    if (!canCreateAccountRole(roleActeur, role)) {
+      throw new ErreurPublique(403, 'Votre rôle ne permet pas de créer ce type de compte.');
     }
     if (role === 'mine' && (!societeMiniere || !UUID.test(societeMiniere))) {
       throw new ErreurPublique(400, 'Rattachez le compte à une société minière.');
@@ -231,13 +282,10 @@ Deno.serve(async (req: Request) => {
     if (role !== 'mine' && societeMiniere) {
       throw new ErreurPublique(400, 'Ce rôle ne peut pas recevoir un périmètre de société minière.');
     }
-    if (typeCompte && typeCompte !== 'comptoir') {
+    if (typeCompte && typeCompte !== role) {
       throw new ErreurPublique(400, 'Le type de compte sélectionné n’est pas reconnu.');
     }
-    if (typeCompte === 'comptoir') {
-      if (role !== 'customer') {
-        throw new ErreurPublique(400, 'Le profil Comptoir doit utiliser le rôle partenaire sécurisé.');
-      }
+    if (role === 'comptoir') {
       const rattachementExistant = Boolean(organisationDemandee);
       const nouveauRattachement = Boolean(codeOrganisation || nomOrganisation);
       if (rattachementExistant === nouveauRattachement) {
@@ -254,8 +302,35 @@ Deno.serve(async (req: Request) => {
           throw new ErreurPublique(400, 'Le nom du comptoir est obligatoire.');
         }
       }
-    } else if (organisationDemandee || codeOrganisation || nomOrganisation) {
-      throw new ErreurPublique(400, 'Ce profil ne peut pas recevoir un périmètre Comptoir.');
+    } else if (codeOrganisation || nomOrganisation) {
+      throw new ErreurPublique(400, 'Seul un Comptoir peut créer une organisation depuis cet écran.');
+    }
+    if (['dgmg','dgi','collector'].includes(role) && (!organisationDemandee || !UUID.test(organisationDemandee))) {
+      throw new ErreurPublique(400, 'Une organisation compatible est obligatoire pour ce rôle.');
+    }
+    if (role === 'collector' && (!collecteurId || !UUID.test(collecteurId))) {
+      throw new ErreurPublique(400, 'Un profil collecteur valide est obligatoire.');
+    }
+    if (role === 'collector' && collecteurId) {
+      const { data: collecteur, error: erreurCollecteur } = await admin
+        .from('snp_artisans_miniers')
+        .select('id, actif, type_artisan')
+        .eq('id', collecteurId)
+        .eq('type_artisan', 'collecteur')
+        .eq('actif', true)
+        .maybeSingle();
+      if (erreurCollecteur || !collecteur) {
+        throw new ErreurPublique(400, 'Le profil collecteur est inactif, incompatible ou introuvable.');
+      }
+      const { data: existingCollectorAccount } = await admin
+        .from('snp_collector_accounts')
+        .select('id')
+        .eq('collector_id', collecteurId)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (existingCollectorAccount) {
+        throw new ErreurPublique(409, 'Ce collecteur possède déjà un compte actif.');
+      }
     }
 
     if (societeMiniere) {
@@ -291,28 +366,29 @@ Deno.serve(async (req: Request) => {
     if (profilExistant) throw new ErreurPublique(409, 'Un compte utilise déjà cette adresse e-mail.');
 
     const permissions = normaliserPermissions(corps.permissions, role);
-    const capacites = normaliserCapacites(corps.capabilities, role);
-    if (typeCompte === 'comptoir' && !capacites.some(
+    const capacites = normaliserCapacites(corps.responsibilities ?? corps.capabilities, role);
+    if (role === 'comptoir' && !capacites.some(
       (capacite) => capacite.code === 'comptoir.manage' && capacite.allowed
     )) {
       throw new ErreurPublique(400, 'L’habilitation Comptoir d’achat est obligatoire pour ce profil.');
     }
-    if (typeCompte !== 'comptoir' && role === 'customer' && capacites.some(
+    if (role !== 'comptoir' && capacites.some(
       (capacite) => capacite.code === 'comptoir.manage' && capacite.allowed
     )) {
       throw new ErreurPublique(400, 'L’habilitation Comptoir exige un périmètre Comptoir actif.');
     }
 
-    if (typeCompte === 'comptoir' && organisationDemandee) {
+    if (organisationDemandee) {
+      const typeOrganisationAttendu = accountOrganizationType(role);
       const { data: organisation, error: erreurOrganisation } = await admin
         .from('snp_organizations')
         .select('id')
         .eq('id', organisationDemandee)
-        .eq('organization_type', 'comptoir')
+        .eq('organization_type', typeOrganisationAttendu)
         .eq('is_active', true)
         .maybeSingle();
       if (erreurOrganisation) throw new Error(`comptoir: ${erreurOrganisation.message}`);
-      if (!organisation) throw new ErreurPublique(400, 'Le comptoir sélectionné est inactif ou introuvable.');
+      if (!organisation) throw new ErreurPublique(400, 'L’organisation sélectionnée est incompatible, inactive ou introuvable.');
     }
     if (permissions.length > 0) {
       const ids = [...new Set(permissions.map((permission) => permission.module_id))];
@@ -343,9 +419,11 @@ Deno.serve(async (req: Request) => {
       email,
       full_name: nomComplet,
       phone: telephone,
-      role,
+      // Owner n'est jamais activé par la seule clé de service : le RPC vérifie
+      // à nouveau le JWT et la hiérarchie avant promotion et journalisation.
+      role: role === 'owner' ? 'customer' : role,
       mining_company_id: role === 'mine' ? societeMiniere : null,
-      is_active: actif,
+      is_active: role === 'owner' ? false : actif,
       two_factor_enabled: false,
       mfa_enrolled_at: null,
       must_change_password: true,
@@ -362,15 +440,27 @@ Deno.serve(async (req: Request) => {
       throw new Error(`profil: ${erreurProfil.message}`);
     }
 
-    if (typeCompte === 'comptoir') {
-      let organisationId = organisationDemandee;
+    let organisationId = organisationDemandee;
+    if (role === 'comptoir') {
       if (!organisationId) {
+        const { data: ministereTutelle, error: erreurMinistereTutelle } = await admin
+          .from('snp_ministries')
+          .select('id')
+          .eq('code', 'MEMC')
+          .eq('is_active', true)
+          .maybeSingle();
+        if (erreurMinistereTutelle || !ministereTutelle?.id) {
+          throw new Error(
+            `ministère de tutelle du comptoir: ${erreurMinistereTutelle?.message ?? 'MEMC actif introuvable'}`,
+          );
+        }
         const { data: nouvelleOrganisation, error: erreurNouvelleOrganisation } = await admin
           .from('snp_organizations')
           .insert({
             code: codeOrganisation,
             name: nomOrganisation,
             organization_type: 'comptoir',
+            supervising_ministry_id: ministereTutelle.id,
             is_active: true,
             created_by: acteur.id,
           })
@@ -389,56 +479,85 @@ Deno.serve(async (req: Request) => {
         organisationCreee = organisationId;
       }
 
+    }
+
+    if (role === 'mine') {
+      const { data: mineOrganization, error: mineOrganizationError } = await admin
+        .from('snp_organizations')
+        .select('id')
+        .eq('mining_company_id', societeMiniere)
+        .eq('organization_type', 'mine')
+        .maybeSingle();
+      if (mineOrganizationError || !mineOrganization?.id) {
+        throw new Error(`organisation minière: ${mineOrganizationError?.message ?? 'introuvable'}`);
+      }
+      organisationId = mineOrganization.id;
+    }
+
+    if (organisationId) {
       const { error: erreurRattachement } = await admin
         .from('snp_user_organization_memberships')
         .insert({
           user_id: utilisateurCree,
           organization_id: organisationId,
-          membership_role: 'manager',
+          membership_role: ['mine', 'comptoir'].includes(role) ? 'manager' : 'operator',
           is_primary: true,
-          reason: 'Rattachement lors de la création sécurisée du compte Comptoir',
+          reason: 'Rattachement lors de la création sécurisée du compte',
           granted_by: acteur.id,
         });
       if (erreurRattachement) {
-        throw new Error(`rattachement au comptoir: ${erreurRattachement.message}`);
+        throw new Error(`rattachement à l’organisation: ${erreurRattachement.message}`);
       }
+    }
+
+    if (role === 'collector' && collecteurId) {
+      const { error: collectorAccountError } = await admin.from('snp_collector_accounts').insert({
+        user_id: utilisateurCree,
+        collector_id: collecteurId,
+        comptoir_organization_id: organisationId,
+        is_active: true,
+        linked_by: acteur.id,
+        reason: 'Rattachement lors de la création sécurisée du compte Collecteur',
+      });
+      if (collectorAccountError) throw new Error(`profil collecteur: ${collectorAccountError.message}`);
     }
 
     if (capacites.length > 0) {
-      const cleAnon = Deno.env.get('SUPABASE_ANON_KEY');
-      if (!cleAnon) throw new ErreurPublique(503, 'Le service d’habilitation est indisponible.');
-      const clientActeur = createClient(urlSupabase, cleAnon, {
-        auth: { autoRefreshToken: false, persistSession: false },
-        global: { headers: { Authorization: autorisation } },
+      const responsibilityPayload = Object.fromEntries(capacites.map(({ code, allowed }) => [code, allowed]));
+      const { error: validationError } = await clientActeur.rpc('snp_validate_responsibilities', {
+        p_role: role,
+        p_responsibilities: responsibilityPayload,
       });
-      for (const capacite of capacites) {
-        const { error } = await clientActeur.rpc('snp_definir_capacite_utilisateur', {
-          p_user_id: utilisateurCree,
-          p_capability_code: capacite.code,
-          p_allowed: capacite.allowed,
-          p_reason: `${capacite.allowed ? 'Attribution' : 'Retrait'} lors de la création sécurisée du compte`,
-          p_valid_until: null,
-        });
-        if (error) throw new Error(`responsabilités: ${error.message}`);
+      if (validationError) throw new ErreurPublique(403, validationError.message);
+      const selectedResponsibilities = capacites.filter(({ allowed }) => allowed).map(({ code }) => ({
+        user_id: utilisateurCree,
+        responsibility_code: code,
+        granted_by: acteur.id,
+        reason: 'Attribution lors de la création sécurisée du compte',
+      }));
+      if (selectedResponsibilities.length > 0) {
+        const { error: responsibilitiesError } = await admin
+          .from('snp_user_responsibilities')
+          .insert(selectedResponsibilities);
+        if (responsibilitiesError) throw new Error(`responsabilités: ${responsibilitiesError.message}`);
       }
     }
 
-    if (permissions.length > 0) {
-      const { error: erreurPermissions } = await admin.from('user_permissions').insert(
-        permissions.map((permission) => ({
-          user_id: utilisateurCree,
-          module_id: permission.module_id,
-          can_view: permission.can_view,
-          can_create: permission.can_create,
-          can_edit: permission.can_edit,
-          can_delete: permission.can_delete,
-          can_approve: permission.can_approve,
-          can_read: permission.can_view,
-          can_write: permission.can_edit,
-          field_permissions: permission.field_permissions ?? {},
-          granted_by: acteur.id,
-        })),
-      );
+    if (role === 'owner') {
+      const { error: ownerError } = await clientActeur.rpc('snp_configurer_acces_compte', {
+        p_user_id: utilisateurCree, p_full_name: nomComplet, p_phone: telephone,
+        p_role: 'owner', p_is_active: actif, p_mining_company_id: null,
+        p_organization_id: organisationId, p_collector_id: null,
+        p_responsibilities: {}, p_permissions: [],
+      });
+      if (ownerError) throw new ErreurPublique(403, 'La création du compte Owner n’a pas été autorisée par le serveur.');
+    } else if (permissions.length > 0) {
+      // L'Edge Function possède la clé de service, mais ne contourne jamais le
+      // plafond du rôle : la même RPC autoritative gouverne création et édition.
+      const { error: erreurPermissions } = await clientActeur.rpc('snp_remplacer_habilitations_compte', {
+        p_user_id: utilisateurCree,
+        p_habilitations: permissions,
+      });
       if (erreurPermissions) throw new Error(`habilitations: ${erreurPermissions.message}`);
     }
 
@@ -499,17 +618,33 @@ Deno.serve(async (req: Request) => {
     organisationCreee = null;
     return reponse;
   } catch (erreur) {
+    let retourArriereIncomplet = false;
     if (utilisateurCree) {
-      await annulerCreation(admin, utilisateurCree).catch((raison) =>
-        console.error('[create-user] Retour arrière incomplet.', raison)
-      );
+      try {
+        await annulerCreation(admin, utilisateurCree);
+      } catch (raison) {
+        retourArriereIncomplet = true;
+        console.error('[create-user] Retour arrière incomplet.', raison);
+      }
     }
     if (organisationCreee) {
       try {
-        await admin.from('snp_organizations').delete().eq('id', organisationCreee);
+        const { error: erreurSuppressionOrganisation } = await admin
+          .from('snp_organizations')
+          .delete()
+          .eq('id', organisationCreee);
+        if (erreurSuppressionOrganisation) throw erreurSuppressionOrganisation;
       } catch (raison) {
+        retourArriereIncomplet = true;
         console.error('[create-user] Nettoyage du comptoir incomplet.', raison);
       }
+    }
+
+    if (retourArriereIncomplet) {
+      return reponseJson(req, {
+        success: false,
+        error: 'La création a échoué et son annulation n’a pas pu être confirmée. Faites vérifier le compte par un administrateur avant de réessayer.',
+      }, 500);
     }
 
     if (erreur instanceof ErreurPublique) {
@@ -518,7 +653,7 @@ Deno.serve(async (req: Request) => {
     console.error('[create-user] Échec de création.', erreur);
     return reponseJson(req, {
       success: false,
-      error: 'La création n’a pas pu être finalisée. Aucun compte incomplet n’a été conservé.',
+      error: 'La création n’a pas pu être finalisée. Faites vérifier le compte par un administrateur avant de réessayer.',
     }, 500);
   }
 });

@@ -451,9 +451,10 @@ export class AdvancedAnalyticsService {
         return [];
       }
 
-      const periodTotals: Record<string, any> = {};
+      const periodTotals: Record<string, SalesPerformance> = {};
 
       (data || []).forEach((sale) => {
+        if (!sale.created_at) return;
         const date = new Date(sale.created_at);
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
@@ -474,6 +475,7 @@ export class AdvancedAnalyticsService {
             revenue: 0,
             quantityOz: 0,
             salesCount: 0,
+            avgPrice: 0,
           };
         }
 

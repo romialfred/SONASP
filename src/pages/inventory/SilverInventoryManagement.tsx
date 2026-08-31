@@ -1,90 +1,126 @@
-import { useNavigate } from 'react-router-dom';
-import { Package, ArrowLeft, Construction, Sparkles } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle, Beaker, Coins, PackageCheck, RefreshCw, Scale, ShieldCheck,
+} from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import {
+  Badge, Card, DataTable, EmptyState, Note, PageHeader, StatGrid, type Column,
+} from '@/components/ui/sn';
+import { useToast } from '@/components/ui/Toast';
+import {
+  loadSilverInventoryPosition, type SilverPositionRow,
+} from './silverInventoryData';
+import './silver-inventory.css';
+
+const number = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
+const percentage = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+const date = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+
+const formatDate = (value: string) => {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(parsed.getTime()) ? '—' : date.format(parsed);
+};
 
 export function SilverInventoryManagement() {
-  const navigate = useNavigate();
+  const { addToast } = useToast();
+  const [rows, setRows] = useState<SilverPositionRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setRows(await loadSilverInventoryPosition());
+    } catch (caught: unknown) {
+      const message = caught instanceof Error ? caught.message : 'Le chargement de la position argent a échoué.';
+      setError(message);
+      addToast(message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const totals = useMemo(() => rows.reduce((accumulator, row) => ({
+    silver: accumulator.silver + row.silver_grams,
+    available: accumulator.available + row.available_silver_grams,
+    allocated: accumulator.allocated + row.allocated_silver_grams,
+    sold: accumulator.sold + row.sold_silver_grams,
+  }), { silver: 0, available: 0, allocated: 0, sold: 0 }), [rows]);
+
+  const weightedPurity = useMemo(() => {
+    const totalWeight = rows.reduce((sum, row) => sum + row.weight_after_melting_grams, 0);
+    return totalWeight > 0
+      ? rows.reduce((sum, row) => sum + row.weight_after_melting_grams * row.silver_percentage, 0) / totalWeight
+      : 0;
+  }, [rows]);
+
+  const columns: Column<SilverPositionRow>[] = [
+    {
+      key: 'reference', header: 'Lot / certificat', render: (row) => (
+        <span className="silver-position__reference">
+          <strong>{row.certificate_number || `STK-${row.id.slice(0, 8).toUpperCase()}`}</strong>
+          <small>{formatDate(row.entry_date)}</small>
+        </span>
+      ),
+    },
+    { key: 'location', header: 'Localisation', render: (row) => row.processing_location || 'Non renseignée' },
+    { key: 'melted', header: 'Poids après fonte', numeric: true, render: (row) => `${number.format(row.weight_after_melting_grams)} g` },
+    { key: 'purity', header: 'Teneur Ag', numeric: true, render: (row) => <Badge tone="neutral">{percentage.format(row.silver_percentage)} %</Badge> },
+    { key: 'silver', header: 'Argent associé', numeric: true, render: (row) => `${number.format(row.silver_grams)} g` },
+    { key: 'available', header: 'Part disponible', numeric: true, render: (row) => `${number.format(row.available_silver_grams)} g` },
+  ];
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/inventory')} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
+    <NationalDashboardLayout>
+      <main className="sn-page silver-position">
+        <PageHeader
+          icon={Coins}
+          title="Position argent associée"
+          subtitle="Teneur en argent déclarée dans les lots d’or du stock opérationnel."
+          breadcrumb={[{ label: 'Suivi des stocks', to: '/inventory' }, { label: 'Position argent' }]}
+          info={{
+            titre: 'Périmètre de calcul',
+            contenu: <>Cette vue dérive l’argent associé aux lots depuis le poids après fonte et la teneur certifiée. Elle ne constitue pas un registre d’argent autonome.</>,
+          }}
+          actions={(
+            <button type="button" className="sn-btn sn-btn--primary" onClick={() => void load()} disabled={loading}>
+              <RefreshCw className={loading ? 'sn-spin' : undefined} aria-hidden="true" />
+              {loading ? 'Actualisation…' : 'Actualiser'}
+            </button>
+          )}
+        />
 
-          <div className="flex-1">
-            <h1 className="font-heading text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Sparkles className="h-8 w-8 text-gray-400" />
-              Silver Inventory Management
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Track and manage pure silver inventory
-            </p>
-          </div>
-        </div>
+        <StatGrid ariaLabel="Synthèse de la position argent" items={[
+          { label: 'Argent associé', value: `${number.format(totals.silver)} g`, hint: `${number.format(rows.length)} lot(s) documenté(s)`, icon: Coins, tone: 'gold' },
+          { label: 'Part disponible', value: `${number.format(totals.available)} g`, hint: 'Ventilation proportionnelle', icon: Scale, tone: 'green' },
+          { label: 'Part allouée', value: `${number.format(totals.allocated)} g`, hint: 'Lots affectés à une vente', icon: PackageCheck, tone: 'blue' },
+          { label: 'Teneur moyenne pondérée', value: `${percentage.format(weightedPurity)} %`, hint: 'Pondérée par le poids après fonte', icon: Beaker, tone: 'violet' },
+        ]} />
 
-        <Card className="border-2 border-gray-200">
-          <div className="py-16 px-6">
-            <div className="text-center max-w-md mx-auto">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mb-6">
-                <Construction className="w-10 h-10 text-gray-500" />
-              </div>
+        <Note tone="info" icon={ShieldCheck}>
+          Les quantités sont calculées à partir des analyses stockées en base. Toute mobilisation autonome d’argent exige un registre matière et un workflow dédiés ; aucune mutation n’est donc autorisée depuis cet écran.
+        </Note>
 
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Coming Soon
-              </h2>
+        {error && (
+          <Note tone="danger" icon={AlertCircle}>
+            Impossible de charger la position argent : {error}
+          </Note>
+        )}
 
-              <p className="text-gray-600 mb-6">
-                Silver Inventory Management is currently under development. This module will provide
-                the same comprehensive inventory tracking and management features as Gold Inventory,
-                specifically tailored for silver operations.
-              </p>
-
-              <div className="bg-gradient-to-br from-gray-50 to-slate-50 border border-gray-200 rounded-lg p-4 text-left">
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-gray-500" />
-                  Planned Features
-                </h3>
-                <ul className="space-y-2 text-sm text-gray-700">
-                  <li className="flex items-start gap-2">
-                    <Package className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                    <span>Track silver refining from batches to pure inventory</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Package className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                    <span>Automatic calculations for fineness and final fine weight</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Package className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                    <span>Stock allocation and sales integration (FIFO)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Package className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                    <span>Monthly consolidation and reporting</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Package className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                    <span>Complete audit trail and transaction history</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-8 flex gap-3 justify-center">
-                <Button variant="primary" onClick={() => navigate('/inventory')}>
-                  View Gold Inventory
-                </Button>
-                <Button variant="outline" onClick={() => navigate('/dashboard')}>
-                  Go to Dashboard
-                </Button>
-              </div>
-            </div>
-          </div>
+        <Card title="Lots porteurs d’argent" hint="Traçabilité de la teneur argent relevée à l’essai et rattachée au stock d’or.">
+          {!loading && rows.length === 0 ? (
+            <EmptyState
+              title="Aucune teneur argent enregistrée"
+              description="Les lots apparaîtront après l’enregistrement d’une teneur argent strictement positive sur une entrée de stock."
+            />
+          ) : (
+            <DataTable columns={columns} rows={rows} loading={loading} caption="Position argent associée aux lots d’or" />
+          )}
         </Card>
-      </div>
-    </MainLayout>
+      </main>
+    </NationalDashboardLayout>
   );
 }

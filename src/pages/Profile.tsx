@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/Toast';
 import { Table, Column } from '@/components/ui/Table';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { userActivityService } from '@/services/userActivityService';
 
 interface ActivityLog {
   action: string;
@@ -32,7 +33,6 @@ export function Profile() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [language, setLanguage] = useState('en');
   const [emailNotifications, setEmailNotifications] = useState(true);
-  const [batchNotifications, setBatchNotifications] = useState(true);
   const [approvalNotifications, setApprovalNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -44,16 +44,28 @@ export function Profile() {
       setPhone(user.phone || '');
       setLanguage(user.language || 'fr');
       setEmailNotifications(user.email_notifications);
-      setBatchNotifications(user.batch_notifications);
       setApprovalNotifications(user.approval_notifications);
     }
   }, [user]);
 
-  const activityLogs: ActivityLog[] = [
-    { action: 'Login', timestamp: '2025-10-24 10:30:00', ip: '192.168.1.1' },
-    { action: 'Updated profile', timestamp: '2025-10-23 15:45:00', ip: '192.168.1.1' },
-    { action: 'Changed password', timestamp: '2025-10-20 09:15:00', ip: '192.168.1.1' },
-  ];
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [activityState, setActivityState] = useState<'loading' | 'ready' | 'error'>('loading');
+  useEffect(() => {
+    let current = true;
+    setActivityLogs([]);
+    setActivityState('loading');
+    if (!user?.id) return;
+    void userActivityService.getActivityHistory(user.id, { limit: 50 }).then((logs) => {
+      if (!current) return;
+      setActivityLogs(logs.map((log) => ({
+        action: log.description,
+        timestamp: log.created_at ? new Date(log.created_at).toLocaleString('fr-FR') : 'Non renseignée',
+        ip: log.ip_address || 'Non collectée',
+      })));
+      setActivityState('ready');
+    }).catch(() => { if (current) setActivityState('error'); });
+    return () => { current = false; };
+  }, [user?.id]);
 
   const activityColumns: Column<ActivityLog>[] = [
     { key: 'action', label: 'Action', sortable: true },
@@ -115,7 +127,6 @@ export function Profile() {
           phone: phone || null,
           language,
           email_notifications: emailNotifications,
-          batch_notifications: batchNotifications,
           approval_notifications: approvalNotifications,
         })
         .eq('id', user.id);
@@ -172,7 +183,7 @@ export function Profile() {
             <CardDescription>Update your personal information</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSavePersonalInfo} className="space-y-4">
+            <form aria-label="Informations personnelles" onSubmit={handleSavePersonalInfo} className="space-y-4">
               <FormField label={t('auth.name')} error={errors.name} required>
                 <Input
                   value={name}
@@ -185,7 +196,8 @@ export function Profile() {
                 <Input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  readOnly
+                  aria-readonly="true"
                   error={!!errors.email}
                 />
               </FormField>
@@ -306,16 +318,6 @@ export function Profile() {
               </label>
 
               <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm text-gray-700">Batch status updates</span>
-                <input
-                  type="checkbox"
-                  checked={batchNotifications}
-                  onChange={(e) => setBatchNotifications(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer">
                 <span className="text-sm text-gray-700">Approval notifications</span>
                 <input
                   type="checkbox"
@@ -337,12 +339,14 @@ export function Profile() {
             <CardDescription>Recent account activity</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table
+            {activityState === 'loading' ? <p role="status">Chargement de l’historique…</p>
+              : activityState === 'error' ? <p role="alert">L’historique est indisponible. Réessayez ultérieurement.</p>
+              : <Table
               data={activityLogs}
               columns={activityColumns}
               pagination={true}
               pageSize={5}
-            />
+            />}
           </CardContent>
         </Card>
       </div>

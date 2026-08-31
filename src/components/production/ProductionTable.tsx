@@ -13,8 +13,8 @@ interface MiningCompany {
 interface ProductionTableProps {
   productions: DailyProduction[];
   loading: boolean;
-  onEdit: (production: DailyProduction) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (production: DailyProduction) => void;
+  onDelete?: (id: string) => void;
   showMiningCompany?: boolean;
   miningCompanies?: MiningCompany[];
 }
@@ -162,20 +162,24 @@ export function ProductionTable({
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => onEdit(production)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Modifier"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(production.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {onEdit && (
+                    <button
+                      onClick={() => onEdit(production)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Modifier"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => onDelete(production.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

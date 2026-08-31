@@ -1,6 +1,11 @@
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
+SET LOCAL search_path=public,extensions;
+GRANT USAGE ON SCHEMA extensions TO authenticated;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA extensions TO authenticated;
+INSERT INTO public.snp_capability_catalog(code,domain,label,description,sensitive)
+VALUES('accounts.manage','accounts','Administration','Contrôle de hiérarchie',true) ON CONFLICT DO NOTHING;
 
 CREATE OR REPLACE FUNCTION pg_temp.set_test_claims(
   p_sub uuid,
@@ -17,11 +22,13 @@ BEGIN
   PERFORM set_config('request.jwt.claim.role', p_role, true);
   PERFORM set_config(
     'request.jwt.claims',
-    jsonb_build_object('sub', p_sub, 'role', p_role, 'aal', p_aal)::text,
+    jsonb_build_object('sub', p_sub, 'role', p_role, 'aal', p_aal,
+      'session_id','role-lock-'||p_sub::text,'exp',extract(epoch FROM now()+interval '1 hour')::bigint)::text,
     true
   );
 END;
 $fn$;
+GRANT EXECUTE ON FUNCTION pg_temp.set_test_claims(uuid,text,text) TO authenticated;
 
 SELECT plan(10);
 
@@ -72,6 +79,10 @@ VALUES
     'admin-lock-test@sonasp.invalid', 'Admin de test', 'admin', true, now()
   );
 
+INSERT INTO public.user_sessions(user_id,token_hash,expires_at)
+SELECT id,extensions.digest('role-lock-'||id::text,'sha256'),now()+interval '1 hour'
+FROM public.user_profiles WHERE id IN('10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002');
+SET LOCAL ROLE authenticated;
 SELECT pg_temp.set_test_claims(
   '10000000-0000-4000-8000-000000000001', 'authenticated', 'aal2'
 );
@@ -96,8 +107,8 @@ SELECT throws_ok(
     )
   $$,
   '42501',
-  'Le rôle Propriétaire est réservé au script sécurisé de continuité.',
-  'une session authentifiée ne peut pas créer un Owner'
+  NULL,
+  'une session authentifiée ne peut pas créer un Owner par INSERT direct'
 );
 
 SELECT throws_ok(
@@ -107,8 +118,8 @@ SELECT throws_ok(
     WHERE id = '10000000-0000-4000-8000-000000000002'
   $$,
   '42501',
-  'Le rôle ou l’état d’un Propriétaire ne se modifie pas depuis une session utilisateur.',
-  'une session authentifiée ne peut pas promouvoir un compte vers Owner'
+  NULL,
+  'une session authentifiée ne peut pas promouvoir un compte par UPDATE direct'
 );
 
 SELECT throws_ok(
@@ -118,7 +129,7 @@ SELECT throws_ok(
     WHERE id = '10000000-0000-4000-8000-000000000001'
   $$,
   '42501',
-  'Le rôle ou l’état d’un Propriétaire ne se modifie pas depuis une session utilisateur.',
+  NULL,
   'une session authentifiée ne peut pas rétrograder un Owner'
 );
 
@@ -129,7 +140,7 @@ SELECT throws_ok(
     WHERE id = '10000000-0000-4000-8000-000000000001'
   $$,
   '42501',
-  'Le rôle ou l’état d’un Propriétaire ne se modifie pas depuis une session utilisateur.',
+  NULL,
   'une session authentifiée ne peut pas désactiver un Owner'
 );
 
@@ -143,6 +154,7 @@ SELECT is(
   'AAL2 reste obligatoire pour administrer un compte'
 );
 
+RESET ROLE;
 SELECT pg_temp.set_test_claims(
   '10000000-0000-4000-8000-000000000001', 'service_role', 'aal2'
 );

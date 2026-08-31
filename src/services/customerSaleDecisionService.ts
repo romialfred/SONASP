@@ -1,6 +1,11 @@
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
 
+const repondreVenteClient = supabase.rpc.bind(supabase) as unknown as (
+  fonction: 'snp_repondre_vente_client',
+  args: { p_vente_id: string; p_decision: 'approve' | 'reject'; p_motif: string | null },
+) => PromiseLike<{ data: unknown; error: unknown }>;
+
 export interface CustomerSaleDecisionView {
   id: string;
   sale_number: string;
@@ -43,7 +48,7 @@ async function decideCustomerSale(
   reason?: string
 ): Promise<DecisionResult> {
   try {
-    const { data, error } = await supabase.rpc('snp_repondre_vente_client', {
+    const { data, error } = await repondreVenteClient('snp_repondre_vente_client', {
       p_vente_id: saleId,
       p_decision: decision,
       p_motif: reason?.trim() || null,

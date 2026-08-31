@@ -1,4 +1,7 @@
 import { supabase } from '@/lib/supabase';
+import type { Tables } from '@/types/database';
+import { internationalPaymentBalance } from './internationalPaymentBalance';
+import { readAllSalesPages } from './internationalSalesListService';
 import { createPrivateSignedUrl, PRIVATE_STORAGE_BUCKETS } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import { getLatestReferentialFxRate, getReferentialFxRates } from '@/services/fxRateReferential';
@@ -72,9 +75,12 @@ export interface SaleAwaitingPayment {
   sale_number: string;
   customer_id: string;
   customer_name: string;
+  customer_country?: string | null;
+  shipment_date?: string | null;
+  shipment_context_unavailable?: boolean;
   quantity_oz: number;
-  sale_date: string;
-  mechanism_type?: string;
+  sale_date: string | null;
+  mechanism_type?: string | null;
   gross_proceeds: number;
   net_proceeds: number;
   final_proceeds: number;
@@ -84,6 +90,9 @@ export interface SaleAwaitingPayment {
   status: string;
   payment_id: string | null;
   payment_version: number | null;
+  confirmed_amount?: number | null;
+  processing_amount?: number | null;
+  remaining_amount?: number | null;
 }
 
 export interface CustomerBank {
@@ -92,8 +101,9 @@ export interface CustomerBank {
   country: string;
   currency: string;
   account_number: string | null;
+  iban?: string | null;
   swift_code?: string | null;
-  is_primary: boolean;
+  is_primary: boolean | null;
 }
 
 export interface SellerBank {
@@ -104,6 +114,8 @@ export interface SellerBank {
   bank_name: string;
   bank_country: string;
   account_currency: string;
+  account_number?: string | null;
+  iban?: string | null;
   swift_code?: string | null;
   is_primary: boolean | null;
 }
@@ -116,17 +128,17 @@ export interface Payment {
   fx_rate: number | null;
   expected_date: string;
   actual_date?: string | null;
-  bank_name: string;
-  account_number?: string;
-  reference_number: string;
-  proof_url?: string;
-  status: string;
+  bank_name: string | null;
+  account_number?: string | null;
+  reference_number: string | null;
+  proof_url?: string | null;
+  status: string | null;
   version?: number;
-  notes?: string;
-  created_by?: string;
-  created_at: string;
-  approved_by?: string;
-  approved_at?: string;
+  notes?: string | null;
+  created_by?: string | null;
+  created_at: string | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
 }
 
 export interface PrivatePaymentProof {
@@ -294,7 +306,11 @@ export async function decideInternationalPayment(
     p_idempotency_key: input.idempotencyKey,
   },
   input.decision === 'approve' ? ['approved'] : ['rejected'],
-  input.decision === 'approve' ? ['payment_received'] : ['waiting_for_payment']);
+  // Une avance partielle ou un autre paiement encore vivant maintient la vente
+  // dans l'état virtuel. Le RPC reste l'autorité sur ce calcul agrégé.
+  input.decision === 'approve'
+    ? ['payment_received', 'virtual_payment']
+    : ['waiting_for_payment', 'virtual_payment']);
 }
 
 export async function cancelInternationalPayment(
@@ -306,7 +322,7 @@ export async function cancelInternationalPayment(
     p_expected_version: input.expectedVersion,
     p_reason: input.reason.trim(),
     p_idempotency_key: input.idempotencyKey,
-  }, ['cancelled'], ['waiting_for_payment']);
+  }, ['cancelled'], ['waiting_for_payment', 'virtual_payment']);
 }
 
 export interface FXRate {
@@ -532,13 +548,13 @@ export async function compareFXRates(
   }
 }
 
-export async function getSalesAwaitingPayment(): Promise<{
+export async function getSalesAwaitingPayment(saleId?: string): Promise<{
   success: boolean;
   data?: SaleAwaitingPayment[];
   error?: string;
 }> {
   try {
-    const { data: sales, error } = await supabase
+    let query = supabase
       .from('sales')
       .select(`
         id,
@@ -554,33 +570,65 @@ export async function getSalesAwaitingPayment(): Promise<{
         seller_type,
         seller_id,
         status,
-        customers(id, name),
-        payments(id, status, version, is_virtual, created_at)
+        shipping_preparation_id,
+        customers(id, name, country)
       `)
-      .eq('status', 'waiting_for_payment')
+      .in('status', ['waiting_for_payment', 'virtual_payment'])
       .eq('seller_type', 'sonasp')
-      .order('sale_date', { ascending: false });
-
-    if (error) {
-      return { success: false, error: error.message };
+      .order('sale_date', { ascending: false }).order('id');
+    if (saleId) query = query.eq('id', saleId);
+    const sales = await readAllSalesPages((from, to) => query.range(from, to));
+    // Read only shipments linked to the already-authorized sales, under the
+    // same RLS session. A sale date is never presented as a shipment date.
+    const shipmentIds = [...new Set(sales.flatMap((sale) => sale.shipping_preparation_id ? [sale.shipping_preparation_id] : []))];
+    const shipmentDates = new Map<string, string | null>();
+    let shipmentContextUnavailable = false;
+    for (let offset = 0; offset < shipmentIds.length; offset += 100) {
+      try {
+        const rows = await readAllSalesPages((from, to) => supabase.from('shipping_preparations')
+          .select('id,shipped_at').in('id', shipmentIds.slice(offset, offset + 100)).order('id').range(from, to));
+        for (const row of rows) shipmentDates.set(row.id, row.shipped_at);
+      } catch {
+        // Optional shipping metadata must not disable an authorized receipt.
+        // The financial ledger below remains mandatory and fails closed.
+        shipmentContextUnavailable = true;
+      }
     }
-
-    const formattedSales: SaleAwaitingPayment[] = (sales || []).map((sale: any) => {
-      const pendingPayments = (Array.isArray(sale.payments) ? sale.payments : [])
-        .filter((payment: any) => payment.status === 'pending')
-        .sort((left: any, right: any) => {
+    // Paginate the ledger independently: an embedded relation can be truncated
+    // by PostgREST and would overstate the amount still available to receive.
+    const ledger = new Map<string, Pick<Tables<'payments'>, 'id' | 'status' | 'version' | 'is_virtual' | 'created_at' | 'amount' | 'currency'>[]>();
+    for (let offset = 0; offset < sales.length; offset += 100) {
+      const ids = sales.slice(offset, offset + 100).map((sale) => sale.id);
+      const rows = await readAllSalesPages((from, to) => supabase.from('payments')
+        .select('id,sale_id,status,version,is_virtual,created_at,amount,currency')
+        .in('sale_id', ids).order('id').range(from, to));
+      for (const payment of rows) {
+        const existing = ledger.get(payment.sale_id) || [];
+        existing.push(payment);
+        ledger.set(payment.sale_id, existing);
+      }
+    }
+    const formattedSales: SaleAwaitingPayment[] = sales.map((sale) => {
+      const payments = ledger.get(sale.id) || [];
+      const pendingPayments = payments
+        .filter((payment) => payment.status === 'pending')
+        .sort((left, right) => {
           if (Boolean(left.is_virtual) !== Boolean(right.is_virtual)) {
             return left.is_virtual ? -1 : 1;
           }
           return String(right.created_at || '').localeCompare(String(left.created_at || ''));
         });
       const pendingPayment = pendingPayments[0] || null;
+      const balance = internationalPaymentBalance(sale.final_proceeds, sale.currency, payments);
 
       return {
         id: sale.id,
         sale_number: sale.sale_number,
         customer_id: sale.customer_id,
-        customer_name: sale.customers?.name || 'Unknown',
+        customer_name: sale.customers?.name || 'Client non renseigné',
+        customer_country: sale.customers?.country ?? null,
+        shipment_date: shipmentDates.get(sale.shipping_preparation_id || '') ?? null,
+        shipment_context_unavailable: shipmentContextUnavailable && Boolean(sale.shipping_preparation_id),
         quantity_oz: sale.quantity_oz,
         sale_date: sale.sale_date,
         mechanism_type: sale.mechanism_type,
@@ -588,17 +636,20 @@ export async function getSalesAwaitingPayment(): Promise<{
         net_proceeds: sale.net_proceeds,
         final_proceeds: sale.final_proceeds,
         currency: sale.currency || 'USD',
-        seller_type: sale.seller_type,
-        seller_id: sale.seller_id,
+        seller_type: sale.seller_type || '',
+        seller_id: sale.seller_id || '',
         status: sale.status,
         payment_id: pendingPayment?.id || null,
         payment_version: Number.isInteger(pendingPayment?.version)
           ? pendingPayment.version
           : null,
+        confirmed_amount: balance.confirmed,
+        processing_amount: balance.processing,
+        remaining_amount: balance.available,
       };
     });
 
-    return { success: true, data: formattedSales };
+    return { success: true, data: formattedSales.filter((sale) => sale.remaining_amount !== null && (sale.remaining_amount ?? 0) > 0) };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

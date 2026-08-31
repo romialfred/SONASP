@@ -1,15 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
   ACCOUNT_MANAGEMENT_CAPABILITY,
+  accountOrganizationType,
   canManageAccountTarget,
+  canCreateAccountRole,
   INTERACTIVE_ACCOUNT_ROLES,
   isInteractiveAccountRole,
 } from './account-role-policy';
 
 describe('politique des rôles attribuables depuis le portail', () => {
-  it('exclut toujours le rôle Propriétaire', () => {
-    expect(INTERACTIVE_ACCOUNT_ROLES).not.toContain('owner');
-    expect(isInteractiveAccountRole('owner')).toBe(false);
+  it.each([
+    ['owner', 'sonasp'], ['admin', 'sonasp'], ['management', 'sonasp'],
+    ['dgmg', 'dgmg'], ['dgi', 'dgi'], ['mine', 'mine'], ['comptoir', 'comptoir'],
+    ['collector', 'comptoir'], ['customer', 'customer'],
+  ])('valide le rattachement %s au type %s', (role, organizationType) => {
+    expect(accountOrganizationType(role)).toBe(organizationType);
+  });
+  it('inclut Propriétaire dans le catalogue, sans lui donner un droit d’attribution implicite', () => {
+    expect(INTERACTIVE_ACCOUNT_ROLES).toContain('owner');
+    expect(isInteractiveAccountRole('owner')).toBe(true);
   });
 
   it.each(INTERACTIVE_ACCOUNT_ROLES)('conserve le rôle de portail %s', (role) => {
@@ -22,6 +31,13 @@ describe('politique des rôles attribuables depuis le portail', () => {
 });
 
 describe('hiérarchie des comptes administrables', () => {
+  it('vérifie chaque attribution avant création Auth', () => {
+    expect(canCreateAccountRole('owner', 'owner')).toBe(true);
+    expect(canCreateAccountRole('admin', 'owner')).toBe(false);
+    expect(canCreateAccountRole('admin', 'admin')).toBe(false);
+    expect(canCreateAccountRole('management', 'customer')).toBe(false);
+    expect(canCreateAccountRole('owner', 'invented')).toBe(false);
+  });
   const policy = (actorRole: string, targetRole: string, targetId = 'target') =>
     canManageAccountTarget({ actorId: 'actor', actorRole, targetId, targetRole });
 
@@ -29,9 +45,10 @@ describe('hiérarchie des comptes administrables', () => {
     expect(ACCOUNT_MANAGEMENT_CAPABILITY).toBe('accounts.manage');
   });
 
-  it('interdit sa propre cible et tout compte Propriétaire', () => {
+  it('interdit sa propre cible et réserve un autre Owner à un Owner', () => {
     expect(policy('owner', 'admin', 'actor')).toBe(false);
-    expect(policy('owner', 'owner')).toBe(false);
+    expect(policy('owner', 'owner')).toBe(true);
+    expect(policy('owner', 'owner', 'actor')).toBe(false);
     expect(policy('admin', 'owner')).toBe(false);
   });
 

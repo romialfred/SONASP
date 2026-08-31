@@ -1,0 +1,19 @@
+{
+  "type": "database",
+  "source": "SONASP Supabase yyverzuhkdonjjuficor, catalogue Stock/Reserve historique",
+  "target": "Meme projet, migrations 20260829203000 et 20260830070000 uniquement",
+  "pattern": "schema_change",
+  "constraints": {
+    "max_downtime_minutes": 0,
+    "dependencies": ["Sidebar", "Catalogue des habilitations", "RPC IAM", "Journal d'audit"],
+    "special_requirements": [
+      "Autorisation explicite recueillie le 30 aout 2026",
+      "Sauvegarde immediate des catalogues, permissions, fonctions et contrainte avant application",
+      "Repetition transactionnelle avec ROLLBACK sur la cible avant application",
+      "35 assertions SQL et empreintes des six tables metier avant COMMIT",
+      "Aucun repair historique, aucune autre migration, aucun deploiement Vercel",
+      "Rollback automatique de la transaction au moindre echec; apres commit, correction prospective approuvee"
+    ],
+    "compliance_requirements": ["Session active", "MFA sensible", "RLS", "Audit immuable", "Separation des taches"]
+  }
+}

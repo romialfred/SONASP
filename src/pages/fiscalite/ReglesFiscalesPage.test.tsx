@@ -88,13 +88,14 @@ describe('ReglesFiscalesPage', () => {
     mocks.nomsActeurs.mockResolvedValue({ chef: 'TIEGNAN Romuald' });
   });
 
-  it('affiche les règles en tuiles par défaut, sans tableau', async () => {
+  it('affiche les règles en tableau par défaut, sans les anciennes tuiles KPI', async () => {
     mocks.lister.mockResolvedValue([regle(), FNDL]);
 
     const { container } = render();
 
-    await waitFor(() => expect(container.querySelectorAll('.rf-tuile')).toHaveLength(2));
-    expect(container.querySelector('table')).toBeNull();
+    await waitFor(() => expect(container.querySelectorAll('.rf-table tbody tr')).toHaveLength(2));
+    expect(container.querySelector('.rf-tuile')).toBeNull();
+    expect(screen.queryByText('Dernière mise à jour')).toBeNull();
     expect(screen.getByText('1,50 %')).toBeInTheDocument();
   });
 
@@ -113,53 +114,82 @@ describe('ReglesFiscalesPage', () => {
     await waitFor(() => expect(screen.getByText(/Aucune règle n’est enregistrée/)).toBeInTheDocument());
   });
 
-  it('porte la dernière mise à jour et son auteur', async () => {
+  it('calcule les compteurs d’onglets depuis les données chargées', async () => {
     mocks.lister.mockResolvedValue([regle(), FNDL]);
     render();
 
-    await waitFor(() => expect(screen.getByText('Par TIEGNAN Romuald')).toBeInTheDocument());
+    const enVigueur = await screen.findByRole('tab', { name: /En vigueur/ });
+    expect(within(enVigueur).getByText('2')).toBeInTheDocument();
+    expect(within(screen.getByRole('tab', { name: /En projet/ })).getByText('0')).toBeInTheDocument();
   });
 
-  it('filtre les tuiles par la recherche', async () => {
+  it('filtre le tableau par la recherche', async () => {
     mocks.lister.mockResolvedValue([regle(), FNDL]);
     const { container } = render();
 
-    await waitFor(() => expect(container.querySelectorAll('.rf-tuile')).toHaveLength(2));
+    await waitFor(() => expect(container.querySelectorAll('.rf-table tbody tr')).toHaveLength(2));
 
     fireEvent.change(screen.getByLabelText('Rechercher une règle fiscale'), {
       target: { value: 'comptoir' },
     });
 
-    expect(container.querySelectorAll('.rf-tuile')).toHaveLength(1);
+    expect(container.querySelectorAll('.rf-table tbody tr')).toHaveLength(1);
     expect(screen.getByText('TVA des comptoirs d’achat')).toBeInTheDocument();
   });
 
-  it('bascule en tableau à la demande', async () => {
+  it('applique les filtres métier depuis le volet existant', async () => {
+    mocks.lister.mockResolvedValue([regle(), FNDL]);
+    const { container } = render();
+    await waitFor(() => expect(container.querySelectorAll('.rf-table tbody tr')).toHaveLength(2));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filtres' }));
+    const volet = screen.getByRole('dialog', { name: 'Filtres du référentiel' });
+    fireEvent.change(within(volet).getByLabelText('Filtrer par taxe'), { target: { value: 'fndl' } });
+    fireEvent.click(within(volet).getByRole('button', { name: 'Appliquer' }));
+
+    expect(container.querySelectorAll('.rf-table tbody tr')).toHaveLength(1);
+    expect(screen.getByText("FNDL sur le chiffre d’affaires")).toBeInTheDocument();
+  });
+
+  it('conserve le workflow de création existant', async () => {
+    mocks.lister.mockResolvedValue([regle()]);
+    render();
+    fireEvent.click(await screen.findByRole('button', { name: /Nouvelle règle/ }));
+
+    expect(screen.getByText('Identification')).toBeInTheDocument();
+    expect(screen.getByLabelText('Taxe concernée')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).toBeNull();
+  });
+
+  it('bascule en tuiles à la demande avec un sélecteur uniquement iconographique', async () => {
     mocks.lister.mockResolvedValue([regle()]);
     const { container } = render();
 
-    await waitFor(() => expect(container.querySelector('.rf-tuile')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('table')).not.toBeNull());
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Tableau' }));
+    expect(screen.getByRole('radio', { name: 'Vue tableau' })).toBeChecked();
+    expect(screen.getByTitle('Vue tableau')).toBeInTheDocument();
+    expect(screen.getByTitle('Vue en tuiles')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Vue en tuiles' }));
 
-    expect(container.querySelector('table')).not.toBeNull();
-    expect(container.querySelector('.rf-tuile')).toBeNull();
+    expect(container.querySelector('table')).toBeNull();
+    expect(container.querySelector('.rf-tuile')).not.toBeNull();
   });
 
   it('sépare les onglets et n’offre « Abroger » que sur une règle en vigueur', async () => {
     mocks.lister.mockResolvedValue([regle(), regle({ id: 'r3', statut: 'projet', approuve_par: null, approuve_le: null })]);
     const { container } = render();
 
-    await waitFor(() => expect(container.querySelectorAll('.rf-tuile')).toHaveLength(1));
+    await waitFor(() => expect(container.querySelectorAll('.rf-table tbody tr')).toHaveLength(1));
 
-    const tuile = container.querySelector('.rf-tuile') as HTMLElement;
-    fireEvent.click(within(tuile).getByRole('button', { name: 'Actions sur la règle' }));
+    const ligne = container.querySelector('.rf-table tbody tr') as HTMLElement;
+    fireEvent.click(within(ligne).getByRole('button', { name: 'Actions sur la règle' }));
     expect(screen.getByRole('menuitem', { name: /Abroger/ })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /Approuver/ })).toBeNull();
 
     fireEvent.click(screen.getByRole('tab', { name: /En projet/ }));
 
-    const enProjet = container.querySelector('.rf-tuile') as HTMLElement;
+    const enProjet = container.querySelector('.rf-table tbody tr') as HTMLElement;
     fireEvent.click(within(enProjet).getByRole('button', { name: 'Actions sur la règle' }));
     expect(screen.getByRole('menuitem', { name: /Approuver/ })).toBeInTheDocument();
   });
@@ -171,7 +201,9 @@ describe('ReglesFiscalesPage', () => {
 
     // La règle est en projet : l'onglet par défaut ne la montre pas.
     fireEvent.click(await screen.findByRole('tab', { name: /En projet/ }));
-    fireEvent.click(await screen.findByRole('button', { name: /Voir/ }));
+    const ligne = (await screen.findByText('TVA des comptoirs d’achat')).closest('tr') as HTMLElement;
+    fireEvent.click(within(ligne).getByRole('button', { name: 'Actions sur la règle' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Voir le détail/ }));
 
     const volet = screen.getByRole('dialog', { name: 'Détail de la règle' });
     expect(within(volet).getByText('Comptoir d’achat')).toBeInTheDocument();

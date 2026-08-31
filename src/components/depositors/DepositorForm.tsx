@@ -64,8 +64,8 @@ export function DepositorForm({
         telephone: depositor.telephone || '',
         cellphone: depositor.cellphone || '',
         email: depositor.email,
-        is_primary: depositor.is_primary,
-        is_backup: depositor.is_backup,
+        is_primary: depositor.is_primary ?? false,
+        is_backup: depositor.is_backup ?? false,
         group_email: depositor.group_email || '',
         notes: depositor.notes || '',
       });

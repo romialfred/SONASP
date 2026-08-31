@@ -11,6 +11,14 @@ export interface RefiningData {
   notes?: string;
 }
 
+export function calculateFinalFine(
+  postMeltingWeight: number,
+  finenessPercentage: number,
+  metalRetainedPercentage: number,
+): number {
+  return postMeltingWeight * (finenessPercentage / 100) * (metalRetainedPercentage / 100);
+}
+
 /**
  * Validate refining loss against configurable threshold
  */
@@ -53,17 +61,15 @@ export async function createRefiningRecord(data: RefiningData) {
     const { data: record, error } = await supabase
       .from('refining_records')
       .insert({
-        batch_id: data.batch_id,
         pre_melting_weight_grams: data.pre_melting_weight,
         post_melting_weight_grams: data.post_melting_weight,
         fineness_percentage: data.fineness_percentage,
         metal_retained_percentage: data.metal_retained_percentage,
         final_fine_grams: finalFine,
-        final_fine_oz: finalFine / 31.1034768,
+        final_fine_ounces: finalFine / 31.1034768,
         processed_by: data.processed_by,
         processed_at: new Date().toISOString(),
-        notes: data.notes,
-        status: 'pending_approval',
+        processing_notes: data.notes,
       })
       .select()
       .single();
@@ -82,7 +88,6 @@ export async function approveRefining(recordId: string, approvedBy: string) {
     const { data, error } = await supabase
       .from('refining_records')
       .update({
-        status: 'approved',
         approved_by: approvedBy,
         approved_at: new Date().toISOString(),
       })

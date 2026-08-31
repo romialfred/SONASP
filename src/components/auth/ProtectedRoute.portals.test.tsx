@@ -50,6 +50,22 @@ function renderRoute(path: string) {
         <Route path="/production/achats-mines" element={<ProtectedRoute><div>Achats SONASP</div></ProtectedRoute>} />
         <Route path="/portail-mine" element={<div>Portail société</div>} />
         <Route path="/portail-direction" element={<div>Portail Direction</div>} />
+        <Route
+          path="/portail-dgmg"
+          element={<ProtectedRoute requiredAnyCapabilities={[CAPABILITIES.DGMG_SUPERVISE]}><div>Portail DGMG</div></ProtectedRoute>}
+        />
+        <Route
+          path="/portail-dgmg/reserve-validations"
+          element={(
+            <ProtectedRoute requiredSensitiveCapability={CAPABILITIES.RESERVE_ALLOCATIONS_VALIDATE_LEVEL_1}>
+              <div>File Réserve DGMG</div>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/portail-dgi"
+          element={<ProtectedRoute requiredAnyCapabilities={[CAPABILITIES.DGI_FISCAL_CONTROL]}><div>Portail DGI</div></ProtectedRoute>}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -176,5 +192,66 @@ describe('ProtectedRoute — frontières de portail', () => {
     renderRoute('/dashboard');
     expect(screen.getByText('Portail Direction')).toBeInTheDocument();
     expect(screen.queryByText('Interne SONASP')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['dgi', 'dgi-organization', CAPABILITIES.DGI_FISCAL_CONTROL, '/portail-dgi', 'Portail DGI'],
+    ['dgmg', 'dgmg-organization', CAPABILITIES.DGMG_SUPERVISE, '/portail-dgmg', 'Portail DGMG'],
+  ] as const)(
+    'ouvre le portail %s seulement avec son organisation et sa responsabilité autoritatives',
+    (role, organizationId, capability, path, expectedTitle) => {
+      mockedUseAuth.mockReturnValue(auth({
+        ...baseUser,
+        role,
+        organization_id: organizationId,
+        organization_type: role,
+        capabilities: [capability],
+      }));
+
+      renderRoute(path);
+
+      expect(screen.getByText(expectedTitle)).toBeInTheDocument();
+    },
+  );
+
+  it('renvoie un compte DGI hors du portail DGMG vers son accueil fiscal', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      role: 'dgi',
+      organization_id: 'dgi-organization',
+      organization_type: 'dgi',
+      capabilities: [CAPABILITIES.DGI_FISCAL_CONTROL],
+    }));
+
+    renderRoute('/portail-dgmg');
+
+    expect(screen.getByText('Portail DGI')).toBeInTheDocument();
+    expect(screen.queryByText('Portail DGMG')).not.toBeInTheDocument();
+  });
+
+  it('garde la file Réserve DGMG par module et capability sensibles', () => {
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      role: 'dgmg',
+      organization_id: 'dgmg-organization',
+      organization_type: 'dgmg',
+      capabilities: [CAPABILITIES.DGMG_SUPERVISE, CAPABILITIES.RESERVE_ALLOCATIONS_VALIDATE_LEVEL_1],
+      module_codes: ['dashboard', 'national_reserve'],
+    }));
+    const allowed = renderRoute('/portail-dgmg/reserve-validations');
+    expect(screen.getByText('File Réserve DGMG')).toBeInTheDocument();
+    allowed.unmount();
+
+    mockedUseAuth.mockReturnValue(auth({
+      ...baseUser,
+      role: 'dgmg',
+      organization_id: 'dgmg-organization',
+      organization_type: 'dgmg',
+      capabilities: [CAPABILITIES.DGMG_SUPERVISE],
+      module_codes: ['dashboard', 'national_reserve'],
+    }));
+    renderRoute('/portail-dgmg/reserve-validations');
+    expect(screen.getByText('Portail DGMG')).toBeInTheDocument();
+    expect(screen.queryByText('File Réserve DGMG')).not.toBeInTheDocument();
   });
 });

@@ -21,6 +21,14 @@ export const CAPABILITIES = {
   COMPTOIR_TAX_EXECUTE: 'comptoir.tax.execute',
   COLLECTORS_MANAGE: 'collectors.manage',
   COLLECTOR_OPERATE: 'collector.operate',
+  DGMG_SUPERVISE: 'dgmg.supervise',
+  DGMG_PRODUCTION_VALIDATE: 'dgmg.production.validate',
+  RESERVE_ALLOCATIONS_VALIDATE_LEVEL_1: 'reserve.allocations.validate_level_1',
+  DGI_FISCAL_CONTROL: 'dgi.fiscal.control',
+  DGI_FISCAL_RECONCILE: 'dgi.fiscal.reconcile',
+  MINE_PRODUCTION_MANAGE: 'mine.production.manage',
+  REFINING_SUPERVISE: 'refining.supervise',
+  RECONCILIATION_MANAGE: 'reconciliation.manage',
   ARTISAN_CARDS_MANAGE: 'artisan.cards.manage',
   ARTISAN_PAYMENT_METHODS_MANAGE: 'artisan.payment-methods.manage',
   MINE_OPERATE: 'mine.operate',
@@ -71,6 +79,10 @@ export const OPERATIONAL_CAPABILITY_OPTIONS = [
     label: 'Comptoir d’achat',
     description: 'Gère achats, factures DGI, paiements, ventes et stock de son comptoir.',
   },
+  { code: CAPABILITIES.COMPTOIR_INVOICES_ISSUE, label: 'Comptoir — facturation', description: 'Émet les factures des ventes du comptoir.' },
+  { code: CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE, label: 'Comptoir — exécution des paiements', description: 'Exécute les règlements et joint leurs justificatifs.' },
+  { code: CAPABILITIES.COMPTOIR_PAYMENTS_RECONCILE, label: 'Comptoir — contrôle des paiements', description: 'Contrôle les paiements préparés par un autre acteur.' },
+  { code: CAPABILITIES.COMPTOIR_TAX_EXECUTE, label: 'Comptoir — reversements fiscaux', description: 'Prépare et transmet les reversements fiscaux.' },
   {
     code: CAPABILITIES.COLLECTORS_MANAGE,
     label: 'Gestion des collecteurs',
@@ -80,6 +92,41 @@ export const OPERATIONAL_CAPABILITY_OPTIONS = [
     code: CAPABILITIES.COLLECTOR_OPERATE,
     label: 'Agent Collecteur',
     description: 'Enregistre les opérations des seuls orpailleurs qui lui sont rattachés.',
+  },
+  {
+    code: CAPABILITIES.DGMG_SUPERVISE,
+    label: 'Supervision DGMG',
+    description: 'Contrôle les sites, opérateurs et déclarations du secteur minier.',
+  },
+  {
+    code: CAPABILITIES.DGMG_PRODUCTION_VALIDATE,
+    label: 'Validation production',
+    description: 'Valide les déclarations de production relevant de la DGMG.',
+  },
+  {
+    code: CAPABILITIES.DGI_FISCAL_CONTROL,
+    label: 'Contrôle fiscal',
+    description: 'Contrôle les assiettes, taxes, redevances et royalties.',
+  },
+  {
+    code: CAPABILITIES.DGI_FISCAL_RECONCILE,
+    label: 'Rapprochement fiscal',
+    description: 'Rapproche les montants déclarés, appelés et payés.',
+  },
+  {
+    code: CAPABILITIES.MINE_PRODUCTION_MANAGE,
+    label: 'Gestion de la production',
+    description: 'Déclare la production et prépare les opérations de la société.',
+  },
+  {
+    code: CAPABILITIES.REFINING_SUPERVISE,
+    label: 'Raffinage',
+    description: 'Suit les lots, résultats, écarts et réceptions autorisés.',
+  },
+  {
+    code: CAPABILITIES.RECONCILIATION_MANAGE,
+    label: 'Conciliation',
+    description: 'Prépare et analyse les dossiers de conciliation.',
   },
 ] as const;
 
@@ -95,25 +142,32 @@ export function emptyOperationalCapabilities(): OperationalCapabilityMap {
 
 export function operationalCapabilitiesForRole(role: UserRole | ''): OperationalCapabilityMap {
   const result = emptyOperationalCapabilities();
-  if (role === 'management') {
-    result[CAPABILITIES.SONASP_PREPARE] = true;
-    result[CAPABILITIES.SONASP_APPROVE] = true;
-    result[CAPABILITIES.FINANCE_EXECUTE] = true;
-    result[CAPABILITIES.FINANCE_RECONCILE] = true;
-    result[CAPABILITIES.COMPTOIR_MANAGE] = true;
-    result[CAPABILITIES.COLLECTORS_MANAGE] = true;
-  }
+  // La Direction reçoit ses responsabilités explicitement. Aucun cumul
+  // préparer/approuver ou exécuter/rapprocher n'est déduit du rôle.
+  if (role === 'dgmg') result[CAPABILITIES.DGMG_SUPERVISE] = true;
+  if (role === 'dgi') result[CAPABILITIES.DGI_FISCAL_CONTROL] = true;
+  if (role === 'mine') result[CAPABILITIES.MINE_PRODUCTION_MANAGE] = true;
+  if (role === 'comptoir') result[CAPABILITIES.COMPTOIR_MANAGE] = true;
+  if (role === 'collector') result[CAPABILITIES.COLLECTOR_OPERATE] = true;
   return result;
 }
 
 /**
  * Compatibilité lorsque la migration de capacités n'est pas encore disponible
- * dans un environnement de reprise. Le serveur reste toujours l'autorité : dès
- * qu'il fournit `user.capabilities`, aucune permission locale supplémentaire
- * n'est inventée.
+ * dans un environnement de reprise. Hormis le périmètre global du Owner, le
+ * serveur reste toujours l'autorité : dès qu'il fournit `user.capabilities`,
+ * aucune permission locale supplémentaire n'est inventée.
  */
 const ROLE_CAPABILITY_FALLBACK: Record<UserRole, CapabilityCode[]> = {
-  owner: Object.values(CAPABILITIES),
+  owner: [
+    CAPABILITIES.ACCOUNTS_MANAGE,
+    CAPABILITIES.EMAIL_SETTINGS_MANAGE,
+    CAPABILITIES.PLATFORM_SETTINGS_READ,
+    CAPABILITIES.PLATFORM_SETTINGS_MANAGE,
+    CAPABILITIES.REFERENTIALS_MANAGE,
+    CAPABILITIES.SUPPORT_READ,
+    CAPABILITIES.REPORTS_READ,
+  ],
   admin: [
     CAPABILITIES.ACCOUNTS_MANAGE,
     CAPABILITIES.EMAIL_SETTINGS_MANAGE,
@@ -126,21 +180,18 @@ const ROLE_CAPABILITY_FALLBACK: Record<UserRole, CapabilityCode[]> = {
   management: [
     CAPABILITIES.REPORTS_READ,
     CAPABILITIES.SONASP_WORKFLOW_READ,
-    CAPABILITIES.SONASP_PREPARE,
-    CAPABILITIES.SONASP_APPROVE,
-    CAPABILITIES.FINANCE_EXECUTE,
-    CAPABILITIES.FINANCE_RECONCILE,
-    CAPABILITIES.COMPTOIR_MANAGE,
-    CAPABILITIES.COLLECTORS_MANAGE,
     CAPABILITIES.PLATFORM_SETTINGS_READ,
-    CAPABILITIES.PLATFORM_SETTINGS_MANAGE,
   ],
   manager: [
     CAPABILITIES.REPORTS_READ,
     CAPABILITIES.SONASP_WORKFLOW_READ,
     CAPABILITIES.PLATFORM_SETTINGS_READ,
   ],
+  dgmg: [CAPABILITIES.DGMG_SUPERVISE],
+  dgi: [CAPABILITIES.DGI_FISCAL_CONTROL],
   mine: [CAPABILITIES.MINE_OPERATE],
+  comptoir: [CAPABILITIES.COMPTOIR_MANAGE],
+  collector: [CAPABILITIES.COLLECTOR_OPERATE],
   factory: [CAPABILITIES.FACTORY_OPERATE],
   airport: [CAPABILITIES.AIRPORT_OPERATE],
   refinery: [CAPABILITIES.REFINERY_OPERATE],
@@ -152,6 +203,9 @@ export function hasCapability(
   capability: CapabilityCode,
 ): boolean {
   if (!user?.is_active) return false;
+
+  // Le Owner actif est le super-administrateur transversal. Ce raccourci ne
+  // s'applique pas aux opérations sensibles, contrôlées séparément ci-dessous.
   if (user.role === 'owner') return true;
 
   if (Array.isArray(user.capabilities)) {

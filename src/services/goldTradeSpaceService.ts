@@ -379,8 +379,8 @@ export async function getApprovedRefineries(): Promise<{
     id: string;
     refinery_name: string;
     refinery_location: string;
-    average_processing_days: number;
-    max_monthly_capacity_oz: number;
+    average_processing_days: number | null;
+    max_monthly_capacity_oz: number | null;
   }>;
   error?: string;
 }> {

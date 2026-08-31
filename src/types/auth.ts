@@ -1,6 +1,19 @@
 import type { Session } from '@supabase/supabase-js';
 
-export type UserRole = 'owner' | 'factory' | 'airport' | 'refinery' | 'customer' | 'mine' | 'manager' | 'management' | 'admin';
+export type UserRole =
+  | 'owner'
+  | 'admin'
+  | 'management'
+  | 'manager'
+  | 'dgmg'
+  | 'dgi'
+  | 'mine'
+  | 'comptoir'
+  | 'collector'
+  | 'factory'
+  | 'airport'
+  | 'refinery'
+  | 'customer';
 
 export interface UserProfile {
   id: string;
@@ -10,6 +23,15 @@ export interface UserProfile {
   role: UserRole;
   /** Société minière représentée. `null` pour un compte interne SONASP ou un client acheteur. */
   mining_company_id: string | null;
+  /** Organisation principale issue du rattachement RBAC/ABAC autoritatif. */
+  organization_id?: string | null;
+  organization_type?: string | null;
+  /** Responsabilités métier effectives, distinctes des permissions CRUD. */
+  responsibilities?: string[];
+  /** Domaines de modules effectivement ouverts par le resolver de permissions. */
+  module_domains?: string[];
+  /** Codes canoniques des modules actifs effectivement attribués au compte. */
+  module_codes?: string[];
   site_ids: string[];
   is_active: boolean;
   /** Capacités effectives calculées côté serveur pour cette session et son AAL. */

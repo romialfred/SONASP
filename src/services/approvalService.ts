@@ -17,6 +17,11 @@ type ServiceResult<T = undefined> = {
   error?: string;
 };
 
+const deciderApprobation = supabase.rpc.bind(supabase) as unknown as (
+  fonction: 'snp_decider_approbation',
+  args: { p_demande_id: string; p_decision: 'approve' | 'reject'; p_motif: string | null },
+) => PromiseLike<{ data: unknown; error: unknown }>;
+
 /**
  * Point de passage unique pour une décision d'approbation.
  *
@@ -30,7 +35,7 @@ async function decide(
   reason?: string
 ): Promise<ServiceResult<ApprovalDecision>> {
   try {
-    const { data, error } = await supabase.rpc('snp_decider_approbation', {
+    const { data, error } = await deciderApprobation('snp_decider_approbation', {
       p_demande_id: approvalRequestId,
       p_decision: decision,
       p_motif: reason?.trim() || null,

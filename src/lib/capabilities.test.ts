@@ -34,6 +34,12 @@ describe('capacités frontend', () => {
     expect(hasCapability(management, CAPABILITIES.SONASP_PREPARE)).toBe(false);
   });
 
+  it('accorde toutes les capacités fonctionnelles au Owner actif', () => {
+    const owner = profile({ role: 'owner', capabilities: [] });
+    expect(hasCapability(owner, CAPABILITIES.SONASP_PREPARE)).toBe(true);
+    expect(hasCapability(owner, CAPABILITIES.DGMG_SUPERVISE)).toBe(true);
+  });
+
   it('reflète exactement un override serveur ciblé', () => {
     const approver = profile({ role: 'manager', capabilities: [CAPABILITIES.SONASP_APPROVE] });
     expect(hasCapability(approver, CAPABILITIES.SONASP_APPROVE)).toBe(true);

@@ -96,8 +96,7 @@ class PerformanceService {
     const ytdForecast = this.getYearToDateForecast(
       quarterlyForecasts,
       monthlyBudgets,
-      currentMonth,
-      currentQuarter
+      currentMonth
     );
 
     return {
@@ -128,7 +127,7 @@ class PerformanceService {
     if (!currentMonthBudget) return 0;
 
     const daysInWeek = now.getDay() + 1;
-    return currentMonthBudget.daily_budget_oz * daysInWeek;
+    return (currentMonthBudget.daily_budget_oz ?? 0) * daysInWeek;
   }
 
   private getMonthlyBudget(monthlyBudgets: MonthlyBudget[], currentMonth: number): number {
@@ -146,7 +145,7 @@ class PerformanceService {
     quarterlyForecasts: QuarterlyForecast[],
     monthlyBudgets: MonthlyBudget[],
     currentMonth: number,
-    _currentQuarter: number,
+    currentQuarter: number,
     now: Date
   ): number {
     const currentMonthForecast = quarterlyForecasts.find(
@@ -155,7 +154,7 @@ class PerformanceService {
 
     if (currentMonthForecast) {
       const daysInWeek = now.getDay() + 1;
-      return currentMonthForecast.daily_forecast_oz * daysInWeek;
+      return (currentMonthForecast.daily_forecast_oz ?? 0) * daysInWeek;
     }
 
     return this.calculateWeeklyBudget(monthlyBudgets, currentMonth, now);
@@ -181,8 +180,7 @@ class PerformanceService {
   private getYearToDateForecast(
     quarterlyForecasts: QuarterlyForecast[],
     monthlyBudgets: MonthlyBudget[],
-    currentMonth: number,
-    currentQuarter: number
+    currentMonth: number
   ): number {
     let total = 0;
 

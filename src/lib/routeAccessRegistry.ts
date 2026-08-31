@@ -1,4 +1,6 @@
 import { CAPABILITIES, hasAnyCapability, hasCapability, type CapabilityCode } from '@/lib/capabilities';
+import { moduleDomainForPath } from '@/lib/accessControl';
+import { platformModuleCodeForPath } from '@/lib/platformModuleCatalog';
 import type { UserProfile, UserRole } from '@/types/auth';
 
 export type AccountType =
@@ -6,6 +8,8 @@ export type AccountType =
   | 'admin'
   | 'direction'
   | 'sonasp'
+  | 'dgmg'
+  | 'dgi'
   | 'mine'
   | 'comptoir'
   | 'collector'
@@ -27,17 +31,18 @@ export interface PrivateRoutePolicy {
 type PolicyWithoutRoute = Omit<PrivateRoutePolicy, 'route'>;
 
 const ALL_ROLES: readonly UserRole[] = [
-  'owner', 'admin', 'manager', 'management', 'mine', 'factory', 'airport', 'refinery', 'customer',
+  'owner', 'admin', 'manager', 'management', 'dgmg', 'dgi', 'mine', 'comptoir',
+  'collector', 'factory', 'airport', 'refinery', 'customer',
 ];
 const ALL_ACCOUNT_TYPES: readonly Exclude<AccountType, 'unknown'>[] = [
-  'owner', 'admin', 'direction', 'sonasp', 'mine', 'comptoir', 'collector',
+  'owner', 'admin', 'direction', 'sonasp', 'dgmg', 'dgi', 'mine', 'comptoir', 'collector',
   'factory', 'airport', 'refinery', 'customer',
 ];
 export const PARTNER_ACCOUNT_TYPES: readonly Exclude<AccountType, 'unknown'>[] = [
-  'mine', 'comptoir', 'collector', 'factory', 'airport', 'refinery', 'customer',
+  'dgmg', 'dgi', 'mine', 'comptoir', 'collector', 'factory', 'airport', 'refinery', 'customer',
 ];
 const SCOPED_REDIRECT_ACCOUNT_TYPES: readonly Exclude<AccountType, 'unknown'>[] = [
-  'mine', 'comptoir', 'collector',
+  'dgmg', 'dgi', 'mine', 'comptoir', 'collector',
 ];
 
 const SONASP: PolicyWithoutRoute = {
@@ -80,12 +85,28 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   ...policies(['/portail-direction/*'], {
     roles: ['manager'], accountTypes: ['direction'], capabilities: [], readOnly: true, national: false,
   }),
+  ...policies(['/portail-dgmg/reserve-validations'], {
+    roles: ['dgmg'], accountTypes: ['dgmg'],
+    capabilities: [CAPABILITIES.RESERVE_ALLOCATIONS_VALIDATE_LEVEL_1], readOnly: false, national: false,
+  }),
+  ...policies(['/portail-dgmg', '/portail-dgmg/*'], {
+    roles: ['dgmg'], accountTypes: ['dgmg'],
+    capabilities: [CAPABILITIES.DGMG_SUPERVISE], readOnly: true, national: false,
+  }),
+  ...policies(['/portail-dgi/paiements'], {
+    roles: ['dgi'], accountTypes: ['dgi'],
+    capabilities: [CAPABILITIES.DGI_FISCAL_CONTROL, CAPABILITIES.DGI_FISCAL_RECONCILE], readOnly: true, national: false,
+  }),
+  ...policies(['/portail-dgi', '/portail-dgi/*'], {
+    roles: ['dgi'], accountTypes: ['dgi'],
+    capabilities: [CAPABILITIES.DGI_FISCAL_CONTROL], readOnly: true, national: false,
+  }),
   ...policies(['/portail-collecteur', '/portail-collecteur/stock', '/portail-collecteur/documents'], {
-    roles: ['customer'], accountTypes: ['collector'], capabilities: [CAPABILITIES.COLLECTOR_OPERATE],
+    roles: ['collector', 'customer'], accountTypes: ['collector'], capabilities: [CAPABILITIES.COLLECTOR_OPERATE],
     readOnly: true, national: false,
   }),
   ...policies(['/portail-comptoir', '/portail-comptoir/stock', '/portail-comptoir/ventes-sonasp'], {
-    roles: ['customer'], accountTypes: ['comptoir'], capabilities: [CAPABILITIES.COMPTOIR_MANAGE],
+    roles: ['comptoir', 'customer'], accountTypes: ['comptoir'], capabilities: [CAPABILITIES.COMPTOIR_MANAGE],
     readOnly: false, national: false,
   }),
   ...policies(['/portail-mine'], {
@@ -140,11 +161,11 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     '/artisan-minier/:artisanId/infractions/:infractionId/modifier',
   ], SONASP),
   ...policies(['/artisan-minier/liste', '/artisan-minier/:id'], {
-    roles: ['management', 'customer'], accountTypes: ['sonasp', 'comptoir', 'collector'],
+    roles: ['management', 'customer', 'dgmg'], accountTypes: ['sonasp', 'comptoir', 'collector', 'dgmg'],
     capabilities: [], readOnly: true, national: false,
   }),
   ...policies(['/artisan-minier/ventes-or', '/artisan-minier/ventes-or/:id'], {
-    roles: ['management', 'customer'], accountTypes: ['sonasp', 'comptoir', 'collector'],
+    roles: ['management', 'customer', 'dgi'], accountTypes: ['sonasp', 'comptoir', 'collector', 'dgi'],
     capabilities: [], readOnly: true, national: false,
   }),
   ...policies([
@@ -163,15 +184,23 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     roles: ['management', 'customer'], accountTypes: ['sonasp', 'comptoir'],
     capabilities: [], readOnly: true, national: false,
   }),
-  ...policies(['/artisan-minier/paiements/historique', '/artisan-minier/rapports/taxes'], {
+  ...policies(['/artisan-minier/paiements/historique', '/artisan-minier/paiements/historique/:paiementId'], {
     roles: ['management', 'customer'], accountTypes: ['sonasp', 'comptoir', 'collector'],
+    capabilities: [], readOnly: true, national: false,
+  }),
+  ...policies(['/artisan-minier/rapports/taxes'], {
+    roles: ['management', 'customer', 'dgi'], accountTypes: ['sonasp', 'comptoir', 'collector', 'dgi'],
     capabilities: [], readOnly: true, national: false,
   }),
   ...policies(['/artisan-minier/rapports/chiffre-affaires', '/artisan-minier/rapports/quantites'], {
     roles: ['management', 'customer'], accountTypes: ['sonasp', 'comptoir'],
     capabilities: [], readOnly: true, national: false,
   }),
-  ...policies(['/artisan-sites', '/artisan-sites/nouveau', '/artisan-sites/:siteId/modifier', '/artisan-sites/production'], SONASP),
+  ...policies(['/artisan-sites', '/artisan-sites/production'], {
+    roles: ['management', 'dgmg'], accountTypes: ['sonasp', 'dgmg'],
+    capabilities: [], readOnly: true, national: false,
+  }),
+  ...policies(['/artisan-sites/nouveau', '/artisan-sites/:siteId/modifier'], SONASP),
 
   ...policies(['/production/achats-mines', '/achats/plans', '/achats/plans/:id', '/achats/comptes'], SONASP),
   ...policies(['/achats/demandes'], {
@@ -189,13 +218,13 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   // Le referentiel fiscal se consulte largement et ne s'administre que par les
   // profils habilites ; l'ecriture reste gouvernee par la capacite, non par la route.
   ...policies(['/conciliation', '/conciliation/:id'], {
-    roles: ['management', 'admin', 'manager', 'mine'], accountTypes: ['sonasp', 'mine'],
-    capabilities: [CAPABILITIES.RECONCILIATION_READ],
+    roles: ['management', 'admin', 'manager', 'mine', 'dgi'], accountTypes: ['sonasp', 'mine', 'dgi'],
+    capabilities: [CAPABILITIES.RECONCILIATION_READ, CAPABILITIES.DGI_FISCAL_CONTROL],
     readOnly: true, national: false,
   }),
   ...policies(['/conciliation/regles-fiscales'], {
-    roles: ['management', 'admin', 'manager', 'mine'], accountTypes: ['sonasp', 'mine'],
-    capabilities: [CAPABILITIES.TAX_RULES_READ, CAPABILITIES.TAX_RULES_MANAGE],
+    roles: ['management', 'admin', 'manager', 'mine', 'dgi'], accountTypes: ['sonasp', 'mine', 'dgi'],
+    capabilities: [CAPABILITIES.TAX_RULES_READ, CAPABILITIES.TAX_RULES_MANAGE, CAPABILITIES.DGI_FISCAL_CONTROL],
     readOnly: true, national: false,
   }),
   ...policies(['/contrats', '/contrats/:id'], {
@@ -225,13 +254,15 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     readOnly: false, national: true,
   }),
   ...policies(['/production/daily', '/production/:id', '/production/in-safe'], {
-    roles: ['management', 'mine', 'customer', 'factory'], accountTypes: ['sonasp', 'mine', 'factory'],
+    roles: ['management', 'dgmg', 'dgi', 'mine', 'customer', 'factory'], accountTypes: ['sonasp', 'dgmg', 'dgi', 'mine', 'factory'],
     capabilities: [
       CAPABILITIES.SONASP_WORKFLOW_READ,
       CAPABILITIES.SONASP_PREPARE,
       CAPABILITIES.REPORTS_READ,
       CAPABILITIES.MINE_OPERATE,
       CAPABILITIES.FACTORY_OPERATE,
+      CAPABILITIES.DGMG_SUPERVISE,
+      CAPABILITIES.DGI_FISCAL_CONTROL,
     ],
     readOnly: false, national: false,
   }),
@@ -252,15 +283,15 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     readOnly: false, national: true,
   }),
 
-  ...policies(['/users', '/users/new', '/users/edit', '/users/:userId', '/admin/users', '/admin/users/:userId/permissions'], {
-    roles: ['admin'], accountTypes: ['admin'], capabilities: [CAPABILITIES.ACCOUNTS_MANAGE],
+  ...policies(['/users', '/users/new', '/users/edit', '/users/:userId', '/admin/users', '/admin/users/:userId/permissions', '/admin/permissions'], {
+    roles: ['owner', 'admin'], accountTypes: ['owner', 'admin'], capabilities: [CAPABILITIES.ACCOUNTS_MANAGE],
     readOnly: false, national: true,
   }),
   ...policies(['/admin/status-manager', '/admin/modules'], {
-    roles: ['admin'], accountTypes: ['admin'], capabilities: [CAPABILITIES.REFERENTIALS_MANAGE],
+    roles: ['owner', 'admin'], accountTypes: ['owner', 'admin'], capabilities: [CAPABILITIES.REFERENTIALS_MANAGE],
     readOnly: false, national: true,
   }),
-  ...policies(['/parameters'], {
+  ...policies(['/parameters', '/admin/settings'], {
     roles: ['admin', 'management'], accountTypes: ['admin', 'sonasp'], capabilities: [],
     readOnly: true, national: true,
   }),
@@ -284,6 +315,10 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   ...policies(['/admin/messagerie', '/admin/messagerie/nouveau', '/admin/messagerie/:uid'], {
     roles: ['admin'], accountTypes: ['admin'], capabilities: [CAPABILITIES.EMAIL_SETTINGS_MANAGE],
     readOnly: false, national: true,
+  }),
+  ...policies(['/admin/audit'], {
+    roles: ['owner', 'admin'], accountTypes: ['owner', 'admin'], capabilities: [CAPABILITIES.REPORTS_READ],
+    readOnly: true, national: true,
   }),
 
   ...policies(['/gold-prices', '/fx-rates'], {
@@ -322,6 +357,21 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   ...policies(['/inventory/add'], {
     roles: ['management', 'refinery'], accountTypes: ['sonasp', 'refinery'],
     capabilities: [], readOnly: false, national: false,
+  }),
+  ...policies([
+    '/national-reserve', '/national-reserve/physical', '/national-reserve/controls',
+    '/national-reserve/valuation', '/national-reserve/audit',
+    '/national-reserve/allocations', '/national-reserve/allocations/:id',
+  ], {
+    // La reserve physique et sa valorisation restent dans le perimetre
+    // souverain SONASP. La DGMG intervient depuis son portail reglementaire,
+    // sans ouvrir ce registre patrimonial interne.
+    roles: ['management', 'admin'], accountTypes: ['sonasp'],
+    capabilities: [], readOnly: true, national: true,
+  }),
+  ...policies(['/national-reserve/allocations/new', '/national-reserve/allocations/:id/edit'], {
+    roles: ['management'], accountTypes: ['sonasp'],
+    capabilities: [], readOnly: false, national: true,
   }),
   ...policies(['/refining', '/refining/freight-shipments'], {
     roles: ['management', 'mine', 'customer', 'refinery'], accountTypes: ['sonasp', 'mine', 'refinery'],
@@ -381,13 +431,24 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   }),
 
   ...policies([
+    '/stakeholders/organizations', '/stakeholders/organizations/new',
+    '/stakeholders/organizations/:id/edit',
+  ], {
+    roles: ['owner', 'admin', 'management'], accountTypes: ['owner', 'admin', 'sonasp'],
+    capabilities: [CAPABILITIES.REFERENTIALS_MANAGE],
+    readOnly: false, national: true,
+  }),
+  ...policies([
     '/stakeholders/mining-companies', '/stakeholders/mining-companies/new',
     '/stakeholders/mining-companies/:id', '/stakeholders/mining-companies/:id/edit',
-    '/stakeholders/approvers',
   ], {
     roles: ['management', 'admin'], accountTypes: ['sonasp', 'admin'],
     capabilities: [CAPABILITIES.REFERENTIALS_MANAGE, CAPABILITIES.SONASP_PREPARE],
     readOnly: false, national: true,
+  }),
+  ...policies(['/stakeholders/approvers'], {
+    roles: ['owner', 'admin'], accountTypes: ['owner', 'admin'],
+    capabilities: [CAPABILITIES.ACCOUNTS_MANAGE], readOnly: false, national: true,
   }),
   ...policies(['/stakeholders/depositors'], {
     roles: ['management', 'admin', 'mine', 'customer'], accountTypes: ['sonasp', 'admin', 'mine'],
@@ -419,6 +480,22 @@ export function accountTypeFor(user: Partial<UserProfile> | null | undefined): A
   if (role === 'admin') return hasMineTenant ? 'unknown' : 'admin';
   if (role === 'management') return hasMineTenant ? 'unknown' : 'sonasp';
   if (role === 'manager') return hasMineTenant ? 'unknown' : 'direction';
+  if (role === 'dgmg') {
+    return !hasMineTenant
+      && Boolean(user?.organization_id)
+      && user?.organization_type === 'dgmg'
+      && hasCapability(user as UserProfile, CAPABILITIES.DGMG_SUPERVISE)
+      ? 'dgmg'
+      : 'unknown';
+  }
+  if (role === 'dgi') {
+    return !hasMineTenant
+      && Boolean(user?.organization_id)
+      && user?.organization_type === 'dgi'
+      && hasCapability(user as UserProfile, CAPABILITIES.DGI_FISCAL_CONTROL)
+      ? 'dgi'
+      : 'unknown';
+  }
   if (role === 'mine') {
     return hasMineTenant && hasCapability(user as UserProfile, CAPABILITIES.MINE_OPERATE)
       ? 'mine'
@@ -438,6 +515,12 @@ export function accountTypeFor(user: Partial<UserProfile> | null | undefined): A
     return !hasMineTenant && hasCapability(user as UserProfile, CAPABILITIES.REFINERY_OPERATE)
       ? 'refinery'
       : 'unknown';
+  }
+  if (role === 'collector') {
+    return !hasMineTenant && hasCapability(user as UserProfile, CAPABILITIES.COLLECTOR_OPERATE) ? 'collector' : 'unknown';
+  }
+  if (role === 'comptoir') {
+    return !hasMineTenant && hasCapability(user as UserProfile, CAPABILITIES.COMPTOIR_MANAGE) ? 'comptoir' : 'unknown';
   }
 
   // Les anciens comptes Société minière utilisent parfois encore `customer`.
@@ -488,7 +571,7 @@ export function routePolicyFor(pathname: string): PrivateRoutePolicy | null {
   return matches[0] ?? null;
 }
 
-export type RouteDenialReason = 'unknown-profile' | 'unregistered-route' | 'role' | 'account-type' | 'capability' | 'read-only';
+export type RouteDenialReason = 'unknown-profile' | 'unregistered-route' | 'role' | 'account-type' | 'module' | 'capability' | 'read-only';
 
 export type RouteAccessDecision =
   | { allowed: true; accountType: Exclude<AccountType, 'unknown'>; policy: PrivateRoutePolicy }
@@ -506,6 +589,8 @@ export function homePathForAccountType(accountType: AccountType): string | null 
     case 'admin':
     case 'sonasp': return '/dashboard';
     case 'direction': return '/portail-direction';
+    case 'dgmg': return '/portail-dgmg';
+    case 'dgi': return '/portail-dgi';
     case 'mine': return '/portail-mine';
     case 'comptoir': return '/portail-comptoir';
     case 'collector': return '/portail-collecteur';
@@ -532,9 +617,45 @@ export function evaluatePrivateRouteAccess(
   if (!policy) {
     return { allowed: false, accountType, policy: null, reason: 'unregistered-route', redirectTo };
   }
-  // Le propriétaire reste le seul périmètre transversal, mais uniquement sur
-  // une route explicitement enregistrée : aucune URL privée inconnue n'est ouverte.
-  if (accountType === 'owner') return { allowed: true, accountType, policy };
+  // Le Owner actif peut ouvrir toute route privée connue. Les routes non
+  // enregistrées restent fermées afin qu'un nouvel écran ne soit jamais exposé
+  // accidentellement.
+  if (accountType === 'owner') {
+    return { allowed: true, accountType, policy };
+  }
+  const moduleCode = platformModuleCodeForPath(pathname);
+  const isModuleScopedAccount = accountType === 'admin'
+    || accountType === 'sonasp'
+    || accountType === 'dgmg'
+    || accountType === 'dgi';
+  if (
+    isModuleScopedAccount
+    && moduleCode
+    && Array.isArray(user?.module_codes)
+    && !user.module_codes.includes(moduleCode)
+  ) {
+    return { allowed: false, accountType, policy, reason: 'module', redirectTo };
+  }
+  // L'Administrateur de plateforme peut ouvrir tout module national qui lui a
+  // été explicitement attribué dans `user_permissions`. Les portails de
+  // partenaires restent exclus et les capabilities sensibles sont encore
+  // contrôlées par `ProtectedRoute` puis par la base.
+  const administrativeDomain = moduleDomainForPath(pathname);
+  if (
+    accountType === 'admin'
+    && !pathname.startsWith('/portail-')
+    && (
+      (moduleCode && Array.isArray(user?.module_codes) && user.module_codes.includes(moduleCode))
+      || (
+        !Array.isArray(user?.module_codes)
+        && administrativeDomain
+        && Array.isArray(user?.module_domains)
+        && user.module_domains.includes(administrativeDomain)
+      )
+    )
+  ) {
+    return { allowed: true, accountType, policy };
+  }
   if (!policy.roles.includes(user?.role as UserRole)) {
     return { allowed: false, accountType, policy, reason: 'role', redirectTo };
   }

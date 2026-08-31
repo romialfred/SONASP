@@ -1,0 +1,9 @@
+[
+  "20260827203000_integrite_ventes_or_artisanales.sql",
+  "20260829204000_durcir_grand_livre_stock_reserve.sql",
+  "20260829213000_borner_portails_fiscaux_dgi_dgmg.sql",
+  "20260830110000_retablir_reponse_demande_portail_mine.sql",
+  "20260830120000_fiabiliser_conciliation_expeditions_et_impacts.sql",
+  "20260830171500_exiger_session_active_lecture_ventes.sql",
+  "20260830222700_completer_socle_workflows_sans_regression_iam.sql"
+]

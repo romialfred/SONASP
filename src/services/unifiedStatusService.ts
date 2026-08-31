@@ -1,6 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import type { ProductionStatus as CanonicalProductionStatus } from '@/constants/productionStatuses';
 import { productionStatusService } from '@/services/productionStatusService';
+import type { Database, Json } from '@/types/database';
+
+type StatusChangeContextRpc = Database['public']['Functions']['can_change_status']['Args']['p_context'];
+type ShippingPreparationDbUpdate = Database['public']['Tables']['shipping_preparations']['Update'];
 
 // =====================================================
 // TYPES
@@ -57,7 +61,7 @@ export interface StatusHistoryEntry {
   notes: string | null;
   user_email: string | null;
   user_name: string | null;
-  metadata: Record<string, any>;
+  metadata: Json;
 }
 
 export interface StatusChangeRequest {
@@ -66,7 +70,7 @@ export interface StatusChangeRequest {
   newStatus: string;
   context: StatusChangeContext;
   notes?: string;
-  metadata?: Record<string, any>;
+  metadata?: Json;
 }
 
 // =====================================================
@@ -243,7 +247,7 @@ export async function canChangeStatus(
       p_entity_id: entityId,
       p_current_status: currentStatus,
       p_new_status: newStatus,
-      p_context: context,
+      p_context: context as StatusChangeContextRpc,
     });
 
     if (error) {
@@ -347,13 +351,7 @@ export async function changeShippingStatus(
     }
 
     // Update status with timestamp fields
-    const updateData: any = { status: newStatus };
-
-    if (newStatus === 'prepared') {
-      updateData.prepared_at = new Date().toISOString();
-    } else if (newStatus === 'validated_for_refinery') {
-      updateData.shipped_at = new Date().toISOString();
-    }
+    const updateData = { status: newStatus } as ShippingPreparationDbUpdate;
 
     const { error: updateError } = await supabase
       .from('shipping_preparations')

@@ -86,15 +86,14 @@ describe('dossierService', () => {
     expect(mocks.createPrivateSignedUrl).not.toHaveBeenCalled();
   });
 
-  it('n’ouvre un document de vente historique que sur URL absolue', async () => {
+  it('ouvre les URL absolues et signe les chemins privés des documents de vente', async () => {
     const absolue = piece({ source: 'sales_documents', chemin: 'https://exemple.test/doc.pdf' });
     expect(dossierService.estOuvrable(absolue)).toBe(true);
     expect(await dossierService.urlPourDocument(absolue)).toBe('https://exemple.test/doc.pdf');
 
     const relative = piece({ source: 'sales_documents', chemin: 'dossier/doc.pdf' });
-    expect(dossierService.estOuvrable(relative)).toBe(false);
-    expect(await dossierService.urlPourDocument(relative)).toBeNull();
-    // Aucune signature tentée : le bucket de cette source n'est pas connu.
-    expect(mocks.createPrivateSignedUrl).not.toHaveBeenCalled();
+    expect(dossierService.estOuvrable(relative)).toBe(true);
+    expect(await dossierService.urlPourDocument(relative)).toBe('https://signee.example/piece');
+    expect(mocks.createPrivateSignedUrl).toHaveBeenCalledWith('sales-documents', 'dossier/doc.pdf', 300);
   });
 });

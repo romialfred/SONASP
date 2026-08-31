@@ -81,6 +81,10 @@ describe('relations Mine avec la SONASP', () => {
   it('force une proposition de contrat au statut soumis et à l’auteur connecté', async () => {
     await contratsService.proposerMine({
       intitule: 'Contrat de fourniture',
+      numero_contrat: 'CTR-MINE-2026-001',
+      partenaire_type: 'mine_industrielle',
+      date_debut: '2026-09-01',
+      date_fin: '2027-08-31',
       statut: 'brouillon',
       created_by: 'identité-usurpée',
     });
@@ -96,7 +100,13 @@ describe('relations Mine avec la SONASP', () => {
 
   it('refuse une proposition si la session a expiré', async () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
-    await expect(contratsService.proposerMine({ intitule: 'Sans session' }))
+    await expect(contratsService.proposerMine({
+      intitule: 'Sans session',
+      numero_contrat: 'CTR-MINE-2026-002',
+      partenaire_type: 'mine_industrielle',
+      date_debut: '2026-09-01',
+      date_fin: '2027-08-31',
+    }))
       .rejects.toThrow('Votre session a expiré');
     expect(mocks.from).not.toHaveBeenCalled();
   });

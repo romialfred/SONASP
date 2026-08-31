@@ -232,7 +232,7 @@ export const notificationsService = {
   /** Marque comme lues. Sans identifiants, tout ce qui reste non lu. */
   async marquerLues(ids?: string[]): Promise<number> {
     const reponse = await supabase.rpc('snp_marquer_notifications_lues', {
-      p_ids: ids && ids.length ? ids : null,
+      p_ids: ids && ids.length ? ids : undefined,
     });
     return Number(lancerSiErreur(reponse) || 0);
   },

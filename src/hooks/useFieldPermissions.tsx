@@ -29,7 +29,7 @@ export function useFieldPermissions(): UseFieldPermissionsReturn {
   const [permissions, setPermissions] = useState<Record<string, ModulePermissions>>({});
   const [loading, setLoading] = useState(true);
 
-  const isManagement = user?.role === 'management' || user?.role === 'owner';
+  const isManagement = user?.role === 'management';
 
   useEffect(() => {
     if (!user?.id) {
@@ -45,13 +45,6 @@ export function useFieldPermissions(): UseFieldPermissionsReturn {
 
     try {
       setLoading(true);
-
-      // Management users have access to everything
-      if (isManagement) {
-        setPermissions({});
-        setLoading(false);
-        return;
-      }
 
       const { data: userPermissions, error } = await supabase
         .from('user_permissions')
@@ -96,9 +89,6 @@ export function useFieldPermissions(): UseFieldPermissionsReturn {
   };
 
   const canViewField = (moduleName: string, fieldName: string): boolean => {
-    // Management role has access to everything
-    if (isManagement) return true;
-
     const modulePerms = permissions[moduleName];
     if (!modulePerms) return false;
 
@@ -112,9 +102,6 @@ export function useFieldPermissions(): UseFieldPermissionsReturn {
   };
 
   const canEditField = (moduleName: string, fieldName: string): boolean => {
-    // Management role has access to everything
-    if (isManagement) return true;
-
     const modulePerms = permissions[moduleName];
     if (!modulePerms) return false;
 
@@ -131,9 +118,6 @@ export function useFieldPermissions(): UseFieldPermissionsReturn {
     moduleName: string,
     accessType: 'read' | 'write' | 'delete'
   ): boolean => {
-    // Management role has access to everything
-    if (isManagement) return true;
-
     const modulePerms = permissions[moduleName];
     if (!modulePerms) return false;
 

@@ -105,7 +105,13 @@ export function RefiningProcess() {
 
           return {
             ...shipment,
-            mining_company: productions?.daily_production?.mining_companies || null
+            status: shipment.status as FreightShipmentStatus,
+            total_pure_silver_grams: shipment.total_pure_silver_grams ?? 0,
+            gold_price_usd_per_oz: shipment.gold_price_usd_per_oz ?? 0,
+            total_value_usd: shipment.total_value_usd ?? 0,
+            created_at: shipment.created_at ?? '',
+            destination_refinery: shipment.destination_refinery ?? undefined,
+            mining_company: productions?.daily_production?.mining_companies ?? undefined,
           };
         }));
 
@@ -545,7 +551,7 @@ export function RefiningProcess() {
           onConfirm={handleConfirmStatusChange}
           currentStatus={selectedShipment.status}
           shipmentReference={selectedShipment.reference_number}
-          totalGoldOz={selectedShipment.total_pure_gold_oz}
+          totalGoldOz={selectedShipment.total_pure_gold_oz ?? undefined}
           totalValueUsd={selectedShipment.total_value_usd}
           loading={changingStatus}
         />

@@ -327,7 +327,7 @@ export const reglementsAchatService = {
     const reponse = await supabase.rpc('snp_changer_statut_reglement', {
       p_reglement_id: reglementId,
       p_statut: statut,
-      p_motif: motif ?? null,
+      p_motif: motif,
     });
     const lignes = lancerSiErreur(reponse) as Array<{
       r_reglement_id: string; r_statut: string; r_montant_paye: number;

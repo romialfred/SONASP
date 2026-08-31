@@ -24,19 +24,19 @@ export interface AssayCertificate {
   parsing_status: string | null;
   parsing_error: string | null;
   parsed_at: string | null;
-  approval_status: 'pending' | 'approved' | 'rejected';
+  approval_status: string | null;
   approved_by: string | null;
   approved_at: string | null;
   approval_notes: string | null;
   uploaded_by: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface AssayCertificateData {
   id: string;
   certificate_id: string;
-  shipping_preparation_id: string | null;
+  shipping_preparation_id: string;
   certificate_number: string | null;
   certificate_date: string | null;
   laboratory_name: string | null;
@@ -54,19 +54,19 @@ export interface AssayCertificateData {
   silver_purity_percentage: number | null;
   platinum_content_ppm: number | null;
   palladium_content_ppm: number | null;
-  deleterious_elements: Json;
+  deleterious_elements: Json | null;
   copper_percentage: number | null;
   iron_percentage: number | null;
   zinc_percentage: number | null;
   fineness: number | null;
   moisture_percentage: number | null;
   total_weight_g: number | null;
-  is_verified: boolean;
+  is_verified: boolean | null;
   verification_notes: string | null;
   raw_text: string | null;
-  extraction_confidence: number;
-  created_at: string;
-  updated_at: string;
+  extraction_confidence: number | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface ParsedCertificateResult {
@@ -313,12 +313,14 @@ function mapAssayDataFromText(
     cadmium: /(?:Cadmium|Cd)[:\s]+(\d+\.?\d*)/i,
   };
 
+  const deleteriousElements: Record<string, number> = {};
   for (const [element, pattern] of Object.entries(elementPatterns)) {
     const match = text.match(pattern);
     if (match) {
-      data.deleterious_elements![element] = parseFloat(match[1]);
+      deleteriousElements[element] = parseFloat(match[1]);
     }
   }
+  data.deleterious_elements = deleteriousElements;
 
   // Base metals
   const copperPattern = /(?:Copper|Cu)[:\s]+(\d+\.?\d*)\s*%/i;
@@ -396,12 +398,16 @@ export async function parseCertificate(
       .eq('id', certificateId)
       .single();
 
+    if (!certificate?.shipping_preparation_id) {
+      throw new Error('Le certificat ne référence aucune préparation d’expédition.');
+    }
+
     // Save parsed data
     const { data: parsedData, error: saveError } = await supabase
       .from('assay_certificate_data')
       .insert({
         certificate_id: certificateId,
-        shipping_preparation_id: certificate?.shipping_preparation_id,
+        shipping_preparation_id: certificate.shipping_preparation_id,
         ...extractedData,
       })
       .select()
@@ -431,7 +437,7 @@ export async function parseCertificate(
     return {
       success: true,
       data: parsedData,
-      confidence: extractedData.extraction_confidence,
+      confidence: extractedData.extraction_confidence ?? undefined,
     };
   } catch (error: any) {
     await supabase

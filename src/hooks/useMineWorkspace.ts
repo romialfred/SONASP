@@ -20,19 +20,22 @@ async function chargerMine(companyId: string): Promise<MineWorkspaceCompany | nu
   const pending = mineRequests.get(companyId);
   if (pending) return pending;
 
-  const request = supabase
-    .from('mining_companies')
-    .select('id, name, code, abbreviation')
-    .eq('id', companyId)
-    .eq('is_active', true)
-    .maybeSingle()
-    .then(({ data, error }) => {
+  const request = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('mining_companies')
+        .select('id, name, code, abbreviation')
+        .eq('id', companyId)
+        .eq('is_active', true)
+        .maybeSingle();
       if (error || !data) return null;
       const company = data as MineWorkspaceCompany;
       mineCache.set(companyId, company);
       return company;
-    })
-    .finally(() => mineRequests.delete(companyId));
+    } finally {
+      mineRequests.delete(companyId);
+    }
+  })();
 
   mineRequests.set(companyId, request);
   return request;

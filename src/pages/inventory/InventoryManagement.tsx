@@ -121,9 +121,10 @@ export function InventoryManagement() {
     void charger();
   }, [charger]);
 
-  /** Or engagé hors des coffres : en route, en attente d'embarquement, ou vendu sans règlement. */
-  const horsCoffre = stock.transitOz + stock.aeroportOz + stock.venduNonPayeOz;
-  const socle = stock.totalOz + horsCoffre;
+  // Le socle est le registre opérationnel courant. Les flux de transport et
+  // les créances restent visibles séparément : les additionner fabriquerait
+  // un « total » susceptible de compter deux fois le même lot.
+  const socle = stock.totalOz;
 
   const postes = useMemo(
     () => [
@@ -179,11 +180,13 @@ export function InventoryManagement() {
       <div className="sn-page stocks">
         <PageHeader
           icon={Boxes}
-          title="Suivi des stocks d’or"
+          title={isMine ? 'Stocks d’or de la mine' : 'Suivi des stocks'}
           subtitle={isMine
             ? "Vue consolidée de votre mine : coffres, transit, aéroport et créances."
-            : "Vue nationale et détaillée : coffres, mines, transit, aéroport et créances."}
-          breadcrumb={[{ label: 'Suivi des stocks' }, { label: 'Stock d’or' }]}
+            : "Position opérationnelle : disponibilités, raffinage, transit, ventes et alimentation de la réserve."}
+          breadcrumb={isMine
+            ? [{ label: 'Stocks de la mine' }, { label: 'Position consolidée' }]
+            : [{ label: 'Suivi des stocks' }, { label: 'Position opérationnelle' }]}
           actions={
             <>
               <button type="button" className="sn-btn" onClick={() => void charger(true)} disabled={actualisation}>
@@ -197,6 +200,21 @@ export function InventoryManagement() {
             </>
           }
         />
+
+        {!isMine && (
+          <nav className="stocks__domain-switch" aria-label="Domaines de gestion de l’or">
+            <button type="button" className="is-active" aria-current="page">
+              <span><Boxes aria-hidden="true" /></span>
+              <span><strong>Stock opérationnel</strong><small>Or disponible, alloué, raffiné ou en transit</small></span>
+              <Badge tone="success">Position courante</Badge>
+            </button>
+            <button type="button" onClick={() => navigate('/national-reserve')}>
+              <span><Landmark aria-hidden="true" /></span>
+              <span><strong>Réserve nationale</strong><small>Patrimoine affecté, rapproché et activé</small></span>
+              <ChevronRight aria-hidden="true" />
+            </button>
+          </nav>
+        )}
 
         {erreur && (
           <Note tone="danger" icon={AlertTriangle}>
@@ -218,12 +236,12 @@ export function InventoryManagement() {
           <div className="stocks__grille">
             <div className="stocks__principal">
               {/* Les politiques RLS limitent ce socle à la mine connectée. */}
-              <section className="stocks__socle" aria-label={isMine ? 'Stock de la mine' : 'Stock national'}>
+              <section className="stocks__socle" aria-label={isMine ? 'Stock de la mine' : 'Stock opérationnel national'}>
                 <div className="stocks__socle-apercu">
                   <header>
                     <span className="stocks__socle-icone" aria-hidden="true"><Landmark /></span>
                     <div>
-                      <p>{isMine ? 'Position consolidée' : 'Position nationale'}</p>
+                      <p>{isMine ? 'Position consolidée' : 'Position opérationnelle nationale'}</p>
                       <strong>{formatOz(socle)}</strong>
                       <small>{formatKg(socle)} sous suivi</small>
                     </div>
@@ -232,19 +250,24 @@ export function InventoryManagement() {
 
                   <dl className="stocks__socle-detail">
                     <div>
-                      <dt>En coffre</dt>
+                      <dt>Disponible</dt>
+                      <dd>{formatOz(stock.disponibleOz)}</dd>
+                      <span>{formatKg(stock.disponibleOz)}</span>
+                    </div>
+                    <div>
+                      <dt>Alloué</dt>
+                      <dd>{formatOz(stock.allloueOz)}</dd>
+                      <span>{formatKg(stock.allloueOz)}</span>
+                    </div>
+                    <div>
+                      <dt>Transféré à la réserve</dt>
+                      <dd>{formatOz(stock.reserveOz)}</dd>
+                      <span>{formatKg(stock.reserveOz)}</span>
+                    </div>
+                    <div>
+                      <dt>Stock opérationnel</dt>
                       <dd>{formatOz(stock.totalOz)}</dd>
                       <span>{formatKg(stock.totalOz)}</span>
-                    </div>
-                    <div>
-                      <dt>Hors coffre</dt>
-                      <dd>{formatOz(horsCoffre)}</dd>
-                      <span>{part(horsCoffre, socle) === null ? '—' : `${Math.round(part(horsCoffre, socle) || 0)} % du total`}</span>
-                    </div>
-                    <div>
-                      <dt>Déjà vendu</dt>
-                      <dd>{formatOz(stock.venduOz)}</dd>
-                      <span>{formatKg(stock.venduOz)}</span>
                     </div>
                   </dl>
                 </div>
@@ -255,7 +278,9 @@ export function InventoryManagement() {
               <section className="stocks__postes" aria-label="Répartition du stock">
                 {postes.map((poste) => {
                   const Icone = poste.icone;
-                  const pourcentage = part(poste.valeur, socle);
+                  const pourcentage = ['disponible', 'alloue'].includes(poste.cle)
+                    ? part(poste.valeur, socle)
+                    : null;
                   return (
                     <button
                       type="button"
@@ -279,7 +304,7 @@ export function InventoryManagement() {
                         aria-valuenow={pourcentage === null ? undefined : Math.round(pourcentage)}
                         aria-valuemin={0}
                         aria-valuemax={100}
-                        aria-label={`Part de ${poste.libelle} dans l’or ${isMine ? 'de la mine' : 'national'}`}
+                        aria-label={`Part de ${poste.libelle} dans le stock opérationnel`}
                       >
                         <span style={{ width: `${Math.min(pourcentage || 0, 100)}%` }} />
                       </div>
@@ -385,6 +410,7 @@ export function InventoryManagement() {
                           <th className="sn-table__num">Total (oz)</th>
                           <th className="sn-table__num">Disponible (oz)</th>
                           <th className="sn-table__num">Alloué (oz)</th>
+                          <th className="sn-table__num">Réserve (oz)</th>
                           <th className="sn-table__num">Vendu (oz)</th>
                           <th className="sn-table__num">Part</th>
                         </tr>
@@ -399,6 +425,7 @@ export function InventoryManagement() {
                               <td className="sn-table__num">{onces.format(mine.totalOz)}</td>
                               <td className="sn-table__num">{onces.format(mine.disponibleOz)}</td>
                               <td className="sn-table__num">{onces.format(mine.allloueOz)}</td>
+                              <td className="sn-table__num">{onces.format(mine.reserveOz)}</td>
                               <td className="sn-table__num">{onces.format(mine.venduOz)}</td>
                               <td className="sn-table__num">
                                 {pourcentage === null ? '—' : `${entier.format(Math.round(pourcentage))} %`}
@@ -416,6 +443,7 @@ export function InventoryManagement() {
                           <td className="sn-table__num">{onces.format(stock.totalOz)}</td>
                           <td className="sn-table__num">{onces.format(stock.disponibleOz)}</td>
                           <td className="sn-table__num">{onces.format(stock.allloueOz)}</td>
+                          <td className="sn-table__num">{onces.format(stock.reserveOz)}</td>
                           <td className="sn-table__num">{onces.format(stock.venduOz)}</td>
                           <td className="sn-table__num">100 %</td>
                         </tr>

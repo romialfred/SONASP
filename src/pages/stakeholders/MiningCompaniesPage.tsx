@@ -44,7 +44,15 @@ export function MiningCompaniesPage() {
         .order('name');
 
       if (error) throw error;
-      setCompanies(data || []);
+      setCompanies(
+        (data || []).map((company) => ({
+          ...company,
+          contact_person_email: company.contact_person_email ?? '',
+          contact_person_phone: company.contact_person_phone ?? '',
+          is_active: company.is_active ?? false,
+          created_at: company.created_at ?? '',
+        }))
+      );
     } catch (error) {
       console.error('Error loading mining companies:', error);
     } finally {

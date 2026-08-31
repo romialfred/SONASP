@@ -128,8 +128,8 @@ export default function FreightShipmentDetails() {
         }),
         shipmentNumber: shipment.reference_number,
         bars: (shipment.productions || []).map(prod => ({
-          barNo: prod.bar_reference,
-          datePoured: new Date(prod.production_date).toLocaleDateString('en-US', {
+          barNo: prod.bar_reference ?? 'N/A',
+          datePoured: new Date(prod.production_date ?? shipment.shipment_date).toLocaleDateString('en-US', {
             month: '2-digit',
             day: '2-digit',
             year: 'numeric'
@@ -139,14 +139,14 @@ export default function FreightShipmentDetails() {
             day: '2-digit',
             year: 'numeric'
           }),
-          doreWeight: prod.bullion_grams,
-          smkGoldAssay: prod.estimated_fineness_pct,
+          doreWeight: prod.bullion_grams ?? 0,
+          smkGoldAssay: prod.estimated_fineness_pct ?? 0,
           smkSilverAssay: prod.estimated_silver_pct || 0,
-          auContent: prod.pure_gold_grams,
+          auContent: prod.pure_gold_grams ?? 0,
           agContent: prod.silver_content_grams || 0,
-          auContentTroyOz: prod.pure_gold_oz,
+          auContentTroyOz: prod.pure_gold_oz ?? 0,
           agContentTroyOz: (prod.silver_content_grams || 0) / 31.1034768,
-          valueUSD: prod.pure_gold_oz * shipment.gold_price_usd_per_oz
+          valueUSD: (prod.pure_gold_oz ?? 0) * shipment.gold_price_usd_per_oz
         })),
         signatures: (shipment.signatories || [])
           .sort((a, b) => a.display_order - b.display_order)
@@ -178,19 +178,19 @@ export default function FreightShipmentDetails() {
         awbNumber: '',
         lotNumber: shipment.expedition_number || shipment.reference_number,
         numberOfBoxes: shipment.number_of_boxes,
-        boxType: shipment.box_type,
+        boxType: shipment.box_type ?? '',
         description: 'Gold Doré Bars',
         metal: 'Gold (Au)',
         netWeightKg: (shipment.total_bullion_grams ?? 0) / 1000,
-        weightTroyOz: shipment.total_pure_gold_oz,
+        weightTroyOz: shipment.total_pure_gold_oz ?? 0,
         metalPriceCFAPerKg: (shipment.gold_price_usd_per_oz * 32.1507 * shipment.exchange_rate),
-        estimatedValueCFA: shipment.total_value_local,
+        estimatedValueCFA: shipment.total_value_local ?? 0,
         boxReferences: (shipment.productions || [])
           .map(p => p.bar_reference)
           .join(', '),
         exchangeRateFCFAUSD: shipment.exchange_rate,
-        totalPriceCFA: shipment.total_value_local,
-        totalPriceUSD: shipment.total_value_usd
+        totalPriceCFA: shipment.total_value_local ?? 0,
+        totalPriceUSD: shipment.total_value_usd ?? 0
       };
 
       await freightDocumentService.generateAllDocuments(
@@ -360,7 +360,7 @@ export default function FreightShipmentDetails() {
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
                           Or Pur (oz)
                         </th>
-                        {shipment.total_pure_silver_grams > 0 && (
+                        {(shipment.total_pure_silver_grams ?? 0) > 0 && (
                           <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
                             Argent Pur (g)
                           </th>
@@ -374,13 +374,15 @@ export default function FreightShipmentDetails() {
                             {prod.bar_reference}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-600 border border-gray-300">
-                            {new Date(prod.production_date).toLocaleDateString('fr-FR')}
+                            {prod.production_date
+                              ? new Date(prod.production_date).toLocaleDateString('fr-FR')
+                              : '—'}
                           </td>
                           <td className="px-3 py-2 text-sm text-right text-gray-900 border border-gray-300">
                             {formatWeightGrams(prod.bullion_grams)}
                           </td>
                           <td className="px-3 py-2 text-sm text-right text-gray-600 border border-gray-300">
-                            {prod.estimated_fineness_pct.toFixed(2)}%
+                            {(prod.estimated_fineness_pct ?? 0).toFixed(2)}%
                           </td>
                           <td className="px-3 py-2 text-sm text-right text-gray-900 border border-gray-300">
                             {formatWeightGrams(prod.pure_gold_grams)}
@@ -388,9 +390,9 @@ export default function FreightShipmentDetails() {
                           <td className="px-3 py-2 text-sm text-right font-medium text-amber-700 border border-gray-300">
                             {formatWeightOunces(prod.pure_gold_oz)}
                           </td>
-                          {shipment.total_pure_silver_grams > 0 && (
+                          {(shipment.total_pure_silver_grams ?? 0) > 0 && (
                             <td className="px-3 py-2 text-sm text-right text-gray-600 border border-gray-300">
-                              {formatWeightGrams(prod.pure_silver_grams || 0)}
+                              {formatWeightGrams(prod.silver_content_grams || 0)}
                             </td>
                           )}
                         </tr>
@@ -412,9 +414,9 @@ export default function FreightShipmentDetails() {
                         <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400 text-base">
                           {formatWeightOunces(shipment.total_pure_gold_oz)}
                         </td>
-                        {shipment.total_pure_silver_grams > 0 && (
+                        {(shipment.total_pure_silver_grams ?? 0) > 0 && (
                           <td className="px-3 py-3 text-sm text-right text-gray-900 border border-gray-400">
-                            {formatWeightGrams(shipment.total_pure_silver_grams)}
+                            {formatWeightGrams(shipment.total_pure_silver_grams ?? 0)}
                           </td>
                         )}
                       </tr>
@@ -472,7 +474,7 @@ export default function FreightShipmentDetails() {
                     </thead>
                     <tbody>
                       {shipment.productions.map((prod, index) => {
-                        const valueUsd = prod.pure_gold_oz * shipment.gold_price_usd_per_oz;
+                        const valueUsd = (prod.pure_gold_oz ?? 0) * shipment.gold_price_usd_per_oz;
                         const valueLocal = valueUsd * shipment.exchange_rate;
                         return (
                           <tr key={prod.id} className={`hover:bg-green-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
@@ -536,7 +538,7 @@ export default function FreightShipmentDetails() {
                     <div>
                       <p className="text-sm font-medium text-gray-900">Créée</p>
                       <p className="text-xs text-gray-600">
-                        {new Date(shipment.created_at).toLocaleString('fr-FR')}
+                        {shipment.created_at ? new Date(shipment.created_at).toLocaleString('fr-FR') : '—'}
                       </p>
                     </div>
                   </div>

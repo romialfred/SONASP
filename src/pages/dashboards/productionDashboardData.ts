@@ -46,14 +46,22 @@ export const EMPTY_PRODUCTION_DASHBOARD: ProductionDashboardData = {
   unavailable: [],
 };
 
-const STATUTS_EXPEDITION: Record<string, { libelle: string; couleur: string }> = {
-  prepared: { libelle: 'Préparé', couleur: '#3b82f6' },
-  ready_for_customs: { libelle: 'Prêt pour la douane', couleur: '#f59e0b' },
-  shipped: { libelle: 'Expédié', couleur: '#0f7a56' },
-  in_transit: { libelle: 'En transit', couleur: '#8b5cf6' },
+export const STATUTS_EXPEDITION_SUIVIS = [
+  'waiting_for_customs_approval',
+  'approved_by_customs',
+  'ready_for_expedition',
+] as const;
+
+const STATUTS_EXPEDITION: Record<(typeof STATUTS_EXPEDITION_SUIVIS)[number], { libelle: string; couleur: string }> = {
+  waiting_for_customs_approval: { libelle: 'En attente de la douane', couleur: '#f59e0b' },
+  approved_by_customs: { libelle: 'Approuvé par la douane', couleur: '#3b82f6' },
+  ready_for_expedition: { libelle: 'Prêt pour expédition', couleur: '#0f7a56' },
 };
 
-export const STATUTS_EXPEDITION_SUIVIS = Object.keys(STATUTS_EXPEDITION);
+const estStatutExpeditionSuivi = (
+  statut: string
+): statut is (typeof STATUTS_EXPEDITION_SUIVIS)[number] =>
+  STATUTS_EXPEDITION_SUIVIS.some((valeur) => valeur === statut);
 
 interface LigneProduction {
   id: string;
@@ -195,14 +203,17 @@ export async function loadProductionDashboard(reference = new Date()): Promise<P
   });
 
   const total = listeExpeditions.length;
-  const etats: EtatExpedition[] = Array.from(parStatut.entries()).map(([statut, valeurs]) => ({
-    statut,
-    libelle: STATUTS_EXPEDITION[statut]?.libelle || statut,
-    couleur: STATUTS_EXPEDITION[statut]?.couleur || '#6b7280',
-    nombre: valeurs.nombre,
-    onces: valeurs.onces,
-    part: total > 0 ? (valeurs.nombre / total) * 100 : 0,
-  }));
+  const etats: EtatExpedition[] = Array.from(parStatut.entries()).map(([statut, valeurs]) => {
+    const configuration = estStatutExpeditionSuivi(statut) ? STATUTS_EXPEDITION[statut] : null;
+    return {
+      statut,
+      libelle: configuration?.libelle || statut,
+      couleur: configuration?.couleur || '#6b7280',
+      nombre: valeurs.nombre,
+      onces: valeurs.onces,
+      part: total > 0 ? (valeurs.nombre / total) * 100 : 0,
+    };
+  });
 
   return {
     compagnies: listeCompagnies,

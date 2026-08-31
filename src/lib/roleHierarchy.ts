@@ -5,28 +5,35 @@ import type { UserRole } from '@/types/auth';
  *
  * Cette échelle ne remplace pas les habilitations métier. Elle répond à une
  * seule question de sécurité : « cet acteur peut-il attribuer ou administrer
- * ce rôle ? ». Un niveau élevé peut gérer un niveau égal ou inférieur, jamais
- * un niveau supérieur.
+ * ce rôle ? ». Owner peut gérer un autre Owner ; Admin uniquement un niveau
+ * strictement inférieur. L'auto-administration est toujours interdite.
  */
 export const ROLE_LEVEL: Record<UserRole, number> = {
   owner: 100,
   admin: 80,
   management: 60,
   manager: 40,
-  mine: 20,
-  factory: 20,
-  airport: 20,
-  refinery: 20,
-  customer: 20,
+  dgmg: 50,
+  dgi: 50,
+  mine: 30,
+  comptoir: 30,
+  collector: 20,
+  factory: 30,
+  airport: 30,
+  refinery: 30,
+  customer: 10,
 };
 
 export const ACCOUNT_ADMIN_ROLES: UserRole[] = ['owner', 'admin'];
 
+export function isUserRole(value: unknown): value is UserRole {
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(ROLE_LEVEL, value);
+}
+
 export function canAssignRole(actorRole: UserRole | null | undefined, targetRole: UserRole): boolean {
   if (!actorRole || !ACCOUNT_ADMIN_ROLES.includes(actorRole)) return false;
-  // Le rôle Owner est un compte de secours hors parcours interactif. Même un
-  // Owner connecté ne peut ni le proposer ni l'attribuer depuis le portail.
-  if (targetRole === 'owner') return false;
+  if (targetRole === 'owner') return actorRole === 'owner';
+  if (actorRole === 'admin' && targetRole === 'admin') return false;
   return ROLE_LEVEL[targetRole] <= ROLE_LEVEL[actorRole];
 }
 

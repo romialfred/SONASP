@@ -63,6 +63,12 @@ const formaterHorodatage = (iso: string | null | undefined) => {
 /** Les décisions qui ferment une porte demandent un motif écrit. */
 export const STATUTS_A_MOTIVER: StatutContrat[] = ['rejete', 'suspendu', 'resilie', 'annule'];
 
+const estNatureDefaut = (value: string): value is NatureDefaut =>
+  Object.prototype.hasOwnProperty.call(LIBELLES_NATURE_DEFAUT, value);
+
+const estGraviteDefaut = (value: string): value is DefautContrat['gravite'] =>
+  value === 'mineure' || value === 'majeure' || value === 'critique';
+
 export function ContratDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -83,7 +89,7 @@ export function ContratDetails() {
 
   const [decision, setDecision] = useState<{ statut: StatutContrat; motif: string } | null>(null);
   const [manquement, setManquement] = useState<{
-    nature: NatureDefaut; partie: string; gravite: string; description: string;
+    nature: NatureDefaut; partie: string; gravite: DefautContrat['gravite']; description: string;
     quantite: string; echeance: string; actions: string;
   } | null>(null);
 
@@ -149,10 +155,12 @@ export function ContratDetails() {
     executer('manquement', async () => {
       if (!id || !manquement) throw new Error('Contrat inconnu.');
       const defaut = await contratsService.ouvrirDefaut({
+        // La référence métier est attribuée par le déclencheur de numérotation.
+        reference: '',
         contrat_id: id,
         nature: manquement.nature,
         partie_responsable: manquement.partie,
-        gravite: manquement.gravite as DefautContrat['gravite'],
+        gravite: manquement.gravite,
         description: manquement.description.trim(),
         quantite_concernee: Number(manquement.quantite) || null,
         echeance_correction: manquement.echeance || null,
@@ -642,12 +650,13 @@ export function ContratDetails() {
                   <span className="sn-field__label">Nature</span>
                   <select
                     value={manquement.nature}
-                    onChange={(evenement) => setManquement({
-                      ...manquement, nature: evenement.target.value as NatureDefaut,
-                    })}
+                    onChange={(evenement) => {
+                      const nature = evenement.target.value;
+                      if (estNatureDefaut(nature)) setManquement({ ...manquement, nature });
+                    }}
                   >
-                    {(Object.keys(LIBELLES_NATURE_DEFAUT) as NatureDefaut[]).map((nature) => (
-                      <option key={nature} value={nature}>{LIBELLES_NATURE_DEFAUT[nature]}</option>
+                    {Object.entries(LIBELLES_NATURE_DEFAUT).map(([nature, libelle]) => (
+                      <option key={nature} value={nature}>{libelle}</option>
                     ))}
                   </select>
                 </label>
@@ -669,9 +678,10 @@ export function ContratDetails() {
                   <span className="sn-field__label">Gravité</span>
                   <select
                     value={manquement.gravite}
-                    onChange={(evenement) => setManquement({
-                      ...manquement, gravite: evenement.target.value,
-                    })}
+                    onChange={(evenement) => {
+                      const gravite = evenement.target.value;
+                      if (estGraviteDefaut(gravite)) setManquement({ ...manquement, gravite });
+                    }}
                   >
                     {Object.entries(LIBELLES_GRAVITE_DEFAUT).map(([valeur, libelle]) => (
                       <option key={valeur} value={valeur}>{libelle}</option>

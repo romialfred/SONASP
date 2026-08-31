@@ -33,14 +33,17 @@ import {
   POLITIQUE_DOCUMENT_PRODUCTION,
   POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
   POLITIQUE_PREUVE_PAIEMENT,
+  POLITIQUE_DOCUMENT_RESERVE,
   validerUploadServeur,
 } from '../_shared/secure-upload.ts';
 import {
   autoriserDocumentWorkflow,
   parseMetadonneesDocumentExpedition,
   parseMetadonneesDocumentProduction,
+  parseMetadonneesDocumentReserve,
   type MetadonneesDocumentExpedition,
   type MetadonneesDocumentProduction,
+  type MetadonneesDocumentReserve,
 } from '../_shared/workflow-document-upload-policy.ts';
 import {
   createSensitiveUploadHandler,
@@ -56,18 +59,21 @@ const BUCKET_DOCUMENT_EXPEDITION = 'shipping-documents';
 const BUCKET_DOCUMENT_PRODUCTION = 'production-documents';
 const BUCKET_DOCUMENT_FRET = 'freight-customs-documents';
 const BUCKET_PREUVE_PAIEMENT = 'payment-proofs';
+const BUCKET_DOCUMENT_RESERVE = 'reserve-documents';
 const PROFILE_DOCUMENT_SOCIETE = 'mining-company-document';
 const PROFILE_CERTIFICAT_ANALYSE = 'assay-certificate';
 const PROFILE_DOCUMENT_EXPEDITION = 'shipping-document';
 const PROFILE_DOCUMENT_PRODUCTION = 'production-document';
 const PROFILE_DOCUMENT_FRET = 'freight-customs-document';
 const PROFILE_PREUVE_PAIEMENT = 'international-payment-proof';
+const PROFILE_DOCUMENT_RESERVE = 'reserve-allocation-document';
 const PROFILS_SUPPRESSION_DOCUMENTAIRE = new Set([
   PROFILE_DOCUMENT_SOCIETE,
   PROFILE_CERTIFICAT_ANALYSE,
   PROFILE_DOCUMENT_EXPEDITION,
   PROFILE_DOCUMENT_PRODUCTION,
   PROFILE_DOCUMENT_FRET,
+  PROFILE_DOCUMENT_RESERVE,
 ]);
 
 const profiles: Record<string, ProfilGatewayUpload> = {
@@ -95,10 +101,17 @@ const profiles: Record<string, ProfilGatewayUpload> = {
     policy: POLITIQUE_PREUVE_PAIEMENT,
     parseMetadata: parseMetadonneesPreuvePaiement,
   },
+  [PROFILE_DOCUMENT_RESERVE]: {
+    policy: POLITIQUE_DOCUMENT_RESERVE,
+    parseMetadata: parseMetadonneesDocumentReserve,
+  },
 };
 
 async function sha256Hex(octets: Uint8Array): Promise<string> {
-  const empreinte = await crypto.subtle.digest('SHA-256', octets);
+  // Deno 2 distingue ArrayBuffer de SharedArrayBuffer dans WebCrypto.
+  const copie = new Uint8Array(octets.byteLength);
+  copie.set(octets);
+  const empreinte = await crypto.subtle.digest('SHA-256', copie.buffer);
   return Array.from(new Uint8Array(empreinte), (octet) => octet.toString(16).padStart(2, '0')).join('');
 }
 
@@ -306,6 +319,35 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
           : { allowed: false, status: 403 };
       }
 
+      if (profileId === PROFILE_DOCUMENT_RESERVE) {
+        const document = metadata as MetadonneesDocumentReserve;
+        const [session, permission, brouillon] = await Promise.all([
+          clientActeur.rpc('snp_session_signaler_activite'),
+          clientActeur.rpc('snp_reserve_permission_allowed', {
+            p_permission: 'reserve.allocations.edit',
+          }),
+          clientActeur.rpc('snp_reserve_draft_owned_or_owner', {
+            p_allocation_id: document.allocationId,
+          }),
+        ]);
+        if (session.error || permission.error || brouillon.error) {
+          return { allowed: false, status: 503 };
+        }
+        const autorisation = autoriserDocumentWorkflow({
+          actorId: utilisateur.id,
+          parentId: document.allocationId,
+          tenantId: document.allocationId,
+          activeSession: (session.data as { is_active?: unknown } | null)?.is_active === true,
+          aal2: niveauAssurance(token) === 'aal2',
+          parentExists: brouillon.data === true,
+          parentPermission: permission.data === true,
+          hasWriteCapability: permission.data === true,
+        });
+        return autorisation
+          ? { allowed: true, ...autorisation }
+          : { allowed: false, status: 403 };
+      }
+
       if (profileId === PROFILE_PREUVE_PAIEMENT) {
         const preuve = metadata as MetadonneesPreuvePaiement;
         const [session, capacite, paiement] = await Promise.all([
@@ -355,8 +397,8 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
             && paiement.data.customer_id === vente.data.customer_id,
           sellerIsActiveSonasp: vente.data.seller_type === 'sonasp'
             && vendeur.data?.id === vente.data.seller_id
-            && vendeur.data.is_active === true
-            && vendeur.data.code?.toUpperCase() === 'SONASP',
+            && vendeur.data?.is_active === true
+            && vendeur.data?.code?.toUpperCase() === 'SONASP',
         });
         return autorisation
           ? { allowed: true, ...autorisation }
@@ -374,7 +416,9 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         ? (input.metadata as MetadonneesDocumentExpedition).shippingPreparationId
         : input.profileId === PROFILE_DOCUMENT_PRODUCTION
           ? (input.metadata as MetadonneesDocumentProduction).productionId
-          : null;
+          : input.profileId === PROFILE_DOCUMENT_RESERVE
+            ? (input.metadata as MetadonneesDocumentReserve).allocationId
+            : null;
       const operationFretId = input.profileId === PROFILE_DOCUMENT_FRET
         ? (input.metadata as MetadonneesDocumentFret).operationId
         : null;
@@ -422,6 +466,11 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
                     bucket: BUCKET_PREUVE_PAIEMENT,
                     table: 'rpc:snp_paiement_preuve_rattacher',
                   }
+                  : input.profileId === PROFILE_DOCUMENT_RESERVE
+                    ? {
+                      bucket: BUCKET_DOCUMENT_RESERVE,
+                      table: 'rpc:snp_register_reserve_document',
+                    }
           : null;
       if (!profilPersistance) throw new Error('unknown_upload_profile');
       if (
@@ -462,6 +511,26 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         if (
           cible.error || cible.data?.mining_company_id !== input.tenantId
           || cible.data.status === 'shipped_to_refinery'
+        ) throw new Error('tenant_mismatch');
+      }
+      if (input.profileId === PROFILE_DOCUMENT_RESERVE) {
+        const metadata = input.metadata as MetadonneesDocumentReserve;
+        const clientActeur = createClient(urlSupabase, cleAnonyme, {
+          auth: { autoRefreshToken: false, persistSession: false },
+          global: { headers: { Authorization: `Bearer ${input.token}` } },
+        });
+        const [permission, brouillon] = await Promise.all([
+          clientActeur.rpc('snp_reserve_permission_allowed', {
+            p_permission: 'reserve.allocations.edit',
+          }),
+          clientActeur.rpc('snp_reserve_draft_owned_or_owner', {
+            p_allocation_id: metadata.allocationId,
+          }),
+        ]);
+        if (
+          permission.error || brouillon.error
+          || permission.data !== true || brouillon.data !== true
+          || input.tenantId !== metadata.allocationId
         ) throw new Error('tenant_mismatch');
       }
 
@@ -618,6 +687,30 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
           });
           ressource = resultat.data as Record<string, unknown> | null;
           erreurRessource = resultat.error;
+        } else if (input.profileId === PROFILE_DOCUMENT_RESERVE) {
+          const metadata = input.metadata as MetadonneesDocumentReserve;
+          const resultat = await admin.rpc('snp_register_reserve_document_gateway', {
+            p_allocation_id: metadata.allocationId,
+            p_document_type: metadata.documentType,
+            p_file_name: input.file.safeFileName,
+            p_storage_path: chemin,
+            p_mime_type: input.file.mimeType,
+            p_size_bytes: input.bytes.byteLength,
+            p_actor_id: input.actorId,
+          });
+          if (!resultat.error && typeof resultat.data === 'string') {
+            const confirmation = await admin.from('reserve_allocation_documents')
+              .select('id,allocation_id,document_type,file_name,storage_path,mime_type,size_bytes,uploaded_by,uploaded_at')
+              .eq('id', resultat.data)
+              .eq('allocation_id', metadata.allocationId)
+              .eq('storage_path', chemin)
+              .maybeSingle();
+            ressource = confirmation.data as Record<string, unknown> | null;
+            erreurRessource = confirmation.error;
+          } else {
+            ressource = null;
+            erreurRessource = resultat.error ?? new Error('reserve_document_confirmation_failed');
+          }
         } else if (input.profileId === PROFILE_PREUVE_PAIEMENT) {
           const metadata = input.metadata as MetadonneesPreuvePaiement;
           const clientActeur = createClient(urlSupabase, cleAnonyme, {
@@ -736,6 +829,102 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         auth: { autoRefreshToken: false, persistSession: false },
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
+      if (profileId === PROFILE_DOCUMENT_RESERVE) {
+        const document = await admin.from('reserve_allocation_documents')
+          .select('id,allocation_id,storage_path,file_name,size_bytes,mime_type,deleted_at')
+          .eq('id', resourceId)
+          .maybeSingle();
+        if (document.error || !document.data || document.data.deleted_at) {
+          throw new Error('delete_not_allowed');
+        }
+        const [session, permission, brouillon] = await Promise.all([
+          clientActeur.rpc('snp_session_signaler_activite'),
+          clientActeur.rpc('snp_reserve_permission_allowed', {
+            p_permission: 'reserve.allocations.edit',
+          }),
+          clientActeur.rpc('snp_reserve_draft_owned_or_owner', {
+            p_allocation_id: document.data.allocation_id,
+          }),
+        ]);
+        if (
+          session.error || permission.error || brouillon.error
+          || (session.data as { is_active?: unknown } | null)?.is_active !== true
+          || permission.data !== true || brouillon.data !== true
+        ) throw new Error('delete_not_allowed');
+        const chemin = document.data.storage_path;
+        const segments = typeof chemin === 'string' ? chemin.split('/') : [];
+        if (
+          typeof chemin !== 'string'
+          || segments.length !== 5 || segments[0] !== document.data.allocation_id
+          || segments[1] !== 'format-validated' || segments.some((segment) => segment.includes('\\'))
+          || typeof document.data.file_name !== 'string'
+          || typeof document.data.mime_type !== 'string'
+          || !Number.isSafeInteger(document.data.size_bytes)
+          || document.data.size_bytes <= 0
+          || document.data.size_bytes > POLITIQUE_DOCUMENT_RESERVE.maxBytes
+        ) throw new Error('delete_not_allowed');
+        const reserveMimeType = document.data.mime_type;
+        const sauvegarde = await admin.storage.from(BUCKET_DOCUMENT_RESERVE).download(chemin);
+        if (sauvegarde.error || !sauvegarde.data) throw new Error('storage_backup_failed');
+        const octets = new Uint8Array(await sauvegarde.data.arrayBuffer());
+        if (octets.byteLength !== document.data.size_bytes) throw new Error('storage_backup_failed');
+        validerUploadServeur({
+          fileName: document.data.file_name,
+          declaredMimeType: document.data.mime_type,
+          bytes: octets,
+        }, POLITIQUE_DOCUMENT_RESERVE);
+        const auditAutorisation = await admin.from('security_events').insert({
+          user_id: utilisateur.id,
+          event_type: 'sensitive_upload_delete_authorized',
+          details: {
+            profile: profileId,
+            tenant_id: document.data.allocation_id,
+            parent_id: document.data.allocation_id,
+            resource_id: resourceId,
+          },
+        });
+        if (auditAutorisation.error) throw new Error('delete_audit_unavailable');
+        await supprimerObjetAvecCompensation({
+          expectedPath: chemin,
+          async removeObject() {
+            const resultat = await admin.storage.from(BUCKET_DOCUMENT_RESERVE).remove([chemin]);
+            if (resultat.error) throw new Error('storage_delete_failed');
+          },
+          async deleteMetadata() {
+            const resultat = await admin.rpc('snp_delete_reserve_document_gateway', {
+              p_document_id: resourceId,
+              p_actor_id: utilisateur.id,
+            });
+            if (resultat.error || resultat.data !== chemin) throw new Error('metadata_delete_failed');
+            return resultat.data;
+          },
+          async restoreObject() {
+            const resultat = await admin.storage.from(BUCKET_DOCUMENT_RESERVE).upload(chemin, octets, {
+              contentType: reserveMimeType,
+              cacheControl: '0',
+              upsert: false,
+            });
+            if (resultat.error) throw new Error('storage_restore_failed');
+          },
+          onRestoreFailure() {
+            console.error('[sensitive-upload] Restauration compensatoire réserve échouée.');
+          },
+        });
+        try {
+          await admin.from('security_events').insert({
+            user_id: utilisateur.id,
+            event_type: 'sensitive_upload_deleted',
+            details: {
+              profile: profileId,
+              tenant_id: document.data.allocation_id,
+              resource_id: resourceId,
+            },
+          });
+        } catch {
+          console.error('[sensitive-upload] Audit secondaire de suppression réserve indisponible.');
+        }
+        return;
+      }
       if (profileId === PROFILE_DOCUMENT_FRET) {
       const document = await admin.from('freight_customs_documents')
         .select('id, freight_customs_operation_id, file_path, file_name, file_size, mime_type')
@@ -773,6 +962,7 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         || segments.length !== 3 || segments[0] !== 'freight-customs'
         || segments[1] !== operation.data.id || segments[2].includes('\\')
       ) throw new Error('delete_not_allowed');
+      const fretMimeType = document.data.mime_type;
       const sauvegarde = await admin.storage.from(BUCKET_DOCUMENT_FRET).download(chemin);
       if (sauvegarde.error || !sauvegarde.data) throw new Error('storage_backup_failed');
       const octets = new Uint8Array(await sauvegarde.data.arrayBuffer());
@@ -812,7 +1002,7 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         },
         async restoreObject() {
           const resultat = await admin.storage.from(BUCKET_DOCUMENT_FRET).upload(chemin, octets, {
-            contentType: document.data.mime_type,
+            contentType: fretMimeType,
             cacheControl: '0',
             upsert: false,
           });
@@ -1066,7 +1256,7 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
             .select(pathField)
             .maybeSingle();
           if (resultat.error || !resultat.data) throw new Error('metadata_delete_failed');
-          const deletedReference = (resultat.data as Record<string, unknown>)[pathField];
+          const deletedReference = (resultat.data as unknown as Record<string, unknown>)[pathField];
           const deletedPath = cheminObjetLieAuParent(deletedReference, bucket, parentId);
           if (!deletedPath) throw new Error('metadata_delete_failed');
           return deletedPath;

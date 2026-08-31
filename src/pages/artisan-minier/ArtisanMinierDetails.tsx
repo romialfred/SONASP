@@ -33,6 +33,7 @@ import {
   StatGrid,
   type BadgeTone,
   type Column,
+  type StatItem,
 } from '@/components/ui/sn';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
@@ -42,6 +43,7 @@ import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisa
 import { artisanInfractionsService, type ArtisanInfraction } from '@/services/artisanInfractionsService';
 import { useAuth } from '@/contexts/AuthContext';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
+import { normaliserArtisan } from './artisanRow';
 import './artisan-details.css';
 
 type Onglet = 'informations' | 'carte' | 'transactions' | 'infractions';
@@ -91,7 +93,7 @@ const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maxim
 
 const formatFcfa = (value?: number) => `${integer.format(Math.round(value || 0))} FCFA`;
 
-const formatDate = (value?: string) => {
+const formatDate = (value?: string | null) => {
   if (!value) return '—';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
@@ -141,7 +143,7 @@ export default function ArtisanMinierDetails() {
       if (!mounted) return;
 
       if (artisanResult.status === 'fulfilled' && artisanResult.value) {
-        setArtisan(artisanResult.value as ArtisanMinier);
+        setArtisan(normaliserArtisan(artisanResult.value));
       } else {
         setArtisan(null);
         showError("Impossible de charger le dossier de l'artisan");
@@ -171,6 +173,8 @@ export default function ArtisanMinierDetails() {
     }),
     [infractions, ventes]
   );
+
+  const infractionTone: StatItem['tone'] = totaux.infractionsOuvertes > 0 ? 'red' : 'violet';
 
   const ventesFiltrees = useMemo(() => {
     const query = rechercheVente.trim().toLocaleLowerCase('fr');
@@ -335,7 +339,7 @@ export default function ArtisanMinierDetails() {
               { label: 'Ventes déclarées', value: integer.format(ventes.length), icon: Coins, tone: 'gold' },
               { label: 'Quantité collectée', value: `${decimal.format(totaux.quantite)} g`, icon: Scale, tone: 'green' },
               { label: "Chiffre d'affaires", value: formatFcfa(totaux.montant), icon: Banknote, tone: 'blue' },
-              ...(isCollector ? [] : [{ label: 'Infractions', value: integer.format(infractions.length), hint: `${integer.format(totaux.infractionsOuvertes)} en cours`, icon: AlertTriangle, tone: (totaux.infractionsOuvertes > 0 ? 'red' : 'violet') as const }]),
+              ...(isCollector ? [] : [{ label: 'Infractions', value: integer.format(infractions.length), hint: `${integer.format(totaux.infractionsOuvertes)} en cours`, icon: AlertTriangle, tone: infractionTone }]),
             ]}
           />
         </div>

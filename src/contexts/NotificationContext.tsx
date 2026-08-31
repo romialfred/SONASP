@@ -9,6 +9,12 @@ interface NotificationOptions {
 }
 
 interface NotificationContextType {
+  showNotification: (
+    type: 'success' | 'error' | 'warning' | 'info',
+    titleOrMessage: string,
+    message?: string | ReactNode,
+    options?: NotificationOptions,
+  ) => void;
   showSuccess: (title: string, message: string | ReactNode, options?: NotificationOptions) => void;
   showError: (title: string, message: string | ReactNode, options?: NotificationOptions) => void;
   showWarning: (title: string, message: string | ReactNode, options?: NotificationOptions) => void;
@@ -37,15 +43,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const showNotification = (
     type: 'success' | 'error' | 'warning' | 'info',
-    title: string,
-    message: string | ReactNode,
+    titleOrMessage: string,
+    message?: string | ReactNode,
     options?: NotificationOptions
   ) => {
+    const defaultTitles = {
+      success: 'Succès',
+      error: 'Erreur',
+      warning: 'Attention',
+      info: 'Information',
+    } as const;
     setNotification({
       isOpen: true,
       type,
-      title,
-      message,
+      title: message === undefined ? defaultTitles[type] : titleOrMessage,
+      message: message === undefined ? titleOrMessage : message,
       ...options,
     });
   };
@@ -69,6 +81,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   return (
     <NotificationContext.Provider
       value={{
+        showNotification,
         showSuccess,
         showError,
         showWarning,

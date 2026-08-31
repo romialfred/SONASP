@@ -4,6 +4,7 @@ import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLa
 import { DataTable, Note, PageHeader, type Column } from '@/components/ui/sn';
 import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { normaliserArtisan } from '@/pages/artisan-minier/artisanRow';
 
 interface CollectorDocument {
   id: string;
@@ -39,14 +40,17 @@ export default function CollectorDocumentsPage() {
     try {
       const allowed = new Set(workspace.assignedArtisanIds);
       const artisans = (await artisanMinierService.getAll()).filter((artisan) => allowed.has(artisan.id));
-      const rows = await Promise.all(artisans.map(async (artisan) => ({ artisan, documents: await artisanMinierService.getDocuments(artisan.id) || [] })));
-      setDocuments(rows.flatMap(({ artisan, documents: items }) => items.map((item: any) => ({
-        id: String(item.id), artisanName: nameOf(artisan), type: item.type_document || 'document',
-        name: item.nom_fichier || item.nom_document || 'Document',
+      const rows = await Promise.all(artisans.map(async (row) => ({
+        artisan: normaliserArtisan(row),
+        documents: await artisanMinierService.getDocuments(row.id) || [],
+      })));
+      setDocuments(rows.flatMap(({ artisan, documents: items }) => items.map((item) => ({
+        id: item.id, artisanName: nameOf(artisan), type: item.type_document || 'document',
+        name: item.nom_fichier || 'Document',
         // Le schéma historique conserve généralement un chemin de stockage. Sans
         // RPC de signature, seul un lien absolu déjà délivré peut être ouvert.
-        url: safeDocumentUrl(item.chemin_fichier || item.document_url),
-        uploadedAt: item.uploaded_at || item.created_at || null,
+        url: safeDocumentUrl(item.chemin_fichier),
+        uploadedAt: item.uploaded_at || null,
       }))));
     } catch { setDocuments([]); setError('Les documents autorisés sont momentanément indisponibles.'); }
     finally { setLoading(false); }

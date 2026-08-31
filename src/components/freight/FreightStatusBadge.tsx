@@ -1,14 +1,17 @@
 import { Package, CheckCircle, Truck, Plane } from 'lucide-react';
-import { FreightCustomsStatus } from '@/services/freightCustomsService';
+import type { FreightCustomsStatus } from '@/services/freightCustomsService';
+import type { FreightShipmentStatus } from '@/services/freightShipmentService';
+
+export type FreightStatus = FreightCustomsStatus | FreightShipmentStatus;
 
 interface FreightStatusBadgeProps {
-  status: FreightCustomsStatus;
+  status: FreightStatus;
   size?: 'sm' | 'md' | 'lg';
   showIcon?: boolean;
 }
 
 export function FreightStatusBadge({ status, size = 'md', showIcon = true }: FreightStatusBadgeProps) {
-  const getStatusConfig = (status: FreightCustomsStatus | string) => {
+  const getStatusConfig = (status: FreightStatus) => {
     switch (status) {
       case 'customs_pending':
         return {

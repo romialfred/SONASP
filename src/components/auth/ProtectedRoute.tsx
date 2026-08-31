@@ -212,7 +212,12 @@ export function ProtectedRoute({
     );
   }
 
-  const roleAutorise = !allowedRoles
+  const ownerHasGlobalAccess = hasGlobalPlatformAccess(user);
+  const administratorHasModuleAccess = hasAdministrativePlatformAccess(user)
+    && registryDecision.allowed;
+  const roleAutorise = ownerHasGlobalAccess
+    || administratorHasModuleAccess
+    || !allowedRoles
     || allowedRoles.includes(user.role)
     || (isMineScopedUser(user) && allowedRoles.includes('mine'));
   const perimetreAdministrateurAutorise = Boolean(
@@ -222,7 +227,6 @@ export function ProtectedRoute({
   );
   if (
     allowedRoles
-    && !hasGlobalPlatformAccess(user)
     && !perimetreAdministrateurAutorise
     && !roleAutorise
   ) {
@@ -259,16 +263,24 @@ export function ProtectedRoute({
     );
   }
 
-  const missingPermission = Boolean(requiredPermission && !hasPermission(user, requiredPermission));
+  const missingPermission = Boolean(
+    !ownerHasGlobalAccess
+    && !administratorHasModuleAccess
+    && requiredPermission
+    && !hasPermission(user, requiredPermission),
+  );
   const missingCapability = Boolean(
-    (!registryDecision.allowed && registryDecision.reason === 'capability')
-    || (
-      requiredAnyCapabilities?.length
-      && !hasAnyCapability(user, requiredAnyCapabilities)
-    )
-    || Boolean(
-      requiredSensitiveCapability
-      && !hasSensitiveCapability(user, requiredSensitiveCapability)
+    !ownerHasGlobalAccess
+    && (
+      (!registryDecision.allowed && registryDecision.reason === 'capability')
+      || (
+        requiredAnyCapabilities?.length
+        && !hasAnyCapability(user, requiredAnyCapabilities)
+      )
+      || Boolean(
+        requiredSensitiveCapability
+        && !hasSensitiveCapability(user, requiredSensitiveCapability)
+      )
     ),
   );
 

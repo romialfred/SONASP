@@ -1,6 +1,12 @@
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 import type { Affectation } from './tracabiliteVenteService';
+
+const invokeExportSaleRpc = supabase.rpc as unknown as (
+  functionName: 'snp_creer_vente_export_idempotent',
+  parameters: Record<string, unknown>,
+) => PromiseLike<PostgrestSingleResponse<unknown>>;
 
 export interface CreateExportSaleInput {
   customerId: string;
@@ -12,6 +18,8 @@ export interface CreateExportSaleInput {
   mechanismType?: string;
   inProcessRefineryId?: string;
   lots: Affectation[];
+  /** Clé stable à réutiliser lors d'une relance réseau du même ordre. */
+  idempotencyKey?: string;
 }
 
 export interface CreatedExportSale {
@@ -25,7 +33,8 @@ export async function createExportSale(
   input: CreateExportSaleInput
 ): Promise<{ success: boolean; data?: CreatedExportSale; error?: string }> {
   try {
-    const { data, error } = await supabase.rpc('snp_creer_vente_export', {
+    const { data, error } = await invokeExportSaleRpc('snp_creer_vente_export_idempotent', {
+      p_idempotency_key: input.idempotencyKey ?? crypto.randomUUID(),
       p_customer_id: input.customerId,
       p_seller_id: input.sellerId,
       p_quantity_oz: input.quantityOz,

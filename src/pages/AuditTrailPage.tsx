@@ -96,7 +96,9 @@ export function AuditTrailPage() {
     }
   };
 
-  const uniqueUsers = Array.from(new Set(auditLogs.map(log => log.user_email).filter(Boolean)));
+  const uniqueUsers = Array.from(
+    new Set(auditLogs.map(log => log.user_email).filter((email): email is string => Boolean(email)))
+  );
   const uniqueActions = Array.from(new Set(auditLogs.map(log => log.action)));
 
   return (
@@ -122,7 +124,7 @@ export function AuditTrailPage() {
               <p className="text-2xl font-bold text-gray-900">
                 {auditLogs.filter(log => {
                   const today = new Date().toDateString();
-                  return new Date(log.created_at).toDateString() === today;
+                  return log.created_at ? new Date(log.created_at).toDateString() === today : false;
                 }).length}
               </p>
             </CardContent>
@@ -214,7 +216,7 @@ export function AuditTrailPage() {
                     {filteredLogs.map(log => (
                       <tr key={log.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {new Date(log.created_at).toLocaleString()}
+                          {log.created_at ? new Date(log.created_at).toLocaleString('fr-FR') : '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="font-medium text-gray-900">
@@ -236,8 +238,8 @@ export function AuditTrailPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(log.status)}`}>
-                            {formatStatusFr(log.status)}
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(log.status ?? 'unknown')}`}>
+                            {formatStatusFr(log.status ?? 'unknown')}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title={log.details}>

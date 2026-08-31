@@ -1,0 +1,417 @@
+{
+  "at": "2026-08-30T23:08:57.514Z",
+  "site": "https://sonasp.data-univers.com",
+  "deploymentId": "dpl_BHgY3cssVueQ86YtsSHrUddCSE2U",
+  "buildId": "f37a3f7f2c3a-mtge6ddc",
+  "sourceHash": "f37a3f7f2c3a8094fb726ae15ec826f7f0045122b5da9401cae24326f3916a5d",
+  "backup": "C:/Users/romia/.codex/backups/sonasp/release-20260830T2213",
+  "sql": {
+    "project": "yyverzuhkdonjjuficor",
+    "mode": "apply",
+    "at": "2026-08-30T22:55:39.875Z",
+    "migrations": [
+      {
+        "name": "20260827203000_integrite_ventes_or_artisanales.sql",
+        "checksum": "4142e0b5eaabff2ff4712cafd3234c775cb3e2a2e13a71f9aa4761c2b58925ec"
+      },
+      {
+        "name": "20260829204000_durcir_grand_livre_stock_reserve.sql",
+        "checksum": "0390b9129138b5f2f0de7a13b9397f070ba4bb6b7e66a4d4cdb798b530b6e760"
+      },
+      {
+        "name": "20260829213000_borner_portails_fiscaux_dgi_dgmg.sql",
+        "checksum": "0991681925259b7821b86fe21c329c22fe1e69f469f140e5fadc0b68a47c9e09"
+      },
+      {
+        "name": "20260830110000_retablir_reponse_demande_portail_mine.sql",
+        "checksum": "d3957f39337a858086432c93cdd86de10b664c65ac4341684d1bc8e48023c4ae"
+      },
+      {
+        "name": "20260830120000_fiabiliser_conciliation_expeditions_et_impacts.sql",
+        "checksum": "c65b28e4293bdd525ef39e91e10c63e09c7c92422ba60873629538e410246f83"
+      },
+      {
+        "name": "20260830171500_exiger_session_active_lecture_ventes.sql",
+        "checksum": "3fea09f6800c08d7c49bdac3ef26b03c79a89300f0374f64d0bce68d3b103332"
+      },
+      {
+        "name": "20260830222700_completer_socle_workflows_sans_regression_iam.sql",
+        "checksum": "0a155bfe406675330ac420923586ac0443fc3c6d6218860e5b0a7f8a38d816c5"
+      }
+    ],
+    "result": [
+      {
+        "validation": {
+          "mode": "apply",
+          "owner_admin_unchanged": true,
+          "physical_assets_unchanged": true,
+          "protected_tables": 195
+        }
+      }
+    ],
+    "after": {
+      "functions": [
+        {
+          "hash": "0d41f94381ed32b6631cd05e4b3da4b1",
+          "signature": "snp_actor_has_capability(text)"
+        },
+        {
+          "hash": "c7420dd54ed75d73cdd649e017b3ee50",
+          "signature": "snp_configurer_acces_compte(uuid,text,text,text,boolean,uuid,uuid,uuid,jsonb,jsonb)"
+        },
+        {
+          "hash": "682c9222031df5432e49b36c24c2f977",
+          "signature": "snp_user_permission_allowed(uuid,uuid,text)"
+        },
+        {
+          "hash": "e6066a676bb87b311f177b4057285aea",
+          "signature": "snp_validate_responsibilities(text,jsonb)"
+        }
+      ],
+      "owner_active": true,
+      "versions": [
+        "20260827203000",
+        "20260829204000",
+        "20260829213000",
+        "20260830110000",
+        "20260830120000",
+        "20260830171500",
+        "20260830222700"
+      ]
+    }
+  },
+  "services": [
+    {
+      "slug": "envoyer-courriel",
+      "version": 10,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "create-user",
+      "version": 8,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "get-users",
+      "version": 8,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "reset-user-password",
+      "version": 4,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "delete-user",
+      "version": 5,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "get-user-details",
+      "version": 3,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "manage-user-status",
+      "version": 3,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "sensitive-upload",
+      "version": 3,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "revoke-user-sessions",
+      "version": 3,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "activate-account",
+      "version": 1,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "public-assistance",
+      "version": 1,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "fetch-daily-fx-rates",
+      "version": 1,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "fetch-daily-lbma-prices",
+      "version": 1,
+      "status": "ACTIVE"
+    },
+    {
+      "slug": "scheduled-tasks",
+      "version": 1,
+      "status": "ACTIVE"
+    }
+  ],
+  "validations": {
+    "vitest": {
+      "files": 254,
+      "tests": 1980
+    },
+    "migrationTests": 10,
+    "sqlTests": [
+      {
+        "name": "iam_owner_administration_flow",
+        "assertions": 42
+      },
+      {
+        "name": "admin_module_permissions_flow",
+        "assertions": 18
+      },
+      {
+        "name": "comptoir_finance_habilitations",
+        "assertions": 28
+      },
+      {
+        "name": "account_creation_compensation",
+        "assertions": 13
+      },
+      {
+        "name": "interportal_iam_flow",
+        "assertions": 24
+      },
+      {
+        "name": "conciliation_evidence_impacts",
+        "assertions": 33
+      },
+      {
+        "name": "international_partial_payment_flow",
+        "assertions": 19
+      },
+      {
+        "name": "international_sales_scope",
+        "assertions": 19
+      },
+      {
+        "name": "account_deletion_dependencies",
+        "assertions": 15
+      },
+      {
+        "name": "access_control_matrix",
+        "assertions": 25
+      },
+      {
+        "name": "workflow_integrity_regression",
+        "assertions": 14
+      },
+      {
+        "name": "stock_reserve_integrity",
+        "assertions": 17
+      },
+      {
+        "name": "reserve_allocations_workflow",
+        "assertions": 34
+      },
+      {
+        "name": "institutional_fiscal_reserve_boundaries",
+        "assertions": 25
+      },
+      {
+        "name": "owner_module_continuity",
+        "assertions": 26
+      },
+      {
+        "name": "national_reserve_catalog",
+        "assertions": 9
+      }
+    ],
+    "sqlAssertions": 361,
+    "services": {
+      "at": "2026-08-30T23:03:02.507Z",
+      "results": [
+        {
+          "service": "create-user",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "delete-user",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "get-users",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "get-user-details",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "manage-user-status",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "reset-user-password",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "revoke-user-sessions",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "envoyer-courriel",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "sensitive-upload",
+          "test": "no-session-no-payload",
+          "status": 400
+        },
+        {
+          "service": "activate-account",
+          "test": "no-session-no-payload",
+          "status": 400
+        },
+        {
+          "service": "public-assistance",
+          "test": "no-session-no-payload",
+          "status": 422
+        },
+        {
+          "service": "fetch-daily-fx-rates",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "fetch-daily-lbma-prices",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "scheduled-tasks",
+          "test": "no-session-no-payload",
+          "status": 401
+        },
+        {
+          "service": "create-user",
+          "test": "allowed-preflight",
+          "status": 204
+        },
+        {
+          "service": "create-user",
+          "test": "forbidden-preflight",
+          "status": 403
+        },
+        {
+          "service": "get-users",
+          "test": "allowed-preflight",
+          "status": 204
+        },
+        {
+          "service": "get-users",
+          "test": "forbidden-preflight",
+          "status": 403
+        },
+        {
+          "service": "sensitive-upload",
+          "test": "allowed-preflight",
+          "status": 204
+        },
+        {
+          "service": "sensitive-upload",
+          "test": "forbidden-preflight",
+          "status": 403
+        },
+        {
+          "service": "activate-account",
+          "test": "allowed-preflight",
+          "status": 204
+        },
+        {
+          "service": "activate-account",
+          "test": "forbidden-preflight",
+          "status": 403
+        },
+        {
+          "service": "public-assistance",
+          "test": "allowed-preflight",
+          "status": 204
+        },
+        {
+          "service": "public-assistance",
+          "test": "forbidden-preflight",
+          "status": 403
+        }
+      ]
+    },
+    "frontend": {
+      "at": "2026-08-30T23:05:32.319Z",
+      "results": [
+        {
+          "test": "public-build",
+          "buildId": "f37a3f7f2c3a-mtge6ddc"
+        },
+        {
+          "test": "route-shell",
+          "route": "/",
+          "status": 200
+        },
+        {
+          "test": "route-shell",
+          "route": "/login",
+          "status": 200
+        },
+        {
+          "test": "route-shell",
+          "route": "/users/new",
+          "status": 200
+        },
+        {
+          "test": "route-shell",
+          "route": "/national-reserve/allocations",
+          "status": 200
+        },
+        {
+          "test": "route-shell",
+          "route": "/sales",
+          "status": 200
+        },
+        {
+          "test": "route-shell",
+          "route": "/payments",
+          "status": 200
+        },
+        {
+          "test": "route-shell",
+          "route": "/assistance",
+          "status": 200
+        },
+        {
+          "test": "entry-asset",
+          "asset": "/assets/index-Cc3enpQh.js",
+          "status": 200
+        },
+        {
+          "test": "entry-asset",
+          "asset": "/assets/index-knwTUZzg.css",
+          "status": 200
+        },
+        {
+          "test": "service-worker",
+          "status": 200
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "No real user invitation or SMTP delivery test.",
+    "No payment or business write used as an online smoke test.",
+    "Scheduled functions published; no cron enabled and CRON_SECRET remains unconfigured."
+  ]
+}

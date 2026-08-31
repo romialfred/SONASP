@@ -1850,6 +1850,286 @@
       "sha256": "eb308ad0ecf105c439474e36e9a94f8178f343bc2f1cf320754ed3f692421354"
     },
     {
+      "path": "supabase/migrations/20260827190000_securiser_lecture_conciliation_multitenant.sql",
+      "version": "20260827190000",
+      "description": "securiser_lecture_conciliation_multitenant",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6758,
+      "sha256": "bdaaf4846bba566374c72081a8fbc0b456bd1bf2a73ef340d4e1ccd6dd8506fc"
+    },
+    {
+      "path": "supabase/migrations/20260827203000_integrite_ventes_or_artisanales.sql",
+      "version": "20260827203000",
+      "description": "integrite_ventes_or_artisanales",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6214,
+      "sha256": "4142e0b5eaabff2ff4712cafd3234c775cb3e2a2e13a71f9aa4761c2b58925ec"
+    },
+    {
+      "path": "supabase/migrations/20260827230000_refonte_acces_institutionnels.sql",
+      "version": "20260827230000",
+      "description": "refonte_acces_institutionnels",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 45669,
+      "sha256": "f88cec35bf21b7cfbe6516f01101511e4b940e83314e55eed7a2b856957c5a43"
+    },
+    {
+      "path": "supabase/migrations/20260827231000_durcir_separation_fonctions_workflows.sql",
+      "version": "20260827231000",
+      "description": "durcir_separation_fonctions_workflows",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 7649,
+      "sha256": "891eccdb3318d8c82f2bdebb532de0a4c55b0021e097716c66eb622b8cfbffb1"
+    },
+    {
+      "path": "supabase/migrations/20260828004500_gestion_organisations_institutionnelles.sql",
+      "version": "20260828004500",
+      "description": "gestion_organisations_institutionnelles",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 11749,
+      "sha256": "dc07ae332a64f464592c0838869fd8764423f1105844ee4ca338961217dffbca"
+    },
+    {
+      "path": "supabase/migrations/20260828143000_unifier_catalogue_modules_et_reserve_nationale.sql",
+      "version": "20260828143000",
+      "description": "unifier_catalogue_modules_et_reserve_nationale",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 24150,
+      "sha256": "2744d51dd30059317b6302fd2d3f343a5d87edd05564d927eeb10dca82d14e8d"
+    },
+    {
+      "path": "supabase/migrations/20260828193000_reparer_administration_et_habilitations.sql",
+      "version": "20260828193000",
+      "description": "reparer_administration_et_habilitations",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 25660,
+      "sha256": "e1ba52f8ce8e78718ad9406aa3b2e2925e05a3e228813628305752e1ed57fdd8"
+    },
+    {
+      "path": "supabase/migrations/20260828220000_affectations_reserve_nationale.sql",
+      "version": "20260828220000",
+      "description": "affectations_reserve_nationale",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 33334,
+      "sha256": "fcccf079cb91e1052a98563e78c947b86dd16a5fe3ccd0f8a481c726fc503442"
+    },
+    {
+      "path": "supabase/migrations/20260828223000_journaliser_documents_reserve.sql",
+      "version": "20260828223000",
+      "description": "journaliser_documents_reserve",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3442,
+      "sha256": "911e59891665373d540da870b81b132397e5a19cbf1ee36ed7eceea13c6bbcc3"
+    },
+    {
+      "path": "supabase/migrations/20260828224500_borner_acces_reserve_nationale.sql",
+      "version": "20260828224500",
+      "description": "borner_acces_reserve_nationale",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 371,
+      "sha256": "d1ac1bd8f500f0af3ff6da916988295c6e3db1769153c89e94b271ac928eb6b7"
+    },
+    {
+      "path": "supabase/migrations/20260828225000_verrouiller_brouillons_reserve.sql",
+      "version": "20260828225000",
+      "description": "verrouiller_brouillons_reserve",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6060,
+      "sha256": "eef8bfb2d791c1b50e54652cd6fb0c7bc4ba9e70157367c9867a41f6032f6ae6"
+    },
+    {
+      "path": "supabase/migrations/20260828225500_preserver_mouvements_stock_reserve.sql",
+      "version": "20260828225500",
+      "description": "preserver_mouvements_stock_reserve",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1503,
+      "sha256": "69ab2bc9f99b16fad7f213009b3ab19d3ef5e15db893d5f8687e85b4fe57970c"
+    },
+    {
+      "path": "supabase/migrations/20260828230000_autoriser_helpers_reserve.sql",
+      "version": "20260828230000",
+      "description": "autoriser_helpers_reserve",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 425,
+      "sha256": "7cdd2994f2b2c446407921eb6438ed828871a72e1b6757bf5421e2064f460505"
+    },
+    {
+      "path": "supabase/migrations/20260828230500_horodater_valorisation_reserve.sql",
+      "version": "20260828230500",
+      "description": "horodater_valorisation_reserve",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 815,
+      "sha256": "d884c71cb8726dd1a872cd1470d2fa9490a399008915519ffcdd0ac25f2bf9c7"
+    },
+    {
+      "path": "supabase/migrations/20260829103000_durcir_iam_modules_et_mfa.sql",
+      "version": "20260829103000",
+      "description": "durcir_iam_modules_et_mfa",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 40097,
+      "sha256": "1b69d619518214d05a9666422ff4b624748a3633920db24e8d3c690404439115"
+    },
+    {
+      "path": "supabase/migrations/20260829104000_durcir_workflows_stock_et_sources.sql",
+      "version": "20260829104000",
+      "description": "durcir_workflows_stock_et_sources",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 30182,
+      "sha256": "6c752ed8e21f6924d722b63754463ddc24530c3fbe4b214105f03369e5dfa231"
+    },
+    {
+      "path": "supabase/migrations/20260829203000_separer_stock_et_reserve_nationale.sql",
+      "version": "20260829203000",
+      "description": "separer_stock_et_reserve_nationale",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 7910,
+      "sha256": "99a4e7800414645646395d416e2e2cb6d532b0468d81d6551c717328442bc385"
+    },
+    {
+      "path": "supabase/migrations/20260829204000_durcir_grand_livre_stock_reserve.sql",
+      "version": "20260829204000",
+      "description": "durcir_grand_livre_stock_reserve",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 37487,
+      "sha256": "0390b9129138b5f2f0de7a13b9397f070ba4bb6b7e66a4d4cdb798b530b6e760"
+    },
+    {
+      "path": "supabase/migrations/20260829213000_borner_portails_fiscaux_dgi_dgmg.sql",
+      "version": "20260829213000",
+      "description": "borner_portails_fiscaux_dgi_dgmg",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 17879,
+      "sha256": "0991681925259b7821b86fe21c329c22fe1e69f469f140e5fadc0b68a47c9e09"
+    },
+    {
+      "path": "supabase/migrations/20260830070000_acces_owner_et_audit_modules.sql",
+      "version": "20260830070000",
+      "description": "acces_owner_et_audit_modules",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 12100,
+      "sha256": "6b1e3d5b7f430a09fa7d365f17381ff6900ebbc69bd776c3c3fef965f352ee8b"
+    },
+    {
+      "path": "supabase/migrations/20260830103000_securiser_administration_owner_et_profils.sql",
+      "version": "20260830103000",
+      "description": "securiser_administration_owner_et_profils",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 23855,
+      "sha256": "28240be9013eb9b22042253c91c613b09745887a367ba5cfdde6ad7098cfdc47"
+    },
+    {
+      "path": "supabase/migrations/20260830110000_retablir_reponse_demande_portail_mine.sql",
+      "version": "20260830110000",
+      "description": "retablir_reponse_demande_portail_mine",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 10331,
+      "sha256": "d3957f39337a858086432c93cdd86de10b664c65ac4341684d1bc8e48023c4ae"
+    },
+    {
+      "path": "supabase/migrations/20260830111500_raccorder_habilitations_financieres_comptoir.sql",
+      "version": "20260830111500",
+      "description": "raccorder_habilitations_financieres_comptoir",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 18596,
+      "sha256": "25b0a540f504a3cffc4f9b4b8ee4e85ca721e83bbe2f8bb32f9f1585e7eda445"
+    },
+    {
+      "path": "supabase/migrations/20260830120000_fiabiliser_conciliation_expeditions_et_impacts.sql",
+      "version": "20260830120000",
+      "description": "fiabiliser_conciliation_expeditions_et_impacts",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 34537,
+      "sha256": "c65b28e4293bdd525ef39e91e10c63e09c7c92422ba60873629538e410246f83"
+    },
+    {
+      "path": "supabase/migrations/20260830160000_habilitations_administrateur_configurables.sql",
+      "version": "20260830160000",
+      "description": "habilitations_administrateur_configurables",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 5277,
+      "sha256": "2673c5318b1fd02431ed1bb9b67f99913db3284f23edb4377f6a281a4b80f383"
+    },
+    {
+      "path": "supabase/migrations/20260830170000_reparer_controles_suppression_comptes.sql",
+      "version": "20260830170000",
+      "description": "reparer_controles_suppression_comptes",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6280,
+      "sha256": "a41af8da8c9773fb8e4aa2e3fba3dac7bd529684ab1c31f7170473f86354204b"
+    },
+    {
+      "path": "supabase/migrations/20260830171500_exiger_session_active_lecture_ventes.sql",
+      "version": "20260830171500",
+      "description": "exiger_session_active_lecture_ventes",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1801,
+      "sha256": "3fea09f6800c08d7c49bdac3ef26b03c79a89300f0374f64d0bce68d3b103332"
+    },
+    {
+      "path": "supabase/migrations/20260830222700_completer_socle_workflows_sans_regression_iam.sql",
+      "version": "20260830222700",
+      "description": "completer_socle_workflows_sans_regression_iam",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 12523,
+      "sha256": "0a155bfe406675330ac420923586ac0443fc3c6d6218860e5b0a7f8a38d816c5"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -2843,10 +3123,10 @@
       },
       {
         "digits": 14,
-        "count": 88
+        "count": 116
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "722e7875421bf6e11f7038f9e1d3708102e84608de2419997dbfb096120819c0"
+  "catalogueSha256": "f30870f049a9746aa5ee67ff42dd9ed8be316bc53b08e65fc0a3212c7cfb6d2d"
 }

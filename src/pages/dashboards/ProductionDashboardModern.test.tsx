@@ -109,9 +109,9 @@ describe('ProductionDashboardModern', () => {
         { id: 'p2', production_date: aujourdhui, bullion_grams: 500, pure_gold_grams: 450, estimated_oz: 15, estimated_fineness_pct: 90, mining_company_id: 'c2' },
       ],
       shipping_preparations: [
-        { id: 's1', status: 'prepared', total_weight_oz: 20 },
-        { id: 's2', status: 'in_transit', total_weight_oz: 15 },
-        { id: 's3', status: 'prepared', total_weight_oz: 10 },
+        { id: 's1', status: 'waiting_for_customs_approval', total_weight_oz: 20 },
+        { id: 's2', status: 'ready_for_expedition', total_weight_oz: 15 },
+        { id: 's3', status: 'waiting_for_customs_approval', total_weight_oz: 10 },
       ],
     };
     mocks.from.mockImplementation((table: string) => stub(table));
@@ -126,9 +126,9 @@ describe('ProductionDashboardModern', () => {
     expect(indicateurs.getByText('Expéditions actives')).toBeInTheDocument();
     expect(indicateurs.getByText('3')).toBeInTheDocument();
 
-    expect(screen.getByText('Préparé')).toBeInTheDocument();
+    expect(screen.getByText('En attente de la douane')).toBeInTheDocument();
     expect(screen.getByText('(67 %)')).toBeInTheDocument();
-    expect(screen.getByText('En transit')).toBeInTheDocument();
+    expect(screen.getByText('Prêt pour expédition')).toBeInTheDocument();
   });
 
   it('filtre le graphique sur la compagnie sélectionnée', async () => {

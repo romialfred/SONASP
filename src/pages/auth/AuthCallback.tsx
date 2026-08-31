@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { getDefaultRoute } from '@/lib/permissions';
+import { isUserRole } from '@/lib/roleHierarchy';
 import { Loading } from '@/components/ui/Loading';
 
 export function AuthCallback() {
@@ -31,9 +32,9 @@ export function AuthCallback() {
             throw new Error('Votre profil autorisé est introuvable.');
           }
 
-          if (!profile.is_active) {
+          if (!profile.is_active || !isUserRole(profile.role)) {
             await supabase.auth.signOut();
-            throw new Error('Ce compte est désactivé. Contactez l’administrateur.');
+            throw new Error('Ce compte est désactivé ou son rôle est invalide. Contactez l’administrateur.');
           }
 
           // Navigate to the default route based on role

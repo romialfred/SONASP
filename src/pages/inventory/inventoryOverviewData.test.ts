@@ -21,6 +21,7 @@ const ligne = (over: Record<string, unknown> = {}) => ({
   quantity_available_oz: 60,
   quantity_allocated_oz: 30,
   quantity_sold_oz: 10,
+  quantity_national_reserve_oz: 0,
   ...over,
 });
 
@@ -105,7 +106,7 @@ describe('grouperParMine', () => {
     );
 
     expect(groupes.map((g) => g.nom)).toEqual(['Bissa Gold', 'Essakane SA']);
-    expect(groupes[1].totalOz).toBe(200);
+    expect(groupes[1].totalOz).toBe(180);
     expect(groupes[1].disponibleOz).toBe(120);
     expect(groupes[1].lignes).toBe(2);
   });
@@ -114,7 +115,7 @@ describe('grouperParMine', () => {
     // Les ignorer ferait mentir le total par mine face au total national.
     const groupes = grouperParMine([ligne({ mining_company_id: null })], societes);
     expect(groupes[0].nom).toBe('Sans société rattachée');
-    expect(groupes[0].totalOz).toBe(100);
+    expect(groupes[0].totalOz).toBe(90);
   });
 
   it('nomme les sociétés absentes du référentiel', () => {
@@ -125,9 +126,9 @@ describe('grouperParMine', () => {
 
 describe('venduNonPaye', () => {
   const ventes = [
-    { id: 'v1', quantity_oz: 100, total_amount: 1_000, currency: 'USD' },
-    { id: 'v2', quantity_oz: 50, total_amount: 500, currency: 'USD' },
-    { id: 'v3', quantity_oz: 25, total_amount: 250, currency: 'USD' },
+    { id: 'v1', quantity_oz: 100, total_amount: 1_000, currency: 'USD', status: 'sold' },
+    { id: 'v2', quantity_oz: 50, total_amount: 500, currency: 'USD', status: 'sold' },
+    { id: 'v3', quantity_oz: 25, total_amount: 250, currency: 'USD', status: 'sold' },
   ];
 
   it('écarte les ventes réglées', () => {
@@ -149,10 +150,17 @@ describe('venduNonPaye', () => {
 
   it('refuse d’additionner des devises différentes', () => {
     const resultat = venduNonPaye(
-      [ventes[0], { id: 'v4', quantity_oz: 10, total_amount: 100, currency: 'XOF' }],
+      [ventes[0], { id: 'v4', quantity_oz: 10, total_amount: 100, currency: 'XOF', status: 'sold' }],
       []
     );
     expect(resultat.devise).toBeNull();
+  });
+
+  it('ignore une vente annulée ou encore au brouillon', () => {
+    expect(venduNonPaye([
+      { id: 'draft', quantity_oz: 50, total_amount: 500, currency: 'USD', status: 'draft' },
+      { id: 'cancelled', quantity_oz: 50, total_amount: 500, currency: 'USD', status: 'cancelled' },
+    ], []).nombre).toBe(0);
   });
 });
 

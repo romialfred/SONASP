@@ -95,6 +95,11 @@ export interface AnalyseTeneur {
   mining_company?: { id: string; name: string } | null;
 }
 
+export type NouvelleAnalyseTeneur = Pick<
+  AnalyseTeneur,
+  'reference' | 'teneur_declaree_pct'
+> & Partial<Omit<AnalyseTeneur, 'id' | 'reference' | 'teneur_declaree_pct' | 'created_at' | 'updated_at' | 'mining_company'>>;
+
 export interface ResultatAnalyse {
   id: string;
   analyse_id: string;
@@ -170,7 +175,7 @@ export const analysesTeneurService = {
     return (lancerSiErreur(reponse) as AnalyseTeneur) || null;
   },
 
-  async ouvrir(analyse: Partial<AnalyseTeneur>): Promise<AnalyseTeneur> {
+  async ouvrir(analyse: NouvelleAnalyseTeneur): Promise<AnalyseTeneur> {
     const reponse = await supabase.from('snp_analyses_teneur').insert(analyse).select().single();
     return lancerSiErreur(reponse) as AnalyseTeneur;
   },

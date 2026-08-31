@@ -2596,6 +2596,7 @@ export type Database = {
           processing_location: string | null
           quantity_allocated_oz: number | null
           quantity_available_oz: number
+          quantity_national_reserve_oz: number
           quantity_sold_oz: number | null
           refinery_id: string | null
           refining_record_id: string | null
@@ -2623,6 +2624,7 @@ export type Database = {
           processing_location?: string | null
           quantity_allocated_oz?: number | null
           quantity_available_oz: number
+          quantity_national_reserve_oz?: number
           quantity_sold_oz?: number | null
           refinery_id?: string | null
           refining_record_id?: string | null
@@ -2650,6 +2652,7 @@ export type Database = {
           processing_location?: string | null
           quantity_allocated_oz?: number | null
           quantity_available_oz?: number
+          quantity_national_reserve_oz?: number
           quantity_sold_oz?: number | null
           refinery_id?: string | null
           refining_record_id?: string | null
@@ -3077,6 +3080,7 @@ export type Database = {
       }
       modules: {
         Row: {
+          access_domain: string | null
           category: string | null
           created_at: string | null
           description: string | null
@@ -3088,6 +3092,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          access_domain?: string | null
           category?: string | null
           created_at?: string | null
           description?: string | null
@@ -3099,6 +3104,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          access_domain?: string | null
           category?: string | null
           created_at?: string | null
           description?: string | null
@@ -10768,42 +10774,111 @@ export type Database = {
           },
         ]
       }
-      snp_organizations: {
+      snp_ministries: {
         Row: {
           code: string
           created_at: string
-          created_by: string | null
           id: string
           is_active: boolean
-          mining_company_id: string | null
           name: string
-          organization_type: string
-          source_artisan_id: string | null
           updated_at: string
         }
         Insert: {
           code: string
           created_at?: string
-          created_by?: string | null
           id?: string
           is_active?: boolean
-          mining_company_id?: string | null
           name: string
-          organization_type: string
-          source_artisan_id?: string | null
           updated_at?: string
         }
         Update: {
           code?: string
           created_at?: string
-          created_by?: string | null
           id?: string
           is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      snp_organizations: {
+        Row: {
+          address: string | null
+          administrative_region: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          legal_form: string | null
+          mining_company_id: string | null
+          name: string
+          notes: string | null
+          organization_subtype: string | null
+          organization_type: string
+          parent_organization_id: string | null
+          phone: string | null
+          scope_metadata: Json
+          service_code: string | null
+          short_name: string | null
+          source_artisan_id: string | null
+          supervising_ministry_id: string
+          updated_at: string
+          website: string | null
+          zone_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          administrative_region?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          legal_form?: string | null
+          mining_company_id?: string | null
+          name: string
+          notes?: string | null
+          organization_subtype?: string | null
+          organization_type: string
+          parent_organization_id?: string | null
+          phone?: string | null
+          scope_metadata?: Json
+          service_code?: string | null
+          short_name?: string | null
+          source_artisan_id?: string | null
+          supervising_ministry_id: string
+          updated_at?: string
+          website?: string | null
+          zone_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          administrative_region?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          legal_form?: string | null
           mining_company_id?: string | null
           name?: string
+          notes?: string | null
+          organization_subtype?: string | null
           organization_type?: string
+          parent_organization_id?: string | null
+          phone?: string | null
+          scope_metadata?: Json
+          service_code?: string | null
+          short_name?: string | null
           source_artisan_id?: string | null
+          supervising_ministry_id?: string
           updated_at?: string
+          website?: string | null
+          zone_code?: string | null
         }
         Relationships: [
           {
@@ -10814,10 +10889,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "snp_organizations_parent_organization_id_fkey"
+            columns: ["parent_organization_id"]
+            isOneToOne: false
+            referencedRelation: "snp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "snp_organizations_source_artisan_id_fkey"
             columns: ["source_artisan_id"]
             isOneToOne: false
             referencedRelation: "snp_artisans_miniers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_organizations_supervising_ministry_id_fkey"
+            columns: ["supervising_ministry_id"]
+            isOneToOne: false
+            referencedRelation: "snp_ministries"
             referencedColumns: ["id"]
           },
           {
@@ -14890,6 +14979,10 @@ export type Database = {
         Args: { p_artisan_id: string; p_comptoir_id: string }
         Returns: boolean
       }
+      snp_4i_can_read_payment_scope: {
+        Args: { p_artisan_id: string; p_comptoir_id: string | null }
+        Returns: boolean
+      }
       snp_4i_capability_for_scope: {
         Args: {
           p_comptoir_capability: string
@@ -15603,6 +15696,16 @@ export type Database = {
         Args: { p_idempotency_key: string; p_sale_id: string }
         Returns: Json
       }
+      snp_conciliation_impacts_fiscaux: {
+        Args: {
+          p_conciliation_id: string
+          p_ca_final?: number | null
+          p_or_fin_final_g?: number | null
+          p_prix_final?: number | null
+          p_date_fixing?: string | null
+        }
+        Returns: Json
+      }
       snp_conciliation_reserver: {
         Args: {
           p_aggregate_id: string
@@ -15938,6 +16041,56 @@ export type Database = {
       snp_definir_statut_compte: {
         Args: { p_actif: boolean; p_motif: string; p_utilisateur_id: string }
         Returns: undefined
+      }
+      snp_dgi_has_active_fiscal_scope: { Args: never; Returns: boolean }
+      snp_dgi_lister_paiements_fiscaux: {
+        Args: {
+          p_comptoir_organization_id?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          artisan_id: string
+          comptoir_organization_id: string | null
+          date_completion: string | null
+          date_paiement: string | null
+          date_validation: string | null
+          facture_id: string
+          id: string
+          montant_paye: number
+          montant_taxes_retenues: number
+          numero_facture: string | null
+          reference_paiement: string
+          statut: string
+          vente_or_id: string
+        }[]
+      }
+      snp_dgmg_can_validate_reserve_level_1: { Args: never; Returns: boolean }
+      snp_dgmg_lister_validations_reserve_level_1: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          allocation_date: string
+          decision_authority: string | null
+          decision_reference: string | null
+          depository_name: string | null
+          fine_weight_grams: number
+          gross_weight_grams: number
+          id: string
+          ingot_count: number
+          lot_count: number
+          reason: string | null
+          reference: string
+          status: string
+          submitted_at: string | null
+        }[]
+      }
+      snp_dgmg_transition_reserve_level_1: {
+        Args: {
+          p_allocation_id: string
+          p_comment?: string | null
+          p_target_status: string
+        }
+        Returns: string
       }
       snp_desactiver_configuration_courriel: {
         Args: { p_uid: string }
@@ -16850,6 +17003,34 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      snp_regle_fiscale_abroger: {
+        Args: { p_id: string }
+        Returns: Database["public"]["Tables"]["snp_regles_fiscales"]["Row"]
+      }
+      snp_regle_fiscale_approuver: {
+        Args: { p_id: string }
+        Returns: Database["public"]["Tables"]["snp_regles_fiscales"]["Row"]
+      }
+      snp_regle_fiscale_creer: {
+        Args: {
+          p_assiette: string
+          p_categorie_acheteur?: string | null
+          p_code_taxe: string
+          p_commentaire?: string | null
+          p_date_effet?: string
+          p_devise_seuil?: string | null
+          p_libelle: string
+          p_mode_calcul: string
+          p_montant_forfaitaire?: number | null
+          p_profil_vendeur?: string | null
+          p_reference_reglementaire?: string | null
+          p_seuil_max?: number | null
+          p_seuil_min?: number | null
+          p_taux?: number | null
+          p_unite_seuil?: string | null
+        }
+        Returns: Database["public"]["Tables"]["snp_regles_fiscales"]["Row"]
       }
       snp_repartir_plan: {
         Args: { p_ecraser_ajustements?: boolean; p_plan_id: string }

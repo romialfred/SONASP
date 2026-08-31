@@ -501,6 +501,20 @@ describe('UserDetailsPage', () => {
     expect(screen.queryByText('Ce compte ne s’est jamais connecté.')).not.toBeInTheDocument();
   });
 
+  it('retire la note globale et conserve l’état indisponible dans les accès aux sites', async () => {
+    const fiche = ficheUtilisateur();
+    fiche.sources_unavailable = ['accès aux sites'];
+    fiche.statistics.sites_count = null;
+    fiche.sites = [];
+    mocks.getUserDetails.mockResolvedValue(fiche);
+    render(<UserDetailsPage />);
+    await screen.findByRole('heading', { name: 'Awa KABORE' });
+    expect(screen.queryByText(/Données partielles/)).not.toBeInTheDocument();
+    expect(screen.getByText('Indisponible')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /Accès aux sites/ }));
+    expect(screen.getByText(/accès aux sites.*indisponible/i)).toBeInTheDocument();
+  });
+
   it('ignore une réponse tardive après changement de compte', async () => {
     let resolvePremier!: (value: ReturnType<typeof ficheUtilisateur>) => void;
     let resolveSecond!: (value: ReturnType<typeof ficheUtilisateur>) => void;

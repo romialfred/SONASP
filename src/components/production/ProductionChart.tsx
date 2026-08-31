@@ -124,13 +124,18 @@ export function ProductionChart({ productions, groupByCompany = false, miningCom
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                 }}
                 labelStyle={{ color: '#111827', fontWeight: 600 }}
-                formatter={(value: number, name: string) => {
+                formatter={(value, name) => {
                   const labels: Record<string, string> = {
                     oz: 'Onces troy',
                     pureGold: 'Or fin (g)',
                     bullion: 'Doré (g)'
                   };
-                  return [new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 4 }).format(value), labels[name] || name];
+                  const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
+                  const seriesName = String(name ?? '');
+                  return [
+                    new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 4 }).format(numericValue),
+                    labels[seriesName] || seriesName,
+                  ];
                 }}
               />
               <Legend

@@ -114,6 +114,9 @@ export function AnalysesTeneur({
         throw new Error('La teneur déclarée doit être comprise entre 0 et 100 %.');
       }
       const analyse = await analysesTeneurService.ouvrir({
+        // Le déclencheur serveur attribue la référence séquentielle lorsqu'elle
+        // est vide ; la propriété reste obligatoire dans le contrat TypeScript.
+        reference: '',
         contrat_id: contratId ?? null,
         requisition_id: requisitionId ?? null,
         mining_company_id: miningCompanyId ?? null,

@@ -11,33 +11,10 @@ import {
 } from './venteRecuNumberService';
 
 const mocks = vi.hoisted(() => ({
-  from: vi.fn(),
-  numeros: [] as string[],
-  motifs: [] as string[],
-  enEchec: false,
+  rpc: vi.fn(),
 }));
 
-vi.mock('@/lib/supabase', () => ({ supabase: { from: mocks.from } }));
-
-function stub() {
-  const builder: Record<string, unknown> = {};
-  builder.select = vi.fn(() => builder);
-  builder.like = vi.fn((_colonne: string, motif: string) => {
-    mocks.motifs.push(motif);
-    const prefixe = motif.replace(/%$/, '');
-    return Promise.resolve(
-      mocks.enEchec
-        ? { data: null, error: { message: 'lecture refusée' } }
-        : {
-            data: mocks.numeros
-              .filter((numero) => numero.startsWith(prefixe))
-              .map((numero) => ({ numero_recu: numero })),
-            error: null,
-          }
-    );
-  });
-  return builder;
-}
+vi.mock('@/lib/supabase', () => ({ supabase: { rpc: mocks.rpc } }));
 
 const instant = new Date(2025, 11, 28, 14, 30);
 
@@ -96,29 +73,26 @@ describe('compteur', () => {
 describe('genererNumeroRecu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.numeros = [];
-    mocks.motifs = [];
-    mocks.enEchec = false;
-    mocks.from.mockImplementation(() => stub());
+    mocks.rpc.mockResolvedValue({ data: 'VE-OR-2025-00001', error: null });
   });
 
-  it('attribue le premier numéro de l’année', async () => {
-    expect(await genererNumeroRecu(instant)).toBe('VE-OR-2025-00001');
-    expect(mocks.motifs[0]).toBe('VE-OR-2025-%');
+  it('réserve le numéro atomiquement auprès de la base', async () => {
+    expect(await genererNumeroRecu()).toBe('VE-OR-2025-00001');
+    expect(mocks.rpc).toHaveBeenCalledWith('generate_numero_recu_vente_or');
   });
 
-  it('incrémente à l’intérieur de la même année', async () => {
-    mocks.numeros = ['VE-OR-2025-00001', 'VE-OR-2025-00002'];
-    expect(await genererNumeroRecu(instant)).toBe('VE-OR-2025-00003');
+  it('accepte la référence suivante renvoyée par le compteur serveur', async () => {
+    mocks.rpc.mockResolvedValue({ data: 'VE-OR-2025-00003', error: null });
+    expect(await genererNumeroRecu()).toBe('VE-OR-2025-00003');
   });
 
-  it('repart de 00001 à l’année suivante', async () => {
-    mocks.numeros = ['VE-OR-2025-00003'];
-    expect(await genererNumeroRecu(new Date(2026, 0, 4))).toBe('VE-OR-2026-00001');
+  it('rejette une réponse serveur qui ne respecte pas le format comptable', async () => {
+    mocks.rpc.mockResolvedValue({ data: 'VENTE-3', error: null });
+    await expect(genererNumeroRecu()).rejects.toThrow('référence de vente invalide');
   });
 
-  it('remonte une erreur de lecture au lieu d’attribuer un doublon', async () => {
-    mocks.enEchec = true;
-    await expect(genererNumeroRecu(instant)).rejects.toMatchObject({ message: 'lecture refusée' });
+  it('remonte une erreur du compteur au lieu d’inventer une référence', async () => {
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: 'réservation refusée' } });
+    await expect(genererNumeroRecu()).rejects.toMatchObject({ message: 'réservation refusée' });
   });
 });

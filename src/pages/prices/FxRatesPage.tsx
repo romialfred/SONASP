@@ -232,8 +232,18 @@ export function FxRatesPage() {
       });
 
       setMonthlyRates(filteredData.map(rate => ({
-        ...rate,
+        id: rate.id,
+        year: Number(rate.year ?? 0),
+        month: Number(rate.month ?? 0),
+        currency_pair: rate.currency_pair,
+        source_id: rate.source_id,
         source_name: rate.fx_rate_sources?.name || 'Unknown',
+        avg_rate: Number(rate.avg_rate ?? 0),
+        min_rate: Number(rate.min_rate ?? 0),
+        max_rate: Number(rate.max_rate ?? 0),
+        opening_rate: rate.opening_rate,
+        closing_rate: Number(rate.closing_rate ?? 0),
+        data_points: Number(rate.data_points ?? 0),
       })));
     }
   };
@@ -385,7 +395,8 @@ export function FxRatesPage() {
     setYearFilter(new Date().getFullYear().toString());
   };
 
-  const formatRate = (rate: number, pair: string) => {
+  const formatRate = (rate: number | null, pair: string) => {
+    if (rate === null || !Number.isFinite(rate)) return '—';
     if (pair === 'EUR/USD') return rate.toFixed(4);
     if (pair === 'EUR/USD') return rate.toFixed(5);
     return rate.toFixed(2);

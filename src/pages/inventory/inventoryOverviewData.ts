@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { STATUTS_VENTE_ENGAGEANTS } from '@/services/stockSonaspService';
 
 export const GRAMMES_PAR_ONCE = 31.1034768;
 
@@ -44,6 +45,7 @@ export interface StockParMine {
   disponibleOz: number;
   allloueOz: number;
   venduOz: number;
+  reserveOz: number;
   lignes: number;
 }
 
@@ -76,11 +78,13 @@ export interface TendanceStock {
 }
 
 export interface StockNational {
-  /** Or raffiné détenu, toutes mines confondues. */
+  /** Or raffiné encore dans le stock opérationnel : disponible + alloué. */
   totalOz: number;
   disponibleOz: number;
   allloueOz: number;
   venduOz: number;
+  /** Or irréversiblement transféré au patrimoine de Réserve nationale. */
+  reserveOz: number;
   /** Or expédié, pas encore réintégré au stock raffiné. */
   transitOz: number;
   /** Parti chez la raffinerie ou en cours de traitement. */
@@ -116,6 +120,7 @@ export const STOCK_VIDE: StockNational = {
   disponibleOz: 0,
   allloueOz: 0,
   venduOz: 0,
+  reserveOz: 0,
   transitOz: 0,
   enRouteOz: 0,
   aReintegrerOz: 0,
@@ -234,6 +239,7 @@ export function grouperParMine(
     quantity_available_oz?: number | null;
     quantity_allocated_oz?: number | null;
     quantity_sold_oz?: number | null;
+    quantity_national_reserve_oz?: number | null;
   }>,
   societes: Array<{ id: string; name: string }>
 ): StockParMine[] {
@@ -248,17 +254,21 @@ export function grouperParMine(
       {
         id: cle,
         nom: societe?.name || (ligne.mining_company_id ? 'Société inconnue' : 'Sans société rattachée'),
-          totalOz: 0,
+        totalOz: 0,
         disponibleOz: 0,
         allloueOz: 0,
         venduOz: 0,
+        reserveOz: 0,
         lignes: 0,
       };
 
-    groupe.totalOz += Number(ligne.final_fine_oz || 0);
-    groupe.disponibleOz += Number(ligne.quantity_available_oz || 0);
-    groupe.allloueOz += Number(ligne.quantity_allocated_oz || 0);
+    const disponible = Number(ligne.quantity_available_oz || 0);
+    const alloue = Number(ligne.quantity_allocated_oz || 0);
+    groupe.totalOz += disponible + alloue;
+    groupe.disponibleOz += disponible;
+    groupe.allloueOz += alloue;
     groupe.venduOz += Number(ligne.quantity_sold_oz || 0);
+    groupe.reserveOz += Number(ligne.quantity_national_reserve_oz || 0);
     groupe.lignes += 1;
     groupes.set(cle, groupe);
   });
@@ -272,13 +282,16 @@ export function grouperParMine(
  * du stock sans contrepartie constatée.
  */
 export function venduNonPaye(
-  ventes: Array<{ id: string; quantity_oz?: number | null; total_amount?: number | null; currency?: string | null }>,
+  ventes: Array<{ id: string; quantity_oz?: number | null; total_amount?: number | null; currency?: string | null; status?: string | null }>,
   paiements: Array<{ sale_id: string | null; status?: string | null }>
 ) {
   const regleesParVente = new Set(
     paiements.filter((paiement) => paiement.status === 'approved').map((paiement) => paiement.sale_id)
   );
-  const enSouffrance = ventes.filter((vente) => !regleesParVente.has(vente.id));
+  const enSouffrance = ventes.filter((vente) => (
+    STATUTS_VENTE_ENGAGEANTS.includes(vente.status || '')
+    && !regleesParVente.has(vente.id)
+  ));
   const devises = new Set(enSouffrance.map((vente) => vente.currency).filter(Boolean));
 
   return {
@@ -300,7 +313,7 @@ export async function chargerStockNational(): Promise<StockNational> {
   const [inventaire, societes, fret, preparations, ventes, paiements, artisanal, mouvements] = await Promise.allSettled([
     supabase
       .from('gold_inventory')
-      .select('id, entry_date, created_at, certificate_number, processing_location, final_fine_oz, quantity_available_oz, quantity_allocated_oz, quantity_sold_oz, mining_company_id'),
+      .select('id, entry_date, created_at, certificate_number, processing_location, final_fine_oz, quantity_available_oz, quantity_allocated_oz, quantity_sold_oz, quantity_national_reserve_oz, mining_company_id'),
     supabase.from('mining_companies').select('id, name'),
     supabase
       .from('freight_shipments')
@@ -310,7 +323,7 @@ export async function chargerStockNational(): Promise<StockNational> {
       .from('shipping_preparations')
       .select('id, expedition_lot_number, seal_number, total_weight_oz, status, prepared_at, created_at')
       .in('status', [...STATUTS_AEROPORT]),
-    supabase.from('sales').select('id, quantity_oz, total_amount, currency'),
+    supabase.from('sales').select('id, quantity_oz, total_amount, currency, status'),
     supabase.from('payments').select('sale_id, status'),
     supabase
       .from('snp_artisan_ventes_or')
@@ -332,6 +345,7 @@ export async function chargerStockNational(): Promise<StockNational> {
     quantity_available_oz: number | null;
     quantity_allocated_oz: number | null;
     quantity_sold_oz: number | null;
+    quantity_national_reserve_oz: number | null;
     mining_company_id: string | null;
   }>(inventaire);
   const lignesSocietes = lireLignes<{ id: string; name: string }>(societes);
@@ -352,7 +366,7 @@ export async function chargerStockNational(): Promise<StockNational> {
     prepared_at: string | null;
     created_at: string | null;
   }>(preparations);
-  const lignesVentes = lireLignes<{ id: string; quantity_oz: number | null; total_amount: number | null; currency: string | null }>(ventes);
+  const lignesVentes = lireLignes<{ id: string; quantity_oz: number | null; total_amount: number | null; currency: string | null; status: string | null }>(ventes);
   const lignesPaiements = lireLignes<{ sale_id: string | null; status: string | null }>(paiements);
   const lignesArtisanal = lireLignes<{
     quantite_grammes: number | null;
@@ -434,10 +448,11 @@ export async function chargerStockNational(): Promise<StockNational> {
   }));
 
   return {
-    totalOz: somme(detenu, (ligne) => Number(ligne.final_fine_oz || 0)),
+    totalOz: somme(detenu, (ligne) => Number(ligne.quantity_available_oz || 0) + Number(ligne.quantity_allocated_oz || 0)),
     disponibleOz: somme(detenu, (ligne) => Number(ligne.quantity_available_oz || 0)),
     allloueOz: somme(detenu, (ligne) => Number(ligne.quantity_allocated_oz || 0)),
     venduOz: somme(detenu, (ligne) => Number(ligne.quantity_sold_oz || 0)),
+    reserveOz: somme(detenu, (ligne) => Number(ligne.quantity_national_reserve_oz || 0)),
     transitOz: somme(lignesFret || [], (ligne) => Number(ligne.total_pure_gold_oz || 0)),
     enRouteOz: somme(enRoute, (ligne) => Number(ligne.total_pure_gold_oz || 0)),
     aReintegrerOz: somme(aReintegrer, (ligne) => Number(ligne.total_pure_gold_oz || 0)),

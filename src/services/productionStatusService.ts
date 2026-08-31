@@ -196,7 +196,7 @@ class ProductionStatusService {
 
       const counts: Record<ProductionStatus, number> = {
         prepared: 0,
-        shipped: 0,
+        ready_for_customs: 0,
         cancelled: 0
       };
 
@@ -213,7 +213,7 @@ class ProductionStatusService {
       console.error('Error fetching status counts:', error);
       return {
         prepared: 0,
-        shipped: 0,
+        ready_for_customs: 0,
         cancelled: 0
       };
     }

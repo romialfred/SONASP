@@ -281,7 +281,12 @@ export async function getRateAlerts(
 }> {
   try {
     const currencies = ['XOF', 'EUR'];
-    const alerts = [];
+    const alerts: Array<{
+      currency: string;
+      current_rate: number;
+      change_percentage: number;
+      alert_type: 'increase' | 'decrease';
+    }> = [];
 
     for (const currency of currencies) {
       const comparison = await compareRates(currency, 'USD');

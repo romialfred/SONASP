@@ -43,8 +43,8 @@ vi.mock('@/services/goldSalesSettingsService', () => ({
   getAllGoldSalesSettings: mocks.getAll,
   deleteGoldSalesSetting: mocks.remove,
   getSaleMethods: () => [
-    { value: 'spot', label: 'Vente au comptant' },
-    { value: 'forward', label: 'Vente à terme' },
+    { value: 'spot_sale', label: 'Vente au comptant' },
+    { value: 'forward_sale', label: 'Vente à terme' },
   ],
 }));
 
@@ -58,11 +58,13 @@ const parametrages = [
     customer_name: 'Metalor',
     contact_person: 'Jean DUPONT',
     max_stock_percentage: 45.5,
-    sale_method: 'spot',
+    sale_method: 'spot_sale',
     refining_fees_paid_by_customer: true,
     transport_fees_paid_by_customer: false,
     is_active: true,
     effective_date: '2026-01-15',
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
   },
   {
     id: 'p2',
@@ -73,11 +75,13 @@ const parametrages = [
     customer_name: 'Comptoir Central',
     contact_person: null,
     max_stock_percentage: 20,
-    sale_method: 'forward',
+    sale_method: 'forward_sale',
     refining_fees_paid_by_customer: false,
     transport_fees_paid_by_customer: false,
     is_active: false,
-    effective_date: null,
+    effective_date: '2026-02-01',
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
   },
 ] as unknown as GoldSalesSettingView[];
 

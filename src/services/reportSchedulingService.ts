@@ -1,34 +1,17 @@
 import { supabase } from '@/lib/supabase';
+import type { Database, Json } from '@/types/database';
 
-export interface ScheduledReport {
-  id: string;
-  report_type: string;
+type ScheduledReportRow = Database['public']['Tables']['scheduled_reports']['Row'];
+type ReportHistoryRow = Database['public']['Tables']['report_history']['Row'];
+
+export interface ScheduledReport extends Omit<ScheduledReportRow, 'frequency' | 'format'> {
   frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
-  schedule_time: string;
-  schedule_day?: number;
-  schedule_weekday?: number;
-  recipients: string[];
   format: 'pdf' | 'excel';
-  is_active: boolean;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-  last_run_at?: string;
-  next_run_at?: string;
 }
 
-export interface ReportHistory {
-  id: string;
-  report_type: string;
-  report_name: string;
-  generated_by?: string | null;
-  generated_at: string;
-  file_size?: string | null;
+export interface ReportHistory extends Omit<ReportHistoryRow, 'format' | 'status'> {
   format: 'pdf' | 'excel' | 'csv';
-  download_url?: string;
-  parameters?: Record<string, any>;
   status: 'pending' | 'generating' | 'completed' | 'failed';
-  error_message?: string;
 }
 
 export interface CreateScheduledReportData {
@@ -47,7 +30,36 @@ export interface CreateReportHistoryData {
   file_size?: string;
   format: 'pdf' | 'excel' | 'csv';
   download_url?: string;
-  parameters?: Record<string, any>;
+  parameters?: Json;
+}
+
+const FREQUENCES = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'] as const;
+const FORMATS_PLANIFIES = ['pdf', 'excel'] as const;
+const FORMATS_HISTORIQUE = ['pdf', 'excel', 'csv'] as const;
+const STATUTS_HISTORIQUE = ['pending', 'generating', 'completed', 'failed'] as const;
+
+function appartientA<T extends string>(value: string, valeurs: readonly T[]): value is T {
+  return valeurs.some((candidate) => candidate === value);
+}
+
+function normaliserRapportPlanifie(row: ScheduledReportRow): ScheduledReport {
+  if (!appartientA(row.frequency, FREQUENCES)) {
+    throw new Error(`Fréquence de rapport inconnue : ${row.frequency}`);
+  }
+  if (!appartientA(row.format, FORMATS_PLANIFIES)) {
+    throw new Error(`Format de rapport planifié inconnu : ${row.format}`);
+  }
+  return { ...row, frequency: row.frequency, format: row.format };
+}
+
+function normaliserHistorique(row: ReportHistoryRow): ReportHistory {
+  if (!appartientA(row.format, FORMATS_HISTORIQUE)) {
+    throw new Error(`Format d'historique inconnu : ${row.format}`);
+  }
+  if (!appartientA(row.status, STATUTS_HISTORIQUE)) {
+    throw new Error(`Statut d'historique inconnu : ${row.status}`);
+  }
+  return { ...row, format: row.format, status: row.status };
 }
 
 export const reportSchedulingService = {
@@ -62,7 +74,7 @@ export const reportSchedulingService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(normaliserRapportPlanifie);
   },
 
   async getActiveScheduledReports(): Promise<ScheduledReport[]> {
@@ -77,7 +89,7 @@ export const reportSchedulingService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(normaliserRapportPlanifie);
   },
 
   async createScheduledReport(reportData: CreateScheduledReportData): Promise<ScheduledReport> {
@@ -98,7 +110,7 @@ export const reportSchedulingService = {
       throw error;
     }
 
-    return data;
+    return normaliserRapportPlanifie(data);
   },
 
   async updateScheduledReport(id: string, updates: Partial<CreateScheduledReportData>): Promise<ScheduledReport> {
@@ -114,7 +126,7 @@ export const reportSchedulingService = {
       throw error;
     }
 
-    return data;
+    return normaliserRapportPlanifie(data);
   },
 
   async toggleScheduledReport(id: string, isActive: boolean): Promise<void> {
@@ -156,13 +168,7 @@ export const reportSchedulingService = {
   async getReportHistory(limit: number = 50): Promise<ReportHistory[]> {
     const { data, error } = await supabase
       .from('report_history')
-      .select(`
-        *,
-        user:generated_by (
-          full_name,
-          email
-        )
-      `)
+      .select('*')
       .order('generated_at', { ascending: false })
       .limit(limit);
 
@@ -171,7 +177,7 @@ export const reportSchedulingService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(normaliserHistorique);
   },
 
   async getReportHistoryByType(reportType: string, limit: number = 20): Promise<ReportHistory[]> {
@@ -187,7 +193,7 @@ export const reportSchedulingService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(normaliserHistorique);
   },
 
   async createReportHistory(historyData: CreateReportHistoryData): Promise<ReportHistory> {
@@ -208,7 +214,7 @@ export const reportSchedulingService = {
       throw error;
     }
 
-    return data;
+    return normaliserHistorique(data);
   },
 
   async updateReportHistoryStatus(

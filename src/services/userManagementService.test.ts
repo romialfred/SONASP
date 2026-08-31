@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createUser, resetUserPassword } from './userManagementService';
+import { defaultResponsibilitiesForRole } from '@/lib/accessControl';
 
 const mocks = vi.hoisted(() => ({ getSession: vi.fn() }));
 
@@ -58,6 +59,38 @@ describe('createUser', () => {
     const resultat = await createUser({ email: 'awa@sonasp.bf', full_name: 'Awa', role: 'admin' });
     expect(resultat.success).toBe(false);
     expect(resultat.error).toMatch(/n’est pas déployé/);
+  });
+
+  it.each(['admin', 'owner'] as const)('envoie uniquement les responsabilités sélectionnées pour %s', async (role) => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"success":true}', { status: 201 }));
+    const responsibilities = defaultResponsibilitiesForRole(role);
+    await createUser({ email: 'test@example.invalid', full_name: 'Test', role, responsibilities, capabilities: responsibilities });
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.responsibilities).toEqual({});
+    expect(body).not.toHaveProperty('capabilities');
+    expect(responsibilities).toEqual(defaultResponsibilitiesForRole(role));
+  });
+
+  it('conserve les droits sélectionnés et les valeurs invalides pour validation serveur', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"success":true}', { status: 201 }));
+    const capabilities = { ...defaultResponsibilitiesForRole('comptoir'), 'comptoir.invoices.issue': true };
+    // Une valeur forgée ne doit jamais être convertie en autorisation ni masquée.
+    Object.assign(capabilities, { 'unknown.enabled': true, 'invalid.value': 'false' });
+    await createUser({ email: 'test@example.invalid', full_name: 'Test', role: 'comptoir', capabilities });
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.responsibilities).toEqual({
+      'comptoir.manage': true, 'comptoir.invoices.issue': true,
+      'unknown.enabled': true, 'invalid.value': 'false',
+    });
+    expect(body).not.toHaveProperty('capabilities');
+  });
+
+  it('ne prétend pas annuler une création dont la réponse a expiré', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+    const result = await createUser({ email: 'test@example.invalid', full_name: 'Test', role: 'owner' });
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Vérifiez la liste des comptes avant de réessayer/);
+    expect(result.error).not.toMatch(/Aucun compte/);
   });
 
   it('ne restitue pas le message technique Failed to fetch', async () => {

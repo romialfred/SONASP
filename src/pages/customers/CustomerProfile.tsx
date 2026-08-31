@@ -145,7 +145,7 @@ export function CustomerProfile() {
         address: customerData.address || 'N/A',
         contactPerson: customerData.contact_person || 'N/A',
         taxId: customerData.tax_id || 'N/A',
-        registeredDate: customerData.created_at,
+        registeredDate: customerData.created_at ?? undefined,
         status: customerData.status || 'active',
         paymentTerms: customerData.payment_terms || 'Net 30 days',
         creditLimit: customerData.credit_limit || 0,
@@ -193,13 +193,13 @@ export function CustomerProfile() {
   ];
 
   const performanceData = [
-    { month: 'Apr', purchases: 3, amount: 425 },
-    { month: 'May', purchases: 4, amount: 582 },
-    { month: 'Jun', purchases: 5, amount: 695 },
-    { month: 'Jul', purchases: 4, amount: 612 },
-    { month: 'Aug', purchases: 5, amount: 748 },
-    { month: 'Sep', purchases: 6, amount: 823 },
-    { month: 'Oct', purchases: 5, amount: 768 },
+    { name: 'Apr', purchases: 3, amount: 425 },
+    { name: 'May', purchases: 4, amount: 582 },
+    { name: 'Jun', purchases: 5, amount: 695 },
+    { name: 'Jul', purchases: 4, amount: 612 },
+    { name: 'Aug', purchases: 5, amount: 748 },
+    { name: 'Sep', purchases: 6, amount: 823 },
+    { name: 'Oct', purchases: 5, amount: 768 },
   ];
 
   const columns = [
@@ -424,7 +424,9 @@ export function CustomerProfile() {
                   <div>
                     <p className="text-sm font-medium text-gray-500">Last Purchase</p>
                     <p className="text-sm text-gray-900 mt-1">
-                      {new Date(customer.lastPurchaseDate).toLocaleDateString()}
+                      {customer.lastPurchaseDate
+                        ? new Date(customer.lastPurchaseDate).toLocaleDateString('fr-FR')
+                        : 'Aucun achat'}
                     </p>
                   </div>
                 </div>

@@ -12,6 +12,10 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrateur',
   management: 'Direction',
   manager: 'Manager · lecture seule',
+  dgmg: 'DGMG',
+  dgi: 'DGI',
+  comptoir: 'Comptoir d’achat',
+  collector: 'Agent Collecteur',
   factory: 'Usine',
   airport: 'Aéroport',
   refinery: 'Raffinerie',
@@ -24,6 +28,10 @@ export const ROLE_TONES: Record<UserRole, RoleTone> = {
   admin: 'danger',
   management: 'info',
   manager: 'neutral',
+  dgmg: 'info',
+  dgi: 'warning',
+  comptoir: 'warning',
+  collector: 'success',
   factory: 'success',
   airport: 'info',
   refinery: 'warning',
@@ -32,7 +40,10 @@ export const ROLE_TONES: Record<UserRole, RoleTone> = {
 };
 
 /** Tous les rôles du référentiel, dans l'ordre décroissant de privilège. */
-export const ALL_ROLES: UserRole[] = ['owner', 'admin', 'management', 'manager', 'mine', 'factory', 'airport', 'refinery', 'customer'];
+export const ALL_ROLES: UserRole[] = [
+  'owner', 'admin', 'management', 'manager', 'dgmg', 'dgi', 'mine',
+  'comptoir', 'collector', 'factory', 'airport', 'refinery', 'customer',
+];
 
 export const roleLabel = (role?: string | null): string =>
   (role && ROLE_LABELS[role as UserRole]) || role || 'Rôle non défini';

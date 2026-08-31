@@ -206,9 +206,23 @@ class DailyProductionService {
       );
     }
 
+    const mutableUpdates = {
+      ...(updates.production_date !== undefined && { production_date: updates.production_date }),
+      ...(updates.bullion_grams !== undefined && { bullion_grams: updates.bullion_grams }),
+      ...(updates.estimated_fineness_pct !== undefined && { estimated_fineness_pct: updates.estimated_fineness_pct }),
+      ...(updates.estimated_gold_pct !== undefined && { estimated_gold_pct: updates.estimated_gold_pct }),
+      ...(updates.estimated_silver_pct !== undefined && { estimated_silver_pct: updates.estimated_silver_pct }),
+      ...(updates.silver_content_grams !== undefined && { silver_content_grams: updates.silver_content_grams }),
+      ...(updates.pure_gold_grams !== undefined && { pure_gold_grams: updates.pure_gold_grams }),
+      ...(updates.estimated_oz !== undefined && { estimated_oz: updates.estimated_oz }),
+      ...(updates.bar_reference !== undefined && { bar_reference: updates.bar_reference }),
+      ...(updates.notes !== undefined && { notes: updates.notes }),
+      ...(updates.site_id !== undefined && { site_id: updates.site_id }),
+      ...(updates.mining_company_id !== undefined && { mining_company_id: updates.mining_company_id }),
+    };
     const { data, error } = await supabase
       .from('daily_production')
-      .update(updates)
+      .update(mutableUpdates)
       .eq('id', id)
       .select()
       .single();
@@ -389,7 +403,7 @@ class DailyProductionService {
   ): Promise<ProductionSummary> {
     const { data, error } = await supabase.rpc('get_wtd_summary', {
       reference_date: referenceDate,
-      company_id: miningCompanyId || null,
+      company_id: miningCompanyId || undefined,
       site: siteId
     });
 
@@ -404,7 +418,7 @@ class DailyProductionService {
   ): Promise<ProductionSummary> {
     const { data, error } = await supabase.rpc('get_mtd_summary', {
       reference_date: referenceDate,
-      company_id: miningCompanyId || null,
+      company_id: miningCompanyId || undefined,
       site: siteId
     });
 
@@ -419,7 +433,7 @@ class DailyProductionService {
   ): Promise<ProductionSummary> {
     const { data, error } = await supabase.rpc('get_ytd_summary', {
       reference_date: referenceDate,
-      company_id: miningCompanyId || null,
+      company_id: miningCompanyId || undefined,
       site: siteId
     });
 
@@ -432,7 +446,7 @@ class DailyProductionService {
     productionDate: string = new Date().toISOString().split('T')[0]
   ): Promise<string> {
     const { data, error } = await supabase.rpc('generate_bar_reference', {
-      company_name: companyName || null,
+      company_name: companyName || undefined,
       production_date: productionDate
     });
 

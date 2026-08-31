@@ -11,11 +11,11 @@ export interface ArtisanInfraction {
   description: string;
   lieu?: string | null;
   statut_traitement: string;
-  conclusion?: ConclusionInfraction;
-  remarques?: string;
+  conclusion?: string | null;
+  remarques?: string | null;
   documents: string[];
-  date_cloture?: string;
-  created_by?: string;
+  date_cloture?: string | null;
+  created_by?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import VenteOrForm, { artisanDisplayName, karatToPercentage, percentageToKarat } from './VenteOrForm';
 import type { ArtisanMinier } from '@/services/artisanMinierService';
@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   showSuccess: vi.fn(),
   showError: vi.fn(),
   pourAchat: vi.fn(),
+  actualiserCours: vi.fn(),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -40,20 +41,23 @@ vi.mock('@/services/tauxAchatService', () => ({
   tauxAchatService: { pourAchat: mocks.pourAchat },
 }));
 
-vi.mock('@/components/prices/LiveGoldPricePanel', () => ({ LiveGoldPricePanel: () => null }));
-
 vi.mock('@/hooks/useCoursOr', async () => {
   const reel = await vi.importActual<typeof import('@/hooks/useCoursOr')>('@/hooks/useCoursOr');
   return {
     ...reel,
     useCoursOr: () => ({
-      cours: null,
+      cours: mocks.prixGramme === null ? null : {
+        price: 4_522.75,
+        timestamp: '2026-08-27T10:30:00.000Z',
+        source: 'Référentiel SONASP',
+        currency: 'USD',
+      },
       tauxUsdXof: 600,
       prixGrammeFcfa: mocks.prixGramme,
       derniereMaj: null,
       chargement: false,
       erreur: mocks.prixGramme === null ? 'Cours indisponible auprès de la source.' : null,
-      actualiser: vi.fn(),
+      actualiser: mocks.actualiserCours,
     }),
   };
 });
@@ -118,6 +122,7 @@ describe('VenteOrForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.params.id = undefined;
+    mocks.prixGramme = 85_821;
     mocks.pourAchat.mockResolvedValue({
       tvaPourcent: 18,
       taxeCommunalePourcent: 1,
@@ -137,15 +142,16 @@ describe('VenteOrForm', () => {
       montant_ce_mois: 1_600_000,
     });
     mocks.create.mockResolvedValue({ id: 'new' });
+    mocks.actualiserCours.mockResolvedValue(undefined);
   });
 
   it('attribue et affiche le numéro de vente sans le laisser saisir', async () => {
     render(<VenteOrForm />);
-    await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/vendeur et déclaration/i)).toBeInTheDocument());
 
     // Un numéro frappé à la main ouvrait la porte aux doublons sur une pièce comptable.
     expect(screen.queryByLabelText('N° de reçu')).not.toBeInTheDocument();
-    expect(screen.getByText('N° de vente')).toBeInTheDocument();
+    expect(screen.getByText(/n° de vente/i)).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('VE-OR-2026-00007')).toBeInTheDocument());
   });
 
@@ -193,34 +199,34 @@ describe('VenteOrForm', () => {
   it('laisse le champ vide quand le cours est indisponible', async () => {
     mocks.prixGramme = null;
     render(<VenteOrForm />);
-    await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/vendeur et déclaration/i)).toBeInTheDocument());
 
     // Une valeur de complaisance sur cet écran deviendrait le prix payé à l'artisan.
     expect(screen.getByLabelText(/Prix au gramme/)).toHaveValue(null);
-    expect(screen.getByText('Cours indisponible auprès de la source.')).toBeInTheDocument();
-    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.getAllByText('Cours indisponible auprès de la source.')).toHaveLength(2);
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
     mocks.prixGramme = 85_821;
   });
 
   it('organise le formulaire en sections métier', async () => {
     render(<VenteOrForm />);
-    await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/vendeur et déclaration/i)).toBeInTheDocument());
 
-    expect(screen.getByText('Nature et pureté de l’or')).toBeInTheDocument();
-    expect(screen.getByText('Valorisation')).toBeInTheDocument();
+    expect(screen.getByText(/nature et qualité de l’or/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^valorisation$/i })).toBeInTheDocument();
     // « Observations » nomme la section et son champ : on vise le titre de section.
-    expect(screen.getByRole('heading', { name: 'Observations' })).toBeInTheDocument();
-    expect(screen.getByText('Récapitulatif')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /observations/i })).toBeInTheDocument();
+    expect(screen.getByText(/récapitulatif financier/i)).toBeInTheDocument();
   });
 
   it('affiche le montant total taxes comprises, identique à l’enregistrement', async () => {
     render(<VenteOrForm />);
-    await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/vendeur et déclaration/i)).toBeInTheDocument());
 
     fillSale();
 
     // 100 g × 40 000 = 4 000 000 brut ; TVA 18 % = 720 000 ; taxe 1 % = 40 000 ; total 4 760 000
-    const recap = within(screen.getByText('Récapitulatif').closest('section') as HTMLElement);
+    const recap = within(screen.getByText(/récapitulatif financier/i).closest('section') as HTMLElement);
     expect(recap.getByText('4 000 000 FCFA')).toBeInTheDocument();
     expect(recap.getByText('720 000 FCFA')).toBeInTheDocument();
     expect(recap.getByText('40 000 FCFA')).toBeInTheDocument();
@@ -238,23 +244,28 @@ describe('VenteOrForm', () => {
     });
   });
 
-  it('bloque la soumission tant que les champs déterminants manquent', async () => {
+  it('affiche les validations au bon endroit et bloque une soumission incomplète', async () => {
     render(<VenteOrForm />);
-    await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/vendeur et déclaration/i)).toBeInTheDocument());
 
     const submit = screen.getByRole('button', { name: /Enregistrer la vente/ });
-    expect(submit).toBeDisabled();
+    expect(submit).not.toBeDisabled();
+    expect(screen.queryByText('Sélectionnez l’artisan vendeur.')).not.toBeInTheDocument();
+    fireEvent.click(submit);
     expect(screen.getByText('Sélectionnez l’artisan vendeur.')).toBeInTheDocument();
+    expect(mocks.create).not.toHaveBeenCalled();
 
     fillSale();
-    expect(submit).not.toBeDisabled();
+    await waitFor(() =>
+      expect(screen.queryByText('Sélectionnez l’artisan vendeur.')).not.toBeInTheDocument(),
+    );
   });
 
   it('lie la pureté en carats et le pourcentage', async () => {
     render(<VenteOrForm />);
-    await waitFor(() => expect(screen.getByText('Nature et pureté de l’or')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/nature et qualité de l’or/i)).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /^24 carats/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choisir la qualité 24 carats' }));
     // Le champ en pourcentage, non le groupe de boutons en carats : depuis que
     // les deux disent « pureté », le libellé doit porter son unité.
     expect(screen.getByLabelText(/Pureté \(%\)/)).toHaveValue(100);
@@ -265,7 +276,7 @@ describe('VenteOrForm', () => {
 
   it('affiche l’historique de l’artisan sélectionné', async () => {
     render(<VenteOrForm />);
-    await waitFor(() => expect(screen.getByText('Vendeur et déclaration')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/vendeur et déclaration/i)).toBeInTheDocument());
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'a1' } });
 
@@ -273,6 +284,57 @@ describe('VenteOrForm', () => {
     await waitFor(() => expect(aside.getByText('KABORE Awa (CP-0001)')).toBeInTheDocument());
     expect(aside.getByText('Ventes déclarées')).toBeInTheDocument();
     expect(aside.getByText('7')).toBeInTheDocument();
+  });
+
+  it('affiche le cours réel du hook et permet de le rafraîchir', async () => {
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByText(/cours de l’or/i)).toBeInTheDocument());
+
+    expect(screen.getByText(/4,522\.75/)).toBeInTheDocument();
+    expect(screen.queryByText('Référentiel SONASP')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser le cours de l’or' }));
+    await waitFor(() => expect(mocks.actualiserCours).toHaveBeenCalledTimes(1));
+  });
+
+  it('résout les taxes pour la date effectivement saisie', async () => {
+    render(<VenteOrForm />);
+    await waitFor(() => expect(mocks.pourAchat).toHaveBeenCalled());
+
+    fireEvent.change(screen.getByLabelText(/Date de vente/), { target: { value: '2026-08-26' } });
+    await waitFor(() => expect(mocks.pourAchat).toHaveBeenLastCalledWith('artisan', '2026-08-26'));
+  });
+
+  it('ignore une double soumission pendant l’enregistrement', async () => {
+    let terminer!: (value: { id: string }) => void;
+    mocks.create.mockImplementation(
+      () => new Promise<{ id: string }>((resolve) => { terminer = resolve; }),
+    );
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByText('VE-OR-2026-00007')).toBeInTheDocument());
+    await waitFor(() => expect(mocks.pourAchat).toHaveBeenCalled());
+
+    fillSale();
+    const submit = screen.getByRole('button', { name: /Enregistrer la vente/ });
+    fireEvent.click(submit);
+    fireEvent.click(submit);
+
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1));
+    await act(async () => terminer({ id: 'new' }));
+  });
+
+  it('restitue une erreur de persistance sans redirection', async () => {
+    mocks.create.mockRejectedValue(new Error('Référence de vente déjà utilisée'));
+    render(<VenteOrForm />);
+    await waitFor(() => expect(screen.getByText('VE-OR-2026-00007')).toBeInTheDocument());
+    await waitFor(() => expect(mocks.pourAchat).toHaveBeenCalled());
+
+    fillSale();
+    fireEvent.click(screen.getByRole('button', { name: /Enregistrer la vente/ }));
+
+    await waitFor(() =>
+      expect(mocks.showError).toHaveBeenCalledWith('Référence de vente déjà utilisée'),
+    );
+    expect(mocks.navigate).not.toHaveBeenCalled();
   });
 
   it('refuse la modification d’une vente validée', async () => {

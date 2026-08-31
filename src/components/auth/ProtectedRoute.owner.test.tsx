@@ -21,7 +21,7 @@ vi.mock('@/contexts/AuthContext', () => ({
 }));
 
 describe('ProtectedRoute Owner', () => {
-  it('autorise le propriétaire même sur une route limitée à un autre rôle', () => {
+  it('ouvre au propriétaire actif une route métier limitée à un autre rôle', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <ProtectedRoute allowedRoles={['factory']}>
@@ -31,5 +31,6 @@ describe('ProtectedRoute Owner', () => {
     );
 
     expect(screen.getByText('Module protégé')).toBeInTheDocument();
+    expect(screen.queryByText('Accès refusé')).not.toBeInTheDocument();
   });
 });

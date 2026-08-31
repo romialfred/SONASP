@@ -1,15 +1,23 @@
-import { useState, useEffect } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Select } from '@/components/ui/Select';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  TrendingUp, Calendar, DollarSign,
-  BarChart3, ArrowUpRight, ArrowDownRight, AlertCircle
+  AlertCircle, ArrowDownRight, ArrowUpRight, BarChart3, CalendarDays,
+  Coins, LineChart as LineChartIcon, RefreshCw, Scale, TrendingUp,
 } from 'lucide-react';
-import { Line, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, ComposedChart } from '@/lib/recharts';
-import { supabase } from '@/lib/supabase';
-import { useToast } from '@/components/ui/Toast';
+import {
+  Bar, BarChart, ComposedChart, Legend, Line, ResponsiveContainer,
+  Tooltip, XAxis, YAxis,
+} from '@/lib/recharts';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { LiveGoldMarketPanel } from '@/components/sales/LiveGoldMarketPanel';
+import {
+  Badge, Card, DataTable, EmptyState, Note, PageHeader, SelectControl,
+  StatGrid, TabPanel, Tabs, type Column,
+} from '@/components/ui/sn';
+import { useToast } from '@/components/ui/Toast';
+import { supabase } from '@/lib/supabase';
+import './gold-prices.css';
+
+type ViewMode = 'daily' | 'monthly' | 'comparison';
 
 interface DailyPrice {
   price_date: string;
@@ -27,7 +35,6 @@ interface MonthlyAggregate {
   average_price: number;
   high_price: number;
   low_price: number;
-  /** Nullables en base : un mois peut n'avoir ni ouverture ni clôture. */
   opening_price: number | null;
   closing_price: number | null;
   total_days: number | null;
@@ -59,772 +66,424 @@ interface MonthlySalesVsMarket {
   total_variance_usd: number;
 }
 
+interface DailyPriceRow extends DailyPrice { id: string; change: number | null }
+interface MonthlyAggregateRow extends MonthlyAggregate {
+  id: string;
+  change: number | null;
+  changePercent: number | null;
+}
+interface SalesPriceRow extends SalesPriceAnalysis { id: string }
+
+const MONTHS = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+] as const;
+
+const usd = new Intl.NumberFormat('fr-FR', {
+  style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2,
+});
+const decimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const integer = new Intl.NumberFormat('fr-FR');
+const date = new Intl.DateTimeFormat('fr-FR', {
+  day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC',
+});
+
+export const formatPriceDate = (value: string) => {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(parsed.getTime()) ? '—' : date.format(parsed);
+};
+
+export const buildDailyRows = (prices: DailyPrice[]): DailyPriceRow[] =>
+  prices.map((price, index) => ({
+    ...price,
+    id: price.price_date,
+    change: index === 0 ? null : price.london_am_rate - prices[index - 1].london_am_rate,
+  })).reverse();
+
+export const buildMonthlyRows = (aggregates: MonthlyAggregate[]): MonthlyAggregateRow[] =>
+  aggregates.map((aggregate, index) => {
+    const previousClose = aggregates[index - 1]?.closing_price;
+    const currentClose = aggregate.closing_price;
+    const change = currentClose == null || previousClose == null ? null : currentClose - previousClose;
+    return {
+      ...aggregate,
+      id: `${aggregate.year}-${aggregate.month}`,
+      change,
+      changePercent: change == null || previousClose == null || previousClose === 0
+        ? null
+        : (change / previousClose) * 100,
+    };
+  }).reverse();
+
+const variationBadge = (value: number | null, percent?: number | null) => {
+  if (value == null) return <span className="gold-prices__muted">—</span>;
+  const positive = value >= 0;
+  return (
+    <Badge tone={positive ? 'success' : 'danger'} icon={positive ? ArrowUpRight : ArrowDownRight}>
+      {positive ? '+' : ''}{decimal.format(value)}
+      {percent == null ? '' : ` (${positive ? '+' : ''}${decimal.format(percent)} %)`}
+    </Badge>
+  );
+};
+
 export function GoldPricesPage() {
   const { addToast } = useToast();
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
 
-  const [viewMode, setViewMode] = useState<'daily' | 'monthly' | 'comparison'>('daily');
+  const [viewMode, setViewMode] = useState<ViewMode>('daily');
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [loading, setLoading] = useState(true);
-  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
   const [dailyPrices, setDailyPrices] = useState<DailyPrice[]>([]);
   const [monthlyAggregates, setMonthlyAggregates] = useState<MonthlyAggregate[]>([]);
   const [salesAnalysis, setSalesAnalysis] = useState<SalesPriceAnalysis[]>([]);
   const [monthlySalesVsMarket, setMonthlySalesVsMarket] = useState<MonthlySalesVsMarket[]>([]);
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  const yearOptions = useMemo(
+    () => Array.from({ length: 5 }, (_, index) => currentYear - index),
+    [currentYear],
+  );
 
-  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i);
-
-  useEffect(() => {
-    loadData();
-  }, [selectedYear, selectedMonth, viewMode]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       if (viewMode === 'daily') {
-        await loadDailyPrices();
+        const today = new Date().toISOString().split('T')[0];
+        const nextMonth = selectedMonth === 12 ? 1 : selectedMonth + 1;
+        const nextYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear;
+        const { data: prices, error: queryError } = await supabase
+          .from('gold_prices_daily')
+          .select('*')
+          .gte('price_date', `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`)
+          .lt('price_date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`)
+          .lte('price_date', today)
+          .order('price_date', { ascending: true });
+        if (queryError) throw queryError;
+        setDailyPrices((prices || []).map((price) => ({
+          price_date: price.price_date,
+          london_am_rate: Number(price.london_am_rate ?? 0),
+          london_pm_rate: price.london_pm_rate,
+          spot_price: price.spot_price,
+          average_price: Number(price.average_price ?? 0),
+          high_price: Number(price.high_price ?? 0),
+          low_price: Number(price.low_price ?? 0),
+        })));
       } else if (viewMode === 'monthly') {
-        await loadMonthlyAggregates();
-      } else if (viewMode === 'comparison') {
-        await loadSalesComparison();
+        const { data: prices, error: queryError } = await supabase
+          .from('gold_prices_monthly')
+          .select('*')
+          .eq('year', selectedYear)
+          .order('month', { ascending: true });
+        if (queryError) throw queryError;
+        const visiblePrices = selectedYear === currentYear
+          ? (prices || []).filter((price) => price.month <= currentMonth)
+          : (prices || []);
+        setMonthlyAggregates(visiblePrices.map((price) => ({
+          year: Number(price.year ?? selectedYear),
+          month: Number(price.month ?? 0),
+          average_price: Number(price.average_price ?? 0),
+          high_price: Number(price.high_price ?? 0),
+          low_price: Number(price.low_price ?? 0),
+          opening_price: price.opening_price,
+          closing_price: price.closing_price,
+          total_days: price.total_days,
+        })));
+      } else {
+        const today = new Date().toISOString().split('T')[0];
+        const [{ data: sales, error: salesError }, { data: summaries, error: summariesError }] = await Promise.all([
+          supabase.from('v_sales_price_analysis').select('*')
+            .eq('year', selectedYear).eq('month', selectedMonth)
+            .lte('sale_date', today).order('sale_date', { ascending: false }),
+          supabase.from('v_monthly_sales_vs_market').select('*')
+            .eq('year', selectedYear).order('month', { ascending: false }),
+        ]);
+        if (salesError) throw salesError;
+        if (summariesError) throw summariesError;
+        setSalesAnalysis((sales || []).map((sale) => ({
+          sale_id: sale.sale_id,
+          sale_number: sale.sale_number,
+          sale_date: sale.sale_date ?? '',
+          year: Number(sale.year ?? selectedYear),
+          month: Number(sale.month ?? selectedMonth),
+          quantity_oz: Number(sale.quantity_oz ?? 0),
+          sale_price_per_oz: Number(sale.sale_price_per_oz ?? 0),
+          market_price_per_oz: Number(sale.market_price_per_oz ?? 0),
+          variance_usd: Number(sale.variance_usd ?? 0),
+          variance_percent: Number(sale.variance_percent ?? 0),
+          customer_name: sale.customer_name ?? 'Client non renseigné',
+        })));
+        const visibleSummaries = selectedYear === currentYear
+          ? (summaries || []).filter((summary) => summary.month !== null && summary.month <= currentMonth)
+          : (summaries || []);
+        setMonthlySalesVsMarket(visibleSummaries.map((summary) => ({
+          year: summary.year,
+          month: summary.month,
+          total_sales: Number(summary.total_sales ?? 0),
+          total_quantity_oz: Number(summary.total_quantity_oz ?? 0),
+          avg_sale_price: Number(summary.avg_sale_price ?? 0),
+          avg_market_price: Number(summary.avg_market_price ?? 0),
+          avg_variance_usd: Number(summary.avg_variance_usd ?? 0),
+          avg_variance_percent: Number(summary.avg_variance_percent ?? 0),
+          total_variance_usd: Number(summary.total_variance_usd ?? 0),
+        })));
       }
-    } catch (error: any) {
-      addToast(error.message || 'Failed to load data', 'error');
+    } catch (caught: unknown) {
+      const message = caught instanceof Error ? caught.message : 'Le chargement des cours a échoué.';
+      setError(message);
+      addToast(message, 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast, currentMonth, currentYear, selectedMonth, selectedYear, viewMode]);
 
-  const loadDailyPrices = async () => {
-    // Fetch daily gold prices from LBMA source stored in database
-    // Data is sourced from London Bullion Market Association (LBMA) - the global authority for gold pricing
-    const today = new Date().toISOString().split('T')[0];
-    const { data, error } = await supabase
-      .from('gold_prices_daily')
-      .select('*')
-      .gte('price_date', `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`)
-      .lt('price_date', `${selectedMonth === 12 ? selectedYear + 1 : selectedYear}-${String(selectedMonth === 12 ? 1 : selectedMonth + 1).padStart(2, '0')}-01`)
-      .lte('price_date', today)
-      .order('price_date', { ascending: true });
+  useEffect(() => { void loadData(); }, [loadData]);
 
-    if (error) throw error;
-    setDailyPrices(data || []);
-  };
+  const dailyRows = useMemo(() => buildDailyRows(dailyPrices), [dailyPrices]);
+  const monthlyRows = useMemo(() => buildMonthlyRows(monthlyAggregates), [monthlyAggregates]);
+  const salesRows = useMemo<SalesPriceRow[]>(() => salesAnalysis.map((sale, index) => ({
+    ...sale,
+    id: sale.sale_id || sale.sale_number || `${sale.sale_date}-${index}`,
+  })), [salesAnalysis]);
 
-  const loadMonthlyAggregates = async () => {
-    // Fetch monthly aggregate gold prices from LBMA data
-    // This includes average, high, low, opening, and closing prices for each month
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
+  const latestPrice = dailyPrices.at(-1) || null;
+  const previousPrice = dailyPrices.at(-2) || null;
+  const priceChange = latestPrice && previousPrice ? latestPrice.london_am_rate - previousPrice.london_am_rate : null;
+  const priceChangePercent = priceChange != null && previousPrice?.london_am_rate
+    ? (priceChange / previousPrice.london_am_rate) * 100 : null;
+  const dailyAverage = dailyPrices.length
+    ? dailyPrices.reduce((sum, price) => sum + price.average_price, 0) / dailyPrices.length : 0;
+  const yearlyAverage = monthlyAggregates.length
+    ? monthlyAggregates.reduce((sum, item) => sum + item.average_price, 0) / monthlyAggregates.length : 0;
+  const totalVariance = salesAnalysis.reduce((sum, sale) => sum + sale.variance_usd, 0);
+  const averageSalePrice = salesAnalysis.length
+    ? salesAnalysis.reduce((sum, sale) => sum + sale.sale_price_per_oz, 0) / salesAnalysis.length : 0;
 
-    const { data, error } = await supabase
-      .from('gold_prices_monthly')
-      .select('*')
-      .eq('year', selectedYear)
-      .order('month', { ascending: true });
-
-    if (error) throw error;
-
-    // Filter out future months if viewing current year
-    const filteredData = selectedYear === currentYear
-      ? (data || []).filter(m => m.month <= currentMonth)
-      : (data || []);
-
-    setMonthlyAggregates(filteredData);
-  };
-
-  const loadSalesComparison = async () => {
-    const today = new Date().toISOString().split('T')[0];
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-
-    // Load sales price analysis
-    const { data: salesData, error: salesError } = await supabase
-      .from('v_sales_price_analysis')
-      .select('*')
-      .eq('year', selectedYear)
-      .eq('month', selectedMonth)
-      .lte('sale_date', today)
-      .order('sale_date', { ascending: false });
-
-    if (salesError) throw salesError;
-    setSalesAnalysis(salesData || []);
-
-    // Load monthly sales vs market
-    const { data: monthlyData, error: monthlyError } = await supabase
-      .from('v_monthly_sales_vs_market')
-      .select('*')
-      .eq('year', selectedYear)
-      .order('month', { ascending: false });
-
-    if (monthlyError) throw monthlyError;
-
-    // Filter out future months if viewing current year
-    const filteredMonthlyData = selectedYear === currentYear
-      ? (monthlyData || []).filter((m) => m.month !== null && m.month <= currentMonth)
-      : (monthlyData || []);
-
-    setMonthlySalesVsMarket(filteredMonthlyData);
-  };
-
-  const latestPrice = dailyPrices.length > 0 ? dailyPrices[dailyPrices.length - 1] : null;
-  const previousPrice = dailyPrices.length > 1 ? dailyPrices[dailyPrices.length - 2] : null;
-  const priceChange = latestPrice && previousPrice ? latestPrice.london_am_rate - previousPrice.london_am_rate : 0;
-  const priceChangePercent = previousPrice ? (priceChange / previousPrice.london_am_rate) * 100 : 0;
-
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
-            <p className="text-gray-600">Loading gold prices...</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
+  const dailyColumns: Column<DailyPriceRow>[] = [
+    { key: 'date', header: 'Date', render: (row) => <strong>{formatPriceDate(row.price_date)}</strong> },
+    { key: 'am', header: 'Fixing AM', numeric: true, render: (row) => usd.format(row.london_am_rate) },
+    { key: 'pm', header: 'Fixing PM', numeric: true, render: (row) => row.london_pm_rate == null ? '—' : usd.format(row.london_pm_rate) },
+    { key: 'spot', header: 'Spot', numeric: true, render: (row) => row.spot_price == null ? '—' : usd.format(row.spot_price) },
+    { key: 'high', header: 'Plus haut', numeric: true, render: (row) => usd.format(row.high_price) },
+    { key: 'low', header: 'Plus bas', numeric: true, render: (row) => usd.format(row.low_price) },
+    { key: 'change', header: 'Variation', numeric: true, render: (row) => variationBadge(row.change) },
+  ];
+  const monthlyColumns: Column<MonthlyAggregateRow>[] = [
+    { key: 'month', header: 'Mois', render: (row) => <strong>{MONTHS[row.month - 1] || 'Mois inconnu'}</strong> },
+    { key: 'average', header: 'Moyenne', numeric: true, render: (row) => usd.format(row.average_price) },
+    { key: 'high', header: 'Plus haut', numeric: true, render: (row) => usd.format(row.high_price) },
+    { key: 'low', header: 'Plus bas', numeric: true, render: (row) => usd.format(row.low_price) },
+    { key: 'open', header: 'Ouverture', numeric: true, render: (row) => row.opening_price == null ? '—' : usd.format(row.opening_price) },
+    { key: 'close', header: 'Clôture', numeric: true, render: (row) => row.closing_price == null ? '—' : usd.format(row.closing_price) },
+    { key: 'days', header: 'Séances', numeric: true, render: (row) => integer.format(row.total_days ?? 0) },
+    { key: 'change', header: 'Variation', numeric: true, render: (row) => variationBadge(row.change, row.changePercent) },
+  ];
+  const salesColumns: Column<SalesPriceRow>[] = [
+    { key: 'reference', header: 'Vente', render: (row) => <strong>{row.sale_number || 'Sans référence'}</strong> },
+    { key: 'date', header: 'Date', render: (row) => formatPriceDate(row.sale_date) },
+    { key: 'customer', header: 'Acheteur', render: (row) => row.customer_name },
+    { key: 'quantity', header: 'Quantité', numeric: true, render: (row) => `${decimal.format(row.quantity_oz)} oz` },
+    { key: 'sale', header: 'Prix de vente', numeric: true, render: (row) => `${usd.format(row.sale_price_per_oz)}/oz` },
+    { key: 'market', header: 'Cours marché', numeric: true, render: (row) => `${usd.format(row.market_price_per_oz)}/oz` },
+    { key: 'variance', header: 'Écart', numeric: true, render: (row) => variationBadge(row.variance_usd, row.variance_percent) },
+  ];
 
   return (
-    <MainLayout>
-      {/* Live Gold Market Panel - Right Side */}
-      <LiveGoldMarketPanel onCollapseChange={setIsPanelCollapsed} />
+    <NationalDashboardLayout>
+      <main className="sn-page gold-prices">
+        <PageHeader
+          icon={Coins}
+          title="Cours de l’or"
+          subtitle="Références LBMA, agrégats mensuels et contrôle des prix de vente."
+          breadcrumb={[{ label: 'Marchés internationaux', to: '/marches-internationaux' }, { label: 'Cours de l’or' }]}
+          info={{ titre: 'Source et unité', contenu: <>Les cours historiques sont lus depuis la base SONASP et exprimés en USD par once troy.</> }}
+          actions={
+            <button type="button" className="sn-btn sn-btn--primary" onClick={() => void loadData()} disabled={loading}>
+              <RefreshCw className={loading ? 'sn-spin' : undefined} aria-hidden="true" />
+              {loading ? 'Actualisation…' : 'Actualiser'}
+            </button>
+          }
+        />
 
-      <div
-        className="space-y-6 transition-all duration-300"
-        style={{
-          marginRight: isPanelCollapsed ? '0' : '320px',
-        }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <DollarSign className="h-8 w-8 text-primary-600" />
-              Gold Prices
-            </h1>
-            <p className="text-gray-600 mt-1">Track daily prices, monthly aggregates, and compare with sales</p>
-          </div>
-          <div className="flex gap-3">
-          </div>
+        <div className="gold-prices__tabs">
+          <Tabs
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Vue des cours de l’or"
+            options={[
+              { value: 'daily', label: 'Cours quotidiens', icon: CalendarDays, count: dailyPrices.length },
+              { value: 'monthly', label: 'Synthèse mensuelle', icon: BarChart3, count: monthlyAggregates.length },
+              { value: 'comparison', label: 'Ventes vs marché', icon: TrendingUp, count: salesAnalysis.length },
+            ]}
+          />
         </div>
 
-        {/* View Mode Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="flex gap-2">
-            <button
-              onClick={() => setViewMode('daily')}
-              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
-                viewMode === 'daily'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <Calendar className="w-4 h-4 inline mr-2" />
-              Day by Day Prices
-            </button>
-            <button
-              onClick={() => setViewMode('monthly')}
-              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
-                viewMode === 'monthly'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <BarChart3 className="w-4 h-4 inline mr-2" />
-              Monthly Aggregates
-            </button>
-            <button
-              onClick={() => setViewMode('comparison')}
-              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
-                viewMode === 'comparison'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4 inline mr-2" />
-              Sales vs Market
-            </button>
-          </nav>
-        </div>
-
-        {/* Date Filters */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex gap-4 items-center">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Year
-                </label>
-                <Select
-                  value={selectedYear.toString()}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="w-full"
-                >
-                  {yearOptions.map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </Select>
-              </div>
-              {viewMode !== 'monthly' && (
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Month
-                  </label>
-                  <Select
-                    value={selectedMonth.toString()}
-                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                    className="w-full"
-                  >
-                    {monthNames.map((name, idx) => (
-                      <option key={idx + 1} value={idx + 1}>{name}</option>
-                    ))}
-                  </Select>
-                </div>
-              )}
+        <Card className="gold-prices__filters" title="Période d’analyse" hint="Les sélecteurs actualisent la vue sans recharger l’application.">
+          <div className="gold-prices__filter-grid">
+            <label>
+              <span>Année</span>
+              <SelectControl value={String(selectedYear)} onChange={(value) => setSelectedYear(Number(value))} ariaLabel="Année d’analyse">
+                {yearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+              </SelectControl>
+            </label>
+            {viewMode !== 'monthly' && (
+              <label>
+                <span>Mois</span>
+                <SelectControl value={String(selectedMonth)} onChange={(value) => setSelectedMonth(Number(value))} ariaLabel="Mois d’analyse">
+                  {MONTHS.map((month, index) => <option key={month} value={index + 1}>{month}</option>)}
+                </SelectControl>
+              </label>
+            )}
+            <div className="gold-prices__source">
+              <span>Référence</span>
+              <strong>LBMA · USD / once troy</strong>
+              <small>Données historiques validées dans la base SONASP</small>
             </div>
-          </CardContent>
+          </div>
         </Card>
 
-        {/* Daily View */}
-        {viewMode === 'daily' && (
-          <>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Current Price</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {latestPrice ? `$${latestPrice.london_am_rate.toFixed(2)}` : 'N/A'}
-                  </p>
-                  {previousPrice && latestPrice && (
-                    <p className={`text-sm mt-1 flex items-center gap-1 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {priceChange >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                      {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePercent.toFixed(2)}%)
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">London AM Rate</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Month High</p>
-                  <p className="text-3xl font-bold text-green-600 mt-1">
-                    {dailyPrices.length > 0
-                      ? `$${Math.max(...dailyPrices.map(p => p.high_price)).toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">Highest daily peak</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Month Low</p>
-                  <p className="text-3xl font-bold text-red-600 mt-1">
-                    {dailyPrices.length > 0
-                      ? `$${Math.min(...dailyPrices.map(p => p.low_price)).toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">Lowest daily dip</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Month Average</p>
-                  <p className="text-3xl font-bold text-primary-600 mt-1">
-                    {dailyPrices.length > 0
-                      ? `$${(dailyPrices.reduce((sum, p) => sum + p.average_price, 0) / dailyPrices.length).toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">{dailyPrices.length} trading days</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* No Data Message */}
-            {dailyPrices.length === 0 && (
-              <Card className="bg-amber-50 border-amber-200">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3 text-amber-900">
-                    <AlertCircle className="w-5 h-5 text-amber-600" />
-                    <div>
-                      <p className="font-semibold">No LBMA Price Data Available</p>
-                      <p className="text-sm mt-1">
-                        Historical gold price data from London Bullion Market Association (LBMA) needs to be imported for {monthNames[selectedMonth - 1]} {selectedYear}.
-                        Please contact your system administrator to load historical price data.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Price Chart */}
-            {dailyPrices.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Daily Price Movement - {monthNames[selectedMonth - 1]} {selectedYear}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-96">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={dailyPrices}>
-                      <XAxis
-                        dataKey="price_date"
-                        tickFormatter={(value) => new Date(value).getDate().toString()}
-                      />
-                      <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
-                      <Tooltip
-                        labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                        formatter={(value: number) => [`$${value.toFixed(2)}`, '']}
-                      />
-                      <Legend />
-                      <Bar dataKey="high_price" fill="#10b981" name="High" opacity={0.3} />
-                      <Bar dataKey="low_price" fill="#ef4444" name="Low" opacity={0.3} />
-                      <Line
-                        type="monotone"
-                        dataKey="london_am_rate"
-                        stroke="#f59e0b"
-                        strokeWidth={3}
-                        dot={{ fill: '#f59e0b', r: 4 }}
-                        name="London AM"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="average_price"
-                        stroke="#3b82f6"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        name="Daily Avg"
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            )}
-
-            {/* Daily Prices Table */}
-            {dailyPrices.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Daily Price Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">London AM</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">London PM</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spot</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">High</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Low</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Change</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {dailyPrices.slice().reverse().map((price, index, arr) => {
-                        const prevPrice = arr[index + 1];
-                        const change = prevPrice ? price.london_am_rate - prevPrice.london_am_rate : 0;
-                        return (
-                          <tr key={price.price_date} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {new Date(price.price_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                              ${price.london_am_rate.toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              ${price.london_pm_rate?.toFixed(2) || 'N/A'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              ${price.spot_price?.toFixed(2) || 'N/A'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right">
-                              ${price.high_price.toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 text-right">
-                              ${price.low_price.toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                              {prevPrice ? (
-                                <span className={change >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                                  {change >= 0 ? '+' : ''}{change.toFixed(2)}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-            )}
-          </>
+        {error && (
+          <div className="gold-prices__error">
+            <Note tone="danger" icon={AlertCircle}>
+              Impossible de charger les cours : {error}
+              <button type="button" onClick={() => void loadData()}>Réessayer</button>
+            </Note>
+          </div>
         )}
 
-        {/* Monthly View */}
-        {viewMode === 'monthly' && (
-          <>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Year Average</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {monthlyAggregates.length > 0
-                      ? `$${(monthlyAggregates.reduce((sum, m) => sum + parseFloat(m.average_price.toString()), 0) / monthlyAggregates.length).toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">{monthlyAggregates.length} months</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Year High</p>
-                  <p className="text-3xl font-bold text-green-600 mt-1">
-                    {monthlyAggregates.length > 0
-                      ? `$${Math.max(...monthlyAggregates.map(m => parseFloat(m.high_price.toString()))).toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">Peak price</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Year Low</p>
-                  <p className="text-3xl font-bold text-red-600 mt-1">
-                    {monthlyAggregates.length > 0
-                      ? `$${Math.min(...monthlyAggregates.map(m => parseFloat(m.low_price.toString()))).toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">Lowest price</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Total Trading Days</p>
-                  <p className="text-3xl font-bold text-primary-600 mt-1">
-                    {monthlyAggregates.length > 0
-                      ? monthlyAggregates.reduce((somme, m) => somme + (m.total_days ?? 0), 0)
-                      : '0'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">Across {monthlyAggregates.length} months</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Monthly Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Price Trends - {selectedYear}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyAggregates}>
-                      <XAxis
-                        dataKey="month"
-                        tickFormatter={(value) => monthNames[value - 1].substring(0, 3)}
-                      />
-                      <YAxis domain={['dataMin - 50', 'dataMax + 50']} />
-                      <Tooltip
-                        labelFormatter={(value) => monthNames[value - 1]}
-                        formatter={(value: number) => [`$${value.toFixed(2)}`, '']}
-                      />
-                      <Legend />
-                      <Bar dataKey="average_price" fill="#3b82f6" name="Average" />
-                      <Bar dataKey="high_price" fill="#10b981" name="High" />
-                      <Bar dataKey="low_price" fill="#ef4444" name="Low" />
-                    </BarChart>
-                  </ResponsiveContainer>
+        <div className="gold-prices__workspace">
+          <div className="gold-prices__content">
+            {viewMode === 'daily' && (
+              <TabPanel value="daily">
+                <div className="gold-prices__stats">
+                  <StatGrid ariaLabel="Indicateurs quotidiens du cours de l’or" items={[
+                    { label: 'Dernier fixing AM', value: latestPrice ? usd.format(latestPrice.london_am_rate) : '—', hint: latestPrice ? formatPriceDate(latestPrice.price_date) : 'Aucune cotation', icon: Coins, tone: 'gold' },
+                    { label: 'Plus haut du mois', value: dailyPrices.length ? usd.format(Math.max(...dailyPrices.map((item) => item.high_price))) : '—', icon: ArrowUpRight, tone: 'green' },
+                    { label: 'Plus bas du mois', value: dailyPrices.length ? usd.format(Math.min(...dailyPrices.map((item) => item.low_price))) : '—', icon: ArrowDownRight, tone: 'red' },
+                    { label: 'Moyenne du mois', value: dailyPrices.length ? usd.format(dailyAverage) : '—', hint: `${integer.format(dailyPrices.length)} séance(s)`, icon: LineChartIcon, tone: 'blue' },
+                  ]} />
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Monthly Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Aggregates</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Month</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Average</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">High</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Low</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Opening</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Closing</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Days</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Change</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {monthlyAggregates.slice().reverse().map((agg, index, arr) => {
-                        const prevAgg = arr[index + 1];
-                        const clotureCourante = agg.closing_price === null ? null : Number(agg.closing_price);
-                        const cloturePrecedente = prevAgg?.closing_price == null ? null : Number(prevAgg.closing_price);
-                        const change = clotureCourante !== null && cloturePrecedente !== null
-                          ? clotureCourante - cloturePrecedente
-                          : 0;
-                        const changePercent = change !== 0 && cloturePrecedente
-                          ? (change / cloturePrecedente) * 100
-                          : 0;
-                        return (
-                          <tr key={`${agg.year}-${agg.month}`} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {monthNames[agg.month - 1]}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              ${parseFloat(agg.average_price.toString()).toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right">
-                              ${parseFloat(agg.high_price.toString()).toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 text-right">
-                              ${parseFloat(agg.low_price.toString()).toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              {agg.opening_price === null ? '—' : `$${Number(agg.opening_price).toFixed(2)}`}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              {agg.closing_price === null ? '—' : `$${Number(agg.closing_price).toFixed(2)}`}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              {agg.total_days}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                              {prevAgg ? (
-                                <div>
-                                  <span className={change >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                                    {change >= 0 ? '+' : ''}{change.toFixed(2)}
-                                  </span>
-                                  <span className={`text-xs ml-1 ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    ({changePercent.toFixed(2)}%)
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {/* Comparison View */}
-        {viewMode === 'comparison' && (
-          <>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Total Sales</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {salesAnalysis.length}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">This month</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Total Quantity</p>
-                  <p className="text-3xl font-bold text-primary-600 mt-1">
-                    {salesAnalysis.reduce((sum, s) => sum + parseFloat(s.quantity_oz.toString()), 0).toFixed(2)} oz
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">Gold sold</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Avg Sale Price</p>
-                  <p className="text-3xl font-bold text-green-600 mt-1">
-                    ${salesAnalysis.length > 0
-                      ? (salesAnalysis.reduce((sum, s) => sum + parseFloat(s.sale_price_per_oz?.toString() || '0'), 0) / salesAnalysis.length).toFixed(2)
-                      : '0.00'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">Per ounce</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600">Total Variance</p>
-                  <p className={`text-3xl font-bold mt-1 ${
-                    salesAnalysis.reduce((sum, s) => sum + parseFloat(s.variance_usd?.toString() || '0'), 0) >= 0
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}>
-                    ${Math.abs(salesAnalysis.reduce((sum, s) => sum + parseFloat(s.variance_usd?.toString() || '0'), 0)).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {salesAnalysis.reduce((sum, s) => sum + parseFloat(s.variance_usd?.toString() || '0'), 0) >= 0 ? 'Above' : 'Below'} market
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Sales vs Market Chart */}
-            {monthlySalesVsMarket.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Sales vs Market Comparison - {selectedYear}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-96">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={monthlySalesVsMarket.slice().reverse()}>
-                        <XAxis
-                          dataKey="month"
-                          tickFormatter={(value) => monthNames[value - 1].substring(0, 3)}
-                        />
-                        <YAxis yAxisId="left" orientation="left" label={{ value: 'Price ($)', angle: -90, position: 'insideLeft' }} />
-                        <YAxis yAxisId="right" orientation="right" label={{ value: 'Variance ($)', angle: 90, position: 'insideRight' }} />
-                        <Tooltip
-                          labelFormatter={(value) => monthNames[value - 1]}
-                          formatter={(value: number, name: string) => {
-                            if (name === 'Sales' || name === 'Market') return [`$${value.toFixed(2)}/oz`, name];
-                            return [`$${value.toFixed(2)}`, name];
-                          }}
-                        />
-                        <Legend />
-                        <Line
-                          yAxisId="left"
-                          type="monotone"
-                          dataKey="avg_sale_price"
-                          stroke="#10b981"
-                          strokeWidth={3}
-                          name="Sales"
-                        />
-                        <Line
-                          yAxisId="left"
-                          type="monotone"
-                          dataKey="avg_market_price"
-                          stroke="#3b82f6"
-                          strokeWidth={3}
-                          strokeDasharray="5 5"
-                          name="Market"
-                        />
-                        <Bar
-                          yAxisId="right"
-                          dataKey="avg_variance_usd"
-                          fill="#f59e0b"
-                          name="Variance"
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Individual Sales Analysis */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-primary-600" />
-                  Sales Price Analysis - {monthNames[selectedMonth - 1]} {selectedYear}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {salesAnalysis.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <p>No sales data available for the selected period</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sale #</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qty (oz)</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Sale Price</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Market Price</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Variance $</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Variance %</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {salesAnalysis.map((sale) => {
-                          const variance = parseFloat(sale.variance_usd?.toString() || '0');
-                          const variancePercent = parseFloat(sale.variance_percent?.toString() || '0');
-                          return (
-                            <tr key={sale.sale_id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {sale.sale_number}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {new Date(sale.sale_date).toLocaleDateString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {sale.customer_name || 'Unknown'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                {parseFloat(sale.quantity_oz.toString()).toFixed(2)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                ${parseFloat(sale.sale_price_per_oz?.toString() || '0').toFixed(2)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                ${parseFloat(sale.market_price_per_oz?.toString() || '0').toFixed(2)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                <span className={`font-medium ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  ${Math.abs(variance).toFixed(2)}
-                                  {variance >= 0 ? ' ↑' : ' ↓'}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                <span className={`font-medium ${variancePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  {variancePercent >= 0 ? '+' : ''}{variancePercent.toFixed(2)}%
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                {latestPrice && priceChange != null && (
+                  <div className="gold-prices__variation-note">
+                    <Note tone={priceChange >= 0 ? 'success' : 'danger'} icon={priceChange >= 0 ? ArrowUpRight : ArrowDownRight}>
+                      Évolution depuis la cotation précédente : {priceChange >= 0 ? '+' : ''}{usd.format(priceChange)}
+                      {priceChangePercent == null ? '' : ` (${priceChangePercent >= 0 ? '+' : ''}${decimal.format(priceChangePercent)} %)`}.
+                    </Note>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
-    </MainLayout>
+
+                {!loading && dailyPrices.length === 0 ? (
+                  <Card className="gold-prices__empty-card">
+                    <EmptyState title="Aucun cours LBMA pour cette période" description={`Aucune cotation n’est enregistrée pour ${MONTHS[selectedMonth - 1]} ${selectedYear}. Contactez l’administration si un import historique est attendu.`} />
+                  </Card>
+                ) : (
+                  <>
+                    <Card title={`Évolution quotidienne · ${MONTHS[selectedMonth - 1]} ${selectedYear}`} hint="Fixings AM, moyenne et amplitude journalière." className="gold-prices__chart-card">
+                      <div className="gold-prices__chart" role="img" aria-label="Graphique des cours quotidiens de l’or">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ComposedChart data={dailyPrices}>
+                            <XAxis dataKey="price_date" tickFormatter={(value) => String(new Date(`${String(value)}T00:00:00Z`).getUTCDate())} />
+                            <YAxis domain={['dataMin - 10', 'dataMax + 10']} width={64} />
+                            <Tooltip labelFormatter={(value) => formatPriceDate(String(value))} formatter={(value) => [usd.format(Number(value ?? 0)), '']} />
+                            <Legend />
+                            <Bar dataKey="high_price" fill="var(--sn-success-soft)" stroke="var(--sn-success)" name="Plus haut" />
+                            <Bar dataKey="low_price" fill="var(--sn-danger-soft)" stroke="var(--sn-danger)" name="Plus bas" />
+                            <Line type="monotone" dataKey="london_am_rate" stroke="var(--sn-gold-dark)" strokeWidth={3} dot={false} name="Fixing AM" />
+                            <Line type="monotone" dataKey="average_price" stroke="var(--sn-info)" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Moyenne" />
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                    <Card title="Détail des cotations" hint="Historique journalier provenant de la base de données." className="gold-prices__table-card">
+                      <DataTable columns={dailyColumns} rows={dailyRows} loading={loading} empty="Aucune cotation pour cette période." caption="Cours quotidiens de l’or" />
+                    </Card>
+                  </>
+                )}
+              </TabPanel>
+            )}
+
+            {viewMode === 'monthly' && (
+              <TabPanel value="monthly">
+                <div className="gold-prices__stats">
+                  <StatGrid ariaLabel="Indicateurs annuels du cours de l’or" items={[
+                    { label: 'Moyenne annuelle', value: monthlyAggregates.length ? usd.format(yearlyAverage) : '—', hint: `${integer.format(monthlyAggregates.length)} mois consolidé(s)`, icon: Coins, tone: 'gold' },
+                    { label: 'Plus haut annuel', value: monthlyAggregates.length ? usd.format(Math.max(...monthlyAggregates.map((item) => item.high_price))) : '—', icon: ArrowUpRight, tone: 'green' },
+                    { label: 'Plus bas annuel', value: monthlyAggregates.length ? usd.format(Math.min(...monthlyAggregates.map((item) => item.low_price))) : '—', icon: ArrowDownRight, tone: 'red' },
+                    { label: 'Séances consolidées', value: integer.format(monthlyAggregates.reduce((sum, item) => sum + (item.total_days ?? 0), 0)), icon: CalendarDays, tone: 'blue' },
+                  ]} />
+                </div>
+                {!loading && monthlyAggregates.length === 0 ? (
+                  <Card className="gold-prices__empty-card"><EmptyState title="Aucun agrégat mensuel" description={`Aucune synthèse n’est disponible pour ${selectedYear}.`} /></Card>
+                ) : (
+                  <>
+                    <Card title={`Tendance mensuelle · ${selectedYear}`} hint="Moyenne, plus haut et plus bas par mois." className="gold-prices__chart-card">
+                      <div className="gold-prices__chart" role="img" aria-label="Graphique des agrégats mensuels du cours de l’or">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={monthlyAggregates}>
+                            <XAxis dataKey="month" tickFormatter={(value) => (MONTHS[Number(value) - 1] || '—').slice(0, 4)} />
+                            <YAxis domain={['dataMin - 50', 'dataMax + 50']} width={64} />
+                            <Tooltip labelFormatter={(value) => MONTHS[Number(value) - 1] || 'Mois inconnu'} formatter={(value) => [usd.format(Number(value ?? 0)), '']} />
+                            <Legend />
+                            <Bar dataKey="average_price" fill="var(--sn-info)" name="Moyenne" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="high_price" fill="var(--sn-success)" name="Plus haut" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="low_price" fill="var(--sn-danger)" name="Plus bas" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                    <Card title="Agrégats mensuels" hint="Ouverture, clôture et amplitude consolidées." className="gold-prices__table-card">
+                      <DataTable columns={monthlyColumns} rows={monthlyRows} loading={loading} empty="Aucun agrégat pour cette année." caption="Agrégats mensuels des cours de l’or" />
+                    </Card>
+                  </>
+                )}
+              </TabPanel>
+            )}
+
+            {viewMode === 'comparison' && (
+              <TabPanel value="comparison">
+                <div className="gold-prices__stats">
+                  <StatGrid ariaLabel="Indicateurs de comparaison des ventes au marché" items={[
+                    { label: 'Ventes analysées', value: integer.format(salesAnalysis.length), hint: `${MONTHS[selectedMonth - 1]} ${selectedYear}`, icon: Coins, tone: 'gold' },
+                    { label: 'Quantité vendue', value: `${decimal.format(salesAnalysis.reduce((sum, sale) => sum + sale.quantity_oz, 0))} oz`, icon: Scale, tone: 'blue' },
+                    { label: 'Prix moyen de vente', value: usd.format(averageSalePrice), hint: 'Par once troy', icon: TrendingUp, tone: 'green' },
+                    { label: 'Écart cumulé', value: usd.format(totalVariance), hint: totalVariance >= 0 ? 'Au-dessus du marché' : 'Sous le marché', icon: totalVariance >= 0 ? ArrowUpRight : ArrowDownRight, tone: totalVariance >= 0 ? 'green' : 'red' },
+                  ]} />
+                </div>
+                {monthlySalesVsMarket.length > 0 && (
+                  <Card title={`Prix de vente comparé au marché · ${selectedYear}`} hint="Évolution des prix moyens et des écarts mensuels." className="gold-prices__chart-card">
+                    <div className="gold-prices__chart" role="img" aria-label="Graphique comparant les ventes au cours du marché">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={[...monthlySalesVsMarket].reverse()}>
+                          <XAxis dataKey="month" tickFormatter={(value) => (MONTHS[Number(value) - 1] || '—').slice(0, 4)} />
+                          <YAxis yAxisId="price" orientation="left" width={64} />
+                          <YAxis yAxisId="variance" orientation="right" width={64} />
+                          <Tooltip labelFormatter={(value) => MONTHS[Number(value) - 1] || 'Mois inconnu'} formatter={(value, name) => [usd.format(Number(value ?? 0)), String(name ?? 'Valeur')]} />
+                          <Legend />
+                          <Line yAxisId="price" type="monotone" dataKey="avg_sale_price" stroke="var(--sn-success)" strokeWidth={3} dot={false} name="Prix de vente" />
+                          <Line yAxisId="price" type="monotone" dataKey="avg_market_price" stroke="var(--sn-info)" strokeWidth={3} strokeDasharray="5 5" dot={false} name="Cours marché" />
+                          <Bar yAxisId="variance" dataKey="avg_variance_usd" fill="var(--sn-gold)" name="Écart moyen" radius={[4, 4, 0, 0]} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                )}
+                <Card title={`Analyse des ventes · ${MONTHS[selectedMonth - 1]} ${selectedYear}`} hint="Les écarts positifs et négatifs restent identifiables par leur libellé et leur icône." className="gold-prices__table-card">
+                  {loading || salesRows.length > 0 ? (
+                    <DataTable columns={salesColumns} rows={salesRows} loading={loading} empty="Aucune vente pour cette période." caption="Comparaison des ventes d’or avec le cours du marché" />
+                  ) : (
+                    <EmptyState title="Aucune vente à comparer" description="Aucune vente ne dispose d’un cours de référence sur la période sélectionnée." />
+                  )}
+                </Card>
+              </TabPanel>
+            )}
+          </div>
+          <LiveGoldMarketPanel variant="embedded" />
+        </div>
+      </main>
+    </NationalDashboardLayout>
   );
 }

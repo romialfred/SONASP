@@ -4,26 +4,30 @@ import { Button } from './Button';
 interface SuccessDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onViewDetails: () => void;
-  expeditionNumber: string;
-  totalBoxes: number;
-  totalNetWeight: number;
-  totalGrossWeight: number;
-  refineryName: string;
-  freightCompany: string;
-  productionDate: string;
+  onViewDetails?: () => void;
+  expeditionNumber?: string;
+  totalBoxes?: number;
+  totalNetWeight?: number;
+  totalGrossWeight?: number;
+  refineryName?: string;
+  freightCompany?: string;
+  productionDate?: string;
+  title?: string;
+  message?: string;
 }
 
 export function SuccessDialog({
   isOpen,
   onClose,
-  expeditionNumber,
-  totalBoxes,
-  totalNetWeight,
-  totalGrossWeight,
-  refineryName,
-  freightCompany,
-  productionDate,
+  expeditionNumber = '',
+  totalBoxes = 0,
+  totalNetWeight = 0,
+  totalGrossWeight = 0,
+  refineryName = '',
+  freightCompany = '',
+  productionDate = '',
+  title = 'Expédition enregistrée !',
+  message,
 }: SuccessDialogProps) {
   if (!isOpen) return null;
 
@@ -42,8 +46,8 @@ export function SuccessDialog({
                   <CheckCircle className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Expédition Enregistrée!</h2>
-                  <p className="text-green-100 text-sm">Préparation créée avec succès</p>
+                  <h2 className="text-xl font-bold">{title}</h2>
+                  <p className="text-green-100 text-sm">{message || 'Préparation créée avec succès'}</p>
                 </div>
               </div>
               <button
@@ -57,6 +61,9 @@ export function SuccessDialog({
         </div>
 
         {/* Content - More compact */}
+        {message ? (
+          <div className="p-6 text-gray-700">{message}</div>
+        ) : (
         <div className="p-5 space-y-4">
           {/* Expedition Number - Prominent Display */}
           <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-lg p-4 text-center">
@@ -136,6 +143,7 @@ export function SuccessDialog({
             </div>
           </div>
         </div>
+        )}
 
         {/* Actions - Single button */}
         <div className="bg-gray-50 px-5 py-3 flex items-center justify-end border-t">

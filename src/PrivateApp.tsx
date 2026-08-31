@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ComponentType } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { DialogProvider } from './contexts/DialogContext';
@@ -82,14 +82,14 @@ const PaymentCreate = lazyNamed(() => import('./pages/payments/PaymentCreate'), 
 const PaymentDetailsPage = lazyNamed(() => import('./pages/payments/PaymentDetailsPage'), 'PaymentDetailsPage');
 const PaymentRecordPage = lazyNamed(() => import('./pages/payments/PaymentRecordPage'), 'PaymentRecordPage');
 const VirtualPaymentsPage = lazyNamed(() => import('./pages/payments/VirtualPaymentsPage'), 'VirtualPaymentsPage');
-const BusinessIntelligenceWorkspace = lazyNamed(
-  () => import('./pages/analytics/BusinessIntelligenceWorkspace'),
-  'BusinessIntelligenceWorkspace',
-);
+const BusinessIntelligenceWorkspace = lazy(async () => {
+  const module = await import('./pages/analytics/BusinessIntelligenceWorkspace');
+  return { default: module.BusinessIntelligenceWorkspace };
+});
 const UsersListPage = lazyNamed(() => import('./pages/admin/UsersListPage'), 'UsersListPage');
 const UserManagementModern = lazyNamed(() => import('./pages/admin/UserManagementModern'), 'UserManagementModern');
-const UserPermissionsPage = lazyNamed(() => import('./pages/admin/UserPermissionsPage'), 'UserPermissionsPage');
 const UserDetailsPage = lazy(() => import('./pages/admin/UserDetailsPage'));
+const RolesPermissionsPage = lazyNamed(() => import('./pages/admin/RolesPermissionsPage'), 'RolesPermissionsPage');
 const ApprovalsDashboard = lazyNamed(() => import('./pages/admin/ApprovalsDashboard'), 'ApprovalsDashboard');
 const TransportCompaniesPage = lazyNamed(() => import('./pages/admin/TransportCompaniesPage'), 'TransportCompaniesPage');
 const TransportCompanyForm = lazyNamed(() => import('./pages/admin/TransportCompanyForm'), 'TransportCompanyForm');
@@ -105,6 +105,15 @@ const MessagerieForm = lazy(() => import('./pages/admin/MessagerieForm'));
 const InventoryManagement = lazyNamed(() => import('./pages/inventory/InventoryManagement'), 'InventoryManagement');
 const AddInventoryEntry = lazyNamed(() => import('./pages/inventory/AddInventoryEntry'), 'AddInventoryEntry');
 const SilverInventoryManagement = lazyNamed(() => import('./pages/inventory/SilverInventoryManagement'), 'SilverInventoryManagement');
+const ReserveAllocationsPage = lazyNamed(() => import('./pages/inventory/ReserveAllocationsPage'), 'ReserveAllocationsPage');
+const ReserveAllocationForm = lazyNamed(() => import('./pages/inventory/ReserveAllocationForm'), 'ReserveAllocationForm');
+const NationalReserveOverview = lazyNamed(() => import('./pages/inventory/NationalReserveWorkspace'), 'NationalReserveOverview');
+const ReservePhysicalPage = lazyNamed(() => import('./pages/inventory/NationalReserveWorkspace'), 'ReservePhysicalPage');
+const ReserveControlsPage = lazyNamed(() => import('./pages/inventory/NationalReserveWorkspace'), 'ReserveControlsPage');
+const ReserveValuationPage = lazyNamed(() => import('./pages/inventory/NationalReserveWorkspace'), 'ReserveValuationPage');
+const ReserveAuditPage = lazyNamed(() => import('./pages/inventory/NationalReserveWorkspace'), 'ReserveAuditPage');
+const OrganizationsPage = lazyNamed(() => import('./pages/stakeholders/OrganizationsPage'), 'OrganizationsPage');
+const OrganizationForm = lazyNamed(() => import('./pages/stakeholders/OrganizationForm'), 'OrganizationForm');
 const MiningCompaniesPage = lazyNamed(() => import('./pages/stakeholders/MiningCompaniesPage'), 'MiningCompaniesPage');
 const MiningCompanyForm = lazyNamed(() => import('./pages/stakeholders/MiningCompanyForm'), 'MiningCompanyForm');
 const MiningCompanyDetails = lazyNamed(() => import('./pages/stakeholders/MiningCompanyDetails'), 'MiningCompanyDetails');
@@ -115,7 +124,10 @@ const DepositorFormPage = lazyNamed(() => import('./pages/stakeholders/Depositor
 const DailyProductionPage = lazyNamed(() => import('./pages/production/DailyProductionPage'), 'DailyProductionPage');
 const ProductionDetails = lazyNamed(() => import('./pages/production/ProductionDetails'), 'ProductionDetails');
 const ProductionInSafe = lazyNamed(() => import('./pages/production/ProductionInSafe'), 'ProductionInSafe');
-const BudgetManagementPage = lazyNamed(() => import('./pages/production/BudgetManagementPage'), 'BudgetManagementPage');
+const BudgetManagementPage = lazy(async () => {
+  const module = await import('./pages/production/BudgetManagementPage');
+  return { default: module.BudgetManagementPage };
+});
 const ExportLicensesPage = lazyNamed(() => import('./pages/production/ExportLicensesPage'), 'ExportLicensesPage');
 const ExportLicenseRequestsInboxPage = lazy(() => import('./pages/production/ExportLicenseRequestsInboxPage'));
 const ExportLicenseForm = lazyNamed(() => import('./pages/production/ExportLicenseForm'), 'ExportLicenseForm');
@@ -146,6 +158,7 @@ const InfractionDetails = lazy(() => import('./pages/artisan-minier/InfractionDe
 const PaiementsVentesDashboard = lazy(() => import('./pages/artisan-minier/PaiementsVentesDashboard'));
 const PaiementForm = lazy(() => import('./pages/artisan-minier/PaiementForm'));
 const PaiementsHistorique = lazy(() => import('./pages/artisan-minier/PaiementsHistorique'));
+const PaiementDetails = lazy(() => import('./pages/artisan-minier/PaiementDetails'));
 const CentreRapportsAnalyse = lazy(() => import('./pages/artisan-minier/CentreRapportsAnalyse'));
 const RapportChiffreAffaires = lazy(() => import('./pages/artisan-minier/RapportChiffreAffaires'));
 const RapportQuantites = lazy(() => import('./pages/artisan-minier/RapportQuantites'));
@@ -169,7 +182,6 @@ const RequisitionDetails = lazy(() => import('./pages/requisitions/RequisitionDe
 const FactureVente = lazy(() => import('./pages/artisan-minier/FactureVente'));
 const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/ArtisanalSitesOverview'));
 const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
-const ApprobateursPage = lazy(() => import('./pages/stakeholders/ApprobateursPage'));
 const MinePortalPage = lazy(() => import('./pages/mine/MinePortalPage'));
 const ComptoirPortalPage = lazy(() => import('./pages/comptoir/ComptoirPortalPage'));
 const ComptoirStockPage = lazy(() => import('./pages/comptoir/ComptoirStockPage'));
@@ -179,11 +191,19 @@ const CollectorStockPage = lazy(() => import('./pages/collector/CollectorStockPa
 const CollectorDocumentsPage = lazy(() => import('./pages/collector/CollectorDocumentsPage'));
 const SonaspComptoirSalesInboxPage = lazy(() => import('./pages/comptoir/SonaspComptoirSalesInboxPage'));
 const ManagerPortalPage = lazy(() => import('./pages/manager/ManagerPortalPage'));
+const InstitutionalPortalPage = lazy(() => import('./pages/portals/InstitutionalPortalPage'));
+const DgiFiscalPaymentsPage = lazy(() => import('./pages/portals/DgiFiscalPaymentsPage'));
+const DgmgReserveValidationPage = lazy(() => import('./pages/portals/DgmgReserveValidationPage'));
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
 const UpdatePassword = lazy(() => import('./pages/auth/UpdatePassword'));
 const ReglesFiscalesPage = lazy(() => import('./pages/fiscalite/ReglesFiscalesPage'));
 const ConciliationsPage = lazy(() => import('./pages/conciliation/ConciliationsPage'));
 const ConciliationDetails = lazy(() => import('./pages/conciliation/ConciliationDetails'));
+
+function LegacyPermissionsRedirect() {
+  const { userId } = useParams<{ userId: string }>();
+  return <Navigate to={`/users/edit?userId=${encodeURIComponent(userId ?? '')}&step=permissions`} replace />;
+}
 
 function AppRoutes() {
   const location = useLocation();
@@ -251,6 +271,38 @@ function AppRoutes() {
           <Route path="/settings" element={<Navigate to="/parameters" replace />} />
 
           <Route element={<NationalDashboardChrome />}>
+            <Route
+              path={privateRoutePath('/portail-dgmg')}
+              element={
+                <ProtectedRoute requiredAnyCapabilities={[CAPABILITIES.DGMG_SUPERVISE]}>
+                  <InstitutionalPortalPage portal="dgmg" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path={privateRoutePath('/portail-dgmg/reserve-validations')}
+              element={
+                <ProtectedRoute requiredSensitiveCapability={CAPABILITIES.RESERVE_ALLOCATIONS_VALIDATE_LEVEL_1}>
+                  <DgmgReserveValidationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path={privateRoutePath('/portail-dgi')}
+              element={
+                <ProtectedRoute requiredAnyCapabilities={[CAPABILITIES.DGI_FISCAL_CONTROL]}>
+                  <InstitutionalPortalPage portal="dgi" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path={privateRoutePath('/portail-dgi/paiements')}
+              element={
+                <ProtectedRoute requiredAnyCapabilities={[CAPABILITIES.DGI_FISCAL_CONTROL, CAPABILITIES.DGI_FISCAL_RECONCILE]}>
+                  <DgiFiscalPaymentsPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path={privateRoutePath('/portail-collecteur')}
               element={
@@ -484,6 +536,15 @@ function AppRoutes() {
             />
 
             <Route
+              path="/artisan-minier/paiements/historique/:paiementId"
+              element={
+                <ProtectedRoute>
+                  <PaiementDetails />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/artisan-minier/:artisanId/infractions/nouvelle"
               element={
                 <ProtectedRoute>
@@ -565,6 +626,87 @@ function AppRoutes() {
             />
 
             <Route
+              path="/national-reserve"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <NationalReserveOverview />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/national-reserve/physical"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <ReservePhysicalPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/national-reserve/controls"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <ReserveControlsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/national-reserve/valuation"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <ReserveValuationPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/national-reserve/audit"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <ReserveAuditPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/national-reserve/allocations"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <ReserveAllocationsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/national-reserve/allocations/new"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ReserveAllocationForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/national-reserve/allocations/:id"
+              element={
+                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                  <ReserveAllocationsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/national-reserve/allocations/:id/edit"
+              element={
+                <ProtectedRoute allowedRoles={['management']}>
+                  <ReserveAllocationForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/payments"
               element={
                 <ProtectedRoute>
@@ -576,7 +718,7 @@ function AppRoutes() {
             <Route
               path="/artisan-sites"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['management', 'dgmg']}>
                   <ArtisanalSitesOverview />
                 </ProtectedRoute>
               }
@@ -603,7 +745,7 @@ function AppRoutes() {
             <Route
               path="/artisan-sites/production"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['management', 'dgmg']}>
                   <ArtisanalSiteProduction />
                 </ProtectedRoute>
               }
@@ -668,8 +810,8 @@ function AppRoutes() {
               path="/conciliation"
               element={(
                 <ProtectedRoute
-                  allowedRoles={['management', 'admin', 'manager', 'mine']}
-                  requiredAnyCapabilities={[CAPABILITIES.RECONCILIATION_READ]}
+                  allowedRoles={['management', 'admin', 'manager', 'mine', 'dgi']}
+                  requiredAnyCapabilities={[CAPABILITIES.RECONCILIATION_READ, CAPABILITIES.DGI_FISCAL_CONTROL]}
                 >
                   <ConciliationsPage />
                 </ProtectedRoute>
@@ -679,8 +821,8 @@ function AppRoutes() {
               path="/conciliation/regles-fiscales"
               element={(
                 <ProtectedRoute
-                  allowedRoles={['management', 'admin', 'manager', 'mine']}
-                  requiredAnyCapabilities={[CAPABILITIES.TAX_RULES_READ, CAPABILITIES.TAX_RULES_MANAGE]}
+                  allowedRoles={['management', 'admin', 'manager', 'mine', 'dgi']}
+                  requiredAnyCapabilities={[CAPABILITIES.TAX_RULES_READ, CAPABILITIES.TAX_RULES_MANAGE, CAPABILITIES.DGI_FISCAL_CONTROL]}
                 >
                   <ReglesFiscalesPage />
                 </ProtectedRoute>
@@ -690,8 +832,8 @@ function AppRoutes() {
               path="/conciliation/:id"
               element={(
                 <ProtectedRoute
-                  allowedRoles={['management', 'admin', 'manager', 'mine']}
-                  requiredAnyCapabilities={[CAPABILITIES.RECONCILIATION_READ]}
+                  allowedRoles={['management', 'admin', 'manager', 'mine', 'dgi']}
+                  requiredAnyCapabilities={[CAPABILITIES.RECONCILIATION_READ, CAPABILITIES.DGI_FISCAL_CONTROL]}
                 >
                   <ConciliationDetails />
                 </ProtectedRoute>
@@ -801,7 +943,7 @@ function AppRoutes() {
             <Route
               path="/production/daily"
               element={
-                <ProtectedRoute allowedRoles={['factory', 'management', 'mine']}>
+                <ProtectedRoute allowedRoles={['factory', 'management', 'mine', 'dgmg', 'dgi']}>
                   <DailyProductionPage />
                 </ProtectedRoute>
               }
@@ -840,7 +982,7 @@ function AppRoutes() {
             <Route
               path="/users"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
                   <UsersListPage />
                 </ProtectedRoute>
               }
@@ -849,7 +991,7 @@ function AppRoutes() {
             <Route
               path="/users/new"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
                   <UserManagementModern />
                 </ProtectedRoute>
               }
@@ -858,7 +1000,7 @@ function AppRoutes() {
             <Route
               path="/users/edit"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
                   <UserManagementModern />
                 </ProtectedRoute>
               }
@@ -867,7 +1009,7 @@ function AppRoutes() {
             <Route
               path="/users/:userId"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
                   <UserDetailsPage />
                 </ProtectedRoute>
               }
@@ -876,7 +1018,7 @@ function AppRoutes() {
             <Route
               path="/admin/users"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
                   <UsersListPage />
                 </ProtectedRoute>
               }
@@ -885,8 +1027,17 @@ function AppRoutes() {
             <Route
               path="/admin/users/:userId/permissions"
               element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE}>
-                  <UserPermissionsPage />
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
+                  <LegacyPermissionsRedirect />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/permissions"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
+                  <RolesPermissionsPage />
                 </ProtectedRoute>
               }
             />
@@ -902,6 +1053,15 @@ function AppRoutes() {
 
             <Route
               path="/parameters"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SETTINGS_VIEW}>
+                  <ParametersPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/settings"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.SETTINGS_VIEW}>
                   <ParametersPage />
@@ -993,7 +1153,10 @@ function AppRoutes() {
             <Route
               path="/admin/modules"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute
+                  allowedRoles={['management']}
+                  requiredSensitiveCapability={CAPABILITIES.REFERENTIALS_MANAGE}
+                >
                   <ModulesManagement />
                 </ProtectedRoute>
               }
@@ -1025,6 +1188,15 @@ function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['management']}>
                   <MessagerieForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/audit"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}>
+                  <AuditTrailPage />
                 </ProtectedRoute>
               }
             />
@@ -1462,6 +1634,33 @@ function AppRoutes() {
             />
 
             <Route
+              path="/stakeholders/organizations"
+              element={
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'management']} requiredSensitiveCapability={CAPABILITIES.REFERENTIALS_MANAGE}>
+                  <OrganizationsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/organizations/new"
+              element={
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'management']} requiredSensitiveCapability={CAPABILITIES.REFERENTIALS_MANAGE}>
+                  <OrganizationForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/stakeholders/organizations/:id/edit"
+              element={
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'management']} requiredSensitiveCapability={CAPABILITIES.REFERENTIALS_MANAGE}>
+                  <OrganizationForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/stakeholders/mining-companies"
               element={
                 <ProtectedRoute allowedRoles={['management', 'admin']}>
@@ -1500,8 +1699,8 @@ function AppRoutes() {
             <Route
               path="/stakeholders/approvers"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
-                  <ApprobateursPage />
+                <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
+                  <Navigate to="/users" replace />
                 </ProtectedRoute>
               }
             />

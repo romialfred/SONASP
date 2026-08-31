@@ -1,0 +1,20 @@
+.institutional-portal { display: grid; gap: 18px; }
+.institutional-portal__metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.institutional-portal__metric { min-height: 132px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; border: 1px solid var(--sn-line); border-radius: var(--sn-radius-lg); background: var(--sn-surface); box-shadow: var(--sn-shadow-card); }
+.institutional-portal__metric > svg { width: 42px; height: 42px; padding: 10px; color: var(--sn-green); background: var(--sn-green-soft); border-radius: 12px; }
+.institutional-portal__metric div { display: grid; gap: 4px; }
+.institutional-portal__metric span, .institutional-portal__metric small { color: var(--sn-muted); }
+.institutional-portal__metric strong { color: var(--sn-navy); font-size: 28px; line-height: 1.1; }
+.institutional-portal__workspaces { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.institutional-portal__workspaces a { display: flex; min-height: 92px; align-items: flex-start; gap: 12px; padding: 17px; border: 1px solid var(--sn-line); border-radius: var(--sn-radius-lg); color: var(--sn-navy); background: var(--sn-surface); text-decoration: none; box-shadow: var(--sn-shadow-card); transition: border-color 140ms ease, transform 140ms ease; }
+.institutional-portal__workspaces a:hover { border-color: var(--sn-green); transform: translateY(-1px); }
+.institutional-portal__workspaces a:focus-visible { outline: 3px solid rgb(15 122 86 / 20%); outline-offset: 2px; }
+.institutional-portal__workspaces svg { width: 20px; height: 20px; flex: none; color: var(--sn-green); }
+.institutional-portal__workspaces span { display: grid; gap: 5px; }
+.institutional-portal__workspaces strong { font-size: 13px; }
+.institutional-portal__workspaces small { color: var(--sn-muted); line-height: 1.45; }
+.institutional-portal__responsibilities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.institutional-portal__responsibilities li { display: flex; align-items: center; gap: 10px; padding: 15px; border: 1px solid var(--sn-line); border-radius: 10px; color: var(--sn-navy); font-weight: 700; }
+.institutional-portal__responsibilities svg { width: 18px; color: var(--sn-green); }
+@media (max-width: 900px) { .institutional-portal__metrics, .institutional-portal__workspaces { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .institutional-portal__responsibilities { grid-template-columns: 1fr; } }

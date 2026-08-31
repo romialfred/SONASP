@@ -46,6 +46,10 @@ export function MiningCompanyDetails() {
   }, [id]);
 
   const loadCompanyDetails = async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     try {
       const [companyRes, accountsRes, activitiesRes, prodRes, freightRes, licRes, docs] = await Promise.all([
         supabase.from('mining_companies').select('*').eq('id', id).single(),
@@ -54,7 +58,7 @@ export function MiningCompanyDetails() {
         supabase.from('daily_production').select('pure_gold_grams, estimated_oz, production_date').eq('mining_company_id', id),
         supabase.from('freight_shipments').select('id', { count: 'exact', head: true }).eq('mining_company_id', id),
         supabase.from('export_licenses').select('id', { count: 'exact', head: true }).eq('mining_company_id', id),
-        miningCompanyDocumentService.list(id as string).catch(() => []),
+        miningCompanyDocumentService.list(id).catch(() => []),
       ]);
 
       if (companyRes.data) setCompany(companyRes.data);

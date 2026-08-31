@@ -28,7 +28,7 @@ function sourceFiles(directory: string): string[] {
 }
 
 function normalized(path: string): string {
-  return path.replaceAll('\\', '/');
+  return path.split('\\').join('/');
 }
 
 describe('inventaire machine-vérifiable des uploads sensibles', () => {

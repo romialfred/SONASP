@@ -4,6 +4,10 @@ import {
   type CategorieDocument,
   type DocumentContrat,
 } from './contratsService';
+import type { Database } from '@/types/database';
+
+type ContratDocumentInsert = Database['public']['Tables']['snp_contrats_documents']['Insert'];
+type RequisitionDocumentInsert = Database['public']['Tables']['snp_requisitions_documents']['Insert'];
 
 /**
  * Versement et consultation des pièces contractuelles.
@@ -106,23 +110,36 @@ export const piecesContractuellesService = {
 
     const { data: utilisateur } = await supabase.auth.getUser();
 
-    const piece = lancerSiErreur(await supabase
-      .from(table)
-      .insert({
-        [cle]: entree.objetId,
-        categorie: entree.categorie,
-        intitule: entree.intitule,
-        version,
-        chemin,
-        type_mime: entree.fichier.type || null,
-        taille_octets: entree.fichier.size,
-        date_document: entree.dateDocument || null,
-        ...(entree.domaine === 'contrat' ? { date_expiration: entree.dateExpiration || null } : {}),
-        observations: entree.observations || null,
-        created_by: utilisateur.user?.id ?? null,
-      })
-      .select()
-      .single());
+    const commun = {
+      categorie: entree.categorie,
+      intitule: entree.intitule,
+      version,
+      chemin,
+      type_mime: entree.fichier.type || null,
+      taille_octets: entree.fichier.size,
+      date_document: entree.dateDocument || null,
+      observations: entree.observations || null,
+      created_by: utilisateur.user?.id ?? null,
+    };
+
+    const piece = entree.domaine === 'contrat'
+      ? lancerSiErreur(await supabase
+        .from('snp_contrats_documents')
+        .insert({
+          ...commun,
+          contrat_id: entree.objetId,
+          date_expiration: entree.dateExpiration || null,
+        } satisfies ContratDocumentInsert)
+        .select()
+        .single())
+      : lancerSiErreur(await supabase
+        .from('snp_requisitions_documents')
+        .insert({
+          ...commun,
+          requisition_id: entree.objetId,
+        } satisfies RequisitionDocumentInsert)
+        .select()
+        .single());
 
     // La version précédente devient une archive, jamais un rebut.
     if (precedentes?.length) {

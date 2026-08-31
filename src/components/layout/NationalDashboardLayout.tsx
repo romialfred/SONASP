@@ -45,6 +45,11 @@ import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
 import { useCollectorWorkspace } from '@/hooks/useCollectorWorkspace';
 import { getNavigationSectionsForUser, type NavigationSection } from './sidebarNavigation';
 import { accountTypeFor, homePathForAccountType } from '@/lib/routeAccessRegistry';
+import {
+  MODULE_CATALOG_UPDATED_EVENT,
+  modulesService,
+} from '@/services/modulesService';
+import type { ModuleAvailabilityMap } from '@/lib/platformModuleCatalog';
 import './national-dashboard-layout.css';
 
 interface NationalDashboardLayoutProps {
@@ -123,10 +128,31 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     displayName: comptoirDisplayName,
   } = useComptoirWorkspace();
   const { isCollector, workspace: collectorWorkspace } = useCollectorWorkspace();
+  const [moduleAvailability, setModuleAvailability] = useState<ModuleAvailabilityMap | null>(null);
+
+  const chargerDisponibiliteModules = useCallback(async () => {
+    try {
+      setModuleAvailability(await modulesService.getNavigationAvailability());
+    } catch (reason) {
+      // La route reste le garde-fou autoritatif. En cas d'indisponibilité
+      // ponctuelle du catalogue, conserver la navigation statique évite de
+      // transformer un incident réseau en sidebar entièrement vide.
+      console.warn('[Modules] Catalogue de navigation indisponible :', reason);
+      setModuleAvailability(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    void chargerDisponibiliteModules();
+    const actualiser = () => void chargerDisponibiliteModules();
+    window.addEventListener(MODULE_CATALOG_UPDATED_EVENT, actualiser);
+    return () => window.removeEventListener(MODULE_CATALOG_UPDATED_EVENT, actualiser);
+  }, [chargerDisponibiliteModules]);
+
   const mineDisplayName = companyCode || companyName;
   const collectorDisplayName = collectorWorkspace?.collectorName || 'Collecteur d’or';
   const navigationSections = useMemo(() => {
-    const sections = getNavigationSectionsForUser(user);
+    const sections = getNavigationSectionsForUser(user, moduleAvailability);
     if (!isMine) return sections;
 
     const order = [
@@ -159,7 +185,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
         .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
         .map((group) => ({ ...group, label: labels[group.id] || group.label })),
     }));
-  }, [isMine, user]);
+  }, [isMine, moduleAvailability, user]);
   const navigationGroups = useMemo(
     () => navigationSections.flatMap((section) => section.groups),
     [navigationSections]
@@ -383,7 +409,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   };
 
   const sidebar = (
-    <aside className={cn(
+    <aside data-testid="app-sidebar" className={cn(
       'national-sidebar',
       isMine && 'is-mine',
       isComptoir && 'is-comptoir',
@@ -520,7 +546,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
 
   return (
-    <div className={cn(
+    <div data-testid="app-shell" className={cn(
       'national-shell',
       isMine && 'is-mine',
       isComptoir && 'is-comptoir',
@@ -541,7 +567,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       )}
 
       <div className="national-shell__body">
-        <header className="national-header">
+        <header className="national-header" data-testid="app-header">
           <button
             type="button"
             className="national-header__mobile-menu"
@@ -726,7 +752,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           </ChromeContext.Provider>
         </main>
 
-        <footer className="national-shell__footer">
+        <footer className="national-shell__footer" data-testid="app-footer">
           <span>© {new Date().getFullYear()} SONASP — Société Nationale des Substances Précieuses</span>
           <span className="national-shell__footer-motto">Confidentialité · Intégrité · Transparence</span>
         </footer>

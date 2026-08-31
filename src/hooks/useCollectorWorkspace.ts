@@ -30,10 +30,9 @@ export function useCollectorWorkspace() {
     const load = async () => {
       setLoading(true);
       try {
-        const client = supabase as any;
         const [{ data: collectorId, error: collectorError }, { data: organizationId, error: organizationError }] = await Promise.all([
-          client.rpc('snp_current_collector_id'),
-          client.rpc('snp_current_organization_id'),
+          supabase.rpc('snp_current_collector_id'),
+          supabase.rpc('snp_current_organization_id'),
         ]);
         if (collectorError) throw collectorError;
         if (organizationError) throw organizationError;
@@ -41,16 +40,16 @@ export function useCollectorWorkspace() {
         const nowIso = new Date().toISOString();
 
         const [{ data: collector, error: profileError }, { data: organization, error: scopeError }, { data: assignments, error: assignmentsError }] = await Promise.all([
-          client.from('snp_artisans_miniers')
+          supabase.from('snp_artisans_miniers')
             .select('id, nom, prenoms, raison_sociale, numero_carte')
             .eq('id', collectorId)
             .single(),
-          client.from('snp_organizations')
+          supabase.from('snp_organizations')
             .select('id, code, name, organization_type')
             .eq('id', organizationId)
             .eq('organization_type', 'comptoir')
             .single(),
-          client.from('snp_collector_artisan_assignments')
+          supabase.from('snp_collector_artisan_assignments')
             .select('artisan_id')
             .eq('collector_id', collectorId)
             .lte('valid_from', nowIso)
@@ -70,7 +69,7 @@ export function useCollectorWorkspace() {
             organizationId,
             organizationName: organization.name,
             organizationCode: organization.code,
-            assignedArtisanIds: [...new Set((assignments || []).map((row: any) => String(row.artisan_id)))],
+            assignedArtisanIds: [...new Set((assignments || []).map((row) => row.artisan_id))],
           });
         }
       } catch (error) {

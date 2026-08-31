@@ -37,6 +37,7 @@ import { isSalesApprover } from '@/lib/permissions';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { normaliserArtisan } from './artisanRow';
 import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
 import './vente-or-details.css';
 
@@ -125,7 +126,7 @@ export default function VenteOrDetails() {
       setVente(data);
       if (data.artisan_id) {
         try {
-          setArtisan(await artisanMinierService.getById(data.artisan_id));
+          setArtisan(normaliserArtisan(await artisanMinierService.getById(data.artisan_id)));
         } catch {
           setArtisan(null); // le détail de la vente reste consultable sans la fiche artisan
         }

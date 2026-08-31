@@ -95,7 +95,7 @@ export function AssayCertificatesModern() {
         setPdfUrl(null);
         setPdfBlobUrl(null);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading PDF:', error);
       alert.showAlert('Erreur lors du chargement du PDF', 'error');
       setPdfUrl(null);
@@ -133,14 +133,23 @@ export function AssayCertificatesModern() {
         .from('assay_certificate_data')
         .select('*');
 
-      const certificatesWithParsedData = certificatesData?.map((cert: any) => {
-        const parsed = parsedData?.find((p: any) => p.certificate_id === cert.id);
-        return { ...cert, parsed_data: parsed || null };
-      }) || [];
+      const certificatesWithParsedData: CertificateWithData[] = (certificatesData ?? []).map((cert) => {
+        const parsed = parsedData?.find((item) => item.certificate_id === cert.id);
+        return {
+          ...cert,
+          parsed_data: parsed ? {
+            laboratory_name: parsed.laboratory_name ?? undefined,
+            gold_content_gpt: parsed.gold_content_gpt ?? undefined,
+            silver_content_gpt: parsed.silver_content_gpt ?? undefined,
+            gold_purity_percentage: parsed.gold_purity_percentage ?? undefined,
+            sample_weight_g: parsed.sample_weight_g ?? undefined,
+          } : undefined,
+        };
+      });
 
-      const grouped = shippingsData?.map((shipping: any) => {
+      const grouped: ShippingWithCertificates[] = (shippingsData ?? []).map((shipping) => {
         const shippingCerts = certificatesWithParsedData?.filter(
-          (cert: any) => cert.shipping_preparation_id === shipping.id
+          (cert) => cert.shipping_preparation_id === shipping.id
         ) || [];
 
         return {
@@ -152,10 +161,10 @@ export function AssayCertificatesModern() {
           mining_company_name: shipping.mining_company?.name || 'Non spécifiée',
           mining_company_country: shipping.mining_company?.country || '',
           shipped_to_company: shipping.shipped_to_company || 'Non spécifié',
-          created_at: shipping.created_at,
+          created_at: shipping.created_at ?? '',
           certificates: shippingCerts,
         };
-      }) || [];
+      });
 
       setShippingGroups(grouped);
 
@@ -187,7 +196,7 @@ export function AssayCertificatesModern() {
       if (tabs.length > 0 && !activeTab) {
         setActiveTab(tabs[0].id);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading data:', error);
       alert.showAlert('Erreur lors du chargement des données', 'error');
     } finally {
@@ -221,7 +230,7 @@ export function AssayCertificatesModern() {
     };
   };
 
-  const getApprovalStatusBadge = (status: string) => {
+  const getApprovalStatusBadge = (status: string | null) => {
     const config = {
       approved: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Approuvé' },
       rejected: { bg: 'bg-red-100', text: 'text-red-700', label: 'Rejeté' },

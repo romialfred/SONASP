@@ -63,7 +63,9 @@ export function DepositorFormPage() {
         .order('full_name');
 
       if (error) throw error;
-      setExistingDepositors(data || []);
+      setExistingDepositors(
+        (data || []).map((item) => ({ ...item, is_active: item.is_active ?? false }))
+      );
     } catch (error) {
       console.error('Error loading existing depositors:', error);
     } finally {

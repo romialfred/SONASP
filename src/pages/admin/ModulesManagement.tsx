@@ -67,17 +67,21 @@ export default function ModulesManagement() {
 
   const tous = useMemo(() => aplatirModules(modules), [modules]);
   const visibles = useMemo(() => filterModules(modules, recherche), [modules, recherche]);
+  const desynchronises = useMemo(
+    () => tous.filter((module) => !module.parent_id && module.catalog_consistent === false),
+    [tous],
+  );
 
   const basculerActivation = async (module: Module) => {
-    // Désactiver un module retire une section entière de l'application à tous les
-    // utilisateurs, et emporte ses sous-modules : la manœuvre se faisait en un clic.
+    // Les bascules portent sur les autres comptes ; le Owner conserve son
+    // accès de continuité. La désactivation du parent emporte ses enfants.
     const sousModules = module.submodules?.length || 0;
     const confirme = await demanderConfirmation({
       title: module.est_actif ? 'Désactiver ce module ?' : 'Réactiver ce module ?',
       message: module.est_actif
-        ? `« ${module.nom} » disparaîtra de l’application pour tous les utilisateurs${
+        ? `« ${module.nom} » disparaîtra de l’application pour les comptes autres que le Owner${
             sousModules > 0 ? `, ainsi que ses ${sousModules} sous-module(s)` : ''
-          }.`
+          }. Le Owner conserve tous ses accès.`
         : `« ${module.nom} » redeviendra accessible aux utilisateurs habilités.`,
       confirmText: module.est_actif ? 'Désactiver' : 'Réactiver',
       cancelText: 'Annuler',
@@ -187,6 +191,9 @@ export default function ModulesManagement() {
               {module.nom}
               {!module.est_actif && <Badge tone="danger">Désactivé</Badge>}
               {!module.est_visible_menu && <Badge tone="neutral">Masqué du menu</Badge>}
+              {!sousModule && module.catalog_consistent === false && (
+                <Badge tone="danger">Habilitation manquante</Badge>
+              )}
             </h3>
             <p>{module.description || module.code}</p>
             {module.route && <code>{module.route}</code>}
@@ -253,7 +260,7 @@ export default function ModulesManagement() {
             {
               label: 'Masqués du menu',
               value: tous.filter((module) => !module.est_visible_menu).length,
-              hint: 'Actifs mais absents de la navigation',
+              hint: 'Masqués pour les comptes autres que Owner',
               icon: EyeOff,
               tone: 'gold',
             },
@@ -263,13 +270,30 @@ export default function ModulesManagement() {
               icon: LayoutGrid,
               tone: 'violet',
             },
+            {
+              label: 'Référentiels synchronisés',
+              value: `${modules.length - desynchronises.length}/${modules.length}`,
+              hint: 'Navigation et création de comptes',
+              icon: LayoutGrid,
+              tone: desynchronises.length > 0 ? 'gold' : 'green',
+            },
           ]}
         />
 
         <Note tone="info" icon={Info}>
           <strong>Désactivé</strong> : le module disparaît, ses sous-modules avec lui.{' '}
-          <strong>Masqué</strong> : il reste actif, hors menu.
+          <strong>Masqué</strong> : il reste actif, hors menu. Chaque module racine utilise le même code stable
+          dans la sidebar et dans les habilitations de comptes.{' '}
+          <strong>Le Owner conserve toujours l’accès à tous les modules et sous-modules</strong>,
+          même désactivés ou masqués pour les autres comptes.
         </Note>
+
+        {desynchronises.length > 0 && (
+          <Note tone="danger" icon={AlertTriangle}>
+            {desynchronises.length} module(s) de navigation n’ont pas de module d’habilitation correspondant.
+            La création de comptes reste fermée pour ces modules jusqu’à correction du catalogue.
+          </Note>
+        )}
 
         <section className="sn-card admin-page__filtres" aria-label="Filtres des modules">
           <label className="sn-field admin-page__filtre-large">

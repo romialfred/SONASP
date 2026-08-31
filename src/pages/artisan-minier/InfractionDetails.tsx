@@ -30,6 +30,7 @@ import {
 } from '@/services/artisanInfractionsService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { artisanFullName } from '@/utils/artisanIdentity';
+import { normaliserArtisan } from './artisanRow';
 import './infraction-details.css';
 
 const CONCLUSIONS: Record<ConclusionInfraction, { label: string; tone: BadgeTone; icon: typeof Gavel; sens: string }> = {
@@ -40,6 +41,11 @@ const CONCLUSIONS: Record<ConclusionInfraction, { label: string; tone: BadgeTone
 };
 
 const EXTENSIONS_IMAGE = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
+const CONCLUSION_VALUES: readonly ConclusionInfraction[] = ['reconnu', 'soupçonne', 'complice', 'innocente'];
+
+function estConclusion(value: string): value is ConclusionInfraction {
+  return CONCLUSION_VALUES.some((candidate) => candidate === value);
+}
 
 /** Nom lisible d'une pièce à partir de son URL de stockage. */
 export function pieceName(url: string): string {
@@ -97,7 +103,9 @@ export default function InfractionDetails() {
         showError("Impossible de charger ce constat d'infraction");
       }
       // Le dossier artisan n'est qu'un contexte : son absence ne masque pas le constat.
-      if (dossier.status === 'fulfilled') setArtisan(dossier.value);
+      if (dossier.status === 'fulfilled') {
+        setArtisan(dossier.value ? normaliserArtisan(dossier.value) : null);
+      }
       setLoading(false);
     };
 
@@ -111,7 +119,9 @@ export default function InfractionDetails() {
   const modifier = `/artisan-minier/${artisanId}/infractions/${infractionId}/modifier`;
 
   const cloture = infraction?.statut_traitement === 'cloture';
-  const conclusion = infraction?.conclusion ? CONCLUSIONS[infraction.conclusion] : null;
+  const conclusion = infraction?.conclusion && estConclusion(infraction.conclusion)
+    ? CONCLUSIONS[infraction.conclusion]
+    : null;
   const duree = useMemo(() => (infraction ? dureeInstruction(infraction) : null), [infraction]);
 
   if (loading) {

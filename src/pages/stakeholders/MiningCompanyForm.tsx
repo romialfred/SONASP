@@ -18,6 +18,7 @@ import {
   type MiningCompanyDocument,
 } from '@/services/miningCompanyDocumentService';
 import { MiningCompanyFormGuide } from '@/components/stakeholders/MiningCompanyFormGuide';
+import type { Database } from '@/types/database';
 
 // Les sociétés minières inscrites exploitent au Burkina Faso ; les pays
 // voisins ne servent qu'aux sociétés mères et aux partenaires.
@@ -27,11 +28,16 @@ import { MiningCompanyFormGuide } from '@/components/stakeholders/MiningCompanyF
 const COUNTRIES = ['Burkina Faso'];
 const CURRENCIES = ['XOF', 'USD', 'EUR', 'GHS', 'AED', 'ZAR'];
 
-const COMPANY_TYPES = [
+type CompanyType = Database['public']['Enums']['company_type_enum'];
+
+const COMPANY_TYPES: Array<{ value: CompanyType; label: string }> = [
   { value: 'production_mine', label: 'Mine de production' },
   { value: 'parent_company', label: 'Société mère / Groupe' },
   { value: 'institution', label: 'Institution' },
 ];
+
+const isCompanyType = (value: string): value is CompanyType =>
+  COMPANY_TYPES.some((type) => type.value === value);
 
 
 interface BankAccount {
@@ -49,7 +55,7 @@ interface CompanyForm {
   name: string;
   abbreviation: string;
   code: string;
-  company_type: string;
+  company_type: CompanyType;
   registration_number: string;
   tax_id: string;
   country: string;
@@ -100,6 +106,7 @@ export function MiningCompanyForm() {
   }, [id]);
 
   const loadCompany = async () => {
+    if (!id) return;
     try {
       const { data, error } = await supabase.from('mining_companies').select('*').eq('id', id).single();
       if (error) throw error;
@@ -132,6 +139,7 @@ export function MiningCompanyForm() {
   };
 
   const loadBankAccounts = async () => {
+    if (!id) return;
     try {
       const { data, error } = await supabase
         .from('stakeholder_bank_accounts')
@@ -146,8 +154,9 @@ export function MiningCompanyForm() {
   };
 
   const loadDocuments = async () => {
+    if (!id) return;
     try {
-      setDocuments(await miningCompanyDocumentService.list(id as string));
+      setDocuments(await miningCompanyDocumentService.list(id));
     } catch (error) {
       console.error('Error loading documents:', error);
     }
@@ -162,7 +171,7 @@ export function MiningCompanyForm() {
       account_currency: formData.default_currency, swift_code: '', is_primary: bankAccounts.length === 0,
     }]);
   const removeBankAccount = (index: number) => setBankAccounts(bankAccounts.filter((_, i) => i !== index));
-  const updateBankAccount = (index: number, field: string, value: any) => {
+  const updateBankAccount = <K extends keyof BankAccount>(index: number, field: K, value: BankAccount[K]) => {
     const updated = [...bankAccounts];
     updated[index] = { ...updated[index], [field]: value };
     setBankAccounts(updated);
@@ -214,28 +223,30 @@ export function MiningCompanyForm() {
       let companyId = id as string | undefined;
 
       if (isEdit) {
-        const { error } = await supabase.from('mining_companies').update(payload).eq('id', id);
+        const { error } = await supabase.from('mining_companies').update(payload).eq('id', id!);
         if (error) throw error;
       } else {
         const { data: newCompany, error } = await supabase
           .from('mining_companies')
-          .insert({ ...payload, created_by: userData.user?.id })
+          .insert({ ...payload, created_by: userData.user?.id ?? null })
           .select()
           .single();
         if (error) throw error;
         companyId = newCompany.id;
       }
 
+      if (!companyId) throw new Error("L'identifiant de la société n'a pas été généré.");
+
       // Comptes bancaires (remplacement complet)
       if (isEdit) {
         await supabase.from('stakeholder_bank_accounts').delete()
-          .eq('stakeholder_type', 'mining_company').eq('stakeholder_id', id);
+          .eq('stakeholder_type', 'mining_company').eq('stakeholder_id', id!);
       }
       for (const account of bankAccounts) {
         if (account.bank_name && account.account_number) {
           await supabase.from('stakeholder_bank_accounts').insert({
             stakeholder_type: 'mining_company', stakeholder_id: companyId, ...account,
-            created_by: userData.user?.id,
+            created_by: userData.user?.id ?? null,
           });
         }
       }
@@ -296,7 +307,12 @@ export function MiningCompanyForm() {
                         placeholder="POURA_BF" />
                     </FormField>
                     <FormField label="Type" required hint="Nature de l’entité">
-                      <Select value={formData.company_type} onChange={(e) => set('company_type', e.target.value)}>
+                      <Select
+                        value={formData.company_type}
+                        onChange={(e) => {
+                          if (isCompanyType(e.target.value)) set('company_type', e.target.value);
+                        }}
+                      >
                         {COMPANY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                       </Select>
                     </FormField>
@@ -508,11 +524,11 @@ export function MiningCompanyForm() {
                           </Select>
                         </FormField>
                         <FormField label="Code SWIFT/BIC">
-                          <Input value={account.swift_code} onChange={(e) => updateBankAccount(index, 'swift_code', e.target.value)} />
+                          <Input value={account.swift_code ?? ''} onChange={(e) => updateBankAccount(index, 'swift_code', e.target.value)} />
                         </FormField>
                       </div>
                       <label className="flex items-center gap-2">
-                        <input type="checkbox" checked={account.is_primary}
+                        <input type="checkbox" checked={account.is_primary ?? false}
                           onChange={(e) => updateBankAccount(index, 'is_primary', e.target.checked)}
                           className="rounded border-gray-300 accent-emerald-600" />
                         <span className="text-sm text-gray-700">Compte principal</span>

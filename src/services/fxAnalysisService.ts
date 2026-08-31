@@ -107,7 +107,9 @@ export async function getCurrentFxRates(currencyPair: string) {
   if (error) throw error;
 
   const rates: Record<string, number> = {};
-  (data || []).forEach(r => { rates[r.source_name] = r.rate; });
+  (data || []).forEach((rate) => {
+    if (rate.source_name && rate.rate !== null) rates[rate.source_name] = rate.rate;
+  });
 
   return { success: true, data: rates };
 }
@@ -273,6 +275,8 @@ export async function saveFxAnalysisToDB(
       .from('fx_rate_analysis')
       .insert({
         payment_id: paymentId,
+        amount_paid: analysisData.virtual_payment_amount,
+        payment_currency: analysisData.virtual_payment_currency,
         virtual_payment_amount: analysisData.virtual_payment_amount,
         virtual_payment_currency: analysisData.virtual_payment_currency,
         customer_rate: analysisData.customer_rate,

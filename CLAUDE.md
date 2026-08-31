@@ -48,6 +48,10 @@ Avant d'éditer :
 
 Dans un worktree sale, travaille autour des changements existants. N'utilise jamais `git reset --hard`, `git checkout --`, une suppression récursive large ou une commande détruisant le travail d'une autre session.
 
+### Lancement local (30 août 2026)
+
+Pour « démarrer la plateforme en local », utiliser **`npm start` / SONASP Local sur 5180** : build puis serveur statique, sans rechargement HMR. Après un build déjà vérifié, `npm run serve:local` suffit. **`npm run dev` / SONASP Dev est réservé au développement sur 5181.** Ne pas forcer `vite --port 5180` : la reconnexion de son client recharge le document et peut détruire les saisies au retour d’onglet. Préserver l’origine (`localhost` ou `127.0.0.1`) de la session de l’utilisateur. Voir `docs/ui-lifecycle-and-refresh-policy.md`.
+
 ## 4. Sources de vérité
 
 Ordre de confiance :

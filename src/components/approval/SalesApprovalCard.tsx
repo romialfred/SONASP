@@ -67,7 +67,8 @@ export function SalesApprovalCard({ approval, onApproved, onRejected }: SalesApp
       forward_14: 'Forward 14 days',
       forward_14_days: 'Forward 14 days',
     };
-    return labels[mechanism?.toLowerCase()] || mechanism || 'Spot';
+    const key = mechanism?.toLowerCase();
+    return (key ? labels[key] : undefined) || mechanism || 'Spot';
   };
 
   const getMechanismDays = (mechanism: string | null) => {
@@ -78,7 +79,8 @@ export function SalesApprovalCard({ approval, onApproved, onRejected }: SalesApp
       forward_14: 14,
       forward_14_days: 14,
     };
-    return days[mechanism?.toLowerCase()] || 2;
+    const key = mechanism?.toLowerCase();
+    return (key ? days[key] : undefined) || 2;
   };
 
   const handleApprove = async () => {
@@ -148,7 +150,7 @@ export function SalesApprovalCard({ approval, onApproved, onRejected }: SalesApp
   }
 
   const mechanismDays = getMechanismDays(saleDetails.mechanism_type);
-  const dueDate = new Date(saleDetails.created_at);
+  const dueDate = new Date(saleDetails.created_at ?? approval.requested_at ?? Date.now());
   dueDate.setDate(dueDate.getDate() + mechanismDays);
 
   return (

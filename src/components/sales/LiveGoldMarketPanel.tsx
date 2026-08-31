@@ -10,12 +10,14 @@ import {
 
 interface LiveGoldMarketPanelProps {
   onCollapseChange?: (isCollapsed: boolean) => void;
+  /** `embedded` integre le cours au flux de la page sans panneau flottant. */
+  variant?: 'drawer' | 'embedded';
 }
 
 const afficherCours = (value: number | undefined) =>
   typeof value === 'number' && Number.isFinite(value) ? `$${formatGoldPrice(value)}` : '—';
 
-export function LiveGoldMarketPanel({ onCollapseChange }: LiveGoldMarketPanelProps) {
+export function LiveGoldMarketPanel({ onCollapseChange, variant = 'drawer' }: LiveGoldMarketPanelProps) {
   const [goldPrice, setGoldPrice] = useState<LiveGoldPrice | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,6 +52,10 @@ export function LiveGoldMarketPanel({ onCollapseChange }: LiveGoldMarketPanelPro
   }, []);
 
   const marketStatus = getMarketStatus();
+  const marketSchedules: Array<[string, typeof marketStatus.london]> = [
+    ['Londres', marketStatus.london],
+    ['New York', marketStatus.newYork],
+  ];
   const basculer = () => {
     const next = !isCollapsed;
     setIsCollapsed(next);
@@ -62,19 +68,23 @@ export function LiveGoldMarketPanel({ onCollapseChange }: LiveGoldMarketPanelPro
 
   return (
     <aside
-      className={`fixed right-0 top-20 z-40 transition-transform duration-300 ${isCollapsed ? 'translate-x-full' : 'translate-x-0'}`}
+      className={variant === 'embedded'
+        ? 'live-gold-panel live-gold-panel--embedded'
+        : `fixed right-0 top-20 z-40 transition-transform duration-300 ${isCollapsed ? 'translate-x-full' : 'translate-x-0'}`}
       aria-label="Cours de l’or"
     >
-      <button
+      {variant === 'drawer' && <button
         type="button"
         onClick={basculer}
         className="absolute left-0 top-1/2 grid h-10 w-9 -translate-x-full -translate-y-1/2 place-items-center rounded-l-lg border border-r-0 border-slate-200 bg-white shadow-lg"
         aria-label={isCollapsed ? 'Afficher le cours de l’or' : 'Masquer le cours de l’or'}
       >
         {isCollapsed ? <ChevronLeft aria-hidden="true" className="h-5 w-5" /> : <ChevronRight aria-hidden="true" className="h-5 w-5" />}
-      </button>
+      </button>}
 
-      <div className="w-80 rounded-l-2xl border border-r-0 border-slate-200 bg-white shadow-2xl">
+      <div className={variant === 'embedded'
+        ? 'w-full rounded-xl border border-slate-200 bg-white shadow-sm'
+        : 'w-80 rounded-l-2xl border border-r-0 border-slate-200 bg-white shadow-2xl'}>
         <div className="p-5">
           <header className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
             <div>
@@ -130,11 +140,7 @@ export function LiveGoldMarketPanel({ onCollapseChange }: LiveGoldMarketPanelPro
 
               <section className="mt-4 rounded-lg border border-slate-200 p-3" aria-label="Horaires indicatifs des marchés">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Horaires indicatifs</h3>
-                {[
-                  ['Londres', marketStatus.london],
-                  ['New York', marketStatus.newYork],
-                ].map(([name, status]) => {
-                  const value = status as typeof marketStatus.london;
+                {marketSchedules.map(([name, value]) => {
                   return (
                     <div key={String(name)} className="mt-2 flex items-center justify-between text-xs">
                       <span className="flex items-center gap-2 text-slate-700">

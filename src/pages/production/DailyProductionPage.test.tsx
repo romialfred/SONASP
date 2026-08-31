@@ -19,7 +19,13 @@ const mocks = vi.hoisted(() => ({
   showConfirm: vi.fn(),
   showError: vi.fn(),
   reponses: {} as Record<string, unknown[] | null>,
-  authUser: null as null | { role: string; is_active: boolean; mining_company_id: string | null },
+  authUser: null as null | {
+    role: string;
+    is_active: boolean;
+    mining_company_id: string | null;
+    organization_id?: string | null;
+    organization_type?: string | null;
+  },
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -65,15 +71,17 @@ vi.mock('@/components/production/ProductionTable', () => ({
     onDelete,
   }: {
     productions: DailyProduction[];
-    onDelete: (id: string) => void;
+    onDelete?: (id: string) => void;
   }) => (
     <div>
       {productions.map((production) => (
         <div key={production.id}>
           <span>{production.bar_reference}</span>
-          <button type="button" onClick={() => onDelete(production.id)}>
-            Supprimer {production.bar_reference}
-          </button>
+          {onDelete && (
+            <button type="button" onClick={() => onDelete(production.id)}>
+              Supprimer {production.bar_reference}
+            </button>
+          )}
         </div>
       ))}
     </div>
@@ -228,6 +236,26 @@ describe('DailyProductionPage', () => {
     expect(screen.queryByLabelText('Compagnie minière')).not.toBeInTheDocument();
     expect(screen.getByText('Périmètre du compte')).toBeInTheDocument();
     expect(screen.getByText('Essakane SA')).toBeInTheDocument();
+  });
+
+  it.each(['dgmg', 'dgi'])('rend la production strictement consultative pour le portail %s', async (role) => {
+    mocks.authUser = {
+      role,
+      is_active: true,
+      mining_company_id: null,
+      organization_id: `${role}-organization`,
+      organization_type: role,
+    };
+    mocks.emplacement = { pathname: '/production/daily', state: { productionId: 'p1' } };
+
+    render(<DailyProductionPage />);
+    await waitFor(() => expect(screen.getByText('BAR-001')).toBeInTheDocument());
+
+    expect(screen.queryByRole('button', { name: /Déclarer une production/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Budgets et prévisions/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Supprimer BAR-001' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Formulaire de production')).not.toBeInTheDocument();
+    expect(mocks.navigate).toHaveBeenCalledWith('.', { replace: true, state: null });
   });
 
   it('annonce le nombre de critères actifs et sait les remettre à zéro', async () => {

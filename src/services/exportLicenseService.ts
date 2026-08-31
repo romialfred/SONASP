@@ -454,7 +454,7 @@ class ExportLicenseService {
         p_date_export_souhaitee: input.desiredExportDate,
         p_destination: destination,
         p_motif: reason,
-        p_commentaire: comment,
+        p_commentaire: comment ?? '',
       },
     );
     if (error) {

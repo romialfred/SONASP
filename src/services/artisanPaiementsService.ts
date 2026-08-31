@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { Json, Tables } from '@/types/database';
 
 export interface FactureDefinitive {
   id?: string;
@@ -13,15 +14,15 @@ export interface FactureDefinitive {
   montant_net_a_payer: number;
   taux_tva: number;
   taux_retenue_source: number;
-  date_emission: string;
-  date_echeance?: string;
+  date_emission: string | null;
+  date_echeance?: string | null;
   statut: 'emise' | 'en_paiement' | 'payee' | 'annulee';
-  pdf_url?: string;
-  notes?: string;
-  emise_par?: string;
-  created_at?: string;
-  updated_at?: string;
-  certification_dgi_status?: 'pending' | 'certified' | 'rejected' | 'cancelled';
+  pdf_url?: string | null;
+  notes?: string | null;
+  emise_par?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  certification_dgi_status?: string;
   dgi_reference?: string | null;
   dgi_document_path?: string | null;
   dgi_certified_at?: string | null;
@@ -48,25 +49,101 @@ export interface PaiementArtisan {
   type_paiement: TypePaiementArtisan;
   montant_paye: number;
   montant_taxes_retenues: number;
-  details_paiement: any;
+  details_paiement: Json | null;
   statut: StatutPaiementArtisan;
   date_paiement: string | null;
-  date_validation?: string;
-  date_completion?: string;
-  preuve_paiement_url?: string;
-  recu_paiement_url?: string;
-  traite_par?: string;
-  valide_par?: string;
-  notes?: string;
+  date_validation?: string | null;
+  date_completion?: string | null;
+  preuve_paiement_url?: string | null;
+  recu_paiement_url?: string | null;
+  traite_par?: string | null;
+  valide_par?: string | null;
+  completed_by?: string | null;
+  cancelled_by?: string | null;
+  failed_by?: string | null;
+  terminal_reason?: string | null;
+  notes?: string | null;
   /** Coordonnee de reglement employee, prise sur la fiche de l'artisan. */
-  moyen_paiement_id?: string;
+  moyen_paiement_id?: string | null;
   /** Facture presentee au reglement ; specimen tant que la certification DGI n'est pas raccordee. */
-  numero_facture?: string;
-  created_at?: string;
-  updated_at?: string;
+  numero_facture?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   comptoir_organization_id?: string | null;
   /** Verrou optimiste détenu et incrémenté par les RPC 4I. */
   version?: number;
+}
+
+export interface ArtisanPaymentBeneficiary {
+  id: string;
+  nom?: string | null;
+  prenoms?: string | null;
+  raison_sociale?: string | null;
+  numero_carte?: string | null;
+  telephone?: string | null;
+  email?: string | null;
+  adresse?: string | null;
+  commune?: string | null;
+  region?: string | null;
+}
+
+export interface ArtisanPaymentSale {
+  id: string;
+  numero_recu?: string | null;
+  reference_vente?: string | null;
+  date_vente: string;
+  type_or: string;
+  quantite_grammes: number;
+  purete_karat: number;
+  prix_kg_fcfa: number;
+  montant_brut_fcfa: number;
+  montant_total_fcfa: number;
+  statut?: string | null;
+  statut_paiement?: string | null;
+}
+
+export interface ArtisanPaymentMethod {
+  id: string;
+  type: string;
+  libelle?: string | null;
+  titulaire: string;
+  banque?: string | null;
+  code_swift?: string | null;
+  numero_compte?: string | null;
+  numero_telephone?: string | null;
+  est_principal: boolean;
+  actif: boolean;
+  verifie_le?: string | null;
+}
+
+export interface ArtisanPaymentOrganization {
+  id: string;
+  code: string;
+  name: string;
+  short_name?: string | null;
+  organization_type: string;
+}
+
+export interface ArtisanPaymentWorkflowEvent {
+  id: string;
+  action: string;
+  actor_id?: string | null;
+  actor_role?: string | null;
+  capability_code?: string | null;
+  reason?: string | null;
+  status_before?: string | null;
+  status_after?: string | null;
+  occurred_at: string;
+}
+
+export interface ArtisanPaymentDossier extends PaiementArtisan {
+  artisan?: ArtisanPaymentBeneficiary | null;
+  facture?: FactureDefinitive | null;
+  vente?: ArtisanPaymentSale | null;
+  moyen_paiement?: ArtisanPaymentMethod | null;
+  organisation?: ArtisanPaymentOrganization | null;
+  taxes: TaxeRetenue[];
+  historique: ArtisanPaymentWorkflowEvent[];
 }
 
 export interface TaxeRetenue {
@@ -80,14 +157,14 @@ export interface TaxeRetenue {
   taux_taxe: number;
   montant_taxe: number;
   compte_comptable?: string | null;
-  reference_comptable?: string;
-  statut_reversement: 'a_reverser' | 'en_cours' | 'reverse' | 'comptabilise';
-  date_reversement?: string;
-  reversement_reference?: string;
-  periode_fiscale?: string;
-  exercice_fiscal?: string;
-  created_at?: string;
-  updated_at?: string;
+  reference_comptable?: string | null;
+  statut_reversement: 'a_reverser' | 'en_cours' | 'reverse' | 'comptabilise' | null;
+  date_reversement?: string | null;
+  reversement_reference?: string | null;
+  periode_fiscale?: string | null;
+  exercice_fiscal?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   /** Verrou optimiste détenu et incrémenté par les RPC 4I. */
   version?: number;
 }
@@ -113,7 +190,29 @@ export interface VenteEnAttentePaiement {
 }
 
 export type ArtisanPaymentStatus = PaiementArtisan['statut'];
-export type ArtisanTaxStatus = TaxeRetenue['statut_reversement'];
+export type ArtisanTaxStatus = NonNullable<TaxeRetenue['statut_reversement']>;
+
+const FACTURE_STATUSES = ['emise', 'en_paiement', 'payee', 'annulee'] as const;
+const TAX_STATUSES = ['a_reverser', 'en_cours', 'reverse', 'comptabilise'] as const;
+
+function normaliserFacture(row: Tables<'snp_artisan_factures_definitives'>): FactureDefinitive {
+  if (!row.statut || !FACTURE_STATUSES.includes(row.statut as FactureDefinitive['statut'])) {
+    throw new Error(`Statut de facture inconnu : ${row.statut ?? 'non renseigné'}.`);
+  }
+  return { ...row, statut: row.statut as FactureDefinitive['statut'] };
+}
+
+function normaliserPaiement(row: Tables<'snp_artisan_paiements'>): PaiementArtisan {
+  return row;
+}
+
+function normaliserTaxe(row: Tables<'snp_artisan_taxes_retenues'>): TaxeRetenue {
+  if (row.statut_reversement !== null
+    && !TAX_STATUSES.includes(row.statut_reversement as ArtisanTaxStatus)) {
+    throw new Error(`Statut fiscal inconnu : ${row.statut_reversement}.`);
+  }
+  return { ...row, statut_reversement: row.statut_reversement as ArtisanTaxStatus | null };
+}
 
 export interface ArtisanInvoiceMutationResult {
   invoice_id: string;
@@ -178,7 +277,7 @@ export interface EmitArtisanInvoiceInput {
   expectedSaleVersion: number;
   idempotencyKey: string;
   dueDate?: string | null;
-  notes?: string;
+  notes?: string | null;
 }
 
 export interface CreateArtisanPaymentInput {
@@ -187,7 +286,7 @@ export interface CreateArtisanPaymentInput {
   expectedInvoiceVersion: number;
   paymentMethodId: string;
   idempotencyKey: string;
-  notes?: string;
+  notes?: string | null;
 }
 
 export interface TransitionArtisanPaymentInput {
@@ -196,7 +295,7 @@ export interface TransitionArtisanPaymentInput {
   expectedVersion: number;
   newStatus: ArtisanPaymentStatus;
   idempotencyKey: string;
-  notes?: string;
+  notes?: string | null;
 }
 
 export interface TransitionArtisanTaxInput {
@@ -329,7 +428,7 @@ const artisanPaiementsService = {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data ? normaliserFacture(data) : null;
     } catch (error) {
       console.error('Erreur récupération facture:', error);
       throw error;
@@ -481,7 +580,7 @@ const artisanPaiementsService = {
         .order('date_paiement', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(normaliserPaiement);
     } catch (error) {
       console.error('Erreur récupération paiements:', error);
       throw error;
@@ -502,7 +601,7 @@ const artisanPaiementsService = {
         .order('date_paiement', { ascending: false});
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(normaliserPaiement);
     } catch (error) {
       console.error('Erreur récupération paiements artisan:', error);
       throw error;
@@ -521,7 +620,7 @@ const artisanPaiementsService = {
         .select(`
           *,
           facture:snp_artisan_factures_definitives(*),
-          vente:snp_artisan_ventes_or(reference_vente, date_vente),
+          vente:snp_artisan_ventes_or(id, reference_vente, numero_recu, date_vente),
           artisan:snp_artisans_miniers(nom, prenoms, numero_carte, telephone)
         `);
 
@@ -544,7 +643,7 @@ const artisanPaiementsService = {
       const { data, error } = await query.order('date_paiement', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(normaliserPaiement);
     } catch (error) {
       console.error('Erreur récupération tous les paiements:', error);
       throw error;
@@ -576,7 +675,7 @@ const artisanPaiementsService = {
       const { data, error } = await query.order('periode_fiscale', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(normaliserTaxe);
     } catch (error) {
       console.error('Erreur récupération taxes retenues:', error);
       throw error;
@@ -610,6 +709,67 @@ const artisanPaiementsService = {
       throw new Error("La procédure sécurisée n'a pas confirmé la transition fiscale.");
     }
     return result;
+  },
+
+  async getPaiementDossier(paiementId: string): Promise<ArtisanPaymentDossier | null> {
+    try {
+      const { data, error } = await supabase
+        .from('snp_artisan_paiements')
+        .select(`
+          *,
+          artisan:snp_artisans_miniers(
+            id, nom, prenoms, raison_sociale, numero_carte, telephone,
+            email, adresse, commune, region
+          ),
+          facture:snp_artisan_factures_definitives(*),
+          vente:snp_artisan_ventes_or(
+            id, numero_recu, reference_vente, date_vente, type_or,
+            quantite_grammes, purete_karat, prix_kg_fcfa,
+            montant_brut_fcfa, montant_total_fcfa, statut, statut_paiement
+          ),
+          moyen_paiement:snp_artisan_moyens_paiement(
+            id, type, libelle, titulaire, banque, code_swift,
+            numero_compte, numero_telephone, est_principal, actif, verifie_le
+          ),
+          organisation:snp_organizations!snp_artisan_paiements_comptoir_organization_id_fkey(
+            id, code, name, short_name, organization_type
+          )
+        `)
+        .eq('id', paiementId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      const [taxesResult, historiqueResult] = await Promise.all([
+        supabase
+          .from('snp_artisan_taxes_retenues')
+          .select('*')
+          .eq('paiement_id', paiementId)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('snp_workflow_audit')
+          .select('id, action, actor_id, actor_role, capability_code, reason, status_before, status_after, occurred_at')
+          .eq('aggregate_type', 'artisan-payment')
+          .eq('aggregate_id', paiementId)
+          .order('occurred_at', { ascending: true }),
+      ]);
+
+      if (taxesResult.error) throw taxesResult.error;
+      if (historiqueResult.error) throw historiqueResult.error;
+
+      return {
+        ...(data as unknown as Omit<ArtisanPaymentDossier, 'taxes' | 'historique'>),
+        taxes: (taxesResult.data || []) as TaxeRetenue[],
+        historique: (historiqueResult.data || []).map((event) => ({
+          ...event,
+          id: String(event.id),
+        })) as ArtisanPaymentWorkflowEvent[],
+      };
+    } catch (error) {
+      console.error('Erreur récupération dossier de paiement:', error);
+      throw error;
+    }
   },
 
   async getResumePaiementsArtisan(artisanId: string): Promise<any> {

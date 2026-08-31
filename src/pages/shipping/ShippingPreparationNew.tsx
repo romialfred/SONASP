@@ -228,7 +228,16 @@ export default function ShippingPreparationNew() {
       available: availableProductions.length
     });
 
-    setProductions(availableProductions);
+    setProductions(
+      availableProductions.map((production) => ({
+        ...production,
+        bullion_grams: production.bullion_grams ?? 0,
+        pure_gold_grams: production.pure_gold_grams ?? 0,
+        estimated_oz: production.estimated_oz ?? 0,
+        silver_content_grams: production.silver_content_grams ?? undefined,
+        mining_company: production.mining_company ?? undefined,
+      }))
+    );
   };
 
   const loadFreightCompanies = async () => {

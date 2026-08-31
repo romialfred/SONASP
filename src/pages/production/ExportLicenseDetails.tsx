@@ -61,7 +61,13 @@ export function ExportLicenseDetails() {
         .order('prepared_at', { ascending: false });
       if (shipmentsError) throw shipmentsError;
 
-      setShipments(shipmentsData || []);
+      setShipments(
+        (shipmentsData || []).map((shipment) => ({
+          ...shipment,
+          status: shipment.status ?? 'prepared',
+          prepared_at: shipment.prepared_at ?? '',
+        }))
+      );
     } catch (error) {
       setLoadError(errorMessage(error, 'Impossible de charger cette licence.'));
       setLicense(null);

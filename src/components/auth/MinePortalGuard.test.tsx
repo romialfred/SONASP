@@ -50,13 +50,13 @@ describe('MinePortalGuard', () => {
     expect(screen.queryByText(/Mine autorisée/)).not.toBeInTheDocument();
   });
 
-  it('autorise l’Owner actif à choisir n’importe quelle société sans rattachement', () => {
+  it('refuse à Owner tout périmètre Mine déduit de l’URL', () => {
     mockedUseAuth.mockReturnValue(auth({
       user: { ...mineUser, role: 'owner', mining_company_id: null },
     }));
     render(<MemoryRouter initialEntries={['/portail-mine?mine=mine-2']}><MinePortalGuard><Probe /></MinePortalGuard></MemoryRouter>);
-    expect(screen.getByText('Toutes les mines autorisées')).toBeInTheDocument();
-    expect(screen.queryByText('Portail Mine non attribué')).not.toBeInTheDocument();
+    expect(screen.getByText('Portail Mine non attribué')).toBeInTheDocument();
+    expect(screen.queryByText('Toutes les mines autorisées')).not.toBeInTheDocument();
   });
 
   it('n’autorise jamais un profil en erreur même si un utilisateur est présent', () => {
@@ -87,7 +87,7 @@ describe('MinePortalGuard', () => {
     expect(screen.getByText('Mine autorisée mine-1')).toBeInTheDocument();
   });
 
-  it('renvoie l’Owner vers le tableau de bord lorsqu’aucune mine n’est choisie', () => {
+  it('refuse également Owner lorsqu’aucune mine n’est choisie', () => {
     mockedUseAuth.mockReturnValue(auth({
       user: { ...mineUser, role: 'owner', mining_company_id: null },
     }));
@@ -99,6 +99,7 @@ describe('MinePortalGuard', () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText('Tableau de bord SONASP')).toBeInTheDocument();
+    expect(screen.getByText('Portail Mine non attribué')).toBeInTheDocument();
+    expect(screen.queryByText('Tableau de bord SONASP')).not.toBeInTheDocument();
   });
 });

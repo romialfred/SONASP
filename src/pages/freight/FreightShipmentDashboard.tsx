@@ -94,8 +94,8 @@ export default function FreightShipmentDashboard() {
     approved: shipments.filter((s) => s.status === 'approved').length,
     shipped: shipments.filter((s) => s.status === 'shipped_to_refinery').length,
     received: shipments.filter((s) => s.status === 'received_at_refinery').length,
-    totalValue: shipments.reduce((sum, s) => sum + s.total_value_usd, 0),
-    totalOz: shipments.reduce((sum, s) => sum + s.total_pure_gold_oz, 0),
+    totalValue: shipments.reduce((sum, s) => sum + (s.total_value_usd ?? 0), 0),
+    totalOz: shipments.reduce((sum, s) => sum + (s.total_pure_gold_oz ?? 0), 0),
   };
 
   if (loading) {
@@ -319,10 +319,10 @@ export default function FreightShipmentDashboard() {
                           {shipment.production_count}
                         </td>
                         <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">
-                          {shipment.total_pure_gold_oz.toFixed(3)}
+                           {(shipment.total_pure_gold_oz ?? 0).toFixed(3)}
                         </td>
                         <td className="px-4 py-3 text-right text-sm font-semibold text-green-700">
-                          ${shipment.total_value_usd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                           ${(shipment.total_value_usd ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                         </td>
                         <td className="px-4 py-3 text-center text-sm text-gray-600">
                           {shipment.number_of_boxes}

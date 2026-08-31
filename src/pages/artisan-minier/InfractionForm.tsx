@@ -31,6 +31,7 @@ import {
 } from '@/services/artisanInfractionsService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { artisanFullName } from '@/utils/artisanIdentity';
+import { normaliserArtisan } from './artisanRow';
 import './infraction-form.css';
 
 /** Qualifications prévues par le dispositif de contrôle ; « Autre » ouvre une saisie libre. */
@@ -64,6 +65,17 @@ const STATUT_OPTIONS: Array<{ value: StatutTraitementInfraction; label: string }
   { value: 'en_cours', label: 'Instruction en cours' },
   { value: 'cloture', label: 'Dossier clôturé' },
 ];
+
+const STATUTS_TRAITEMENT: readonly StatutTraitementInfraction[] = ['en_cours', 'cloture'];
+const CONCLUSIONS: readonly ConclusionInfraction[] = ['reconnu', 'soupçonne', 'complice', 'innocente'];
+
+function estStatutTraitement(value: string): value is StatutTraitementInfraction {
+  return STATUTS_TRAITEMENT.some((candidate) => candidate === value);
+}
+
+function estConclusion(value: string): value is ConclusionInfraction {
+  return CONCLUSIONS.some((candidate) => candidate === value);
+}
 
 /** 10 Mo : plafond annoncé à l'agent, désormais réellement appliqué. */
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -104,6 +116,12 @@ export const EMPTY_DRAFT: InfractionDraft = {
  */
 export function draftFromInfraction(infraction: ArtisanInfraction): InfractionDraft {
   const connu = (TYPES_INFRACTION as readonly string[]).includes(infraction.type_infraction);
+  const statut = estStatutTraitement(infraction.statut_traitement)
+    ? infraction.statut_traitement
+    : 'en_cours';
+  const conclusion = infraction.conclusion && estConclusion(infraction.conclusion)
+    ? infraction.conclusion
+    : '';
   return {
     date_infraction: infraction.date_infraction,
     type_infraction: connu ? infraction.type_infraction : AUTRE_TYPE,
@@ -111,8 +129,8 @@ export function draftFromInfraction(infraction: ArtisanInfraction): InfractionDr
     lieu: infraction.lieu || '',
     description: infraction.description,
     remarques: infraction.remarques || '',
-    statut_traitement: infraction.statut_traitement,
-    conclusion: infraction.conclusion || '',
+    statut_traitement: statut,
+    conclusion,
     date_cloture: infraction.date_cloture || '',
   };
 }
@@ -190,7 +208,9 @@ export default function InfractionForm() {
       ]);
       if (!active) return;
 
-      if (dossier.status === 'fulfilled') setArtisan(dossier.value);
+      if (dossier.status === 'fulfilled') {
+        setArtisan(dossier.value ? normaliserArtisan(dossier.value) : null);
+      }
       if (constats.status === 'fulfilled') setHistorique(constats.value || []);
 
       if (infractionId) {

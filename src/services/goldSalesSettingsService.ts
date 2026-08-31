@@ -72,6 +72,17 @@ export interface SaleAuthorizationResult {
   } | null;
 }
 
+type SaleAuthorizationSettings = NonNullable<SaleAuthorizationResult['settings']>;
+
+function isSaleAuthorizationSettings(value: unknown): value is SaleAuthorizationSettings {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const settings = value as Record<string, unknown>;
+  return typeof settings.max_stock_percentage === 'number'
+    && ['standard', 'consignment', 'forward_sale', 'spot_sale'].includes(String(settings.sale_method))
+    && typeof settings.refining_fees_paid_by_customer === 'boolean'
+    && typeof settings.transport_fees_paid_by_customer === 'boolean';
+}
+
 // Récupérer toutes les configurations
 export async function getAllGoldSalesSettings() {
   try {
@@ -406,7 +417,18 @@ export async function checkSaleAuthorization(
       };
     }
 
-    return { success: true, data: result };
+    if (result.settings !== null && !isSaleAuthorizationSettings(result.settings)) {
+      return { success: false, error: { message: 'La configuration de vente retournée est invalide.' } };
+    }
+    return {
+      success: true,
+      data: {
+        is_authorized: result.is_authorized,
+        max_allowed_oz: result.max_allowed_oz,
+        reason: result.reason,
+        settings: result.settings,
+      },
+    };
   } catch (error: any) {
     console.error('Error checking sale authorization:', error);
     return {

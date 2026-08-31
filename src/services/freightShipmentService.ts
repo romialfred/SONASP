@@ -31,12 +31,12 @@ export interface FreightShipment {
   exchange_rate: number;
   local_currency: string;
   total_bullion_grams: number | null;
-  total_pure_gold_grams: number;
-  total_pure_gold_oz: number;
-  total_pure_silver_grams: number;
-  total_value_usd: number;
-  total_value_local: number;
-  production_count: number;
+  total_pure_gold_grams: number | null;
+  total_pure_gold_oz: number | null;
+  total_pure_silver_grams: number | null;
+  total_value_usd: number | null;
+  total_value_local: number | null;
+  production_count: number | null;
   packing_list_pdf_path?: string | null;
   consignment_note_pdf_path?: string | null;
   bullion_summary_pdf_path?: string | null;
@@ -51,8 +51,8 @@ export interface FreightShipment {
   received_at?: string | null;
   received_by?: string | null;
   created_by?: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
   deleted_at?: string | null;
 
   destination_refinery?: any;
@@ -65,15 +65,15 @@ export interface FreightShipmentProduction {
   id: string;
   freight_shipment_id: string;
   production_id: string;
-  production_date: string;
-  bar_reference: string;
-  bullion_grams: number;
-  estimated_fineness_pct: number;
-  estimated_silver_pct: number;
-  pure_gold_grams: number;
-  pure_gold_oz: number;
-  silver_content_grams: number;
-  added_at: string;
+  production_date: string | null;
+  bar_reference: string | null;
+  bullion_grams: number | null;
+  estimated_fineness_pct: number | null;
+  estimated_silver_pct: number | null;
+  pure_gold_grams: number | null;
+  pure_gold_oz: number | null;
+  silver_content_grams: number | null;
+  added_at: string | null;
   added_by?: string | null;
 }
 

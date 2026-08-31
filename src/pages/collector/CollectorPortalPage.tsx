@@ -8,6 +8,7 @@ import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisa
 import artisanPaiementsService from '@/services/artisanPaiementsService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { comptoirPortalService } from '@/services/comptoirPortalService';
+import { normaliserArtisan } from '@/pages/artisan-minier/artisanRow';
 
 interface CollectorDashboard {
   artisans: ArtisanMinier[];
@@ -43,7 +44,9 @@ export default function CollectorPortalPage() {
         artisanPaiementsService.getAllPaiements(),
         artisanPaiementsService.getTaxesRetenues(),
       ]);
-      const scopedArtisans = (artisans || []).filter((artisan) => allowed.has(artisan.id));
+      const scopedArtisans = (artisans || [])
+        .filter((artisan) => allowed.has(artisan.id))
+        .map(normaliserArtisan);
       const documents = await Promise.all(
         scopedArtisans.map((artisan) => artisanMinierService.getDocuments(artisan.id).catch(() => [])),
       );

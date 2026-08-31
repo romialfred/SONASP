@@ -305,9 +305,6 @@ export default function UserDetailsPage() {
           }
         />
 
-        {details.sources_unavailable.length > 0 && (
-          <Note tone="warning" icon={AlertTriangle}>Données partielles : {details.sources_unavailable.join(', ')}. Les valeurs absentes ne sont pas remplacées par des zéros.</Note>
-        )}
         {profile.failed_login_attempts > 0 && (
           <Note tone="warning" icon={AlertTriangle}>{profile.failed_login_attempts} tentative(s) échouée(s) sont encore enregistrées sur ce compte.</Note>
         )}

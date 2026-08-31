@@ -50,6 +50,31 @@ export type MetadonneesDocumentProduction = Record<string, unknown> & {
   documentName: string;
 };
 
+export type MetadonneesDocumentReserve = Record<string, unknown> & {
+  fileName: string;
+  allocationId: string;
+  documentType: string;
+};
+
+export function parseMetadonneesDocumentReserve(
+  raw: unknown,
+): MetadonneesDocumentReserve | null {
+  const objet = objetFerme(raw, ['fileName', 'allocationId', 'documentType']);
+  if (
+    !objet
+    || !texteValide(objet.fileName, 255)
+    || typeof objet.allocationId !== 'string'
+    || !UUID.test(objet.allocationId)
+    || !texteValide(objet.documentType, 80)
+    || !/^[a-z0-9][a-z0-9_-]*$/u.test(objet.documentType)
+  ) return null;
+  return {
+    fileName: objet.fileName,
+    allocationId: objet.allocationId,
+    documentType: objet.documentType,
+  };
+}
+
 export function parseMetadonneesDocumentProduction(
   raw: unknown,
 ): MetadonneesDocumentProduction | null {

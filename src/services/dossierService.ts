@@ -131,6 +131,7 @@ const BUCKET_PAR_SOURCE: Record<string, string> = {
   // demanderait une politique de storage, decision de securite a part.
   assay_certificates: PRIVATE_STORAGE_BUCKETS.assayCertificates,
   snp_payment_proofs: PRIVATE_STORAGE_BUCKETS.paymentProofs,
+  sales_documents: 'sales-documents',
 };
 
 export const dossierService = {
@@ -148,7 +149,7 @@ export const dossierService = {
   estOuvrable(document: DocumentDossier): boolean {
     if (!document.chemin) return false;
     if (document.source === 'sales_documents') {
-      return /^https?:\/\//i.test(document.chemin);
+      return true;
     }
     return Boolean(BUCKET_PAR_SOURCE[document.source]);
   },
@@ -162,7 +163,7 @@ export const dossierService = {
 
     // Les documents de vente historiques portent parfois une URL complète.
     if (document.source === 'sales_documents') {
-      return /^https?:\/\//i.test(document.chemin) ? document.chemin : null;
+      if (/^https?:\/\//i.test(document.chemin)) return document.chemin;
     }
 
     const bucket = BUCKET_PAR_SOURCE[document.source];

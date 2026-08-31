@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, CheckCircle, DollarSign, ShieldCheck } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
 import { Loading } from '@/components/ui/Loading';
@@ -14,6 +12,9 @@ import { useToast } from '@/components/ui/Toast';
 import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { errorMessage } from '@/lib/errorMessage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
+import { isPayableSaleStatus } from '@/services/internationalPaymentBalance';
+import '@/styles/design-system.css';
+import { InternationalPaymentFormView, type PaymentFormState } from './InternationalPaymentFormView';
 import {
   InternationalPaymentConflictError,
   createPaymentIdempotencyKey,
@@ -31,18 +32,6 @@ import {
   type InternationalPaymentMutationResult,
   type PaymentProofResumeCandidate,
 } from '@/services/paymentService';
-
-interface PaymentFormState {
-  saleId: string;
-  customerBankId: string;
-  sellerBankId: string;
-  paidAmount: string;
-  paymentCurrency: string;
-  paymentDate: string;
-  referenceNumber: string;
-  transactionId: string;
-  notes: string;
-}
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -73,6 +62,14 @@ function formatCurrency(amount: number, currency: string): string {
 }
 
 export function PaymentCreate() {
+  const { user } = useAuth();
+  const [params] = useSearchParams();
+  const preferredSaleId = params.get('saleId') || '';
+  const scope = JSON.stringify([user?.id, user?.role, user?.is_active, user?.mining_company_id, user?.organization_id, [...(user?.capabilities || [])].sort(), preferredSaleId]);
+  return <PaymentCreateForm key={scope} preferredSaleId={preferredSaleId} />;
+}
+
+function PaymentCreateForm({ preferredSaleId }: { preferredSaleId: string }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToast } = useToast();
@@ -81,6 +78,10 @@ export function PaymentCreate() {
   const proofIdempotencyKey = useRef<string | null>(null);
   const executionResult = useRef<InternationalPaymentMutationResult | null>(null);
   const resumeProofKey = useRef<string | null>(null);
+  const selectionVersion = useRef(0);
+  const fxVersion = useRef(0);
+  const autoSelected = useRef(false);
+  const submitting = useRef(false);
 
   const [loading, setLoading] = useState(canExecute);
   const [saving, setSaving] = useState(false);
@@ -92,10 +93,13 @@ export function PaymentCreate() {
   const [resumeSaving, setResumeSaving] = useState(false);
   const [customerBanks, setCustomerBanks] = useState<CustomerBank[]>([]);
   const [sellerBanks, setSellerBanks] = useState<SellerBank[]>([]);
+  const [banksLoading, setBanksLoading] = useState(false);
+  const [bankError, setBankError] = useState<string | null>(null);
   const [referenceFx, setReferenceFx] = useState<FXRate | null>(null);
   const [form, setForm] = useState<PaymentFormState>(INITIAL_FORM);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [executionCompleted, setExecutionCompleted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const selectedSale = useMemo(
     () => sales.find((sale) => sale.id === form.saleId) || null,
@@ -112,7 +116,7 @@ export function PaymentCreate() {
     setLoadError(null);
     try {
       const [salesResult, resumeResult] = await Promise.all([
-        getSalesAwaitingPayment(),
+        getSalesAwaitingPayment(preferredSaleId || undefined),
         getPaymentProofResumptions(),
       ]);
       if (!salesResult.success) throw new Error(salesResult.error || 'Chargement impossible.');
@@ -132,7 +136,7 @@ export function PaymentCreate() {
     } finally {
       setLoading(false);
     }
-  }, [canExecute]);
+  }, [canExecute, preferredSaleId]);
 
   useEffect(() => { void loadSales(); }, [loadSales]);
   useEffect(() => {
@@ -145,8 +149,10 @@ export function PaymentCreate() {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
-  const selectSale = async (saleId: string) => {
+  const selectSale = useCallback(async (saleId: string) => {
     if (executionResult.current) return;
+    const selection = ++selectionVersion.current;
+    ++fxVersion.current;
     idempotencyKey.current = null;
     proofIdempotencyKey.current = null;
     setProofFile(null);
@@ -157,11 +163,13 @@ export function PaymentCreate() {
       customerBankId: '',
       sellerBankId: '',
       paymentCurrency: '',
-      paidAmount: sale ? String(sale.final_proceeds) : '',
+      paidAmount: sale ? String(sale.remaining_amount ?? sale.final_proceeds) : '',
     }));
     setCustomerBanks([]);
     setSellerBanks([]);
     setReferenceFx(null);
+    setBankError(null);
+    setBanksLoading(Boolean(sale));
     if (!sale) return;
 
     try {
@@ -169,6 +177,7 @@ export function PaymentCreate() {
         getCustomerBanks(sale.customer_id),
         getSellerBanks(sale.seller_type, sale.seller_id),
       ]);
+      if (selection !== selectionVersion.current) return;
       if (!customers.success) throw new Error(customers.error || 'Comptes du client indisponibles.');
       if (!sellers.success) throw new Error(sellers.error || 'Comptes SONASP indisponibles.');
 
@@ -177,28 +186,46 @@ export function PaymentCreate() {
         (bank) => bank.account_currency?.toUpperCase() === sale.currency.toUpperCase(),
       ));
     } catch (error) {
-      addToast(errorMessage(error, 'Impossible de charger les comptes bancaires autorisés.'), 'error');
+      if (selection === selectionVersion.current) {
+        const message = errorMessage(error, 'Impossible de charger les comptes bancaires autorisés.');
+        setBankError(message);
+        addToast(message, 'error');
+      }
+    } finally {
+      if (selection === selectionVersion.current) setBanksLoading(false);
     }
-  };
+  }, [sales, addToast]);
+
+  useEffect(() => {
+    if (preferredSaleId && !autoSelected.current && sales.some((sale) => sale.id === preferredSaleId)) {
+      autoSelected.current = true;
+      void selectSale(preferredSaleId);
+    }
+  }, [preferredSaleId, sales, selectSale]);
 
   const selectCustomerBank = async (bankId: string) => {
+    if (executionResult.current) return;
+    const request = ++fxVersion.current;
     const bank = customerBanks.find((candidate) => candidate.id === bankId) || null;
+    const currency = bank?.currency?.toUpperCase() || '';
     idempotencyKey.current = null;
     setForm((current) => ({
       ...current,
       customerBankId: bankId,
-      paymentCurrency: bank?.currency?.toUpperCase() || '',
+      paymentCurrency: currency,
+      // Never reinterpret a previously entered amount in a different currency.
+      paidAmount: currency === (current.paymentCurrency || selectedSale?.currency) ? current.paidAmount : '',
     }));
     setReferenceFx(null);
     if (!bank || !selectedSale) return;
 
     const result = await getCurrentFXRate(bank.currency, selectedSale.currency);
-    if (result.success && result.data) setReferenceFx(result.data);
+    if (request === fxVersion.current && result.success && result.data) setReferenceFx(result.data);
   };
 
   const validationError = (): string | null => {
     if (!canExecute) return 'Une session AAL2 avec la capacité finance d’exécution est requise.';
-    if (!selectedSale || selectedSale.status !== 'waiting_for_payment') {
+    if (!selectedSale || !isPayableSaleStatus(selectedSale.status)) {
       return 'La vente n’est plus dans l’état attendu. Actualisez la liste.';
     }
     if (!form.customerBankId || !form.sellerBankId) return 'Sélectionnez les deux comptes bancaires validés.';
@@ -206,6 +233,8 @@ export function PaymentCreate() {
     if (!Number.isFinite(Number(form.paidAmount)) || Number(form.paidAmount) <= 0) {
       return 'Le montant payé doit être strictement positif.';
     }
+    if (form.paymentCurrency === selectedSale.currency && selectedSale.remaining_amount != null
+      && Number(form.paidAmount) > selectedSale.remaining_amount) return 'Le montant dépasse le solde disponible de cette vente.';
     if (form.paymentDate < thirtyDaysAgo() || form.paymentDate > today()) {
       return 'La date de paiement doit être comprise dans les trente derniers jours.';
     }
@@ -283,12 +312,16 @@ export function PaymentCreate() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitting.current) return;
     const invalid = validationError();
-    if (invalid || !selectedSale || !proofFile) {
+    if (invalid || !selectedSale || !proofFile || !isPayableSaleStatus(selectedSale.status)) {
+      setSubmitError(invalid || 'Dossier de vente incomplet.');
       addToast(invalid || 'Dossier de vente incomplet.', 'error');
       return;
     }
 
+    submitting.current = true;
+    setSubmitError(null);
     setSaving(true);
     try {
       let result = executionResult.current;
@@ -296,7 +329,7 @@ export function PaymentCreate() {
         idempotencyKey.current ||= createPaymentIdempotencyKey();
         result = await executeInternationalPayment({
           saleId: selectedSale.id,
-          expectedSaleStatus: 'waiting_for_payment',
+          expectedSaleStatus: selectedSale.status,
           expectedPaymentVersion: selectedSale.payment_version,
           paidAmount: Number(form.paidAmount),
           paymentCurrency: form.paymentCurrency,
@@ -328,11 +361,12 @@ export function PaymentCreate() {
       addToast(
         result.replayed
           ? 'Paiement rejoué sans doublon et preuve privée confirmée.'
-          : 'Paiement exécuté, preuve privée validée et dossier transmis au rapprochement.',
+          : 'Versement enregistré, justificatif déposé et dossier transmis au rapprochement.',
         'success',
       );
       navigate(`/payments/${result.payment_id}`);
     } catch (error) {
+      setSubmitError(errorMessage(error, 'L’enregistrement du versement a été refusé.'));
       if (error instanceof InternationalPaymentConflictError) {
         addToast(error.message, 'error');
         await loadSales();
@@ -340,47 +374,46 @@ export function PaymentCreate() {
         addToast(errorMessage(error, 'Le serveur a refusé l’exécution du paiement.'), 'error');
       }
     } finally {
+      submitting.current = false;
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <MainLayout><Loading message="Chargement des paiements autorisés…" /></MainLayout>;
+    return <NationalDashboardLayout><Loading message="Chargement des paiements autorisés…" /></NationalDashboardLayout>;
   }
 
   if (!canExecute) {
     return (
-      <MainLayout>
+      <NationalDashboardLayout>
         <div className="max-w-3xl mx-auto p-6">
           <Alert variant="error" title="Exécution non autorisée">
             Cette opération exige une session AAL2 active et la capacité
             « Finances — exécution » fournie par le serveur.
           </Alert>
         </div>
-      </MainLayout>
+      </NationalDashboardLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/payments')}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> Retour
-          </Button>
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-gray-900">Exécuter un paiement international</h1>
-            <p className="text-gray-600 mt-1">Conversion atomique de l’engagement existant, sans création en double.</p>
-          </div>
-        </div>
-
-        {loadError && <Alert variant="error" title="Chargement impossible">{loadError}</Alert>}
-        {resumptions.length > 0 && (
+    <NationalDashboardLayout>
+      <InternationalPaymentFormView
+        form={form} sales={sales} customerBanks={customerBanks} sellerBanks={sellerBanks}
+        proofFile={proofFile} referenceFx={referenceFx} saving={saving || resumeSaving}
+        executionCompleted={executionCompleted} banksLoading={banksLoading} bankError={bankError}
+        loadError={loadError} submitError={submitError} minDate={thirtyDaysAgo()} maxDate={today()}
+        onBack={() => navigate(preferredSaleId ? `/sales/${encodeURIComponent(preferredSaleId)}` : '/payments')}
+        onViewSale={(id) => navigate(`/sales/${encodeURIComponent(id)}`)}
+        onRetry={() => void loadSales()} onRetryBanks={() => void selectSale(form.saleId)}
+        onSaleChange={(id) => void selectSale(id)} onCustomerBankChange={(id) => void selectCustomerBank(id)}
+        onChange={updateForm} onProofChange={selectProof} onSubmit={handleSubmit}
+        recovery={resumptions.length > 0 && (
           <Card>
             <CardHeader><CardTitle>Reprendre un rattachement interrompu</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <Alert variant="warning" title="Paiement déjà exécuté">
-                Ces paiements ont été confirmés par le serveur, mais leur preuve privée est absente ou incomplète. Ne relancez pas l’exécution bancaire.
+              <Alert variant="warning" title="Versement déjà enregistré">
+                Ces versements sont enregistrés, mais leur justificatif est absent ou incomplet. Rattachez la preuve sans créer un second versement pour la même opération.
               </Alert>
               <div className="space-y-2">
                 {resumptions.map((candidate) => (
@@ -431,136 +464,7 @@ export function PaymentCreate() {
             </CardContent>
           </Card>
         )}
-        {!loadError && sales.length === 0 && (
-          <Alert variant="info" title="Aucune vente en attente">
-            Seules les ventes SONASP au statut « waiting_for_payment » sont proposées.
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader><CardTitle>Vente et comptes contrôlés</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <FormField label="Vente en attente" required htmlFor="saleId">
-                  <Select id="saleId" value={form.saleId} onChange={(event) => void selectSale(event.target.value)} disabled={saving || executionCompleted} required>
-                    <option value="">Sélectionner une vente…</option>
-                    {sales.map((sale) => (
-                      <option key={sale.id} value={sale.id}>
-                        {sale.sale_number} — {sale.customer_name} — {formatCurrency(sale.final_proceeds, sale.currency)}
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
-
-                {selectedSale && (
-                  <div className="rounded-lg bg-gray-50 p-4 grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-gray-600">Client</span><p className="font-semibold">{selectedSale.customer_name}</p></div>
-                    <div><span className="text-gray-600">Montant de la vente</span><p className="font-semibold">{formatCurrency(selectedSale.final_proceeds, selectedSale.currency)}</p></div>
-                    <div><span className="text-gray-600">Engagement</span><p className="font-semibold">{selectedSale.payment_id ? `version ${selectedSale.payment_version}` : 'Dette historique — secours serveur'}</p></div>
-                    <div><span className="text-gray-600">Devise de règlement</span><p className="font-semibold">{selectedSale.currency}</p></div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Compte du client" required htmlFor="customerBankId">
-                    <Select id="customerBankId" value={form.customerBankId} onChange={(event) => void selectCustomerBank(event.target.value)} disabled={!selectedSale || saving || executionCompleted} required>
-                      <option value="">Compte payeur actif…</option>
-                      {customerBanks.map((bank) => (
-                        <option key={bank.id} value={bank.id}>{bank.bank_name} — {bank.currency}</option>
-                      ))}
-                    </Select>
-                  </FormField>
-                  <FormField label="Compte receveur SONASP" required htmlFor="sellerBankId">
-                    <Select id="sellerBankId" value={form.sellerBankId} onChange={(event) => updateForm('sellerBankId', event.target.value)} disabled={!selectedSale || saving || executionCompleted} required>
-                      <option value="">Compte vérifié dans la devise de vente…</option>
-                      {sellerBanks.map((bank) => (
-                        <option key={bank.id} value={bank.id}>{bank.bank_name} — {bank.account_currency}</option>
-                      ))}
-                    </Select>
-                  </FormField>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle>Détails bancaires</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Montant payé" required htmlFor="paidAmount">
-                    <Input id="paidAmount" type="number" min="0.01" step="0.01" value={form.paidAmount} onChange={(event) => updateForm('paidAmount', event.target.value)} disabled={!selectedSale || saving || executionCompleted} required />
-                  </FormField>
-                  <FormField label="Devise payée" required htmlFor="paymentCurrency">
-                    <Input id="paymentCurrency" value={form.paymentCurrency} readOnly placeholder="Dérivée du compte client" />
-                  </FormField>
-                  <FormField label="Date du paiement" required htmlFor="paymentDate">
-                    <Input id="paymentDate" type="date" min={thirtyDaysAgo()} max={today()} value={form.paymentDate} onChange={(event) => updateForm('paymentDate', event.target.value)} disabled={saving || executionCompleted} required />
-                  </FormField>
-                  <FormField label="Référence bancaire" required htmlFor="referenceNumber">
-                    <Input id="referenceNumber" value={form.referenceNumber} onChange={(event) => updateForm('referenceNumber', event.target.value)} minLength={5} maxLength={255} disabled={saving || executionCompleted} required />
-                  </FormField>
-                  <FormField label="Identifiant de transaction" htmlFor="transactionId">
-                    <Input id="transactionId" value={form.transactionId} onChange={(event) => updateForm('transactionId', event.target.value)} maxLength={255} disabled={saving || executionCompleted} />
-                  </FormField>
-                </div>
-                <FormField label="Notes" htmlFor="notes">
-                  <textarea id="notes" value={form.notes} onChange={(event) => updateForm('notes', event.target.value)} rows={3} maxLength={4000} disabled={saving || executionCompleted} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
-                </FormField>
-                <FormField label="Preuve bancaire privée" required htmlFor="paymentProof">
-                  <Input
-                    id="paymentProof"
-                    type="file"
-                    accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
-                    onChange={(event) => selectProof(event.target.files?.[0] ?? null)}
-                    disabled={saving}
-                    required={!proofFile}
-                  />
-                  <p className="mt-1 text-xs text-gray-600">
-                    PDF/JPEG/PNG, 10 Mo maximum. Le serveur contrôle les octets réels et stocke la preuve dans un bucket privé.
-                  </p>
-                </FormField>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Contrôles serveur</CardTitle></CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <p className="flex gap-2"><CheckCircle className="h-4 w-4 text-green-600 mt-0.5" /> Acteur, statut et horodatages sont dérivés du JWT.</p>
-                <p className="flex gap-2"><CheckCircle className="h-4 w-4 text-green-600 mt-0.5" /> Les deux comptes, leur devise et leur validité sont revérifiés.</p>
-                <p className="flex gap-2"><DollarSign className="h-4 w-4 text-green-600 mt-0.5" /> Le taux FX est choisi dans le référentiel serveur.</p>
-                <p className="flex gap-2"><AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" /> Un autre agent habilité devra rapprocher l’opération.</p>
-              </CardContent>
-            </Card>
-
-            {referenceFx && selectedSale && (
-              <Card>
-                <CardHeader><CardTitle>Taux indicatif</CardTitle></CardHeader>
-                <CardContent className="text-sm space-y-2">
-                  <p className="text-2xl font-bold">{referenceFx.rate.toFixed(6)}</p>
-                  <p>{referenceFx.from_currency}/{referenceFx.to_currency} au {referenceFx.rate_date}</p>
-                  <p className="text-gray-600">Indication uniquement : la RPC sélectionne et contrôle le taux final.</p>
-                </CardContent>
-              </Card>
-            )}
-
-            <Alert variant={executionCompleted ? 'warning' : 'info'} title="Preuve bancaire privée obligatoire">
-              {executionCompleted
-                ? 'Le paiement est déjà exécuté. Renvoyez la même preuve : l’approbation reste fermée tant que le rattachement privé n’est pas confirmé.'
-                : 'Le dépôt est contrôlé par le serveur et lié exactement au paiement et à sa vente. Aucune URL publique n’est créée.'}
-            </Alert>
-
-            <Button type="submit" disabled={saving || !selectedSale || !proofFile} className="w-full">
-              {saving
-                ? 'Contrôle et dépôt en cours…'
-                : executionCompleted
-                  ? 'Rattacher la preuve privée et transmettre'
-                  : 'Exécuter, rattacher la preuve et transmettre'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </MainLayout>
+      />
+    </NationalDashboardLayout>
   );
 }

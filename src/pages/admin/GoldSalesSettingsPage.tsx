@@ -12,6 +12,7 @@ import {
   getSaleMethods,
   type GoldSalesSettingView,
 } from '@/services/goldSalesSettingsService';
+import type { Tables } from '@/types/database';
 import './admin.css';
 
 /** Recherche tolérante aux champs non renseignés. */
@@ -30,6 +31,51 @@ export const dateEffet = (valeur?: string | null) => {
   const date = new Date(valeur);
   return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString('fr-FR');
 };
+
+const METHODES_VENTE = new Set<GoldSalesSettingView['sale_method']>([
+  'standard',
+  'consignment',
+  'forward_sale',
+  'spot_sale',
+]);
+
+function normaliserParametrage(
+  row: Tables<'gold_sales_settings_view'>,
+): GoldSalesSettingView | null {
+  if (
+    !row.id || !row.mining_company_id || !row.customer_id || !row.effective_date
+    || !row.created_at || !row.updated_at
+    || typeof row.max_stock_percentage !== 'number'
+    || typeof row.is_active !== 'boolean'
+    || typeof row.refining_fees_paid_by_customer !== 'boolean'
+    || typeof row.transport_fees_paid_by_customer !== 'boolean'
+    || !row.sale_method
+    || !METHODES_VENTE.has(row.sale_method as GoldSalesSettingView['sale_method'])
+  ) return null;
+
+  return {
+    id: row.id,
+    mining_company_id: row.mining_company_id,
+    customer_id: row.customer_id,
+    max_stock_percentage: row.max_stock_percentage,
+    sale_method: row.sale_method as GoldSalesSettingView['sale_method'],
+    refining_fees_paid_by_customer: row.refining_fees_paid_by_customer,
+    transport_fees_paid_by_customer: row.transport_fees_paid_by_customer,
+    is_active: row.is_active,
+    effective_date: row.effective_date,
+    notes: row.notes ?? undefined,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    created_by: row.created_by ?? undefined,
+    updated_by: row.updated_by ?? undefined,
+    mining_company_name: row.mining_company_name,
+    mining_company_abbr: row.mining_company_abbr,
+    customer_name: row.customer_name,
+    contact_person: row.contact_person,
+    created_by_name: row.created_by_name ?? undefined,
+    updated_by_name: row.updated_by_name ?? undefined,
+  };
+}
 
 export default function GoldSalesSettingsPage() {
   const alerte = useCustomAlert();
@@ -51,7 +97,10 @@ export default function GoldSalesSettingsPage() {
     setLoading(true);
     const resultat = await getAllGoldSalesSettings();
     if (resultat.success) {
-      setSettings(resultat.data);
+      setSettings(resultat.data.flatMap((row) => {
+        const setting = normaliserParametrage(row);
+        return setting ? [setting] : [];
+      }));
     } else {
       const erreur = resultat.error as { message?: string; technicalDetails?: string } | undefined;
       setErreurModale({

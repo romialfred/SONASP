@@ -48,3 +48,74 @@ describe('userPermissionsService.save', () => {
     expect(mocks.from).not.toHaveBeenCalled();
   });
 });
+
+describe('userPermissionsService.listModules', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('inclut les modules désactivés lorsqu’on examine les droits permanents Owner', async () => {
+    const query = {
+      select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(),
+      then: (resolve: (value: unknown) => unknown) => Promise.resolve(resolve({
+        data: [{ id: 'inactive', name: 'gold_inventory', is_active: false }], error: null,
+      })),
+    };
+    mocks.from.mockReturnValue(query);
+    const result = await userPermissionsService.listModules(true);
+    expect(query.eq).not.toHaveBeenCalled();
+    expect(result.modules).toEqual([expect.objectContaining({ id: 'inactive', is_active: false })]);
+  });
+
+  it('charge le domaine et l’ordre du référentiel autoritatif', async () => {
+    const orderBySort = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'module-reserve',
+          name: 'gold_inventory',
+          display_name: 'Réserve d’or nationale',
+          description: 'Position consolidée',
+          category: 'mines_industrielles',
+          sort_order: 25,
+          access_domain: 'inventory',
+        },
+        {
+          id: 'legacy-silver',
+          name: 'silver_inventory',
+          display_name: 'Silver Inventory',
+          description: null,
+          category: 'refinery_inventory',
+          sort_order: 41,
+          access_domain: 'inventory',
+        },
+      ],
+      error: null,
+    });
+    const orderByCategory = vi.fn().mockReturnValue({ order: orderBySort });
+    const inFilter = vi.fn().mockReturnValue({ order: orderByCategory });
+    const eq = vi.fn().mockReturnValue({ in: inFilter });
+    const select = vi.fn().mockReturnValue({ eq });
+    mocks.from.mockReturnValue({ select });
+
+    const result = await userPermissionsService.listModules();
+
+    expect(mocks.from).toHaveBeenCalledWith('modules');
+    expect(select).toHaveBeenCalledWith('id, name, display_name, description, category, sort_order, access_domain, is_active');
+    expect(inFilter).toHaveBeenCalledWith('name', expect.arrayContaining(['gold_inventory', 'administration']));
+    expect(orderByCategory).toHaveBeenCalledWith('category');
+    expect(orderBySort).toHaveBeenCalledWith('sort_order');
+    expect(result).toEqual({
+      modules: [{
+        id: 'module-reserve',
+        name: 'gold_inventory',
+        display_name: 'Réserve d’or nationale',
+        description: 'Position consolidée',
+        category: 'mines_industrielles',
+        sort_order: 25,
+        access_domain: 'inventory',
+      }],
+    });
+    expect(result.modules.map((module) => module.name)).not.toContain('silver_inventory');
+  });
+});

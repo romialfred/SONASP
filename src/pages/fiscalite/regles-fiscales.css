@@ -1,35 +1,432 @@
 /**
- * Référentiel fiscal — habillage propre à l'écran.
+ * Référentiel fiscal — reproduction de l'écran de référence.
  *
- * Aucune couleur ni aucun rayon n'est redéfini ici : tout vient des jetons
- * `--sn-*`. La page n'ajoute que la grille de tuiles et la barre d'outils, deux
- * formes que le socle ne portait pas encore.
+ * Le shell national reste intact. Les règles ci-dessous ne règlent que la
+ * géométrie et les états propres à cette page, sur les jetons SONASP existants.
  */
 
-/* ------------------------------------------------------------ Barre d'outils */
+.rf-page {
+  min-height: 100%;
+  padding: 16px 26px 28px;
+}
+
+.rf-page .sn-breadcrumb {
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+
+.rf-page .sn-page__head {
+  min-height: 62px;
+  gap: 14px;
+}
+
+.rf-page .sn-page__icon {
+  width: 62px;
+  height: 62px;
+  flex-basis: 62px;
+  border-radius: 17px;
+}
+
+.rf-page .sn-page__icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.rf-page .sn-page__head h2 {
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.rf-page .sn-page__subtitle {
+  margin-top: 6px;
+  font-size: 12.5px;
+}
+
+.rf-page .sn-page__actions .sn-btn {
+  height: 44px;
+  padding: 0 24px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.rf-page .sn-page__actions {
+  align-self: flex-start;
+  margin-top: -2px;
+}
+
+.rf-page > .sn-note {
+  margin-top: 14px !important;
+}
+
+/* ------------------------------------------------------- Barre fonctionnelle */
 
 .rf-barre {
   display: flex;
   align-items: center;
-  margin-bottom: var(--sn-gap-lg);
-  padding: 10px 12px;
-  gap: 12px;
-  border: 1px solid var(--sn-line);
+  min-height: 64px;
+  margin-top: 17px;
+  margin-bottom: 18px;
+  padding: 10px 12px 10px 4px;
+  gap: 18px;
+  border: 1px solid var(--sn-line-soft);
   background: var(--sn-surface);
-  border-radius: var(--sn-radius-lg);
-  box-shadow: var(--sn-shadow-card);
+  border-radius: 11px;
+  box-shadow: 0 1px 4px rgb(16 36 62 / 4%);
+}
+
+.rf-barre .sn-tabs {
+  flex: 0 0 auto;
+}
+
+.rf-barre .sn-tabs--pill {
+  gap: 7px;
+}
+
+.rf-barre .sn-tabs--pill .sn-tabs__item {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.rf-barre .sn-tabs__count {
+  min-width: 20px;
+  height: 20px;
+  padding: 1px 6px;
+  font-size: 10.5px;
+  line-height: 18px;
 }
 
 .rf-barre__filtres {
   display: flex;
+  min-width: 0;
   flex: 1;
   align-items: center;
   justify-content: flex-end;
-  min-width: 0;
-  gap: 10px;
+  gap: 20px;
 }
 
-.rf-barre__recherche { width: min(320px, 100%); }
+.rf-barre__recherche {
+  width: auto;
+  min-width: 240px;
+  height: 42px;
+  flex: 1 1 510px;
+  max-width: 524px;
+  border-radius: 9px;
+  box-shadow: 0 1px 4px rgb(16 36 62 / 5%);
+}
+
+.rf-barre__recherche input::placeholder {
+  color: #8b9bae;
+}
+
+.rf-barre__separateur {
+  width: 1px;
+  height: 42px;
+  flex: 0 0 1px;
+  background: var(--sn-line-soft);
+}
+
+.rf-barre__bouton-filtre {
+  height: 42px;
+  min-width: 112px;
+  padding: 0 18px;
+  border-color: var(--sn-line);
+  border-radius: 9px;
+  font-size: 12.5px;
+  box-shadow: 0 1px 4px rgb(16 36 62 / 5%);
+}
+
+.rf-barre__bouton-filtre.is-filtered {
+  border-color: #9bd0ba;
+  color: var(--sn-green-dark);
+  background: var(--sn-green-soft);
+}
+
+.rf-vues {
+  display: grid;
+  height: 42px;
+  flex: 0 0 auto;
+  padding: 4px;
+  grid-template-columns: repeat(2, 42px);
+  gap: 4px;
+  border: 1px solid var(--sn-line-soft);
+  background: #fbfcfd;
+  border-radius: 9px;
+}
+
+.rf-vues label {
+  display: grid;
+  position: relative;
+  place-items: center;
+  border: 1px solid transparent;
+  color: #60738c;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.rf-vues label:hover {
+  color: var(--sn-ink);
+  background: var(--sn-surface-alt);
+}
+
+.rf-vues label.is-active {
+  border-color: #2da376;
+  color: var(--sn-green);
+  background: #eef9f4;
+}
+
+.rf-vues label:focus-within {
+  outline: 2px solid var(--sn-green);
+  outline-offset: 2px;
+}
+
+.rf-vues input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.rf-vues svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* ------------------------------------------------------------ Icônes fiscales */
+
+.rf-icone-taxe {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--sn-muted);
+  background: var(--sn-line-soft);
+}
+
+.rf-icone-taxe svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.9;
+}
+
+.rf-icone-taxe.is-development {
+  color: #16a36f;
+  background: #e9f8f1;
+}
+
+.rf-icone-taxe.is-royalty {
+  color: #2f78f2;
+  background: #edf4ff;
+}
+
+.rf-icone-taxe.is-tva {
+  color: #e69600;
+  background: #fff6e7;
+}
+
+.rf-icone-taxe.is-neutral {
+  color: var(--sn-muted);
+  background: var(--sn-line-soft);
+}
+
+.rf-icone-taxe__tva {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1.4px solid currentcolor;
+  border-radius: 50%;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* ------------------------------------------------------------------ Tableau */
+
+.rf-table-wrap {
+  position: relative;
+  overflow-x: auto;
+  border: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  border-radius: 11px;
+  box-shadow: 0 2px 7px rgb(16 36 62 / 5%);
+}
+
+.rf-table-wrap--loading {
+  display: grid;
+  min-height: 250px;
+  place-items: center;
+}
+
+.rf-table-message {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  gap: 8px;
+  color: var(--sn-muted);
+  font-size: 12.5px;
+}
+
+.rf-table-message svg {
+  width: 17px;
+  height: 17px;
+}
+
+.rf-table {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: #253e58;
+  font-size: 12.5px;
+}
+
+.rf-table__col-icon { width: 6%; }
+.rf-table__col-taxe { width: 24%; }
+.rf-table__col-vendeur { width: 14.5%; }
+.rf-table__col-assiette { width: 20%; }
+.rf-table__col-valeur { width: 9%; }
+.rf-table__col-date { width: 10.5%; }
+.rf-table__col-reference { width: 11.5%; }
+.rf-table__col-action { width: 4.5%; }
+
+.rf-table th {
+  height: 50px;
+  padding: 0;
+  border-bottom: 1px solid var(--sn-line);
+  color: #405a75;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.rf-table th:first-child {
+  font-size: 0;
+}
+
+.rf-table th:last-child {
+  text-align: center;
+}
+
+.rf-table td {
+  height: 67px;
+  padding: 0;
+  border-bottom: 1px solid var(--sn-line-soft);
+  vertical-align: middle;
+}
+
+.rf-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rf-table tbody tr {
+  transition: background 130ms ease;
+}
+
+.rf-table tbody tr:hover {
+  background: #fbfcfd;
+}
+
+.rf-table__icone-cell {
+  text-align: center;
+}
+
+.rf-table__icone {
+  width: 35px;
+  height: 35px;
+  margin: 0 auto;
+  border-radius: 10px;
+}
+
+.rf-table__taxe strong,
+.rf-table__taxe span,
+.rf-table__assiette span,
+.rf-table__date span,
+.rf-table__date small {
+  display: block;
+}
+
+.rf-table__taxe strong {
+  overflow: hidden;
+  color: var(--sn-navy);
+  font-size: 12.7px;
+  font-weight: 700;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rf-table__taxe span,
+.rf-table__assiette span + span,
+.rf-table__date small {
+  color: #435d78;
+  font-size: 11.7px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.rf-table__taxe span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rf-table__assiette span {
+  line-height: 18px;
+}
+
+.rf-table__valeur {
+  color: var(--sn-navy);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rf-table__date {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rf-table__date small {
+  color: var(--sn-muted);
+}
+
+.rf-table__reference {
+  display: inline-block;
+  max-width: calc(100% - 10px);
+  overflow: hidden;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #52677d;
+  background: #f1f3f5;
+  font-size: 10.8px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rf-table__action {
+  text-align: center;
+}
+
+.rf-table__action .rf-menu {
+  display: inline-block;
+}
+
+.rf-table__action .sn-btn--icon {
+  border: 0;
+  box-shadow: none;
+}
+
+.rf-table__action .sn-btn--icon svg {
+  width: 20px;
+  height: 20px;
+  color: #173b59;
+}
 
 /* ------------------------------------------------------------ Grille tuiles */
 
@@ -58,27 +455,15 @@
   box-shadow: var(--sn-shadow-raised);
 }
 
-/* Une règle retirée ne doit pas se lire comme une règle qui s'applique. */
 .rf-tuile.is-inactive { background: var(--sn-surface-alt); }
 .rf-tuile.is-inactive .rf-tuile__valeur strong { color: var(--sn-muted); }
-
 .rf-tuile__haut { display: flex; align-items: flex-start; gap: 12px; }
 
 .rf-tuile__icone {
-  display: grid;
   width: 38px;
   height: 38px;
-  flex: 0 0 auto;
-  place-items: center;
-  color: var(--sn-green);
-  background: var(--sn-green-soft);
   border-radius: 11px;
 }
-
-.rf-tuile__icone svg { width: 18px; height: 18px; }
-.rf-tuile__icone.is-gold { color: var(--sn-gold-dark); background: var(--sn-gold-soft); }
-.rf-tuile__icone.is-violet { color: var(--sn-violet); background: var(--sn-violet-soft); }
-.rf-tuile__icone.is-neutral { color: var(--sn-muted); background: var(--sn-line-soft); }
 
 .rf-tuile__titre { min-width: 0; flex: 1; }
 
@@ -112,7 +497,33 @@
   line-height: 1.1;
 }
 
-/* --------------------------------------------------------------- Menu tuile */
+.rf-tuile__faits {
+  display: grid;
+  padding-top: 12px;
+  gap: 11px 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--sn-line-soft);
+}
+
+.rf-fait { min-width: 0; }
+.rf-fait dt { color: var(--sn-faint); font-size: 10.5px; font-weight: 600; }
+
+.rf-fait dd {
+  margin: 2px 0 0;
+  color: var(--sn-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.rf-tuile__pied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* --------------------------------------------------------------- Menus */
 
 .rf-menu { position: relative; flex: 0 0 auto; }
 
@@ -149,36 +560,6 @@
 .rf-menu__liste button:hover { color: var(--sn-navy); background: var(--sn-surface-alt); }
 .rf-menu__liste button svg { width: 15px; height: 15px; color: var(--sn-muted); }
 
-/* -------------------------------------------------------------- Corps tuile */
-
-.rf-tuile__faits {
-  display: grid;
-  padding-top: 12px;
-  gap: 11px 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-top: 1px solid var(--sn-line-soft);
-}
-
-.rf-fait { min-width: 0; }
-.rf-fait dt { color: var(--sn-faint); font-size: 10.5px; font-weight: 600; }
-
-.rf-fait dd {
-  margin: 2px 0 0;
-  color: var(--sn-ink-soft);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.rf-fait dd.is-vide { color: var(--sn-faint); font-weight: 500; font-style: italic; }
-
-.rf-tuile__pied {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
 /* --------------------------------------------------------------- Détail */
 
 .rf-detail { display: grid; gap: 14px; }
@@ -194,13 +575,66 @@
 .rf-detail__ligne dt { color: var(--sn-faint); font-size: 10.5px; font-weight: 600; }
 .rf-detail__ligne dd { margin: 0; color: var(--sn-ink); font-size: 12.5px; font-weight: 600; }
 
-@media (max-width: 900px) {
-  .rf-barre { flex-wrap: wrap; }
-  .rf-barre__filtres { justify-content: flex-start; }
-  .rf-barre__recherche { width: 100%; }
+/* ------------------------------------------------------------ Responsive */
+
+@media (max-width: 1300px) {
+  .rf-barre { gap: 12px; }
+  .rf-barre__filtres { gap: 10px; }
+  .rf-barre__recherche { max-width: none; }
+}
+
+@media (max-width: 1180px) {
+  .rf-barre {
+    flex-wrap: wrap;
+    padding: 10px;
+  }
+
+  .rf-barre__filtres { flex-basis: 100%; }
+  .rf-barre__recherche { max-width: none; }
+}
+
+@media (max-width: 767px) {
+  .rf-page { padding: 14px 14px 24px; }
+
+  .rf-page .sn-page__head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .rf-page .sn-page__icon {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+    border-radius: 13px;
+  }
+
+  .rf-page .sn-page__head h2 { font-size: 21px; }
+  .rf-page .sn-page__actions { width: 100%; }
+  .rf-page .sn-page__actions .sn-btn { width: 100%; }
+  .rf-barre .sn-tabs { width: 100%; }
+
+  .rf-barre .sn-tabs--pill .sn-tabs__item {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .rf-barre__filtres { flex-wrap: wrap; }
+
+  .rf-barre__recherche {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .rf-barre__separateur { display: none; }
+  .rf-barre__bouton-filtre { flex: 1; }
 }
 
 @media (max-width: 560px) {
+  .rf-barre .sn-tabs--pill .sn-tabs__item {
+    padding: 0 10px;
+    font-size: 11.5px;
+  }
+
   .rf-tuiles { grid-template-columns: minmax(0, 1fr); }
   .rf-tuile__faits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

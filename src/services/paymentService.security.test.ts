@@ -180,6 +180,48 @@ describe('paymentService — frontière RPC 4H', () => {
     });
   });
 
+  it('accepte les statuts agrégés des avances et annulations partielles', async () => {
+    const approvalKey = '71000000-0000-4000-8000-000000000001';
+    const cancellationKey = '81000000-0000-4000-8000-000000000001';
+    mocks.rpc
+      .mockResolvedValueOnce({
+        data: {
+          ...execution,
+          payment_status: 'approved',
+          sale_status: 'virtual_payment',
+          version: 5,
+          idempotency_key: approvalKey,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          ...execution,
+          payment_status: 'cancelled',
+          sale_status: 'virtual_payment',
+          version: 6,
+          idempotency_key: cancellationKey,
+        },
+        error: null,
+      });
+
+    await expect(decideInternationalPayment({
+      paymentId: execution.payment_id,
+      expectedVersion: 4,
+      decision: 'approve',
+      reason: 'Avance bancaire conforme',
+      idempotencyKey: approvalKey,
+    })).resolves.toMatchObject({ sale_status: 'virtual_payment' });
+
+    await expect(cancelInternationalPayment({
+      paymentId: execution.payment_id,
+      expectedStatus: 'processing',
+      expectedVersion: 5,
+      reason: 'Annulation partielle justifiée',
+      idempotencyKey: cancellationKey,
+    })).resolves.toMatchObject({ sale_status: 'virtual_payment' });
+  });
+
   it('refuse une réponse RPC qui ne confirme pas le nouvel état', async () => {
     mocks.rpc.mockResolvedValue({ data: { ...execution, payment_status: 'pending' }, error: null });
     await expect(executeInternationalPayment(executionInput)).rejects.toThrow('n’a pas confirmé');

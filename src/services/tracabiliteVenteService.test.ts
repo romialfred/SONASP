@@ -158,6 +158,38 @@ describe('construireLots', () => {
     const lots = construireLots([{ ...achatMine, numero_achat: null }], [], []);
     expect(lots[0].reference).toBe('Achat sans numéro');
   });
+
+  it('mobilise une cession de comptoir acquise sans recompter son achat artisanal', () => {
+    const lots = construireLots(
+      [],
+      [],
+      [{
+        source_type: 'cession_comptoir',
+        achat_mine_id: null,
+        artisan_vente_id: null,
+        comptoir_cession_id: 'c1',
+        quantite_oz: 2,
+      }],
+      0,
+      [{
+        id: 'c1',
+        reference_vente: 'CESS-2026-001',
+        date_vente: '2026-08-10',
+        quantity_grams: GRAMMES_PAR_ONCE * 10,
+        status: 'accepted',
+        comptoir: { name: 'Comptoir NAFOLA' },
+      }],
+    );
+    expect(lots).toEqual([
+      expect.objectContaining({
+        source_type: 'cession_comptoir',
+        origine: 'Comptoir NAFOLA',
+        quantiteOz: 10,
+        affecteeOz: 2,
+        disponibleOz: 8,
+      }),
+    ]);
+  });
 });
 
 describe('nomArtisan', () => {

@@ -1,0 +1,10 @@
+import { spawnSync } from 'node:child_process';
+import { mkdirSync,writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+const cli=process.env.SUPABASE_CLI || 'C:/Users/romia/AppData/Local/npm-cache/_npx/b96a6bd565c470ce/node_modules/@supabase/cli-windows-x64/bin/supabase.exe';
+const r=spawnSync(cli,['db','query','--linked','--file',resolve('scripts/development-data/reference-data.sql'),'-o','json'],{encoding:'utf8',timeout:120000});
+if(r.status!==0) throw new Error(r.stderr||r.error?.message);
+const data=JSON.parse(r.stdout);
+mkdirSync('output/development-data',{recursive:true});
+writeFileSync('output/development-data/reference-data.json',JSON.stringify(data,null,2));
+console.log(JSON.stringify(data,null,2));

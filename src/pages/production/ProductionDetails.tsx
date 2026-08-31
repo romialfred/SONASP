@@ -390,9 +390,9 @@ export function ProductionDetails() {
                       production_date: production.production_date,
                       bullion_grams: production.bullion_grams,
                       estimated_fineness_pct: production.estimated_fineness_pct,
-                      pure_gold_grams: production.pure_gold_grams,
-                      estimated_oz: production.estimated_oz,
-                      estimated_silver_pct: production.estimated_silver_pct,
+                      pure_gold_grams: production.pure_gold_grams ?? 0,
+                      estimated_oz: production.estimated_oz ?? 0,
+                      estimated_silver_pct: production.estimated_silver_pct ?? undefined,
                       mining_company_name: compagnie?.name,
                       // Le pays venait d'une constante figée à « Guinée ».
                       site_country: compagnie?.country || undefined,

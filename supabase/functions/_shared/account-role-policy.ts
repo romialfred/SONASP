@@ -1,11 +1,12 @@
 export const INTERACTIVE_ACCOUNT_ROLES = [
+  'owner',
   'admin',
   'management',
-  'manager',
+  'dgmg',
+  'dgi',
   'mine',
-  'factory',
-  'airport',
-  'refinery',
+  'comptoir',
+  'collector',
   'customer',
 ] as const;
 
@@ -17,16 +18,26 @@ const ACCOUNT_ROLE_LEVELS: Readonly<Record<string, number>> = {
   owner: 100,
   admin: 80,
   management: 60,
+  dgmg: 50,
+  dgi: 50,
   manager: 40,
-  mine: 20,
-  factory: 20,
-  airport: 20,
-  refinery: 20,
-  customer: 20,
+  mine: 30,
+  comptoir: 30,
+  collector: 20,
+  factory: 30,
+  airport: 30,
+  refinery: 30,
+  customer: 10,
 };
 
 export function isInteractiveAccountRole(role: string): boolean {
   return INTERACTIVE_ACCOUNT_ROLE_SET.has(role);
+}
+
+/** Type du rattachement validé ensuite par le RPC autoritatif. */
+export function accountOrganizationType(role: string): string {
+  if (['owner', 'admin', 'management'].includes(role)) return 'sonasp';
+  return role === 'collector' ? 'comptoir' : role;
 }
 
 /**
@@ -47,8 +58,12 @@ export function canManageAccountTarget(input: {
 
   return input.actorId !== input.targetId
     && (actorRole === 'owner' || actorRole === 'admin')
-    && targetRole !== 'owner'
-    && !(actorRole === 'admin' && targetRole === 'admin')
     && targetLevel >= 0
-    && targetLevel <= actorLevel;
+    && (actorRole === 'owner' || targetLevel < actorLevel);
+}
+
+/** Catalogue et hiérarchie doivent être vérifiés avant toute création Auth. */
+export function canCreateAccountRole(actorRole: string, targetRole: string): boolean {
+  return isInteractiveAccountRole(targetRole)
+    && canManageAccountTarget({ actorId: 'actor', actorRole, targetId: 'new-account', targetRole });
 }

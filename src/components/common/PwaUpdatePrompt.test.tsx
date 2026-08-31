@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PwaUpdatePrompt } from './PwaUpdatePrompt';
 
@@ -6,20 +6,31 @@ const pwaMocks = vi.hoisted(() => ({
   needRefresh: false,
   setNeedRefresh: vi.fn(),
   updateServiceWorker: vi.fn().mockResolvedValue(undefined),
+  reloadCurrentDocument: vi.fn(),
+  registrationOptions: null as { onNeedReload?: () => void } | null,
 }));
 
 vi.mock('@/lib/pwaRegistration', () => ({
-  usePwaRegistration: () => ({
-    needRefresh: [pwaMocks.needRefresh, pwaMocks.setNeedRefresh],
-    offlineReady: [false, vi.fn()],
-    updateServiceWorker: pwaMocks.updateServiceWorker,
-  }),
+  usePwaRegistration: (options?: { onNeedReload?: () => void }) => {
+    pwaMocks.registrationOptions = options ?? null;
+    return {
+      needRefresh: [pwaMocks.needRefresh, pwaMocks.setNeedRefresh],
+      offlineReady: [false, vi.fn()],
+      updateServiceWorker: pwaMocks.updateServiceWorker,
+    };
+  },
+}));
+
+vi.mock('@/lib/pwaUpdate', () => ({
+  browserNetworkState: () => !navigator.onLine ? 'offline' : 'online',
+  reloadCurrentDocument: pwaMocks.reloadCurrentDocument,
 }));
 
 describe('PwaUpdatePrompt', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     pwaMocks.needRefresh = false;
+    pwaMocks.registrationOptions = null;
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
   });
 
@@ -62,5 +73,47 @@ describe('PwaUpdatePrompt', () => {
 
     expect(pwaMocks.setNeedRefresh).toHaveBeenCalledWith(false);
     expect(pwaMocks.updateServiceWorker).not.toHaveBeenCalled();
+  });
+
+  it('ne recharge jamais cet onglet quand un autre onglet active la version', () => {
+    pwaMocks.needRefresh = true;
+    render(<PwaUpdatePrompt />);
+
+    act(() => {
+      pwaMocks.registrationOptions?.onNeedReload?.();
+    });
+
+    expect(pwaMocks.reloadCurrentDocument).not.toHaveBeenCalled();
+    expect(screen.getByText('La nouvelle version SONASP est prête')).toBeInTheDocument();
+    expect(screen.getByText(/Cet écran reste intact/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Recharger maintenant' }));
+    expect(pwaMocks.reloadCurrentDocument).toHaveBeenCalledTimes(1);
+    expect(pwaMocks.updateServiceWorker).not.toHaveBeenCalled();
+  });
+
+  it('ne réagit pas aux événements lifecycle et recharge seulement après le clic local', async () => {
+    pwaMocks.needRefresh = true;
+    render(<PwaUpdatePrompt />);
+
+    fireEvent(window, new Event('blur'));
+    fireEvent(document, new Event('visibilitychange'));
+    fireEvent(window, new Event('focus'));
+    fireEvent(window, new Event('pageshow'));
+
+    expect(pwaMocks.updateServiceWorker).not.toHaveBeenCalled();
+    expect(pwaMocks.reloadCurrentDocument).not.toHaveBeenCalled();
+    expect(screen.getByText('Une mise à jour SONASP est disponible')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mettre à jour maintenant' }));
+    await waitFor(() => {
+      expect(pwaMocks.updateServiceWorker).toHaveBeenCalledTimes(1);
+    });
+    expect(pwaMocks.reloadCurrentDocument).not.toHaveBeenCalled();
+
+    act(() => {
+      pwaMocks.registrationOptions?.onNeedReload?.();
+    });
+    expect(pwaMocks.reloadCurrentDocument).toHaveBeenCalledTimes(1);
   });
 });

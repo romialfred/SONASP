@@ -1,4 +1,9 @@
 import { supabase } from '@/lib/supabase';
+import type { Database } from '@/types/database';
+
+type RequisitionInsert = Database['public']['Tables']['snp_requisitions']['Insert'];
+type EnlevementInsert = Database['public']['Tables']['snp_requisitions_enlevements']['Insert'];
+type RequisitionDocumentInsert = Database['public']['Tables']['snp_requisitions_documents']['Insert'];
 
 /**
  * Réquisitions de production d'or.
@@ -309,7 +314,11 @@ export const requisitionsService = {
   },
 
   async creer(requisition: Partial<Requisition>): Promise<Requisition> {
-    const reponse = await supabase.from('snp_requisitions').insert(requisition).select().single();
+    const reponse = await supabase
+      .from('snp_requisitions')
+      .insert(requisition as RequisitionInsert)
+      .select()
+      .single();
     return lancerSiErreur(reponse) as Requisition;
   },
 
@@ -418,7 +427,10 @@ export const requisitionsService = {
 
   async planifierEnlevement(enlevement: Partial<Enlevement>): Promise<Enlevement> {
     const reponse = await supabase
-      .from('snp_requisitions_enlevements').insert(enlevement).select().single();
+      .from('snp_requisitions_enlevements')
+      .insert(enlevement as EnlevementInsert)
+      .select()
+      .single();
     return lancerSiErreur(reponse) as Enlevement;
   },
 
@@ -488,7 +500,7 @@ export const requisitionsService = {
     return lancerSiErreur(reponse) || [];
   },
 
-  async ajouterDocument(document: Record<string, unknown>) {
+  async ajouterDocument(document: RequisitionDocumentInsert) {
     const reponse = await supabase
       .from('snp_requisitions_documents').insert(document).select().single();
     return lancerSiErreur(reponse);

@@ -114,8 +114,8 @@ export default function FreightShipmentsRefining() {
 
   const waitingCount = filteredShipments.filter(s => s.status === 'shipped_to_refinery').length;
   const receivedCount = filteredShipments.filter(s => s.status === 'received_at_refinery').length;
-  const totalValue = filteredShipments.reduce((sum, s) => sum + s.total_value_usd, 0);
-  const totalOz = filteredShipments.reduce((sum, s) => sum + s.total_pure_gold_oz, 0);
+  const totalValue = filteredShipments.reduce((sum, s) => sum + (s.total_value_usd ?? 0), 0);
+  const totalOz = filteredShipments.reduce((sum, s) => sum + (s.total_pure_gold_oz ?? 0), 0);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -359,7 +359,7 @@ export default function FreightShipmentsRefining() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-green-700">
-                              ${shipment.total_value_usd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                               ${(shipment.total_value_usd ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                             </td>
                             <td className="px-4 py-3 text-center text-sm text-gray-600">
                               {shipment.production_count}
@@ -457,7 +457,7 @@ export default function FreightShipmentsRefining() {
                               {formatWeightOunces(shipment.total_pure_gold_oz)} oz
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-green-700">
-                              ${shipment.total_value_usd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                               ${(shipment.total_value_usd ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                             </td>
                             <td className="px-4 py-3 text-center">
                               <Button

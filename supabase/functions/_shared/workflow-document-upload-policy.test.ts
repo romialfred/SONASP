@@ -3,6 +3,7 @@ import {
   autoriserDocumentWorkflow,
   parseMetadonneesDocumentExpedition,
   parseMetadonneesDocumentProduction,
+  parseMetadonneesDocumentReserve,
 } from './workflow-document-upload-policy.ts';
 
 const ACTOR = 'ac585840-4d30-4a67-9e66-8d1fd77279ee';
@@ -25,6 +26,17 @@ describe('métadonnées fermées des documents métier', () => {
     })).toEqual({ fileName: 'rapport.pdf', productionId: PARENT, documentName: 'Rapport journalier' });
     expect(parseMetadonneesDocumentProduction({
       fileName: 'rapport.pdf', productionId: 'invalide', documentName: 'Rapport journalier',
+    })).toBeNull();
+  });
+
+  it('borne les métadonnées des documents de réserve', () => {
+    expect(parseMetadonneesDocumentReserve({
+      fileName: 'decision.pdf', allocationId: PARENT, documentType: 'decision_allocation',
+    })).toEqual({
+      fileName: 'decision.pdf', allocationId: PARENT, documentType: 'decision_allocation',
+    });
+    expect(parseMetadonneesDocumentReserve({
+      fileName: 'decision.pdf', allocationId: PARENT, documentType: '../secret',
     })).toBeNull();
   });
 });

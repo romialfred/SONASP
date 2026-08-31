@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from './AuthContext';
+import { MandatoryMfaGate } from '@/components/auth/MandatoryMfaGate';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 const authMocks = vi.hoisted(() => ({
   getSession: vi.fn(),
+  getUser: vi.fn(),
+  contextConsumerRendered: vi.fn(),
+  mfaState: vi.fn(),
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
   rpc: vi.fn(),
@@ -29,6 +35,7 @@ vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: authMocks.getSession,
+      getUser: authMocks.getUser,
       signInWithPassword: authMocks.signInWithPassword,
       signOut: authMocks.signOut,
       onAuthStateChange: authMocks.onAuthStateChange,
@@ -69,6 +76,10 @@ vi.mock('@/services/userSessionService', () => ({
 
 vi.mock('@/components/auth/SessionTimeoutWarning', () => ({
   SessionTimeoutWarning: () => null,
+}));
+
+vi.mock('@/services/mfaService', () => ({
+  mfaService: { etat: authMocks.mfaState },
 }));
 
 function AuthStateProbe() {
@@ -113,6 +124,28 @@ function SignOutProbe() {
   );
 }
 
+function GuardedDraftProbe() {
+  authMocks.contextConsumerRendered();
+  const { initialized, loading, profileLoading, refreshProfile, session } = useAuth();
+  const [draft, setDraft] = useState('');
+
+  if (loading || !initialized || (session && profileLoading)) {
+    return <div role="status">Chargement global</div>;
+  }
+
+  return (
+    <section data-testid="stable-shell">
+      <label htmlFor="lifecycle-draft">Brouillon métier</label>
+      <input
+        id="lifecycle-draft"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+      />
+      <button type="button" onClick={() => void refreshProfile()}>Revalider le profil</button>
+    </section>
+  );
+}
+
 describe('AuthProvider profile fallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -124,6 +157,7 @@ describe('AuthProvider profile fallback', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     authMocks.signOut.mockResolvedValue({ error: null });
+    authMocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
     authMocks.rpc.mockResolvedValue({ error: null });
     authMocks.registerCurrentSession.mockResolvedValue({
       id: '33333333-3333-4333-8333-333333333333',
@@ -138,6 +172,58 @@ describe('AuthProvider profile fallback', () => {
       access_tokens_revoked: false,
     });
     authMocks.isTerminalSessionError.mockReturnValue(false);
+    authMocks.mfaState.mockResolvedValue({ etape_suivante: 'pret', aal: 'aal2' });
+  });
+
+  it('conserve le vrai sous-arbre protégé pendant les reprises répétées et le ferme à la déconnexion', async () => {
+    const session = { access_token: 'initial', user: { id: 'owner-lifecycle' } };
+    authMocks.profileResult = {
+      id: session.user.id, role: 'owner', is_active: true, capabilities: [],
+    };
+    authMocks.getSession.mockResolvedValue({ data: { session }, error: null });
+    const mounted = vi.fn();
+    const unmounted = vi.fn();
+    function Draft() {
+      const [value, setValue] = useState('');
+      useEffect(() => { mounted(); return () => { unmounted(); }; }, []);
+      return <input aria-label="Saisie protégée" value={value} onChange={event => setValue(event.target.value)} />;
+    }
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <AuthProvider>
+          <MandatoryMfaGate>
+            <Routes>
+              <Route path="/dashboard" element={<ProtectedRoute><Draft /></ProtectedRoute>} />
+              <Route path="/login" element={<p>Session fermée</p>} />
+            </Routes>
+          </MandatoryMfaGate>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    const input = await screen.findByLabelText('Saisie protégée');
+    fireEvent.change(input, { target: { value: 'Travail non enregistré' } });
+    for (let index = 0; index < 5; index += 1) {
+      await act(async () => {
+        fireEvent(window, new Event('blur'));
+        fireEvent(document, new Event('visibilitychange'));
+        await authMocks.authStateCallback?.('TOKEN_REFRESHED', { ...session, access_token: `renewed-${index}` });
+        await authMocks.authStateCallback?.('SIGNED_IN', session);
+        fireEvent(window, new Event('focus'));
+        fireEvent(window, new Event('pageshow'));
+      });
+      expect(screen.getByLabelText('Saisie protégée')).toBe(input);
+      expect(input).toHaveValue('Travail non enregistré');
+      expect(screen.queryByRole('status', { name: /session|espace|plateforme/i })).not.toBeInTheDocument();
+    }
+    expect(mounted).toHaveBeenCalledTimes(1);
+    expect(unmounted).not.toHaveBeenCalled();
+    expect(authMocks.mfaState).toHaveBeenCalledTimes(1);
+    expect(authMocks.profileFetch).toHaveBeenCalledTimes(1);
+    expect(authMocks.registerCurrentSession).toHaveBeenCalledTimes(1);
+    await act(async () => { await authMocks.authStateCallback?.('SIGNED_OUT', null); });
+    expect(screen.queryByLabelText('Saisie protégée')).not.toBeInTheDocument();
+    expect(screen.getByText('Session fermée')).toBeInTheDocument();
+    expect(unmounted).toHaveBeenCalledTimes(1);
   });
 
   it('refuse tout accès privé quand le profil autoritatif est indisponible', async () => {
@@ -276,6 +362,124 @@ describe('AuthProvider profile fallback', () => {
 
     expect(state).toHaveAttribute('data-user-id', 'stable-user');
     expect(state).toHaveAttribute('data-profile-error', '');
+    expect(authMocks.profileFetch).toHaveBeenCalledTimes(1);
+    expect(authMocks.registerCurrentSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('conserve le shell et le brouillon si SIGNED_IN revient pendant une revalidation silencieuse', async () => {
+    const session = {
+      access_token: 'token-stable',
+      user: {
+        id: 'stable-draft-user',
+        email: 'draft@sonasp.bf',
+        app_metadata: { role: 'customer' },
+        user_metadata: {},
+        created_at: '2026-08-17T00:00:00.000Z',
+      },
+    };
+    const profile = {
+      id: 'stable-draft-user',
+      email: 'draft@sonasp.bf',
+      full_name: 'Agent brouillon',
+      phone: null,
+      role: 'customer',
+      mining_company_id: null,
+      site_ids: [],
+      is_active: true,
+      is_sales_approver: false,
+      two_factor_enabled: false,
+      language: 'fr',
+      email_notifications: true,
+      batch_notifications: true,
+      approval_notifications: true,
+      created_at: '2026-08-17T00:00:00.000Z',
+      updated_at: '2026-08-17T00:00:00.000Z',
+    };
+    let resolveRefresh: ((value: typeof profile) => void) | undefined;
+    const pendingRefresh = new Promise<typeof profile>((resolve) => {
+      resolveRefresh = resolve;
+    });
+
+    authMocks.profileResult = profile;
+    authMocks.getSession.mockResolvedValue({ data: { session }, error: null });
+    authMocks.getUser.mockResolvedValue({ data: { user: session.user }, error: null });
+    authMocks.profileFetch
+      .mockResolvedValueOnce(profile)
+      .mockImplementationOnce(() => pendingRefresh);
+
+    render(<AuthProvider><GuardedDraftProbe /></AuthProvider>);
+
+    const draft = await screen.findByLabelText('Brouillon métier');
+    fireEvent.change(draft, { target: { value: 'valeur non enregistrée' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Revalider le profil' }));
+    await waitFor(() => expect(authMocks.profileFetch).toHaveBeenCalledTimes(2));
+    const renderCountBeforeLifecycleEvent = authMocks.contextConsumerRendered.mock.calls.length;
+
+    await act(async () => {
+      await authMocks.authStateCallback?.('SIGNED_IN', session);
+    });
+
+    expect(screen.queryByText('Chargement global')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Brouillon métier')).toBe(draft);
+    expect(draft).toHaveValue('valeur non enregistrée');
+    expect(authMocks.profileFetch).toHaveBeenCalledTimes(2);
+    expect(authMocks.registerCurrentSession).toHaveBeenCalledTimes(1);
+    expect(authMocks.contextConsumerRendered).toHaveBeenCalledTimes(renderCountBeforeLifecycleEvent);
+
+    await act(async () => {
+      resolveRefresh?.(profile);
+      await pendingRefresh;
+    });
+  });
+
+  it('ne republie pas le contexte global quand le jeton du même compte est renouvelé', async () => {
+    const initialSession = {
+      access_token: 'token-initial',
+      user: {
+        id: 'stable-token-user',
+        email: 'token@sonasp.bf',
+        app_metadata: { role: 'customer' },
+        user_metadata: {},
+        created_at: '2026-08-17T00:00:00.000Z',
+      },
+    };
+    const refreshedSession = {
+      ...initialSession,
+      access_token: 'token-refreshed',
+    };
+    authMocks.profileResult = {
+      id: 'stable-token-user',
+      email: 'token@sonasp.bf',
+      full_name: 'Agent jeton stable',
+      phone: null,
+      role: 'customer',
+      mining_company_id: null,
+      site_ids: [],
+      is_active: true,
+      is_sales_approver: false,
+      two_factor_enabled: false,
+      language: 'fr',
+      email_notifications: true,
+      batch_notifications: true,
+      approval_notifications: true,
+      created_at: '2026-08-17T00:00:00.000Z',
+      updated_at: '2026-08-17T00:00:00.000Z',
+    };
+    authMocks.getSession.mockResolvedValue({ data: { session: initialSession }, error: null });
+
+    render(<AuthProvider><GuardedDraftProbe /></AuthProvider>);
+
+    const draft = await screen.findByLabelText('Brouillon métier');
+    fireEvent.change(draft, { target: { value: 'saisie à préserver' } });
+    const renderCountBeforeTokenRefresh = authMocks.contextConsumerRendered.mock.calls.length;
+
+    await act(async () => {
+      await authMocks.authStateCallback?.('TOKEN_REFRESHED', refreshedSession);
+    });
+
+    expect(authMocks.contextConsumerRendered).toHaveBeenCalledTimes(renderCountBeforeTokenRefresh);
+    expect(screen.getByLabelText('Brouillon métier')).toBe(draft);
+    expect(draft).toHaveValue('saisie à préserver');
     expect(authMocks.profileFetch).toHaveBeenCalledTimes(1);
     expect(authMocks.registerCurrentSession).toHaveBeenCalledTimes(1);
   });

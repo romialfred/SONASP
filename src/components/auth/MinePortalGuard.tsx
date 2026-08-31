@@ -1,7 +1,6 @@
 import { createContext, ReactNode, useContext } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { hasGlobalPlatformAccess } from '@/lib/permissions';
 import type { UserProfile } from '@/types/auth';
 import { Loading } from '@/components/ui/Loading';
 import { isMineScopedUser, isMineTenantProfile } from '@/lib/mineAccess';
@@ -50,8 +49,7 @@ export function MinePortalGuard({ children }: { children: ReactNode }) {
     return <GuardMessage title="Compte désactivé" description="Ce compte ne peut plus accéder au Portail Mine. Contactez l’administrateur SONASP." />;
   }
 
-  const canChooseCompany = hasGlobalPlatformAccess(user);
-  const requestedCompanyId = new URLSearchParams(location.search).get('mine')?.trim() || null;
+  const canChooseCompany = false;
 
   if (!canChooseCompany && isMineTenantProfile(user) && !isMineScopedUser(user)) {
     return (
@@ -71,16 +69,9 @@ export function MinePortalGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  // Le shell national ne propose plus de sélecteur global de mine. Un Owner ne
-  // peut donc ouvrir cet espace que depuis un lien métier portant un périmètre
-  // explicite et vérifiable dans l'URL.
-  if (canChooseCompany && !requestedCompanyId) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Pour un compte de mine, tout paramètre d'URL est volontairement ignoré :
-  // la société du profil autoritatif demeure son unique périmètre.
-  const companyId = canChooseCompany ? requestedCompanyId : user.mining_company_id;
+  // Tout paramètre d'URL est ignoré : seule la société du profil autoritatif
+  // peut ouvrir ce portail, y compris face à un compte Owner technique.
+  const companyId = user.mining_company_id;
   if (!companyId) {
     return (
       <GuardMessage

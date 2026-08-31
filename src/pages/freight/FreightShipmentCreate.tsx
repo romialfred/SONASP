@@ -223,10 +223,8 @@ export default function FreightShipmentCreate() {
         // Add unique signatories (avoid duplicates across multiple shipping preps)
         if (data && data.length > 0) {
           for (const sig of data) {
-            // Try different possible column names (database schema may vary)
-            const displayName = sig.full_name || sig.name || sig.depositor_name || 'Unknown';
-            // Use title as fallback if position is empty
-            const displayPosition = sig.position || sig.title || sig.job_title || 'Unknown';
+            const displayName = sig.name || 'Unknown';
+            const displayPosition = sig.position || 'Unknown';
 
             console.log('👤 Processing signatory:', {
               raw: sig,

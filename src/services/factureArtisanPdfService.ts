@@ -114,7 +114,10 @@ export class FactureArtisanPdfService {
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('Date :', this.margin, yPos + 6);
     this.doc.setFont('helvetica', 'normal');
-    this.doc.text(new Date(facture.date_emission).toLocaleDateString('fr-FR'), this.margin + 30, yPos + 6);
+    const dateEmission = facture.date_emission
+      ? new Date(facture.date_emission).toLocaleDateString('fr-FR')
+      : 'Non renseignée';
+    this.doc.text(dateEmission, this.margin + 30, yPos + 6);
 
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('Devise :', this.margin, yPos + 12);

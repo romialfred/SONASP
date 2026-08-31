@@ -36,6 +36,22 @@ describe('calculerStockSonasp', () => {
     expect(stock.disponibleOz).toBe(0);
   });
 
+  it('n’exporte ni un achat minier en attente ni l’or affecté à la réserve nationale', () => {
+    const stock = calculerStockSonasp(
+      [
+        { quantite_oz: 100, statut: 'en_attente' },
+        { quantite_oz: 80, statut: 'validee' },
+      ],
+      [],
+      [],
+      [],
+      [{ quantity_national_reserve_oz: 25 }],
+    );
+    expect(stock.achatMinesOz).toBe(80);
+    expect(stock.reserveNationaleOz).toBe(25);
+    expect(stock.disponibleOz).toBe(55);
+  });
+
   it('signale le découvert au lieu d’afficher un stock négatif', () => {
     // Vendre plus qu'on n'a acheté est une anomalie : elle doit se voir.
     const stock = calculerStockSonasp([], [], [{ quantity_oz: 30, status: 'sold' }]);

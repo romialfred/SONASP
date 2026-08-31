@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   Contact,
   Loader2,
   Lock,
+  RefreshCw,
   Save,
   ShieldCheck,
   UserRound,
@@ -20,25 +21,36 @@ import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
 import { useAuth } from '@/contexts/AuthContext';
 import { createUser } from '@/services/userManagementService';
+import { getAdministrationUserDetails } from '@/services/userAdministrationDetailsService';
 import {
   EMPTY_PERMISSION,
   userPermissionsService,
   type ModulePermission,
-  type PermissionMap,
   type PermissionModule,
 } from '@/services/userPermissionsService';
 import { roleLabel, roleTone, type RoleTone } from '@/lib/roleLabels';
 import { canAssignRole, canManageAccount } from '@/lib/roleHierarchy';
 import {
-  OPERATIONAL_CAPABILITY_OPTIONS,
-  operationalCapabilitiesForRole,
   type OperationalCapabilityMap,
 } from '@/lib/capabilities';
+import {
+  ACCOUNT_CREATION_ROLES as POLICY_ACCOUNT_CREATION_ROLES,
+  accountRolePolicy,
+  availableModulesFor,
+  boundPermissionToCeiling,
+  defaultResponsibilitiesForRole,
+  permissionCeilingFor,
+  permissionsForPreset,
+  responsibilitiesForRole,
+  validateResponsibilities,
+  type AccountCreationRole,
+  type OrganizationType,
+} from '@/lib/accessControl';
 import { userCapabilitiesService } from '@/services/userCapabilitiesService';
 import type { UserRole } from '@/types/auth';
 import './admin.css';
 
-export type AccountRoleChoice = UserRole | 'comptoir';
+export type AccountRoleChoice = AccountCreationRole | Exclude<UserRole, AccountCreationRole>;
 
 export interface UserFormData {
   fullName: string;
@@ -49,6 +61,8 @@ export interface UserFormData {
   comptoirOrganizationId: string;
   comptoirOrganizationCode: string;
   comptoirOrganizationName: string;
+  organizationId: string;
+  collectorId: string;
   isActive: boolean;
 }
 
@@ -61,6 +75,8 @@ export const EMPTY_USER_FORM: UserFormData = {
   comptoirOrganizationId: '',
   comptoirOrganizationCode: '',
   comptoirOrganizationName: '',
+  organizationId: '',
+  collectorId: '',
   isActive: true,
 };
 
@@ -71,27 +87,20 @@ export const NEW_COMPTOIR_VALUE = '__new_comptoir__';
  * Aéroport et Manager restent lisibles en modification, mais leurs opérations
  * sont désormais portées respectivement par Société minière ou Direction.
  */
-export const ACCOUNT_CREATION_ROLES: AccountRoleChoice[] = [
-  'admin',
-  'management',
-  'mine',
-  'comptoir',
-  'refinery',
-  'customer',
-];
+export const ACCOUNT_CREATION_ROLES: AccountRoleChoice[] = [...POLICY_ACCOUNT_CREATION_ROLES];
 
 export const persistedRole = (role: AccountRoleChoice | ''): UserRole | '' =>
-  role === 'comptoir' ? 'customer' : role;
+  role;
 
 export const accountRoleLabel = (role: AccountRoleChoice): string =>
-  role === 'comptoir' ? 'Comptoir d’achat' : roleLabel(role);
+  accountRolePolicy(role)?.label ?? roleLabel(role);
 
 export const accountRoleTone = (role: AccountRoleChoice): RoleTone =>
-  role === 'comptoir' ? 'warning' : roleTone(role);
+  accountRolePolicy(role)?.badgeTone ?? roleTone(role);
 
 /** Vocation de chaque rôle, en français et sans référence à un module inexistant. */
 export const DESCRIPTIONS_ROLE: Record<UserRole, string> = {
-  owner: 'Accès complet, y compris l’administration de la plateforme',
+  owner: 'Accès complet à tous les modules, paramètres et opérations de la plateforme',
   admin: 'Administration des comptes, référentiels et paramètres',
   management: 'Pilotage national et validation des opérations',
   manager: 'Consultation consolidée sans création, modification ni validation',
@@ -100,6 +109,10 @@ export const DESCRIPTIONS_ROLE: Record<UserRole, string> = {
   refinery: 'Traitement des lots reçus et suivi de l’affinage',
   customer: 'Consultation de ses commandes et de ses documents',
   mine: 'Compte principal d’une société, limité à son propre périmètre',
+  dgmg: 'Supervision réglementaire des opérateurs et productions minières',
+  dgi: 'Contrôle fiscal, taxes, royalties et rapprochements autorisés',
+  comptoir: 'Achats, collecte, stocks et ventes limités au comptoir représenté',
+  collector: 'Collecte terrain limitée aux orpailleurs et zones rattachés',
 };
 
 export const DESCRIPTION_COMPTOIR =
@@ -125,6 +138,9 @@ export function validateIdentite(
   if (!form.email.trim()) return 'L’adresse e-mail est obligatoire.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'L’adresse e-mail est invalide.';
   if (!form.role) return 'Sélectionnez un rôle.';
+  if (!accountRolePolicy(form.role)) {
+    return 'Remplacez ce rôle historique par un rôle institutionnel avant d’enregistrer.';
+  }
   if (form.role === 'mine' && form.miningCompanyIds.length !== 1) return 'Rattachez le compte Société minière à une compagnie unique.';
   if (form.role === 'mine') {
     const indisponibilite = indisponibilites.get(form.miningCompanyIds[0]);
@@ -185,6 +201,17 @@ export interface ComptoirOrganization {
   is_active: boolean;
 }
 
+export interface AccessOrganization extends ComptoirOrganization {
+  organization_type: OrganizationType;
+}
+
+export interface CollectorProfile {
+  id: string;
+  display_name: string;
+  organization_id: string | null;
+  organization_name: string | null;
+}
+
 export function indisponibiliteSocieteMiniere(
   compagnie: MiningCompany,
   comptes: MiningCompanyAccount[],
@@ -207,35 +234,52 @@ export function UserManagementModern() {
   const { addToast } = useToast();
   const { user: utilisateurCourant } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   const userId = searchParams.get('userId');
-  const isEditMode = Boolean(userId);
+  const isEditMode = pathname === '/users/edit' || Boolean(userId);
+  const requestKey = isEditMode ? `edit:${userId ?? ''}` : 'new';
+  const requestedStep = searchParams.get('step') === 'permissions' ? 2 : 1;
 
   const [loading, setLoading] = useState(true);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const loadController = useRef<AbortController | null>(null);
   const [saving, setSaving] = useState(false);
-  const [etape, setEtape] = useState<1 | 2>(1);
+  const [etape, setEtape] = useState<1 | 2>(requestedStep);
   const [erreur, setErreur] = useState<string | null>(null);
 
   const [form, setForm] = useState<UserFormData>(EMPTY_USER_FORM);
   const [roleInitial, setRoleInitial] = useState<UserRole | null>(null);
   const [modules, setModules] = useState<PermissionModule[]>([]);
-  const [permissionsEnBase, setPermissionsEnBase] = useState<PermissionMap>({});
   const [permissions, setPermissions] = useState<Record<string, ModulePermission>>({});
-  const [capacitesEnBase, setCapacitesEnBase] = useState<OperationalCapabilityMap>(
-    operationalCapabilitiesForRole(''),
-  );
   const [capacites, setCapacites] = useState<OperationalCapabilityMap>(
-    operationalCapabilitiesForRole(''),
+    defaultResponsibilitiesForRole(''),
   );
   const [compagnies, setCompagnies] = useState<MiningCompany[]>([]);
   const [comptesCompagnies, setComptesCompagnies] = useState<MiningCompanyAccount[]>([]);
   const [comptoirs, setComptoirs] = useState<ComptoirOrganization[]>([]);
+  const [organizations, setOrganizations] = useState<AccessOrganization[]>([]);
+  const [collectors, setCollectors] = useState<CollectorProfile[]>([]);
 
   const charger = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true);
+    setLoadError(null);
     setErreur(null);
+    setEtape(requestedStep);
+    setRoleInitial(null);
+    setForm(EMPTY_USER_FORM);
+    setPermissions({});
+    setCapacites(defaultResponsibilitiesForRole(''));
     try {
-      const [resultatSocietes, resultatComptesCompagnies, resultatComptoirs] = await Promise.all([
+      if (isEditMode && !userId?.trim()) {
+        throw new Error('La référence du compte à modifier est absente.');
+      }
+      const [resultatSocietes, resultatComptesCompagnies, resultatOrganizations, resultatCollectors] = await Promise.all([
         supabase
           .from('mining_companies')
           .select('id, name, abbreviation, is_active')
@@ -247,11 +291,17 @@ export function UserManagementModern() {
           .not('mining_company_id', 'is', null),
         (supabase as any)
           .from('snp_organizations')
-          .select('id, code, name, is_active')
-          .eq('organization_type', 'comptoir')
+          .select('id, code, name, organization_type, is_active')
           .eq('is_active', true)
           .order('name'),
+        (supabase as any)
+          .from('snp_artisans_miniers')
+          .select('id, nom, prenoms, raison_sociale, artisanal_site_id, actif')
+          .eq('type_artisan', 'collecteur')
+          .eq('actif', true)
+          .order('nom'),
       ]);
+      if (signal.aborted) return;
       const { data: societes, error: erreurSocietes } = resultatSocietes;
       if (erreurSocietes) throw erreurSocietes;
       setCompagnies((societes || []).map((societe) => ({
@@ -262,20 +312,37 @@ export function UserManagementModern() {
       const { data: comptesMines, error: erreurComptesMines } = resultatComptesCompagnies;
       if (erreurComptesMines) throw erreurComptesMines;
       setComptesCompagnies((comptesMines || []) as MiningCompanyAccount[]);
-      if (resultatComptoirs.error) {
+      if (resultatOrganizations.error) {
+        if (isEditMode) throw new Error('Impossible de charger le référentiel des organisations. Réessayez avant de modifier le compte.');
         // La création des autres profils reste disponible sur un environnement
         // où le référentiel Comptoir n'aurait pas encore été migré.
-        console.warn('[Comptes] Référentiel des comptoirs indisponible.', resultatComptoirs.error);
+        console.warn('[Comptes] Référentiel des organisations indisponible.', resultatOrganizations.error);
+        setOrganizations([]);
         setComptoirs([]);
       } else {
-        setComptoirs((resultatComptoirs.data || []) as ComptoirOrganization[]);
+        const activeOrganizations = (resultatOrganizations.data || []) as AccessOrganization[];
+        setOrganizations(activeOrganizations);
+        setComptoirs(activeOrganizations.filter(({ organization_type }) => organization_type === 'comptoir'));
+      }
+      if (resultatCollectors.error) {
+        if (isEditMode) throw new Error('Impossible de charger le référentiel des collecteurs. Réessayez avant de modifier le compte.');
+        console.warn('[Comptes] Référentiel des collecteurs indisponible.', resultatCollectors.error);
+        setCollectors([]);
+      } else {
+        setCollectors((resultatCollectors.data || []).map((collector: any) => ({
+          id: collector.id,
+          display_name: collector.raison_sociale || [collector.prenoms, collector.nom].filter(Boolean).join(' ') || 'Collecteur',
+          organization_id: null,
+          organization_name: null,
+        })));
       }
 
       // `user_permissions.module_id` référence `modules`, et non `snp_modules` comme
       // cet écran le faisait : les droits accordés portaient alors des identifiants
       // qu'aucun lecteur ne pouvait résoudre.
-      const listeModules = await userPermissionsService.listModules();
-      if (listeModules.error) setErreur(listeModules.error);
+      const listeModules = await userPermissionsService.listModules(true);
+      if (signal.aborted) return;
+      if (listeModules.error) throw new Error(listeModules.error);
       setModules(listeModules.modules);
 
       const initiales: Record<string, ModulePermission> = {};
@@ -284,13 +351,12 @@ export function UserManagementModern() {
       });
 
       if (userId) {
-        const { data: profil, error: erreurProfil } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-        if (erreurProfil) throw erreurProfil;
-        if (!profil) throw new Error('Le compte demandé est introuvable.');
+        // Même lecture autoritative que la fiche : la RLS historique des profils
+        // ne permet pas au navigateur Owner de lire directement les autres comptes.
+        // Le service contrôle session, AAL2 et hiérarchie sans élargir cette RLS.
+        const { profile: profil } = await getAdministrationUserDetails(userId, signal);
+        if (signal.aborted) return;
+        if (profil.id !== userId) throw new Error('La fiche reçue ne correspond pas au compte demandé.');
 
         setRoleInitial((profil.role as UserRole) || null);
 
@@ -303,32 +369,88 @@ export function UserManagementModern() {
           comptoirOrganizationId: '',
           comptoirOrganizationCode: '',
           comptoirOrganizationName: '',
+          organizationId: '',
+          collectorId: '',
           isActive: profil?.is_active !== false,
         });
 
-        const capacitesRole = operationalCapabilitiesForRole((profil.role as UserRole) || '');
-        const { overrides, error: erreurCapacites } = await userCapabilitiesService.load(userId);
-        if (erreurCapacites) setErreur(erreurCapacites);
-        const capacitesEffectives = { ...capacitesRole, ...overrides };
-        setCapacitesEnBase(capacitesEffectives);
+        const roleCompte = (profil.role as UserRole) || '';
+        const capacitesRole = defaultResponsibilitiesForRole(roleCompte);
+        const { data: responsibilitiesData, error: responsibilitiesError } = await (supabase as any)
+          .from('snp_user_responsibilities')
+          .select('responsibility_code')
+          .eq('user_id', userId);
+        if (signal.aborted) return;
+        let capacitesEffectives = { ...capacitesRole };
+        if (!responsibilitiesError && responsibilitiesData) {
+          const compatible = new Set(responsibilitiesForRole(roleCompte).map(({ code }) => code));
+          responsibilitiesData.forEach(({ responsibility_code }: { responsibility_code: keyof OperationalCapabilityMap }) => {
+            if (compatible.has(responsibility_code)) capacitesEffectives[responsibility_code] = true;
+          });
+        } else {
+          // Lecture de compatibilité tant que la migration IAM n'a pas encore été appliquée.
+          const { overrides, error: erreurCapacites } = await userCapabilitiesService.load(userId);
+          if (signal.aborted) return;
+          if (erreurCapacites) throw new Error(erreurCapacites);
+          const compatible = new Set(responsibilitiesForRole(roleCompte).map(({ code }) => code));
+          Object.entries(overrides).forEach(([code, allowed]) => {
+            if (compatible.has(code as keyof OperationalCapabilityMap)) {
+              capacitesEffectives[code as keyof OperationalCapabilityMap] = allowed;
+            }
+          });
+        }
         setCapacites(capacitesEffectives);
 
         const { permissions: persistees, error: erreurPermissions } = await userPermissionsService.load(userId);
-        if (erreurPermissions) setErreur(erreurPermissions);
-        setPermissionsEnBase(persistees);
+        if (signal.aborted) return;
+        if (erreurPermissions) throw new Error(erreurPermissions);
         setPermissions({ ...initiales, ...persistees });
+
+        const { data: membership, error: membershipError } = await (supabase as any)
+          .from('snp_user_organization_memberships')
+          .select('organization_id, snp_organizations(id, code, name, organization_type)')
+          .eq('user_id', userId)
+          .eq('is_primary', true)
+          .is('valid_until', null)
+          .maybeSingle();
+        if (signal.aborted) return;
+        if (membershipError) throw new Error('Impossible de charger le rattachement du compte. Réessayez avant de modifier ses accès.');
+        if (membership?.organization_id) {
+          setForm((current) => ({
+            ...current,
+            organizationId: membership.organization_id,
+            comptoirOrganizationId: membership.snp_organizations?.organization_type === 'comptoir'
+              ? membership.organization_id
+              : current.comptoirOrganizationId,
+          }));
+        }
+        if (roleCompte === 'collector') {
+          const { data: collectorAccount, error: collectorAccountError } = await (supabase as any)
+            .from('snp_collector_accounts')
+            .select('collector_id')
+            .eq('user_id', userId)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (signal.aborted) return;
+          if (collectorAccountError) throw new Error('Impossible de charger le profil collecteur rattaché au compte.');
+          setForm((current) => ({ ...current, collectorId: collectorAccount?.collector_id || '' }));
+        }
       } else {
         setPermissions(initiales);
       }
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de charger les données du compte.'));
+      if (!signal.aborted) setLoadError(errorMessage(reason, 'Impossible de charger les données du compte.'));
     } finally {
-      setLoading(false);
+      if (!signal.aborted) {
+        setLoadedKey(requestKey);
+        setLoading(false);
+      }
     }
-  }, [userId]);
+  }, [isEditMode, requestKey, requestedStep, userId]);
 
   useEffect(() => {
     void charger();
+    return () => loadController.current?.abort();
   }, [charger]);
 
   const setValue = <K extends keyof UserFormData>(clef: K, valeur: UserFormData[K]) =>
@@ -351,11 +473,12 @@ export function UserManagementModern() {
       comptoirOrganizationName: role === 'comptoir'
         ? current.comptoirOrganizationName
         : '',
+      organizationId: current.role === role ? current.organizationId : '',
+      collectorId: role === 'collector' && current.role === 'collector' ? current.collectorId : '',
     }));
-    const defaults = operationalCapabilitiesForRole(roleTechnique);
-    if (role === 'comptoir') defaults['comptoir.manage'] = true;
+    const defaults = defaultResponsibilitiesForRole(roleTechnique);
     setCapacites(defaults);
-    if (!isEditMode) setCapacitesEnBase(defaults);
+    setPermissions(permissionsForPreset(roleTechnique, defaults, modules, 'recommended'));
   };
 
   const indisponibilitesCompagnies = useMemo(() => new Map(
@@ -369,6 +492,26 @@ export function UserManagementModern() {
     }),
   ), [compagnies, comptesCompagnies, userId]);
   const erreurIdentite = validateIdentite(form, isEditMode, indisponibilitesCompagnies);
+  const erreurResponsabilites = validateResponsibilities(form.role, capacites);
+  const policy = accountRolePolicy(form.role);
+  const organizationOptions = useMemo(() => {
+    if (!policy?.organizationType) return [];
+    if (form.role === 'collector') {
+      return organizations.filter(({ organization_type }) => organization_type === 'comptoir');
+    }
+    return organizations.filter(({ organization_type }) => organization_type === policy.organizationType);
+  }, [form.role, organizations, policy?.organizationType]);
+  const erreurRattachement = useMemo(() => {
+    if (!form.role || form.role === 'mine' || form.role === 'comptoir') return null;
+    if (policy?.organizationRequired && !form.organizationId) {
+      return `Sélectionnez l’organisation de rattachement pour le rôle ${policy.label}.`;
+    }
+    if (form.role === 'collector' && !form.collectorId) {
+      return 'Sélectionnez le profil collecteur rattaché à ce compte.';
+    }
+    return null;
+  }, [form.collectorId, form.organizationId, form.role, policy]);
+  const erreurEtapeIdentite = erreurIdentite || erreurResponsabilites || erreurRattachement;
   const editionPropreCompte = Boolean(userId && utilisateurCourant?.id === userId);
   const peutAdministrerCompte = !isEditMode || Boolean(
     roleInitial
@@ -387,13 +530,22 @@ export function UserManagementModern() {
     },
     [isEditMode, roleInitial, utilisateurCourant?.role],
   );
+  const modulesDisponibles = useMemo(
+    () => availableModulesFor(form.role, capacites, modules)
+      .filter((module) => form.role === 'owner' || module.is_active !== false),
+    [capacites, form.role, modules],
+  );
   const modulesOuverts = useMemo(
-    () => Object.values(permissions).filter((permission) => permission.can_view).length,
-    [permissions]
+    () => form.role === 'owner' ? modulesDisponibles.length : modulesDisponibles.filter((module) => permissions[module.id]?.can_view).length,
+    [form.role, modulesDisponibles, permissions]
   );
 
   const basculer = (moduleId: string, droit: DroitClef) =>
     setPermissions((current) => {
+      const module = modules.find(({ id }) => id === moduleId);
+      if (!module) return current;
+      const ceiling = permissionCeilingFor(form.role, capacites, module);
+      if (!ceiling[droit]) return current;
       const base = current[moduleId] || EMPTY_PERMISSION(moduleId);
       const valeur = !base[droit];
       const suivant: ModulePermission = { ...base, [droit]: valeur };
@@ -404,12 +556,36 @@ export function UserManagementModern() {
         suivant.can_approve = false;
       }
       if (droit !== 'can_view' && valeur) suivant.can_view = true;
-      return { ...current, [moduleId]: suivant };
+      return { ...current, [moduleId]: boundPermissionToCeiling(suivant, ceiling) };
     });
 
+  const basculerResponsabilite = (code: keyof OperationalCapabilityMap) => {
+    setCapacites((current) => {
+      const next = { ...current, [code]: !current[code] };
+      const validation = validateResponsibilities(form.role, next);
+      if (validation) {
+        setErreur(validation);
+        return current;
+      }
+      setErreur(null);
+      setPermissions((currentPermissions) => Object.fromEntries(
+        availableModulesFor(form.role, next, modules).map((module) => [
+          module.id,
+          boundPermissionToCeiling(
+            currentPermissions[module.id] || EMPTY_PERMISSION(module.id),
+            permissionCeilingFor(form.role, next, module),
+          ),
+        ]),
+      ));
+      return next;
+    });
+  };
+
   const enregistrer = async () => {
-    if (saving) return;
-    const message = validateIdentite(form, isEditMode, indisponibilitesCompagnies);
+    if (saving || loading || loadError || loadedKey !== requestKey) return;
+    const message = validateIdentite(form, isEditMode, indisponibilitesCompagnies)
+      || validateResponsibilities(form.role, capacites)
+      || erreurRattachement;
     if (message) {
       setErreur(message);
       setEtape(1);
@@ -438,9 +614,13 @@ export function UserManagementModern() {
     setErreur(null);
     try {
       let identifiant = userId;
-      const permissionsEnregistrees = form.role === 'manager'
-        ? appliquerGabarit(permissions, 'consultation')
-        : permissions;
+      const permissionsEnregistrees = Object.fromEntries(modulesDisponibles.map((module) => [
+        module.id,
+        boundPermissionToCeiling(
+          permissions[module.id] || EMPTY_PERMISSION(module.id),
+          permissionCeilingFor(form.role, capacites, module),
+        ),
+      ]));
 
       if (!isEditMode) {
         const resultat = await createUser({
@@ -450,10 +630,10 @@ export function UserManagementModern() {
           role: roleTechnique,
           is_active: form.isActive,
           mining_company_id: form.role === 'mine' ? form.miningCompanyIds[0] : null,
-          account_type: form.role === 'comptoir' ? 'comptoir' : undefined,
+          account_type: form.role,
           organization_id: form.role === 'comptoir' && form.comptoirOrganizationId !== NEW_COMPTOIR_VALUE
             ? form.comptoirOrganizationId
-            : undefined,
+            : form.organizationId || undefined,
           organization_code: form.role === 'comptoir' && form.comptoirOrganizationId === NEW_COMPTOIR_VALUE
             ? form.comptoirOrganizationCode.trim().toUpperCase()
             : undefined,
@@ -461,9 +641,9 @@ export function UserManagementModern() {
             ? form.comptoirOrganizationName.trim()
             : undefined,
           permissions: permissionsEnregistrees,
-          capabilities: form.role === 'comptoir'
-            ? { ...capacites, 'comptoir.manage': true }
-            : capacites,
+          capabilities: capacites,
+          responsibilities: capacites,
+          collector_id: form.role === 'collector' ? form.collectorId : undefined,
         });
         if (!resultat.success || !resultat.user) {
           throw new Error(resultat.error || 'La création du compte a échoué.');
@@ -473,35 +653,19 @@ export function UserManagementModern() {
         if (!identifiant) {
           throw new Error('Le compte à modifier est introuvable.');
         }
-        const { error } = await supabase.rpc('snp_configurer_compte_portail', {
+        const { error } = await (supabase as any).rpc('snp_configurer_acces_compte', {
           p_user_id: identifiant,
           p_full_name: form.fullName,
           p_phone: form.phone || null,
           p_role: form.role,
           p_is_active: form.isActive,
           p_mining_company_id: form.role === 'mine' ? form.miningCompanyIds[0] : null,
+          p_organization_id: form.role === 'comptoir' ? form.comptoirOrganizationId : form.organizationId || null,
+          p_collector_id: form.role === 'collector' ? form.collectorId : null,
+          p_responsibilities: capacites,
+          p_permissions: Object.values(permissionsEnregistrees),
         });
         if (error) throw error;
-      }
-
-      // Pour une création, le serveur enregistre profil et habilitations dans
-      // la même opération et annule l'ensemble si le courriel échoue. En
-      // modification seulement, les droits sont mis à jour séparément.
-      if (identifiant && isEditMode) {
-        const resultat = await userPermissionsService.save(
-          identifiant,
-          permissionsEnBase,
-          permissionsEnregistrees,
-          utilisateurCourant.id
-        );
-        if (!resultat.success) throw new Error(resultat.error);
-
-        const resultatCapacites = await userCapabilitiesService.save(
-          identifiant,
-          capacitesEnBase,
-          capacites,
-        );
-        if (!resultatCapacites.success) throw new Error(resultatCapacites.error);
       }
 
       addToast(
@@ -518,13 +682,46 @@ export function UserManagementModern() {
     }
   };
 
-  if (loading) {
+  if (loading || loadedKey !== requestKey) {
     return (
       <NationalDashboardLayout>
         <div className="sn-page admin-page">
           <div className="admin-page__loading">
             <Loader2 className="sn-spin" aria-hidden="true" /> Chargement du compte…
           </div>
+        </div>
+      </NationalDashboardLayout>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <NationalDashboardLayout>
+        <div className="sn-page admin-page compte">
+          <PageHeader
+            icon={UserRound}
+            title={isEditMode ? 'Modifier le compte' : 'Créer un compte'}
+            breadcrumb={[
+              { label: 'Administration' },
+              { label: 'Utilisateurs', to: '/users' },
+              { label: isEditMode ? 'Modification' : 'Nouveau compte' },
+            ]}
+          />
+          <Note tone="danger" icon={AlertTriangle}>{loadError}</Note>
+          <EmptyState
+            title="Le formulaire n’est pas disponible"
+            description="Les données nécessaires n’ont pas pu être chargées. Aucune modification n’a été enregistrée."
+            action={(
+              <div className="flex flex-wrap gap-3">
+                <button type="button" className="sn-btn" onClick={() => navigate('/users')}>
+                  <ArrowLeft aria-hidden="true" /> Retour à la liste
+                </button>
+                <button type="button" className="sn-btn sn-btn--primary" onClick={() => void charger()}>
+                  <RefreshCw aria-hidden="true" /> Réessayer
+                </button>
+              </div>
+            )}
+          />
         </div>
       </NationalDashboardLayout>
     );
@@ -538,8 +735,8 @@ export function UserManagementModern() {
           title={isEditMode ? 'Modifier le compte' : 'Créer un compte'}
           subtitle={
             etape === 1
-              ? 'Identité, rôle et rattachement aux compagnies minières.'
-              : 'Habilitations accordées sur les modules de la plateforme.'
+              ? 'Identité, rôle, responsabilités et périmètre organisationnel.'
+              : 'Modules réellement disponibles dans le plafond de ce profil.'
           }
           breadcrumb={[
             { label: 'Administration' },
@@ -556,7 +753,7 @@ export function UserManagementModern() {
                   type="button"
                   className="sn-btn sn-btn--primary"
                   onClick={() => setEtape(2)}
-                  disabled={Boolean(erreurIdentite) || editionPropreCompte || !peutAdministrerCompte}
+                  disabled={Boolean(erreurEtapeIdentite) || editionPropreCompte || !peutAdministrerCompte}
                 >
                   Habilitations <ArrowRight aria-hidden="true" />
                 </button>
@@ -591,8 +788,9 @@ export function UserManagementModern() {
 
         {isEditMode && !editionPropreCompte && !peutAdministrerCompte && (
           <Note tone="danger" icon={Lock}>
-            Ce compte possède un niveau supérieur au vôtre. Sa modification est réservée à un compte
-            disposant d’un niveau au moins équivalent.
+            {roleInitial === 'owner'
+              ? 'Seul un autre Owner peut administrer ce compte.'
+              : 'Votre rôle ne permet pas de modifier ce compte. Un administrateur ne peut gérer que les comptes de niveau inférieur.'}
           </Note>
         )}
 
@@ -611,8 +809,8 @@ export function UserManagementModern() {
             role="tab"
             aria-selected={etape === 2}
             className={etape === 2 ? 'is-active' : ''}
-            onClick={() => !erreurIdentite && setEtape(2)}
-            disabled={Boolean(erreurIdentite)}
+            onClick={() => !erreurEtapeIdentite && setEtape(2)}
+            disabled={Boolean(erreurEtapeIdentite) || editionPropreCompte || !peutAdministrerCompte}
           >
             <span>2</span> Habilitations
           </button>
@@ -696,7 +894,7 @@ export function UserManagementModern() {
                       />
                       <span>
                         <strong>{accountRoleLabel(role)}</strong>
-                        <small>{role === 'comptoir' ? DESCRIPTION_COMPTOIR : DESCRIPTIONS_ROLE[role]}</small>
+                        <small>{accountRolePolicy(role)?.description ?? DESCRIPTIONS_ROLE[role]}</small>
                       </span>
                       <Badge tone={accountRoleTone(role)}>{accountRoleLabel(role)}</Badge>
                     </label>
@@ -704,6 +902,43 @@ export function UserManagementModern() {
                 ))}
               </ul>
             </Section>
+
+            {form.role && responsibilitiesForRole(form.role).length > 0 && (
+              <Section
+                id="responsabilites"
+                icon={ShieldCheck}
+                tone="emerald"
+                title="Responsabilités métier"
+                description="Elles déterminent les opérations autorisées. Les combinaisons incompatibles sont bloquées immédiatement."
+              >
+                <ul className="compte__roles compte__responsabilites-grid">
+                  {responsibilitiesForRole(form.role).map((option) => {
+                    const mandatory = option.requiredFor.includes(form.role as AccountCreationRole);
+                    return (
+                      <li key={option.code}>
+                        <label className={capacites[option.code] ? 'is-checked' : ''}>
+                          <input
+                            type="checkbox"
+                            checked={capacites[option.code]}
+                            disabled={mandatory || editionPropreCompte || !peutAdministrerCompte}
+                            onChange={() => basculerResponsabilite(option.code)}
+                            aria-label={option.label}
+                          />
+                          <span>
+                            <strong>{option.label}</strong>
+                            <small>{option.description}</small>
+                          </span>
+                          {mandatory && <Badge tone="success">Obligatoire</Badge>}
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <Note tone="info" icon={Lock}>
+                  Le serveur applique le même plafond et interdit l’auto‑approbation, même en cas de requête forgée.
+                </Note>
+              </Section>
+            )}
 
             {form.role === 'mine' && <Section
               id="rattachement"
@@ -843,6 +1078,69 @@ export function UserManagementModern() {
               )}
             </Section>}
 
+            {form.role && !['mine', 'comptoir'].includes(form.role) && policy?.organizationRequired && (
+              <Section
+                id="rattachement-organisation"
+                icon={Building2}
+                tone="amber"
+                title={form.role === 'collector' ? 'Périmètre du collecteur' : 'Organisation représentée'}
+                description="Ce rattachement autoritatif borne toutes les lectures et mutations côté serveur."
+              >
+                {organizationOptions.length === 0 ? (
+                  <EmptyState
+                    title="Aucune organisation compatible"
+                    description={`Créez d’abord une organisation de type ${form.role === 'collector' ? 'comptoir' : policy.organizationType}.`}
+                    action={(
+                      <button
+                        type="button"
+                        className="sn-btn sn-btn--primary"
+                        onClick={() => navigate(`/stakeholders/organizations/new?type=${form.role === 'collector' ? 'comptoir' : policy.organizationType}`)}
+                      >
+                        <Building2 aria-hidden="true" /> Créer l’organisation
+                      </button>
+                    )}
+                  />
+                ) : (
+                  <ul className="compte__compagnies">
+                    {organizationOptions.map((organization) => (
+                      <li key={organization.id}>
+                        <label className={form.organizationId === organization.id ? 'is-checked' : ''}>
+                          <input
+                            type="radio"
+                            name="access-organization"
+                            checked={form.organizationId === organization.id}
+                            disabled={editionPropreCompte || !peutAdministrerCompte}
+                            onChange={() => setValue('organizationId', organization.id)}
+                          />
+                          <span>
+                            <strong>{organization.name}</strong>
+                            <small>{organization.code}</small>
+                          </span>
+                          <Badge tone="success">Actif</Badge>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {form.role === 'collector' && (
+                  <Field label="Profil collecteur" required htmlFor="collector-profile">
+                    <select
+                      id="collector-profile"
+                      value={form.collectorId}
+                      disabled={editionPropreCompte || !peutAdministrerCompte}
+                      onChange={(event) => setValue('collectorId', event.target.value)}
+                    >
+                      <option value="">Sélectionner un collecteur…</option>
+                      {collectors.map((collector) => (
+                        <option key={collector.id} value={collector.id}>{collector.display_name}</option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
+              </Section>
+            )}
+
             {!isEditMode && (
               <Section
                 id="acces"
@@ -859,9 +1157,9 @@ export function UserManagementModern() {
               </Section>
             )}
 
-            {erreurIdentite && (
+            {erreurEtapeIdentite && (
               <Note tone="warning" icon={AlertTriangle}>
-                {erreurIdentite}
+                {erreurEtapeIdentite}
               </Note>
             )}
           </>
@@ -871,65 +1169,39 @@ export function UserManagementModern() {
             icon={ShieldCheck}
             tone="emerald"
             title={`Habilitations (${modulesOuverts} module(s) ouverts)`}
-            description="Retirer la consultation retire les droits qui en dépendent."
+            description="Seuls les modules compatibles avec le rôle et les responsabilités sont présentés."
           >
-            <div className="compte__responsabilites">
-              <div>
-                <strong>Responsabilités métier</strong>
-                <p>
-                  Elles complètent le rôle de portail. Le serveur contrôle chaque étape et interdit
-                  l’auto-approbation, même si plusieurs responsabilités sont cochées.
-                </p>
-              </div>
-              {form.role === 'manager' && (
-                <Note tone="info" icon={Lock}>
-                  Le profil Manager reste strictement en lecture seule : aucune responsabilité
-                  opérationnelle ne peut lui être attribuée.
-                </Note>
-              )}
-              <ul className="compte__roles">
-                {OPERATIONAL_CAPABILITY_OPTIONS.map((option) => (
-                  <li key={option.code}>
-                    <label className={capacites[option.code] ? 'is-checked' : ''}>
-                      <input
-                        type="checkbox"
-                        checked={capacites[option.code]}
-                        disabled={
-                          form.role === 'manager'
-                          || (form.role === 'comptoir' && option.code === 'comptoir.manage')
-                          || editionPropreCompte
-                          || !peutAdministrerCompte
-                        }
-                        onChange={() => setCapacites((current) => ({
-                          ...current,
-                          [option.code]: !current[option.code],
-                        }))}
-                        aria-label={option.label}
-                      />
-                      <span>
-                        <strong>{option.label}</strong>
-                        <small>{option.description}</small>
-                      </span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="compte__gabarits">
+            {form.role === 'admin' && (
+              <Note tone="info" icon={ShieldCheck}>
+                L’Owner peut attribuer les droits de chaque module à cet Administrateur.
+                Les validations sensibles restent soumises aux habilitations métier et à la séparation des fonctions.
+                L’Administrateur ne peut pas modifier ses propres droits ni ceux d’un Owner.
+              </Note>
+            )}
+            {form.role === 'owner' ? (
+              <Note tone="info" icon={ShieldCheck}>
+                Le rôle Owner conserve tous les droits sur tous les modules, même désactivés.
+                Ces droits ne peuvent pas être retirés individuellement. L’auto-modification reste interdite.
+              </Note>
+            ) : <div className="compte__gabarits">
               <span className="sn-field__label">Gabarits</span>
-              <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(appliquerGabarit(permissions, 'aucun'))}>
+              <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(permissionsForPreset(form.role, capacites, modules, 'none'))}>
                 Aucun droit
               </button>
-              <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(appliquerGabarit(permissions, 'consultation'))}>
+              <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(permissionsForPreset(form.role, capacites, modules, 'read'))}>
                 Consultation seule
               </button>
-              <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(appliquerGabarit(permissions, 'complet'))}>
-                Tous les droits
+              <button type="button" className="sn-btn sn-btn--sm sn-btn--primary" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(permissionsForPreset(form.role, capacites, modules, 'recommended'))}>
+                Droits recommandés
               </button>
-            </div>
+              {form.role === 'admin' && (
+                <button type="button" className="sn-btn sn-btn--sm" disabled={!peutAdministrerCompte || editionPropreCompte} onClick={() => setPermissions(permissionsForPreset(form.role, capacites, modules, 'all'))}>
+                  Tous les droits sur les modules
+                </button>
+              )}
+            </div>}
 
-            {modules.length === 0 ? (
+            {modulesDisponibles.length === 0 ? (
               <EmptyState
                 title="Aucun module habilitable"
                 description="Aucun module actif n’est déclaré : les habilitations ne peuvent pas être attribuées."
@@ -949,8 +1221,9 @@ export function UserManagementModern() {
                     </tr>
                   </thead>
                   <tbody>
-                    {modules.map((module) => {
+                    {modulesDisponibles.map((module) => {
                       const permission = permissions[module.id] || EMPTY_PERMISSION(module.id);
+                      const ceiling = permissionCeilingFor(form.role, capacites, module);
                       return (
                         <tr key={module.id}>
                           <td>
@@ -961,8 +1234,8 @@ export function UserManagementModern() {
                             <td key={droit.clef} className="is-centre">
                               <input
                                 type="checkbox"
-                                checked={permission[droit.clef]}
-                                disabled={!peutAdministrerCompte || editionPropreCompte}
+                                checked={form.role === 'owner' || permission[droit.clef]}
+                                disabled={form.role === 'owner' || !peutAdministrerCompte || editionPropreCompte || !ceiling[droit.clef]}
                                 aria-label={`${droit.label} — ${module.display_name || module.name}`}
                                 onChange={() => basculer(module.id, droit.clef)}
                               />
@@ -980,9 +1253,20 @@ export function UserManagementModern() {
 
         <div className="sn-form-actions">
           {etape === 2 && (
-            <button type="button" className="sn-btn" onClick={() => setEtape(1)} disabled={saving}>
-              <ArrowLeft aria-hidden="true" /> Revenir à l’identité
-            </button>
+            <>
+              <button type="button" className="sn-btn" onClick={() => setEtape(1)} disabled={saving}>
+                <ArrowLeft aria-hidden="true" /> Revenir à l’identité
+              </button>
+              <button
+                type="button"
+                className="sn-btn sn-btn--primary"
+                onClick={() => void enregistrer()}
+                disabled={saving || editionPropreCompte || !peutAdministrerCompte}
+              >
+                {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                {isEditMode ? 'Enregistrer les modifications' : 'Créer le compte'}
+              </button>
+            </>
           )}
         </div>
       </div>

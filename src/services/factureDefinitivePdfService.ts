@@ -91,7 +91,10 @@ const factureDefinitivePdfService = {
     yPos += 7;
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(10);
-    pdf.text(`Date d'émission: ${new Date(facture.date_emission).toLocaleDateString('fr-FR')}`, 15, yPos);
+    const dateEmission = facture.date_emission
+      ? new Date(facture.date_emission).toLocaleDateString('fr-FR')
+      : 'Non renseignée';
+    pdf.text(`Date d'émission: ${dateEmission}`, 15, yPos);
 
     if (facture.date_echeance) {
       yPos += 6;

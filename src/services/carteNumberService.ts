@@ -93,5 +93,8 @@ export async function genererNumeroCarte(maintenant = new Date()): Promise<strin
 
   if (error) throw error;
 
-  return composerNumero(maintenant, compteurSuivant((data || []).map((ligne) => ligne.numero_carte), prefixe));
+  const numerosExistants = (data || [])
+    .map((ligne) => ligne.numero_carte)
+    .filter((numero): numero is string => typeof numero === 'string');
+  return composerNumero(maintenant, compteurSuivant(numerosExistants, prefixe));
 }

@@ -1,0 +1,34 @@
+.silver-position {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.silver-position > .sn-note {
+  border-color: #cbd9e6;
+  background: linear-gradient(90deg, #f5f8fb 0%, #fff 100%);
+}
+
+.silver-position__reference {
+  display: grid;
+  min-width: 130px;
+  gap: 2px;
+}
+
+.silver-position__reference strong {
+  color: var(--sn-ink);
+  font-size: 11.5px;
+}
+
+.silver-position__reference small {
+  color: var(--sn-faint);
+  font-size: 10px;
+}
+
+@media (max-width: 720px) {
+  .silver-position { gap: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .silver-position .sn-spin { animation: none; }
+}

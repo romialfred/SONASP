@@ -91,8 +91,8 @@ export function lignesExport(
     (production.mining_company_id && parId.get(production.mining_company_id)) || 'Non renseignée',
     nombre(production.bullion_grams),
     nombre(production.estimated_fineness_pct),
-    nombre(production.pure_gold_grams),
-    nombre(production.estimated_oz, 4),
+    nombre(production.pure_gold_grams ?? 0),
+    nombre(production.estimated_oz ?? 0, 4),
     production.bar_reference || '',
     production.notes || '',
   ]);
@@ -102,6 +102,7 @@ export function lignesExport(
 export function DailyProductionPage() {
   const { user } = useAuth();
   const mineCompanyId = user?.mining_company_id || null;
+  const institutionalReadOnly = user?.role === 'dgmg' || user?.role === 'dgi';
   const navigate = useNavigate();
   const emplacement = useLocation();
   // La fiche d'une déclaration renvoie ici pour la modifier : sans cela, le
@@ -167,6 +168,10 @@ export function DailyProductionPage() {
 
   useEffect(() => {
     if (!declarationAModifier) return;
+    if (institutionalReadOnly) {
+      navigate('.', { replace: true, state: null });
+      return;
+    }
     const cible = productions.find((production) => production.id === declarationAModifier);
     if (!cible) return;
     setSelection(cible);
@@ -174,7 +179,7 @@ export function DailyProductionPage() {
     // L'état de navigation est consommé une fois : un retour arrière ne doit
     // pas rouvrir le formulaire.
     navigate('.', { replace: true, state: null });
-  }, [declarationAModifier, productions, navigate]);
+  }, [declarationAModifier, institutionalReadOnly, productions, navigate]);
 
   useEffect(() => {
     if (!filtresOuverts) return;
@@ -212,6 +217,7 @@ export function DailyProductionPage() {
   const periodeInvalide = periode.debut > periode.fin;
 
   const supprimer = async (id: string) => {
+    if (institutionalReadOnly) return;
     // `showConfirm` attend (titre, message, options) et renvoie une promesse.
     // L'appel passait la fonction de suppression en guise de message : la promesse
     // n'etait jamais lue et **la suppression n'avait tout simplement jamais lieu**.
@@ -261,10 +267,12 @@ export function DailyProductionPage() {
                 <SlidersHorizontal aria-hidden="true" /> Filtres
                 {filtresActifs > 0 && <em>{filtresActifs}</em>}
               </button>
-              <button type="button" className="sn-btn" onClick={() => navigate('/performance/budgets')}>
-                <TrendingUp aria-hidden="true" /> Budgets et prévisions
-              </button>
-              {formOuvert ? (
+              {!institutionalReadOnly && (
+                <button type="button" className="sn-btn" onClick={() => navigate('/performance/budgets')}>
+                  <TrendingUp aria-hidden="true" /> Budgets et prévisions
+                </button>
+              )}
+              {!institutionalReadOnly && (formOuvert ? (
                 <button
                   type="button"
                   className="sn-btn"
@@ -286,7 +294,7 @@ export function DailyProductionPage() {
                 >
                   <Plus aria-hidden="true" /> Déclarer une production
                 </button>
-              )}
+              ))}
             </>
           }
         />
@@ -297,7 +305,7 @@ export function DailyProductionPage() {
           </Note>
         )}
 
-        {formOuvert && (
+        {!institutionalReadOnly && formOuvert && (
           <Section
             id="saisie"
             icon={Plus}
@@ -462,7 +470,7 @@ export function DailyProductionPage() {
                   ? 'Aucune production n’a été déclarée sur cette période.'
                   : 'Aucune déclaration ne correspond à cette compagnie.'
               }
-              action={
+              action={institutionalReadOnly ? undefined : (
                 <button
                   type="button"
                   className="sn-btn sn-btn--primary"
@@ -473,7 +481,7 @@ export function DailyProductionPage() {
                 >
                   Déclarer une production
                 </button>
-              }
+              )}
             />
           ) : (
             <ProductionTable
@@ -481,12 +489,12 @@ export function DailyProductionPage() {
               loading={loading}
               showMiningCompany={!mineCompanyId}
               miningCompanies={compagnies}
-              onEdit={(production: DailyProduction) => {
-                setSelection(production);
-                setFormOuvert(true);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              onDelete={(id: string) => void supprimer(id)}
+              onEdit={institutionalReadOnly ? undefined : (production: DailyProduction) => {
+                  setSelection(production);
+                  setFormOuvert(true);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              onDelete={institutionalReadOnly ? undefined : (id: string) => void supprimer(id)}
             />
           )}
         </Section>

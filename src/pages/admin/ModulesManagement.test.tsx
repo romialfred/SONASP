@@ -112,6 +112,8 @@ describe('ModulesManagement', () => {
     expect(screen.getByText('Cartes professionnelles')).toBeInTheDocument();
     expect(screen.getAllByText('Désactivé').length).toBeGreaterThan(0);
     expect(screen.getByText('Masqué du menu')).toBeInTheDocument();
+    expect(screen.getByText('Le Owner conserve toujours l’accès à tous les modules et sous-modules'))
+      .toBeInTheDocument();
 
     const indicateurs = within(screen.getByRole('region', { name: 'État des modules' }));
     expect(within(indicateurs.getByText('Modules déclarés').closest('article') as HTMLElement).getByText('3')).toBeInTheDocument();
@@ -126,6 +128,7 @@ describe('ModulesManagement', () => {
     // La désactivation retirait une section entière de l'application en un clic.
     await waitFor(() => expect(mocks.confirmer).toHaveBeenCalled());
     expect(mocks.confirmer.mock.calls[0][0].message).toMatch(/1 sous-module/);
+    expect(mocks.confirmer.mock.calls[0][0].message).toContain('Le Owner conserve tous ses accès.');
     await waitFor(() => expect(mocks.toggleActive).toHaveBeenCalledWith('m1'));
   });
 

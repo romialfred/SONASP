@@ -8,6 +8,7 @@ import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLa
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import { errorMessage } from '@/lib/errorMessage';
 import { achatsIndustrielsService, type Societe } from '@/services/achatsIndustrielsService';
+import type { TablesInsert } from '@/types/database';
 import {
   contratsService,
   formaterQuantite,
@@ -381,7 +382,10 @@ export function ContratForm() {
     return liste;
   }, [saisie, industriel, quantiteTotale]);
 
-  const construireCharge = (): Partial<Contrat> => ({
+  const construireCharge = (): TablesInsert<'snp_contrats'> => ({
+    // Le déclencheur serveur remplace cette valeur vide par le numéro
+    // séquentiel autoritatif lors de l'insertion.
+    numero_contrat: '',
     intitule: saisie.intitule.trim(),
     partenaire_type: saisie.partenaire_type,
     mining_company_id: industriel ? saisie.mining_company_id || null : null,

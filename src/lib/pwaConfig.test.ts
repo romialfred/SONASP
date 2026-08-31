@@ -17,4 +17,15 @@ describe('configuration de transition PWA', () => {
     expect(viteConfig).toMatch(/clientsClaim:\s*true/u);
     expect(viteConfig).not.toMatch(/registerType:\s*'autoUpdate'/u);
   });
+
+  it('délègue le contrôle du reload au garde local inter-onglets', () => {
+    const prompt = readFileSync(
+      resolve(process.cwd(), 'src/components/common/PwaUpdatePrompt.tsx'),
+      'utf8',
+    );
+
+    expect(prompt).toContain('onNeedReload');
+    expect(prompt).toContain('updateRequestedHereRef.current');
+    expect(prompt).toContain('setActivatedElsewhere(true)');
+  });
 });

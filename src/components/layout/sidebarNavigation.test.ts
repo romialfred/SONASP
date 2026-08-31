@@ -94,6 +94,157 @@ describe('section « Rapports et analyses »', () => {
 });
 
 describe('navigation', () => {
+  it('projette tous les modules pour le Owner actif malgré un périmètre serveur vide', () => {
+    const owner = {
+      id: 'owner-user', email: 'owner@example.bf', full_name: 'Owner SONASP', phone: null,
+      role: 'owner', mining_company_id: null, site_ids: [], is_active: true,
+      module_domains: [], capabilities: [], is_sales_approver: false, two_factor_enabled: true,
+      language: 'fr', email_notifications: true, batch_notifications: true,
+      approval_notifications: true, created_at: '2026-01-01', updated_at: '2026-01-01',
+    } satisfies UserProfile;
+    const sections = getNavigationSectionsForUser(owner);
+    const routes = sections.flatMap((section) => section.groups.flatMap((group) => [
+      group.path,
+      ...(group.children?.map((item) => item.path) || []),
+    ]));
+
+    expect(sections.map((section) => section.id)).toEqual(expect.arrayContaining(
+      NAVIGATION_SECTIONS.map((section) => section.id),
+    ));
+    expect(routes).toEqual(expect.arrayContaining([
+      '/artisan-sites', '/conciliation', '/production/daily', '/users', '/admin/messagerie',
+      '/national-reserve',
+    ]));
+  });
+
+  it('sépare les stocks opérationnels de la Réserve nationale', () => {
+    const inventory = ALL_GROUPS.find((group) => group.id === 'inventory');
+    const reserve = ALL_GROUPS.find((group) => group.id === 'national-reserve');
+
+    expect(inventory?.label).toBe('Suivi des stocks');
+    expect(reserve?.label).toBe('Réserve nationale');
+    expect(reserve?.children).toContainEqual(expect.objectContaining({
+      label: 'Affectations à la réserve',
+      path: '/national-reserve/allocations',
+      catalogCode: 'inventory-allocations',
+    }));
+  });
+
+  it('applique les bascules du catalogue aux sous-modules des profils non Owner', () => {
+    const admin = {
+      id: 'admin-catalog', email: 'admin.catalog@example.bf', full_name: 'Admin Catalogue', phone: null,
+      role: 'admin', mining_company_id: null, site_ids: [], is_active: true,
+      module_codes: ['gold_inventory', 'national_reserve'],
+      capabilities: [], is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+      email_notifications: true, batch_notifications: true, approval_notifications: true,
+      created_at: '2026-01-01', updated_at: '2026-01-01',
+    } satisfies UserProfile;
+    const enabled = { isActive: true, isVisibleInMenu: true };
+    const hidden = { isActive: true, isVisibleInMenu: false };
+    const sections = getNavigationSectionsForUser(admin, {
+      gold_inventory: enabled,
+      'inventory-overview': enabled,
+      'inventory-silver': hidden,
+      'inventory-new-entry': enabled,
+      national_reserve: enabled,
+      'reserve-overview': enabled,
+      'inventory-allocations': enabled,
+      'inventory-physical': enabled,
+      'inventory-controls': hidden,
+      'inventory-valuation': enabled,
+      'inventory-audit': enabled,
+    });
+    const paths = sections.flatMap((section) => section.groups.flatMap((group) => (
+      group.children?.map((item) => item.path) || [group.path]
+    )));
+
+    expect(paths).toContain('/inventory/add');
+    expect(paths).toContain('/national-reserve/physical');
+    expect(paths).not.toContain('/inventory/silver');
+    expect(paths).not.toContain('/national-reserve/controls');
+  });
+
+  it.each(['absent', 'désactivé', 'masqué'] as const)(
+    'conserve tous les modules et sous-modules au Owner avec un catalogue %s',
+    (state) => {
+      const owner = {
+        id: 'owner-catalog', email: 'owner.catalog@example.bf', full_name: 'Owner Catalogue', phone: null,
+        role: 'owner', mining_company_id: null, site_ids: [], is_active: true,
+        module_codes: [], module_domains: [], capabilities: [], is_sales_approver: false,
+        two_factor_enabled: true, language: 'fr', email_notifications: true,
+        batch_notifications: true, approval_notifications: true,
+        created_at: '2026-01-01', updated_at: '2026-01-01',
+      } satisfies UserProfile;
+      const expected = getNavigationSectionsForUser(owner);
+      const codes = expected.flatMap((section) => section.groups.flatMap((group) => [
+        group.moduleCode,
+        ...(group.children?.map((item) => item.catalogCode) || []),
+      ])).filter((code): code is string => Boolean(code));
+      const availability = state === 'absent' ? {} : Object.fromEntries(codes.map((code) => [
+        code, { isActive: state !== 'désactivé', isVisibleInMenu: state !== 'masqué' },
+      ]));
+
+      expect(getNavigationSectionsForUser(owner, availability)).toEqual(expected);
+      expect(expected.flatMap((section) => section.groups).find((group) => group.id === 'national-reserve')
+        ?.children).toHaveLength(6);
+      expect(getNavigationSectionsForUser({ ...owner, is_active: false }, availability)).toEqual([]);
+    },
+  );
+
+  it.each([
+    ['dgmg', 'dgmg.supervise', 'dgmg-organization', 'dgmg', ['dashboard', 'mining_sites'], ['/portail-dgmg', '/artisan-sites']],
+    ['dgi', 'dgi.fiscal.control', 'dgi-organization', 'dgi', ['dashboard', 'conciliation'], ['/portail-dgi', '/conciliation', '/conciliation/regles-fiscales']],
+  ] as const)(
+    'projette pour %s uniquement les modules institutionnels attribués',
+    (role, capability, organizationId, organizationType, moduleCodes, expectedRoutes) => {
+      const institutionalUser = {
+        id: `${role}-user`, email: `${role}@example.bf`, full_name: role.toUpperCase(), phone: null,
+        role, mining_company_id: null, organization_id: organizationId,
+        organization_type: organizationType, site_ids: [], is_active: true,
+        capabilities: [capability], module_codes: [...moduleCodes],
+        is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+        email_notifications: true, batch_notifications: true, approval_notifications: true,
+        created_at: '2026-01-01', updated_at: '2026-01-01',
+      } satisfies UserProfile;
+      const routes = getNavigationSectionsForUser(institutionalUser)
+        .flatMap((section) => section.groups.map((group) => group.path));
+
+      expect(routes).toEqual(expectedRoutes);
+    },
+  );
+
+  it('affiche la validation Réserve DGMG seulement avec le module et la capability dédiés', () => {
+    const validator = {
+      id: 'dgmg-validator', email: 'validator@dgmg.bf', full_name: 'Validateur DGMG', phone: null,
+      role: 'dgmg', mining_company_id: null, organization_id: 'dgmg-organization',
+      organization_type: 'dgmg', site_ids: [], is_active: true,
+      capabilities: [CAPABILITIES.DGMG_SUPERVISE, CAPABILITIES.RESERVE_ALLOCATIONS_VALIDATE_LEVEL_1],
+      module_codes: ['dashboard', 'national_reserve'], is_sales_approver: false,
+      two_factor_enabled: true, language: 'fr', email_notifications: true,
+      batch_notifications: true, approval_notifications: true,
+      created_at: '2026-01-01', updated_at: '2026-01-01',
+    } satisfies UserProfile;
+
+    const routes = getNavigationSectionsForUser(validator)
+      .flatMap((section) => section.groups.map((group) => group.path));
+    expect(routes).toContain('/portail-dgmg/reserve-validations');
+    expect(routes).not.toContain('/national-reserve');
+  });
+
+  it('ne construit aucun menu institutionnel pour une organisation incompatible', () => {
+    const dgiDansDgmg = {
+      id: 'dgi-user', email: 'dgi@example.bf', full_name: 'Agent DGI', phone: null,
+      role: 'dgi', mining_company_id: null, organization_id: 'dgmg-organization',
+      organization_type: 'dgmg', site_ids: [], is_active: true,
+      capabilities: [CAPABILITIES.DGI_FISCAL_CONTROL], module_codes: ['dashboard'],
+      is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+      email_notifications: true, batch_notifications: true, approval_notifications: true,
+      created_at: '2026-01-01', updated_at: '2026-01-01',
+    } satisfies UserProfile;
+
+    expect(getNavigationSectionsForUser(dgiDansDgmg)).toEqual([]);
+  });
+
   it('organise la vente internationale et ses parties prenantes', () => {
     const marche = ALL_GROUPS.find((group) => group.id === 'market');
     const ventes = ALL_GROUPS.find((group) => group.id === 'sales');
@@ -111,11 +262,12 @@ describe('navigation', () => {
     );
   });
 
-  it('place les Approbateurs uniquement dans Parties prenantes', () => {
+  it('supprime l’ancien écran Approbateurs au profit du wizard utilisateurs', () => {
     const partiesPrenantes = ALL_GROUPS.find((group) => group.id === 'stakeholders');
     const administration = ALL_GROUPS.find((group) => group.id === 'administration');
 
-    expect(partiesPrenantes?.children?.map((item) => item.label)).toContain('Approbateurs');
+    expect(partiesPrenantes?.children?.map((item) => item.label)).not.toContain('Approbateurs');
+    expect(partiesPrenantes?.children?.map((item) => item.path)).not.toContain('/stakeholders/approvers');
     expect(administration?.children?.map((item) => item.label)).not.toContain('Approbations');
     expect(administration?.children?.map((item) => item.path)).not.toContain('/approvals');
   });

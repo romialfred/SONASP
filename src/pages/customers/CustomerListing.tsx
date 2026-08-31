@@ -60,7 +60,7 @@ export function CustomerListing() {
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select('customer_id, quantity_oz, final_proceeds, created_at, status')
-        .in('status', ['approved', 'customer_approved', 'payment_received', 'completed']);
+        .in('status', ['management_approved', 'customer_approved', 'payment_received', 'completed']);
 
       if (salesError) {
         console.error('Error fetching sales:', salesError);
@@ -86,9 +86,10 @@ export function CustomerListing() {
 
         // Find last purchase date
         const sortedSales = customerSales.sort((a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          (b.created_at ? new Date(b.created_at).getTime() : 0)
+          - (a.created_at ? new Date(a.created_at).getTime() : 0)
         );
-        const lastPurchaseDate = sortedSales.length > 0 ? sortedSales[0].created_at : '';
+        const lastPurchaseDate = sortedSales[0]?.created_at ?? '';
 
         // Calculate payment rate based on completed sales
         const completedSales = customerSales.filter(s => s.status === 'completed' || s.status === 'payment_received');

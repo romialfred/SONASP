@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { GRAMMES_PAR_ONCE, STATUTS_ENGAGEANTS, type StatutAchat } from './achatMineService';
+import { GRAMMES_PAR_ONCE, type StatutAchat } from './achatMineService';
 
 /**
  * Stock d'or de la SONASP disponible à l'export.
@@ -39,6 +39,8 @@ export const STATUTS_VENTE_ENGAGEANTS = [
 
 /** Statuts d'un achat artisanal qui font entrer l'or au stock. */
 export const STATUTS_ARTISAN_ACQUIS = ['validee', 'payee'];
+/** Un achat préparé immobilise la mine mais n'appartient pas encore à la SONASP. */
+export const STATUTS_ACHAT_MINE_ACQUIS: StatutAchat[] = ['validee', 'payee'];
 
 /**
  * Statuts d'une cession comptoir acquise : acceptée par la SONASP, payée ou
@@ -55,6 +57,8 @@ export interface StockSonasp {
   cessionComptoirsOz: number;
   /** Onces déjà engagées par une vente à l'international. */
   venduOz: number;
+  /** Or souverain sorti irréversiblement du stock exportable. */
+  reserveNationaleOz: number;
   entreesOz: number;
   disponibleOz: number;
   disponibleGrammes: number;
@@ -68,10 +72,11 @@ export function calculerStockSonasp(
   achatsMines: Array<{ quantite_oz: number | null; statut: StatutAchat }>,
   achatsArtisans: Array<{ quantite_grammes: number | null; statut: string | null }>,
   ventesExport: Array<{ quantity_oz: number | null; status: string | null }>,
-  cessionsComptoirs: Array<{ quantity_grams: number | null; status: string | null }> = []
+  cessionsComptoirs: Array<{ quantity_grams: number | null; status: string | null }> = [],
+  reserveNationale: Array<{ quantity_national_reserve_oz: number | null }> = [],
 ): StockSonasp {
   const achatMinesOz = achatsMines
-    .filter((achat) => STATUTS_ENGAGEANTS.includes(achat.statut))
+    .filter((achat) => STATUTS_ACHAT_MINE_ACQUIS.includes(achat.statut))
     .reduce((total, achat) => total + Number(achat.quantite_oz || 0), 0);
 
   const achatArtisansGrammes = achatsArtisans
@@ -87,15 +92,18 @@ export function calculerStockSonasp(
   const venduOz = ventesExport
     .filter((vente) => STATUTS_VENTE_ENGAGEANTS.includes(vente.status || ''))
     .reduce((total, vente) => total + Number(vente.quantity_oz || 0), 0);
+  const reserveNationaleOz = reserveNationale
+    .reduce((total, ligne) => total + Number(ligne.quantity_national_reserve_oz || 0), 0);
 
   const entreesOz = achatMinesOz + achatArtisansOz + cessionComptoirsOz;
-  const solde = entreesOz - venduOz;
+  const solde = entreesOz - venduOz - reserveNationaleOz;
 
   return {
     achatMinesOz: arrondi(achatMinesOz),
     achatArtisansOz: arrondi(achatArtisansOz),
     cessionComptoirsOz: arrondi(cessionComptoirsOz),
     venduOz: arrondi(venduOz),
+    reserveNationaleOz: arrondi(reserveNationaleOz),
     entreesOz: arrondi(entreesOz),
     disponibleOz: arrondi(Math.max(0, solde)),
     disponibleGrammes: arrondi(Math.max(0, solde) * GRAMMES_PAR_ONCE),
@@ -120,23 +128,32 @@ export const stockSonaspService = {
    * disponible faux, donc l'erreur remonte plutôt que d'être avalée.
    */
   async stock(sonaspId: string): Promise<StockSonasp> {
-    const [mines, artisans, ventes, cessions] = await Promise.all([
+    const [mines, artisans, ventes, cessions, reserve] = await Promise.all([
       supabase.from('snp_achats_mines').select('quantite_oz, statut'),
-      supabase.from('snp_artisan_ventes_or').select('quantite_grammes, statut'),
+      // Les achats effectués par un comptoir restent dans son stock jusqu'à
+      // leur cession à la SONASP. Les compter ici et dans `cessions` doublait
+      // exactement la même matière.
+      supabase
+        .from('snp_artisan_ventes_or')
+        .select('quantite_grammes, statut')
+        .is('comptoir_organization_id', null),
       supabase.from('sales').select('quantity_oz, status').eq('seller_id', sonaspId),
       supabase.from('snp_comptoir_ventes_sonasp').select('quantity_grams, status'),
+      supabase.from('gold_inventory').select('quantity_national_reserve_oz'),
     ]);
 
     if (mines.error) throw mines.error;
     if (artisans.error) throw artisans.error;
     if (ventes.error) throw ventes.error;
     if (cessions.error) throw cessions.error;
+    if (reserve.error) throw reserve.error;
 
     return calculerStockSonasp(
       (mines.data || []) as Array<{ quantite_oz: number; statut: StatutAchat }>,
       artisans.data || [],
       ventes.data || [],
-      cessions.data || []
+      cessions.data || [],
+      reserve.data || [],
     );
   },
 };

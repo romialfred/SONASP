@@ -1,0 +1,21 @@
+{
+  "type": "database",
+  "source": "Supabase SONASP yyverzuhkdonjjuficor — IAM actuel",
+  "target": "Même projet — trois correctifs IAM approuvés et create-user uniquement",
+  "pattern": "schema_change",
+  "constraints": {
+    "max_downtime_minutes": 0,
+    "dependencies": ["Auth AAL2", "Sessions applicatives", "Création et édition de comptes", "Plafonds de permissions", "RLS des portails", "Messagerie de bienvenue"],
+    "special_requirements": [
+      "Autorisation explicite du déploiement ciblé reçue le 30/08/2026",
+      "Dry-run global bloqué par la dette historique : aucun repair ni reset",
+      "Sauvegarde immédiate des définitions, ACL, politiques et catalogues concernés",
+      "Répétition transactionnelle distante avec ROLLBACK, sans comptes synthétiques distants",
+      "Empreintes des tables métier et des comptes inchangées dans la transaction",
+      "Application atomique des trois migrations et inscription de leurs contenus exacts dans l'historique",
+      "Vérification du service ACTIVE et comparaison des sources déployées",
+      "Aucun compte existant supprimé, aucun courriel de test envoyé à un tiers"
+    ],
+    "compliance_requirements": ["Hiérarchie des rôles", "Non-auto-élévation", "MFA", "Isolation organisationnelle", "Journal d'audit"]
+  }
+}

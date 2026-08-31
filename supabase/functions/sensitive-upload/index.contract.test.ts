@@ -75,6 +75,18 @@ describe('contrat d’intégration sensitive-upload', () => {
     expect(source).toContain("event_type: 'sensitive_upload_deleted'");
   });
 
+  it('borne les documents de réserve au brouillon et compense leur suppression', () => {
+    expect(source).toContain("const PROFILE_DOCUMENT_RESERVE = 'reserve-allocation-document'");
+    expect(source).toContain("const BUCKET_DOCUMENT_RESERVE = 'reserve-documents'");
+    expect(source).toContain("clientActeur.rpc('snp_reserve_draft_owned_or_owner'");
+    expect(source).toContain("admin.rpc('snp_register_reserve_document_gateway'");
+    expect(source).toContain("admin.rpc('snp_delete_reserve_document_gateway'");
+    expect(source).toContain('p_actor_id: input.actorId');
+    expect(source).toContain('p_actor_id: utilisateur.id');
+    expect(source).toContain('POLITIQUE_DOCUMENT_RESERVE');
+    expect(source).toContain("Restauration compensatoire réserve échouée");
+  });
+
   it('route les quatre suppressions privées par la même frontière serveur', () => {
     expect(source).toContain('PROFILS_SUPPRESSION_DOCUMENTAIRE');
     expect(source).toContain("table = 'production_documents'");

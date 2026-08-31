@@ -685,9 +685,9 @@ export function BusinessIntelligenceWorkspace({ view }: BusinessIntelligenceWork
                       <YAxis yAxisId="quantity" tick={{ fill: '#60736a', fontSize: 11 }} axisLine={false} tickLine={false} width={58} />
                       <YAxis yAxisId="amount" orientation="right" tick={{ fill: '#8a6b1f', fontSize: 11 }} axisLine={false} tickLine={false} width={58} />
                       <Tooltip
-                        formatter={(value: number | undefined, name: string | undefined) => [
-                          formatCompact(Number(value), name === 'Volume (oz)' ? 'oz' : model.primaryCurrency),
-                          name || 'Valeur',
+                        formatter={(value, name) => [
+                          formatCompact(Number(value ?? 0), name === 'Volume (oz)' ? 'oz' : model.primaryCurrency),
+                          String(name || 'Valeur'),
                         ]}
                         contentStyle={{ borderRadius: 12, border: '1px solid #d8e2dc', boxShadow: '0 12px 28px rgba(18,45,34,.12)' }}
                       />
@@ -713,7 +713,7 @@ export function BusinessIntelligenceWorkspace({ view }: BusinessIntelligenceWork
                       <CartesianGrid stroke="#e3e9e5" strokeDasharray="3 4" horizontal={false} />
                       <XAxis type="number" hide />
                       <YAxis type="category" dataKey="label" width={118} tick={{ fill: '#34483f', fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <Tooltip formatter={(value: number | undefined) => formatCompact(Number(value), treeUnit)} />
+                      <Tooltip formatter={(value) => formatCompact(Number(value ?? 0), treeUnit)} />
                       <Bar dataKey="value" name="Contribution" fill="#0a7755" radius={[0, 7, 7, 0]} maxBarSize={22} />
                     </BarChart>
                   </ResponsiveContainer>

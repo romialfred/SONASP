@@ -6,28 +6,9 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { RefreshCw, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import type { Tables } from '@/types/database';
 
-interface FxRateComparison {
-  id: string | null;
-  rate_date: string | null;
-  currency_pair: string;
-  source_id: string;
-  source_name: string;
-  source_code: string;
-  source_country: string;
-  rate: number;
-  bid_rate: number | null;
-  ask_rate: number | null;
-  bid_ask_spread: number | null;
-  avg_rate: number;
-  min_rate: number;
-  max_rate: number;
-  market_spread: number;
-  source_count: number;
-  deviation_from_avg_pct: number;
-  rate_position: 'LOWEST' | 'HIGHEST' | 'MIDDLE';
-  notes: string | null;
-}
+type FxRateComparisonRow = Tables<'fx_rate_comparison'>;
 
 // Le franc guinéen n'a pas cours au Burkina.
 const CURRENCY_PAIRS = [
@@ -37,7 +18,7 @@ const CURRENCY_PAIRS = [
 ];
 
 export function FxRateComparison() {
-  const [comparisons, setComparisons] = useState<FxRateComparison[]>([]);
+  const [comparisons, setComparisons] = useState<FxRateComparisonRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [currencyPair, setCurrencyPair] = useState('USD/XOF');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -159,7 +140,7 @@ export function FxRateComparison() {
                   <CardContent className="pt-6">
                     <div className="text-sm text-blue-600 font-medium mb-1">Average Rate</div>
                     <div className="text-2xl font-bold text-blue-900">
-                      {formatRate(comparisons[0]?.avg_rate || 0, currencyPair)}
+                      {formatRate(comparisons[0]?.avg_rate ?? 0, currencyPair)}
                     </div>
                   </CardContent>
                 </Card>
@@ -168,7 +149,7 @@ export function FxRateComparison() {
                   <CardContent className="pt-6">
                     <div className="text-sm text-green-600 font-medium mb-1">Highest Rate</div>
                     <div className="text-2xl font-bold text-green-900">
-                      {formatRate(comparisons[0]?.max_rate || 0, currencyPair)}
+                      {formatRate(comparisons[0]?.max_rate ?? 0, currencyPair)}
                     </div>
                   </CardContent>
                 </Card>
@@ -177,7 +158,7 @@ export function FxRateComparison() {
                   <CardContent className="pt-6">
                     <div className="text-sm text-red-600 font-medium mb-1">Lowest Rate</div>
                     <div className="text-2xl font-bold text-red-900">
-                      {formatRate(comparisons[0]?.min_rate || 0, currencyPair)}
+                      {formatRate(comparisons[0]?.min_rate ?? 0, currencyPair)}
                     </div>
                   </CardContent>
                 </Card>
@@ -186,7 +167,7 @@ export function FxRateComparison() {
                   <CardContent className="pt-6">
                     <div className="text-sm text-purple-600 font-medium mb-1">Market Spread</div>
                     <div className="text-2xl font-bold text-purple-900">
-                      {formatRate(comparisons[0]?.market_spread || 0, currencyPair)}
+                      {formatRate(comparisons[0]?.market_spread ?? 0, currencyPair)}
                     </div>
                   </CardContent>
                 </Card>
@@ -230,13 +211,13 @@ export function FxRateComparison() {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="text-base font-bold text-gray-900">
-                            {formatRate(comparison.rate, currencyPair)}
+                            {formatRate(comparison.rate ?? 0, currencyPair)}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <span className={`text-sm font-medium ${getDeviationColor(comparison.deviation_from_avg_pct)}`}>
-                            {comparison.deviation_from_avg_pct > 0 ? '+' : ''}
-                            {comparison.deviation_from_avg_pct.toFixed(2)}%
+                          <span className={`text-sm font-medium ${getDeviationColor(comparison.deviation_from_avg_pct ?? 0)}`}>
+                            {(comparison.deviation_from_avg_pct ?? 0) > 0 ? '+' : ''}
+                            {(comparison.deviation_from_avg_pct ?? 0).toFixed(2)}%
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right text-sm text-gray-600">
@@ -249,7 +230,7 @@ export function FxRateComparison() {
                           {comparison.bid_ask_spread ? formatRate(comparison.bid_ask_spread, currencyPair) : '-'}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {getBestRateBadge(comparison.rate_position)}
+                          {getBestRateBadge(comparison.rate_position ?? 'MIDDLE')}
                         </td>
                       </tr>
                     ))}

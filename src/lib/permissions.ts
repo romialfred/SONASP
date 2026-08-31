@@ -25,10 +25,18 @@ export const PERMISSIONS = {
   AUDIT_VIEW: 'audit:view',
 } as const;
 
-const FULL_ACCESS_PERMISSIONS = [...new Set(Object.values(PERMISSIONS))];
-
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  owner: FULL_ACCESS_PERMISSIONS,
+  // Cette liste documente le socle historique. Les helpers ci-dessous donnent
+  // au Owner actif un accès transversal, y compris aux nouvelles permissions.
+  owner: [
+    PERMISSIONS.USERS_VIEW,
+    PERMISSIONS.USERS_MANAGE,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.SETTINGS_VIEW,
+    PERMISSIONS.SETTINGS_MANAGE,
+    PERMISSIONS.SYSTEM_SETTINGS_MANAGE,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
   factory: [
     PERMISSIONS.LICENSES_VIEW,
     PERMISSIONS.LICENSES_REQUEST,
@@ -61,7 +69,39 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.SETTINGS_VIEW,
     PERMISSIONS.AUDIT_VIEW,
   ],
-  management: FULL_ACCESS_PERMISSIONS,
+  dgmg: [
+    PERMISSIONS.LICENSES_VIEW,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
+  dgi: [
+    PERMISSIONS.SALES_VIEW,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
+  comptoir: [
+    PERMISSIONS.SALES_VIEW,
+    PERMISSIONS.SALES_CREATE,
+    PERMISSIONS.CUSTOMERS_VIEW,
+    PERMISSIONS.CUSTOMERS_CREATE,
+    PERMISSIONS.CUSTOMERS_EDIT,
+    PERMISSIONS.REPORTS_VIEW,
+  ],
+  collector: [
+    PERMISSIONS.CUSTOMERS_VIEW,
+    PERMISSIONS.CUSTOMERS_CREATE,
+    PERMISSIONS.REPORTS_VIEW,
+  ],
+  // Les mutations de la Direction sont ouvertes par les responsabilités
+  // serveur ; cette couche historique ne conserve que la consultation.
+  management: [
+    PERMISSIONS.SALES_VIEW,
+    PERMISSIONS.CUSTOMERS_VIEW,
+    PERMISSIONS.LICENSES_VIEW,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.SETTINGS_VIEW,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
   // L'Administrateur gère le socle et le support. Il ne prépare, n'approuve
   // et n'exécute plus les opérations métier par simple héritage de rôle.
   admin: [
@@ -86,6 +126,7 @@ function permissionsFor(user: UserProfile): string[] {
 
 export function hasPermission(user: UserProfile | null, permission: string): boolean {
   if (!user || !user.is_active) return false;
+  if (hasGlobalPlatformAccess(user)) return true;
 
   const rolePermissions = permissionsFor(user);
   return rolePermissions.includes(permission);
@@ -93,6 +134,7 @@ export function hasPermission(user: UserProfile | null, permission: string): boo
 
 export function hasAnyPermission(user: UserProfile | null, permissions: string[]): boolean {
   if (!user || !user.is_active) return false;
+  if (hasGlobalPlatformAccess(user)) return permissions.length > 0;
 
   const rolePermissions = permissionsFor(user);
   return permissions.some(permission => rolePermissions.includes(permission));
@@ -100,6 +142,7 @@ export function hasAnyPermission(user: UserProfile | null, permissions: string[]
 
 export function hasAllPermissions(user: UserProfile | null, permissions: string[]): boolean {
   if (!user || !user.is_active) return false;
+  if (hasGlobalPlatformAccess(user)) return true;
 
   const rolePermissions = permissionsFor(user);
   return permissions.every(permission => rolePermissions.includes(permission));
@@ -128,7 +171,7 @@ export function hasAdministrativePlatformAccess(user: UserProfile | null): boole
 }
 
 export function isManagement(user: UserProfile | null): boolean {
-  return Boolean(user?.is_active && (user.role === 'owner' || user.role === 'management'));
+  return Boolean(user?.is_active && user.role === 'management');
 }
 
 /** Direction consultative : aucun droit de création, modification ou validation. */
@@ -150,7 +193,7 @@ export function isSalesApprover(user: UserProfile | null): boolean {
 export function canAccessSite(user: UserProfile | null, siteId: string): boolean {
   if (!user || !user.is_active) return false;
 
-  if (user.role === 'owner' || user.role === 'management') return true;
+  if (hasGlobalPlatformAccess(user) || user.role === 'management') return true;
 
   return user.site_ids.includes(siteId);
 }
@@ -167,6 +210,14 @@ export function getDefaultRoute(role: UserRole, miningCompanyId: string | null =
       return '/dashboard/refinery';
     case 'customer':
       return '/dashboard/customer';
+    case 'dgmg':
+      return '/portail-dgmg';
+    case 'dgi':
+      return '/portail-dgi';
+    case 'comptoir':
+      return '/portail-comptoir';
+    case 'collector':
+      return '/portail-collecteur';
     case 'manager':
       return '/portail-direction';
     case 'mine':

@@ -83,4 +83,17 @@ describe('ProductionTable', () => {
     expect(within(ligne).getByText('900,00')).toBeInTheDocument();
     expect(within(ligne).getByText('28,9000')).toBeInTheDocument();
   });
+
+  it('n’expose aucune mutation lorsque les callbacks ne sont pas autorisés', () => {
+    render(
+      <ProductionTable
+        productions={[production()]}
+        loading={false}
+      />,
+    );
+
+    expect(screen.getByTitle('Voir détails')).toBeInTheDocument();
+    expect(screen.queryByTitle('Modifier')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Supprimer')).not.toBeInTheDocument();
+  });
 });

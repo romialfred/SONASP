@@ -6,6 +6,13 @@ import {
 } from '@/lib/privateStorage';
 import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import { deleteSensitiveResource, uploadSensitiveFile } from './sensitiveUploadGateway';
+import type { Database } from '@/types/database';
+
+type ShippingSignatoryInsert = Database['public']['Tables']['shipping_signatories']['Insert'];
+type ShippingSignatoryUpdate = Database['public']['Tables']['shipping_signatories']['Update'];
+type ShippingProductionItemInsert = Database['public']['Tables']['shipping_production_items']['Insert'];
+type ShippingIngotInsert = Database['public']['Tables']['shipping_ingots']['Insert'];
+type ShippingIngotUpdate = Database['public']['Tables']['shipping_ingots']['Update'];
 
 const SHIPPING_DOCUMENTS_BUCKET = PRIVATE_STORAGE_BUCKETS.shippingDocuments;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -50,16 +57,16 @@ export interface ShippingProductionItem {
   id: string;
   shipping_preparation_id: string;
   daily_production_id: string;
-  box_number: string;
+  box_number?: string;
   ingot_box_number: string;
   net_weight_grams: number;
   gross_weight_grams: number;
   fineness_pct: number;
   pure_gold_grams: number;
-  seal_number_1?: string;
-  seal_number_2?: string;
-  order_index: number;
-  created_at: string;
+  seal_number_1: string;
+  seal_number_2: string | null;
+  order_index: number | null;
+  created_at: string | null;
 }
 
 export interface ShippingSignatory {
@@ -74,8 +81,8 @@ export interface ShippingSignatory {
   name: string;
   signature_data: string | null;
   signed_at: string | null;
-  order_index: number;
-  created_at: string;
+  order_index: number | null;
+  created_at: string | null;
 }
 
 export interface ShippingIngot {
@@ -221,7 +228,7 @@ class ShippingPreparationService {
     return data || [];
   }
 
-  async createSignatory(signatory: Partial<ShippingSignatory>): Promise<ShippingSignatory> {
+  async createSignatory(signatory: ShippingSignatoryInsert): Promise<ShippingSignatory> {
     const { data, error } = await supabase
       .from('shipping_signatories')
       .insert(signatory)
@@ -232,7 +239,7 @@ class ShippingPreparationService {
     return data;
   }
 
-  async updateSignatory(id: string, updates: Partial<ShippingSignatory>): Promise<ShippingSignatory> {
+  async updateSignatory(id: string, updates: ShippingSignatoryUpdate): Promise<ShippingSignatory> {
     const { data, error } = await supabase
       .from('shipping_signatories')
       .update(updates)
@@ -261,10 +268,13 @@ class ShippingPreparationService {
       .order('order_index', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map((item) => ({
+      ...item,
+      box_number: item.ingot_box_number,
+    }));
   }
 
-  async addProductionItem(item: Partial<ShippingProductionItem>): Promise<ShippingProductionItem> {
+  async addProductionItem(item: ShippingProductionItemInsert): Promise<ShippingProductionItem> {
     const { data, error } = await supabase
       .from('shipping_production_items')
       .insert(item)
@@ -272,7 +282,7 @@ class ShippingPreparationService {
       .single();
 
     if (error) throw error;
-    return data;
+    return { ...data, box_number: data.ingot_box_number };
   }
 
   async removeProductionItem(id: string): Promise<void> {
@@ -314,7 +324,7 @@ class ShippingPreparationService {
     return data || [];
   }
 
-  async createIngot(ingot: Partial<ShippingIngot>): Promise<ShippingIngot> {
+  async createIngot(ingot: ShippingIngotInsert): Promise<ShippingIngot> {
     const { data, error } = await supabase
       .from('shipping_ingots')
       .insert(ingot)
@@ -325,7 +335,7 @@ class ShippingPreparationService {
     return data;
   }
 
-  async updateIngot(id: string, updates: Partial<ShippingIngot>): Promise<ShippingIngot> {
+  async updateIngot(id: string, updates: ShippingIngotUpdate): Promise<ShippingIngot> {
     const { data, error } = await supabase
       .from('shipping_ingots')
       .update(updates)

@@ -285,17 +285,17 @@ export default function ShippingDashboard() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="text-sm text-slate-900">
-                          {new Date(prep.created_at).toLocaleDateString('fr-FR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })}
+                          {prep.created_at ? new Date(prep.created_at).toLocaleDateString('fr-FR', {
+                             day: '2-digit',
+                             month: '2-digit',
+                             year: 'numeric'
+                           }) : '—'}
                         </div>
                         <div className="text-xs text-slate-500">
-                          {new Date(prep.created_at).toLocaleTimeString('fr-FR', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {prep.created_at ? new Date(prep.created_at).toLocaleTimeString('fr-FR', {
+                             hour: '2-digit',
+                             minute: '2-digit'
+                           }) : ''}
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-center">

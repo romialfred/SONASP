@@ -1,20 +1,23 @@
 import { supabase } from '@/lib/supabase';
 import type { PermissionMap } from '@/services/userPermissionsService';
 import type { OperationalCapabilityMap } from '@/lib/capabilities';
+import type { UserRole } from '@/types/auth';
 
 export interface CreateUserRequest {
   email: string;
   full_name: string;
   phone?: string;
-  role: string;
+  role: UserRole;
   is_active?: boolean;
   mining_company_id?: string | null;
-  account_type?: 'comptoir';
+  account_type?: string;
   organization_id?: string;
   organization_code?: string;
   organization_name?: string;
   permissions?: PermissionMap;
   capabilities?: OperationalCapabilityMap;
+  responsibilities?: OperationalCapabilityMap;
+  collector_id?: string;
 }
 
 export interface CreateUserResponse {
@@ -24,7 +27,7 @@ export interface CreateUserResponse {
     email: string;
     full_name: string;
     role: string;
-    account_type?: 'comptoir' | null;
+    account_type?: string | null;
   };
   email_sent?: boolean;
   requires_password_change?: boolean;
@@ -63,7 +66,17 @@ export async function createUser(data: CreateUserRequest): Promise<CreateUserRes
           'Content-Type': 'application/json',
           'X-Client-Info': 'sonasp-account-administration',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          // À la création, seuls les choix actifs sont attribués. Ne pas envoyer
+          // tout le catalogue décoché : un nouveau code sans effet peut autrement
+          // bloquer Admin/Owner sur une version antérieure du service.
+          // Les valeurs invalides restent visibles pour le validateur serveur.
+          capabilities: undefined,
+          responsibilities: Object.fromEntries(Object.entries(
+            data.responsibilities ?? data.capabilities ?? {},
+          ).filter(([, allowed]) => allowed !== false)),
+        }),
         signal: controleur.signal,
       }
     );
@@ -84,7 +97,7 @@ export async function createUser(data: CreateUserRequest): Promise<CreateUserRes
     return {
       success: false,
       error: estDelai
-        ? 'Le service de création ne répond pas. Aucun compte n’a été validé.'
+        ? 'La réponse du service de création a expiré. Vérifiez la liste des comptes avant de réessayer.'
         : estReseau
           ? 'Le service de création de compte est momentanément inaccessible.'
           : error.message || 'Une erreur inattendue est survenue.',

@@ -31,9 +31,16 @@ const owner: UserProfile = {
 };
 
 describe('permissions Owner', () => {
-  it('accorde toutes les permissions applicatives et tous les sites', () => {
-    expect(hasAllPermissions(owner, Object.values(PERMISSIONS))).toBe(true);
+  it('accorde au Owner actif toutes les permissions et tous les sites', () => {
+    expect(hasAllPermissions(owner, [
+      PERMISSIONS.USERS_MANAGE,
+      PERMISSIONS.SETTINGS_MANAGE,
+      PERMISSIONS.AUDIT_VIEW,
+    ])).toBe(true);
     expect(hasPermission(owner, PERMISSIONS.SYSTEM_SETTINGS_MANAGE)).toBe(true);
+    expect(hasPermission(owner, PERMISSIONS.SALES_CREATE)).toBe(true);
+    expect(hasPermission(owner, PERMISSIONS.SALES_APPROVE)).toBe(true);
+    expect(hasPermission(owner, 'future-module:manage')).toBe(true);
     expect(canAccessSite(owner, 'nimporte-quel-site')).toBe(true);
     expect(hasGlobalPlatformAccess(owner)).toBe(true);
   });

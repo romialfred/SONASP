@@ -128,7 +128,9 @@ export const carteProfessionnelleGeneratorService = {
     pdf.text('DÉLIVRÉE LE:', leftMargin, yPos);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...valueColor);
-    const dateDelivrance = new Date(carte.date_delivrance).toLocaleDateString('fr-FR');
+    const dateDelivrance = carte.date_delivrance
+      ? new Date(carte.date_delivrance).toLocaleDateString('fr-FR')
+      : 'N/A';
     pdf.text(dateDelivrance, leftMargin + 25, yPos);
 
     yPos += 0.5;

@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
+import { moduleDomain } from '@/lib/accessControl';
+import {
+  PLATFORM_MODULE_BY_CODE,
+  type PlatformModuleCode,
+} from '@/lib/platformModuleCatalog';
 import type { Json } from '@/types/database';
 
 /**
@@ -131,6 +136,10 @@ export interface PermissionModule {
   display_name: string | null;
   description: string | null;
   category: string | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+  /** Domaine versionné en base ; une valeur absente/inconnue est refusée. */
+  access_domain?: string | null;
 }
 
 export const userPermissionsService = {
@@ -142,16 +151,29 @@ export const userPermissionsService = {
    * pourtant ses cases à cocher depuis `snp_modules`, un référentiel distinct : les
    * droits ainsi accordés portaient des identifiants que rien ne pouvait résoudre.
    */
-  async listModules(): Promise<{ modules: PermissionModule[]; error?: string }> {
-    const { data, error } = await supabase
+  async listModules(includeInactive = false): Promise<{ modules: PermissionModule[]; error?: string }> {
+    let query = (supabase as any)
       .from('modules')
-      .select('id, name, display_name, description, category')
-      .eq('is_active', true)
-      .order('category');
+      .select('id, name, display_name, description, category, sort_order, access_domain, is_active');
+    if (!includeInactive) query = query.eq('is_active', true);
+    const { data, error } = await query
+      .in('name', [...PLATFORM_MODULE_BY_CODE.keys()])
+      .order('category')
+      .order('sort_order');
     if (error) {
       return { modules: [], error: errorMessage(error, 'Impossible de charger la liste des modules.') };
     }
-    return { modules: (data || []) as PermissionModule[] };
+    return {
+      modules: ((data || []) as PermissionModule[])
+        // Les capacités techniques historiques restent en base pour préserver
+        // les comptes existants, mais seules les unités fonctionnelles de la
+        // sidebar sont attribuables aux nouveaux comptes.
+        .filter((module) => PLATFORM_MODULE_BY_CODE.has(module.name as PlatformModuleCode))
+        .map((module) => ({
+          ...module,
+          access_domain: moduleDomain(module),
+        })),
+    };
   },
 
   /** Habilitations persistées, ou une erreur explicite si la lecture échoue. */

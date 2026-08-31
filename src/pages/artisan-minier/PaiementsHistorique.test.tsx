@@ -2,13 +2,11 @@ import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PaiementsHistorique, { EMPTY_HISTORIQUE_FILTERS, filterPaiements } from './PaiementsHistorique';
-import type { PaiementArtisan } from '@/services/artisanPaiementsService';
+import type { FactureDefinitive, PaiementArtisan } from '@/services/artisanPaiementsService';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   getAllPaiements: vi.fn(),
-  transitionPaiement: vi.fn(),
-  showSuccess: vi.fn(),
   showError: vi.fn(),
   user: {
     id: 'validator-id', role: 'management', is_active: true,
@@ -28,7 +26,6 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 vi.mock('@/hooks/useCustomAlert', () => ({
   useCustomAlert: () => ({
     alertState: { isOpen: false, message: '', type: 'info' },
-    showSuccess: mocks.showSuccess,
     showError: mocks.showError,
     closeAlert: vi.fn(),
   }),
@@ -46,12 +43,31 @@ vi.mock('@/hooks/useCollectorWorkspace', () => ({
 vi.mock('@/services/artisanPaiementsService', () => ({
   default: {
     getAllPaiements: mocks.getAllPaiements,
-    transitionPaiement: mocks.transitionPaiement,
   },
-  createArtisanPaymentIdempotencyKey: () => '10000000-0000-4000-8000-000000000001',
 }));
 
-type Row = PaiementArtisan & { artisan?: { nom?: string; prenoms?: string; numero_carte?: string } };
+type Row = PaiementArtisan & {
+  artisan?: { nom?: string; prenoms?: string; numero_carte?: string };
+  facture?: FactureDefinitive | null;
+  vente?: { numero_recu?: string | null } | null;
+};
+
+const facture = (over: Partial<FactureDefinitive> = {}): FactureDefinitive => ({
+  numero_facture: 'FAC-001',
+  vente_or_id: 'v1',
+  artisan_id: 'a1',
+  montant_brut: 3_620_000,
+  montant_taxe_tva: 0,
+  montant_taxe_retenue_source: 120_000,
+  montant_autres_taxes: 0,
+  montant_total_taxes: 120_000,
+  montant_net_a_payer: 3_500_000,
+  taux_tva: 0,
+  taux_retenue_source: 3.31,
+  date_emission: '2026-05-11',
+  statut: 'emise',
+  ...over,
+});
 
 const paiement = (over: Partial<Row>): Row =>
   ({
@@ -68,6 +84,8 @@ const paiement = (over: Partial<Row>): Row =>
     version: 4,
     date_paiement: '2026-05-12T10:00:00Z',
     artisan: { nom: 'KABORE', prenoms: 'Awa', numero_carte: 'CP-0001' },
+    vente: { numero_recu: 'VE-OR-2026-00001' },
+    facture: facture(),
     ...over,
   }) as Row;
 
@@ -101,17 +119,16 @@ describe('PaiementsHistorique', () => {
       capabilities: ['sonasp.finance.execute', 'sonasp.finance.reconcile'],
     };
     mocks.getAllPaiements.mockResolvedValue(paiements);
-    mocks.transitionPaiement.mockResolvedValue(undefined);
   });
 
   it('affiche les indicateurs et les règlements', async () => {
     render(<PaiementsHistorique />);
 
-    expect(screen.getByRole('heading', { name: 'Historique des paiements' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Dossiers de paiement' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('PAY-001')).toBeInTheDocument());
 
-    const stats = within(screen.getByRole('region', { name: 'Indicateurs de l’historique' }));
-    expect(stats.getByText('Paiements enregistrés')).toBeInTheDocument();
+    const stats = within(screen.getByRole('region', { name: 'Indicateurs des dossiers de paiement' }));
+    expect(stats.getByText('Dossiers enregistrés')).toBeInTheDocument();
     // Seuls les règlements complétés alimentent le montant réglé.
     expect(stats.getByText('3,5 M FCFA')).toBeInTheDocument();
   });
@@ -126,16 +143,12 @@ describe('PaiementsHistorique', () => {
     expect(screen.queryByText('PAY-001')).not.toBeInTheDocument();
   });
 
-  it('demande au serveur de valider un paiement préparé par un autre agent', async () => {
+  it('ouvre une fiche détaillée depuis une ligne de paiement', async () => {
     render(<PaiementsHistorique />);
     await waitFor(() => expect(screen.getByText('PAY-002')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Valider' }));
-
-    await waitFor(() => expect(mocks.transitionPaiement).toHaveBeenCalledWith({
-      paymentId: 'p2', expectedStatus: 'en_traitement', expectedVersion: 4,
-      newStatus: 'valide', idempotencyKey: '10000000-0000-4000-8000-000000000001',
-    }));
+    fireEvent.click(screen.getByRole('button', { name: 'Voir le dossier PAY-002' }));
+    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/paiements/historique/p2');
   });
 
   it('signale un historique indisponible', async () => {
@@ -143,11 +156,11 @@ describe('PaiementsHistorique', () => {
     render(<PaiementsHistorique />);
 
     await waitFor(() =>
-      expect(mocks.showError).toHaveBeenCalledWith("Impossible de charger l'historique des paiements")
+      expect(mocks.showError).toHaveBeenCalledWith('Impossible de charger les dossiers de paiement')
     );
   });
 
-  it('présente au Collecteur un historique filtré sans transition de workflow', async () => {
+  it('présente au Collecteur un registre filtré en lecture seule', async () => {
     mocks.user = {
       id: 'collector-user', role: 'customer', is_active: true,
       capabilities: ['collector.operate'],
@@ -156,31 +169,27 @@ describe('PaiementsHistorique', () => {
 
     await waitFor(() => expect(screen.getByText('PAY-001')).toBeInTheDocument());
     expect(screen.queryByText('PAY-003')).not.toBeInTheDocument();
-    expect(screen.getAllByText('Lecture seule').length).toBeGreaterThan(0);
-    expect(screen.queryByRole('button', { name: 'Valider' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Dossiers en attente/ })).not.toBeInTheDocument();
-    expect(mocks.transitionPaiement).not.toHaveBeenCalled();
+    expect(screen.getByText(/Vous consultez uniquement les paiements/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ventes à régler/ })).not.toBeInTheDocument();
   });
 
-  it('n’expose aucune transition sans capacité sensible autoritative', async () => {
+  it('n’expose aucune transition financière dans le registre', async () => {
     mocks.user = { id: 'reader', role: 'management', is_active: true, capabilities: [] };
     render(<PaiementsHistorique />);
     await waitFor(() => expect(screen.getByText('PAY-002')).toBeInTheDocument());
 
-    expect(screen.queryByRole('button', { name: 'Valider' })).not.toBeInTheDocument();
-    expect(screen.getByText('Rapprochement AAL2 requis')).toBeInTheDocument();
-    expect(mocks.transitionPaiement).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /Confirmer le contrôle/ })).not.toBeInTheDocument();
+    expect(screen.getAllByText('Effectuer le double contrôle').length).toBeGreaterThan(0);
   });
 
-  it('ne demande jamais une URL libre pour clôturer un paiement validé', async () => {
+  it('explique la confirmation sécurisée sans demander une URL libre', async () => {
     mocks.getAllPaiements.mockResolvedValue([
-      paiement({ id: 'p4', statut: 'valide', facture: { certification_dgi_status: 'certified' } }),
+      paiement({ id: 'p4', statut: 'valide', facture: facture({ certification_dgi_status: 'certified' }) }),
     ]);
     render(<PaiementsHistorique />);
-    await waitFor(() => expect(screen.getByText(/gateway de preuve requis/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Attendre la confirmation du versement')).toBeInTheDocument());
 
     expect(screen.queryByPlaceholderText(/URL ou chemin/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Clôturer' })).not.toBeInTheDocument();
-    expect(mocks.transitionPaiement).not.toHaveBeenCalled();
   });
 });

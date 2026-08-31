@@ -236,7 +236,7 @@ export function ParametersPage() {
     if (saving) return;
     const minutes = Number(dureeSaisie);
     if (!Number.isInteger(minutes)) {
-      showError('Saisissez un nombre entier de minutes.');
+      showError('Valeur invalide', 'Saisissez un nombre entier de minutes.');
       return;
     }
     setSaving(true);
@@ -245,10 +245,11 @@ export function ParametersPage() {
       const misAJour = await parametresPlateformeService.definirDureeSession(minutes);
       setParametresSession(misAJour);
       showSuccess(
+        'Durée de session enregistrée',
         `Durée d'inactivité fixée à ${misAJour.inactiviteMinutes} minutes. Elle s'applique dès la prochaine mesure d'activité.`,
       );
     } catch (reason) {
-      showError(errorMessage(reason, 'La durée de session n’a pas pu être enregistrée.'));
+      showError('Enregistrement impossible', errorMessage(reason, 'La durée de session n’a pas pu être enregistrée.'));
     } finally {
       setSaving(false);
     }

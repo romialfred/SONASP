@@ -12,15 +12,30 @@ const mockedWorkspace = vi.mocked(useCollectorWorkspace);
 
 const collector = {
   id: 'collector-user', email: 'collector@example.bf', role: 'customer' as const,
-  is_active: true, mining_company_id: null, capabilities: ['collector.operate'],
+  full_name: 'Collecteur Test', phone: null, is_active: true, mining_company_id: null,
+  site_ids: [], capabilities: ['collector.operate'], is_sales_approver: false,
+  two_factor_enabled: true, language: 'fr', email_notifications: true,
+  batch_notifications: true, approval_notifications: true,
+  created_at: '2026-08-01T00:00:00Z', updated_at: '2026-08-01T00:00:00Z',
 };
+
+const authValue = (capabilities = collector.capabilities): ReturnType<typeof useAuth> => ({
+  user: { ...collector, capabilities },
+  session: { access_token: 'token' } as never,
+  loading: false,
+  initialized: true,
+  profileLoading: false,
+  profileError: null,
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  resetPassword: vi.fn(),
+  updatePassword: vi.fn(),
+  refreshProfile: vi.fn(),
+});
 
 describe('CollectorPortalGuard', () => {
   beforeEach(() => {
-    mockedUseAuth.mockReturnValue({
-      user: collector, session: { access_token: 'token' } as never, loading: false,
-      initialized: true, profileLoading: false,
-    } as ReturnType<typeof useAuth>);
+    mockedUseAuth.mockReturnValue(authValue());
     mockedWorkspace.mockReturnValue({
       isCollector: true, loading: false,
       workspace: {
@@ -43,10 +58,7 @@ describe('CollectorPortalGuard', () => {
   });
 
   it('redirige un autre partenaire vers le tableau national', () => {
-    mockedUseAuth.mockReturnValue({
-      user: { ...collector, capabilities: ['comptoir.manage'] },
-      session: { access_token: 'token' } as never, loading: false, initialized: true, profileLoading: false,
-    } as ReturnType<typeof useAuth>);
+    mockedUseAuth.mockReturnValue(authValue(['comptoir.manage']));
     render(
       <MemoryRouter initialEntries={['/portail-collecteur']}>
         <Routes>

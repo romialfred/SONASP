@@ -1,8 +1,31 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NationalDashboardLayout, reinitialiserEtatBarre } from './NationalDashboardLayout';
+import { MODULE_CATALOG_UPDATED_EVENT, modulesService } from '@/services/modulesService';
+
+const authState = vi.hoisted(() => ({
+  user: {
+    id: 'direction-id',
+    email: 'direction@sonasp.bf',
+    full_name: 'Direction SONASP',
+    role: 'management',
+    mining_company_id: null,
+    is_active: true,
+    capabilities: [
+      'reports.read',
+      'sonasp.workflow.read',
+      'sonasp.prepare',
+      'sonasp.finance.execute',
+      'reconciliation.manage',
+      'reconciliation.read',
+      'tax.rules.read',
+      'refining.supervise',
+      'collectors.manage',
+    ],
+  },
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -12,15 +35,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: {
-      id: 'owner-id',
-      email: 'owner@sonasp.bf',
-      full_name: 'Romuald TIEGNAN',
-      role: 'owner',
-      mining_company_id: null,
-      is_active: true,
-      capabilities: [],
-    },
+    user: authState.user,
     signOut: vi.fn(),
   }),
 }));
@@ -29,10 +44,33 @@ vi.mock('@/components/ui/ProfileErrorBanner', () => ({
   ProfileErrorBanner: () => null,
 }));
 
+vi.mock('@/services/modulesService', () => ({
+  MODULE_CATALOG_UPDATED_EVENT: 'sonasp:module-catalog-updated',
+  modulesService: { getNavigationAvailability: vi.fn().mockResolvedValue(null) },
+}));
+
 describe('NationalDashboardLayout', () => {
   beforeEach(() => {
     localStorage.clear();
     reinitialiserEtatBarre();
+    Object.assign(authState.user, {
+      id: 'direction-id',
+      email: 'direction@sonasp.bf',
+      full_name: 'Direction SONASP',
+      role: 'management',
+      module_domains: undefined,
+      capabilities: [
+        'reports.read',
+        'sonasp.workflow.read',
+        'sonasp.prepare',
+        'sonasp.finance.execute',
+        'reconciliation.manage',
+        'reconciliation.read',
+        'tax.rules.read',
+        'refining.supervise',
+        'collectors.manage',
+      ],
+    });
   });
 
   it('utilise le logo seul et une sidebar réduisible', async () => {
@@ -44,6 +82,10 @@ describe('NationalDashboardLayout', () => {
     );
 
     expect(screen.getByRole('img', { name: 'SONASP' })).toBeInTheDocument();
+    expect(screen.getByTestId('app-shell')).toBeInTheDocument();
+    expect(screen.getAllByTestId('app-sidebar')[0]).toBeInTheDocument();
+    expect(screen.getByTestId('app-header')).toBeInTheDocument();
+    expect(screen.getByTestId('app-footer')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Plateforme SONASP' })).toBeInTheDocument();
     expect(screen.getByText('Collecte, traçabilité et valorisation de l’or')).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: /société minière/i })).not.toBeInTheDocument();
@@ -51,14 +93,14 @@ describe('NationalDashboardLayout', () => {
     const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
     expect(within(sidebar).queryByText(/Société Nationale/i)).not.toBeInTheDocument();
     expect(screen.getByRole('contentinfo')).toHaveTextContent(/Société Nationale des Substances Précieuses/i);
-    expect(screen.getByText('Owner')).toBeInTheDocument();
-    // Les quatre sections structurent la navigation.
+    expect(screen.getByText('Direction SONASP')).toBeInTheDocument();
+    // Les sections métier autorisées structurent la navigation Direction.
     ['Mines semi-mécanisées', 'Mines industrielles', 'Paramètres et configuration', 'Rapports et analyses'].forEach(
       (titre) => expect(screen.getByRole('region', { name: titre })).toBeInTheDocument()
     );
 
     // Chaque groupe porteur d'un chevron est deployable : plus aucun n'est un simple lien.
-    ["Collecte de l'or", 'Expéditions', 'Documents', 'Administration', 'Artisans miniers'].forEach((label) => {
+    ["Collecte de l'or", 'Expéditions', 'Documents', 'Artisans miniers'].forEach((label) => {
       expect(screen.getByRole('button', { name: label })).toHaveAttribute('aria-expanded', 'false');
     });
     expect(container.querySelector('.national-shell__desktop-sidebar')).not.toHaveClass('is-collapsed');
@@ -100,7 +142,7 @@ describe('NationalDashboardLayout', () => {
     expect(screen.queryByRole('link', { name: 'Formalités douanières' })).not.toBeInTheDocument();
   });
 
-  it('ouvre les groupes sites artisanaux et paramétrage de façon exclusive', async () => {
+  it('ouvre deux groupes métier de façon exclusive', async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={['/artisan-sites']}>
@@ -109,18 +151,74 @@ describe('NationalDashboardLayout', () => {
     );
 
     const sites = screen.getByRole('button', { name: 'Sites miniers' });
-    const settings = screen.getByRole('button', { name: 'Paramètres' });
+    const conciliation = screen.getByRole('button', { name: 'Conciliation' });
     expect(sites).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Productions' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Ajouter un site' })).not.toBeInTheDocument();
 
-    await user.click(settings);
+    await user.click(conciliation);
 
     expect(sites).toHaveAttribute('aria-expanded', 'false');
-    expect(settings).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('link', { name: 'Paramètres des ventes' })).toHaveAttribute('href', '/admin/gold-sales-settings');
-    expect(screen.getByRole('link', { name: 'Référentiel des statuts' })).toHaveAttribute('href', '/admin/status-manager');
+    expect(conciliation).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: 'Dossiers' })).toHaveAttribute('href', '/conciliation');
+    expect(screen.getByRole('link', { name: 'Règles fiscales' })).toHaveAttribute('href', '/conciliation/regles-fiscales');
+  });
+
+  it('rend tous les modules au Owner même sans périmètre explicite', () => {
+    Object.assign(authState.user, {
+      id: 'owner-id',
+      email: 'owner@sonasp.bf',
+      full_name: 'Compte technique',
+      role: 'owner',
+      capabilities: [],
+      module_domains: [],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <NationalDashboardLayout><div>Contenu</div></NationalDashboardLayout>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: 'Tableau de bord' })).toBeInTheDocument();
+    ['Mines semi-mécanisées', 'Mines industrielles', 'Paramètres et configuration', 'Rapports et analyses'].forEach(
+      (titre) => expect(screen.getByRole('region', { name: titre })).toBeInTheDocument()
+    );
+    expect(screen.getByRole('button', { name: 'Sites miniers' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Conciliation' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Administration' })).toBeInTheDocument();
+  });
+
+  it('conserve les six écrans Réserve du Owner après chargement et désactivation du catalogue', async () => {
+    Object.assign(authState.user, {
+      role: 'owner',
+      capabilities: [],
+      module_domains: [],
+    });
+    vi.mocked(modulesService.getNavigationAvailability).mockResolvedValueOnce({});
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={['/national-reserve']}>
+          <NationalDashboardLayout><div>Réserve</div></NationalDashboardLayout>
+        </MemoryRouter>
+      );
+    });
+
+    const assertReserveLinks = () => {
+      expect(screen.getByRole('button', { name: 'Réserve nationale' })).toHaveAttribute('aria-expanded', 'true');
+      const routes = ['/national-reserve', '/national-reserve/allocations', '/national-reserve/physical',
+        '/national-reserve/controls', '/national-reserve/valuation', '/national-reserve/audit'];
+      const links = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
+      routes.forEach((route) => expect(links).toContain(route));
+    };
+    assertReserveLinks();
+
+    vi.mocked(modulesService.getNavigationAvailability).mockResolvedValueOnce({
+      national_reserve: { isActive: false, isVisibleInMenu: false },
+    });
+    await act(async () => { window.dispatchEvent(new Event(MODULE_CATALOG_UPDATED_EVENT)); });
+    assertReserveLinks();
   });
 
   it('marque les groupes d’un plus, remplacé par un moins une fois dépliés', async () => {

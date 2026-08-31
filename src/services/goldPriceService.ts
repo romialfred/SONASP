@@ -66,8 +66,6 @@ export async function updateDailyGoldPrice(): Promise<{ success: boolean; error?
       .from('gold_prices_daily')
       .upsert({
         price_date: today,
-        opening_price: price * 0.998, // Slightly lower than current
-        closing_price: price,
         high_price: price * 1.005,
         low_price: price * 0.995,
         london_am_rate: price, // Use actual live price for London AM rate
@@ -119,8 +117,9 @@ export async function getCurrentGoldPrice(): Promise<{
     }
 
     const now = new Date();
-    const dataAge = existingData
-      ? now.getTime() - new Date(existingData.updated_at || existingData.created_at).getTime()
+    const lastUpdate = existingData?.updated_at ?? existingData?.created_at;
+    const dataAge = lastUpdate
+      ? now.getTime() - new Date(lastUpdate).getTime()
       : Infinity;
 
     const shouldUpdate = !existingData || dataAge > 60000;
@@ -136,8 +135,6 @@ export async function getCurrentGoldPrice(): Promise<{
           .from('gold_prices_daily')
           .upsert({
             price_date: today,
-            opening_price: existingData?.opening_price || price * 0.998,
-            closing_price: price,
             high_price: Math.max(existingData?.high_price || 0, price * 1.005),
             low_price: existingData?.low_price
               ? Math.min(existingData.low_price, price * 0.995)
@@ -238,7 +235,7 @@ export async function getGoldPriceStatistics(): Promise<{
 
     const { data, error } = await supabase
       .from('gold_prices_daily')
-      .select('closing_price, price_date, high_price, low_price')
+      .select('london_am_rate, london_pm_rate, price_date, high_price, low_price')
       .gte('price_date', thirtyDaysAgo.toISOString().split('T')[0])
       .order('price_date', { ascending: false });
 
@@ -246,8 +243,9 @@ export async function getGoldPriceStatistics(): Promise<{
       return { success: false, error: 'Insufficient data for statistics' };
     }
 
-    const currentPrice = data[0].closing_price;
-    const previousPrice = data[1].closing_price;
+    const priceForDay = (row: (typeof data)[number]) => row.london_pm_rate ?? row.london_am_rate;
+    const currentPrice = priceForDay(data[0]);
+    const previousPrice = priceForDay(data[1]);
     const change = currentPrice - previousPrice;
     const changePercentage = (change / previousPrice) * 100;
 
@@ -258,10 +256,10 @@ export async function getGoldPriceStatistics(): Promise<{
       trend = 'down';
     }
 
-    const prices = data.map(d => d.closing_price);
+    const prices = data.map(priceForDay);
     const avg30Days = prices.reduce((sum, p) => sum + p, 0) / prices.length;
-    const high30Days = Math.max(...data.map(d => d.high_price));
-    const low30Days = Math.min(...data.map(d => d.low_price));
+    const high30Days = Math.max(...data.map((row) => row.high_price ?? priceForDay(row)));
+    const low30Days = Math.min(...data.map((row) => row.low_price ?? priceForDay(row)));
 
     return {
       success: true,
@@ -355,7 +353,7 @@ export async function compareSalesVsMarketPrices(
         const { data: goldPrice } = await supabase
           .from('gold_prices_daily')
           .select('london_am_rate')
-          .eq('price_date', sale.sale_date)
+          .eq('price_date', sale.sale_date ?? '')
           .single();
 
         if (!goldPrice) {
@@ -471,7 +469,7 @@ export async function getGoldPriceTrend(
 
     const { data, error } = await supabase
       .from('gold_prices_daily')
-      .select('closing_price')
+      .select('london_am_rate, london_pm_rate')
       .gte('price_date', startDate.toISOString().split('T')[0])
       .order('price_date', { ascending: true });
 
@@ -479,7 +477,7 @@ export async function getGoldPriceTrend(
       return { success: false, error: 'Insufficient data for trend analysis' };
     }
 
-    const prices = data.map(d => d.closing_price);
+    const prices = data.map((row) => row.london_pm_rate ?? row.london_am_rate);
     const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
 
     const variance = prices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / prices.length;

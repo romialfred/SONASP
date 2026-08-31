@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import type { PostgrestError } from '@supabase/supabase-js';
 
 export type DepositorCategory =
   | 'general_management'
@@ -31,10 +32,10 @@ export interface Depositor {
   is_primary: boolean | null;
   is_backup: boolean | null;
   group_email: string | null;
-  is_active: boolean;
+  is_active: boolean | null;
   notes: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface DepositorContactSummary extends Depositor {
@@ -82,7 +83,7 @@ class DepositorService {
     mining_company_id?: string;
     category?: DepositorCategory;
     is_active?: boolean;
-  }): Promise<{ data: Depositor[] | null; error: any }> {
+  }): Promise<{ data: Depositor[] | null; error: PostgrestError | null }> {
     let query = supabase
       .from('depositors')
       .select('*')
@@ -108,7 +109,7 @@ class DepositorService {
   /**
    * Get depositor by ID
    */
-  async getDepositorById(id: string): Promise<{ data: Depositor | null; error: any }> {
+  async getDepositorById(id: string): Promise<{ data: Depositor | null; error: PostgrestError | null }> {
     return await supabase
       .from('depositors')
       .select('*')
@@ -121,7 +122,7 @@ class DepositorService {
    */
   async getDepositorsByCompany(
     mining_company_id: string
-  ): Promise<{ data: Depositor[] | null; error: any }> {
+  ): Promise<{ data: Depositor[] | null; error: PostgrestError | null }> {
     return await supabase
       .from('depositors')
       .select('*')
@@ -138,7 +139,7 @@ class DepositorService {
   async getDepositorsByCategory(
     mining_company_id: string,
     category: DepositorCategory
-  ): Promise<{ data: Depositor[] | null; error: any }> {
+  ): Promise<{ data: Depositor[] | null; error: PostgrestError | null }> {
     return await supabase
       .from('depositors')
       .select('*')

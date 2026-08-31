@@ -36,11 +36,13 @@ describe('saleCreationService', () => {
           quantite_oz: 12.5,
         },
       ],
+      idempotencyKey: '11111111-1111-4111-8111-111111111111',
     });
 
     expect(result.success).toBe(true);
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
-    expect(mocks.rpc).toHaveBeenCalledWith('snp_creer_vente_export', {
+    expect(mocks.rpc).toHaveBeenCalledWith('snp_creer_vente_export_idempotent', {
+      p_idempotency_key: '11111111-1111-4111-8111-111111111111',
       p_customer_id: 'customer-1',
       p_seller_id: 'sonasp-1',
       p_quantity_oz: 12.5,
@@ -106,7 +108,7 @@ describe('saleCreationService', () => {
     });
 
     expect(mocks.rpc).toHaveBeenCalledWith(
-      'snp_creer_vente_export',
+      'snp_creer_vente_export_idempotent',
       expect.objectContaining({
         p_mechanism_type: 'in_process',
         p_in_process_refinery_id: 'refinery-1',

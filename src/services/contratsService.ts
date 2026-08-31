@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { TablesInsert, TablesUpdate } from '@/types/database';
 
 /**
  * Contrats de fourniture d'or : accès aux données et opérations métier.
@@ -476,7 +477,7 @@ export const contratsService = {
     return (lancerSiErreur(await requete.maybeSingle()) as Contrat) || null;
   },
 
-  async creer(contrat: Partial<Contrat>): Promise<Contrat> {
+  async creer(contrat: TablesInsert<'snp_contrats'>): Promise<Contrat> {
     const reponse = await supabase.from('snp_contrats').insert(contrat).select().single();
     return lancerSiErreur(reponse) as Contrat;
   },
@@ -488,7 +489,7 @@ export const contratsService = {
    * par les valeurs du compte authentifié. Les valeurs passées par l'écran ne
    * constituent donc jamais une frontière de sécurité.
    */
-  async proposerMine(contrat: Partial<Contrat>): Promise<Contrat> {
+  async proposerMine(contrat: TablesInsert<'snp_contrats'>): Promise<Contrat> {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw new Error('Votre session a expiré. Reconnectez-vous.');
     const reponse = await supabase
@@ -499,7 +500,7 @@ export const contratsService = {
     return lancerSiErreur(reponse) as Contrat;
   },
 
-  async modifier(id: string, champs: Partial<Contrat>): Promise<Contrat> {
+  async modifier(id: string, champs: TablesUpdate<'snp_contrats'>): Promise<Contrat> {
     const reponse = await supabase
       .from('snp_contrats').update(champs).eq('id', id).select().single();
     return lancerSiErreur(reponse) as Contrat;
@@ -616,7 +617,7 @@ export const contratsService = {
     return (lancerSiErreur(reponse) || []) as DocumentContrat[];
   },
 
-  async ajouterDocument(document: Partial<DocumentContrat>): Promise<DocumentContrat> {
+  async ajouterDocument(document: TablesInsert<'snp_contrats_documents'>): Promise<DocumentContrat> {
     const reponse = await supabase
       .from('snp_contrats_documents').insert(document).select().single();
     return lancerSiErreur(reponse) as DocumentContrat;
@@ -633,12 +634,12 @@ export const contratsService = {
     return (lancerSiErreur(reponse) || []) as DefautContrat[];
   },
 
-  async ouvrirDefaut(defaut: Partial<DefautContrat>): Promise<DefautContrat> {
+  async ouvrirDefaut(defaut: TablesInsert<'snp_contrats_defauts'>): Promise<DefautContrat> {
     const reponse = await supabase.from('snp_contrats_defauts').insert(defaut).select().single();
     return lancerSiErreur(reponse) as DefautContrat;
   },
 
-  async modifierDefaut(id: string, champs: Partial<DefautContrat>): Promise<DefautContrat> {
+  async modifierDefaut(id: string, champs: TablesUpdate<'snp_contrats_defauts'>): Promise<DefautContrat> {
     const reponse = await supabase
       .from('snp_contrats_defauts').update(champs).eq('id', id).select().single();
     return lancerSiErreur(reponse) as DefautContrat;

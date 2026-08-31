@@ -8,7 +8,7 @@ export interface AnnualBudget {
   mining_company_id: string | null;
   created_by: string | null;
   created_at: string | null;
-  updated_at: string;
+  updated_at: string | null;
 }
 
 export interface MonthlyBudget {
@@ -20,7 +20,7 @@ export interface MonthlyBudget {
   daily_budget_oz: number | null;
   mining_company_id: string | null;
   created_at: string | null;
-  updated_at: string;
+  updated_at: string | null;
 }
 
 export interface QuarterlyForecast {
@@ -35,8 +35,8 @@ export interface QuarterlyForecast {
   notes: string | null;
   mining_company_id: string | null;
   created_by: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface MonthlyBudgetInput {

@@ -13,46 +13,49 @@ export interface ArtisanMinier {
   type_artisan: TypeArtisan;
 
   nom?: string | null;
-  prenoms?: string;
-  date_naissance?: string;
-  lieu_naissance?: string;
-  sexe?: 'M' | 'F' | 'Autre';
-  nationalite?: string;
+  prenoms?: string | null;
+  date_naissance?: string | null;
+  lieu_naissance?: string | null;
+  sexe?: 'M' | 'F' | 'Autre' | null;
+  nationalite?: string | null;
 
-  raison_sociale?: string;
-  numero_registre_commerce?: string;
+  raison_sociale?: string | null;
+  numero_registre_commerce?: string | null;
 
   telephone: string;
-  telephone_secondaire?: string;
-  email?: string;
-  adresse?: string;
-  commune?: string;
-  region?: string;
-  pays?: string;
+  telephone_secondaire?: string | null;
+  email?: string | null;
+  adresse?: string | null;
+  commune?: string | null;
+  region?: string | null;
+  pays?: string | null;
 
-  type_piece_identite?: 'CNI' | 'Passeport' | 'Permis' | 'Autre';
-  numero_piece_identite?: string;
-  date_delivrance_piece?: string;
-  date_expiration_piece?: string;
-  lieu_delivrance_piece?: string;
-  piece_identite_url?: string;
+  type_piece_identite?: 'CNI' | 'Passeport' | 'Permis' | 'Autre' | null;
+  numero_piece_identite?: string | null;
+  date_delivrance_piece?: string | null;
+  date_expiration_piece?: string | null;
+  lieu_delivrance_piece?: string | null;
+  piece_identite_url?: string | null;
 
-  photo_url?: string;
+  photo_url?: string | null;
 
-  collecteur_id?: string;
+  collecteur_id?: string | null;
 
-  observations?: string;
+  observations?: string | null;
 
   actif?: boolean;
-  desactive_le?: string;
-  desactive_par?: string;
-  motif_desactivation?: string;
+  desactive_le?: string | null;
+  desactive_par?: string | null;
+  motif_desactivation?: string | null;
 
-  created_at?: string;
-  updated_at?: string;
-  created_by?: string;
-  updated_by?: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
 }
+
+export type CreateArtisanMinier = Pick<ArtisanMinier, 'telephone' | 'type_personne' | 'type_artisan'>
+  & Partial<Omit<ArtisanMinier, 'id' | 'telephone' | 'type_personne' | 'type_artisan'>>;
 
 export interface CarteStatistics {
   carte_id: string;
@@ -134,7 +137,7 @@ export const artisanMinierService = {
     return data;
   },
 
-  async create(artisan: Partial<ArtisanMinier>) {
+  async create(artisan: CreateArtisanMinier) {
     const { data: { user } } = await supabase.auth.getUser();
 
     // Le numero est frappe cote application, au format BF-AM-AAAA-XZTM-NNNN.
@@ -144,14 +147,12 @@ export const artisanMinierService = {
 
     const { data, error } = await supabase
       .from('snp_artisans_miniers')
-      .insert([
-        {
+      .insert({
           ...artisan,
           numero_carte: numeroCarte,
           created_by: user?.id,
           updated_by: user?.id
-        }
-      ])
+        })
       .select(`
         *,
         carte:snp_cartes_professionnelles(*)
@@ -233,17 +234,15 @@ export const artisanMinierService = {
 
     const { error: docError } = await supabase
       .from('snp_artisan_documents')
-      .insert([
-        {
+      .insert({
           artisan_id: artisanId,
           type_document: documentType,
-          nom_document: file.name,
-          document_url: publicUrl,
-          document_type: validatedFile.mimeType,
-          document_size: file.size,
+          nom_fichier: file.name,
+          chemin_fichier: publicUrl,
+          type_mime: validatedFile.mimeType,
+          taille_fichier: file.size,
           uploaded_by: user?.id
-        }
-      ]);
+        });
 
     if (docError) throw docError;
 
@@ -348,12 +347,11 @@ export const artisanMinierService = {
     if (data) {
       data.forEach(stat => {
         summary.total_ventes += stat.nombre_ventes || 0;
-        summary.total_montant += parseFloat(stat.montant_total_ventes as any) || 0;
-        summary.total_grammes += parseFloat(stat.quantite_totale_grammes as any) || 0;
-        summary.total_onces += parseFloat(stat.quantite_totale_onces as any) || 0;
-        summary.total_collectes += stat.nombre_collectes || 0;
-        summary.total_depots += stat.nombre_depots || 0;
-        summary.total_transactions += stat.nombre_transactions || 0;
+        const grammes = Number(stat.quantite_totale_grammes) || 0;
+        summary.total_montant += Number(stat.montant_total) || 0;
+        summary.total_grammes += grammes;
+        summary.total_onces += grammes / 31.1034768;
+        summary.total_transactions += (stat.nombre_achats || 0) + (stat.nombre_ventes || 0);
       });
     }
 

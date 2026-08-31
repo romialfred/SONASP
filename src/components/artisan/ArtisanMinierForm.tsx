@@ -23,7 +23,11 @@ import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
-import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import {
+  artisanMinierService,
+  type ArtisanMinier,
+  type CreateArtisanMinier,
+} from '@/services/artisanMinierService';
 import {
   LIBELLES_MOYEN,
   MOYEN_VIDE,
@@ -52,13 +56,13 @@ export interface ArtisanFormValues {
   lieu_naissance: string;
   nationalite: string;
   pays: string;
-  sexe: string;
+  sexe: 'M' | 'F' | 'Autre';
   telephone: string;
   email: string;
   adresse: string;
   commune: string;
   region: string;
-  type_piece_identite: string;
+  type_piece_identite: 'CNI' | 'Passeport' | 'Permis' | 'Autre';
   numero_piece_identite: string;
   date_delivrance_piece: string;
   date_expiration_piece: string;
@@ -397,7 +401,10 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
     setSaving(true);
     try {
       // La photo locale n'est pas persistée telle quelle : seul le lien de stockage l'est.
-      const payload: Partial<ArtisanMinier> = { ...values, photo_url: artisan?.photo_url || '' } as Partial<ArtisanMinier>;
+      const payload: CreateArtisanMinier = {
+        ...values,
+        photo_url: artisan?.photo_url || '',
+      };
       const enregistre = artisan?.id
         ? await artisanMinierService.update(artisan.id, payload)
         : await artisanMinierService.create(payload);
@@ -533,7 +540,11 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                     />
                   </Field>
                   <Field label="Sexe" htmlFor="sexe">
-                    <select id="sexe" value={values.sexe} onChange={(event) => setValue('sexe', event.target.value)}>
+                    <select
+                      id="sexe"
+                      value={values.sexe}
+                      onChange={(event) => setValue('sexe', event.target.value as ArtisanFormValues['sexe'])}
+                    >
                       <option value="M">Masculin</option>
                       <option value="F">Féminin</option>
                     </select>
@@ -655,7 +666,10 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                 <select
                   id="type-piece"
                   value={values.type_piece_identite}
-                  onChange={(event) => setValue('type_piece_identite', event.target.value)}
+                  onChange={(event) => setValue(
+                    'type_piece_identite',
+                    event.target.value as ArtisanFormValues['type_piece_identite'],
+                  )}
                 >
                   <option value="CNI">Carte nationale d’identité</option>
                   <option value="Passeport">Passeport</option>

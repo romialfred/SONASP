@@ -174,8 +174,9 @@ export default defineConfig(({ mode }) => {
       },
       workbox: {
         // Le worker reste en attente. Après le clic « Mettre à jour », le hook
-        // lui envoie SKIP_WAITING ; `clientsClaim` déclenche alors l'unique
-        // rechargement explicite prévu par vite-plugin-pwa.
+        // lui envoie SKIP_WAITING. `clientsClaim` peut notifier tous les onglets,
+        // mais `PwaUpdatePrompt.onNeedReload` interdit désormais tout reload dans
+        // ceux qui n'ont pas eux-mêmes demandé l'activation.
         skipWaiting: false,
         clientsClaim: true,
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // Large application bundle and PDF.js library
@@ -254,15 +255,16 @@ export default defineConfig(({ mode }) => {
     drop: mode === 'production' ? ['console', 'debugger'] : [],
   },
   /**
-   * Port fixe : le poste de developpement heberge d'autres projets Vite qui occupent
-   * le 5173 par defaut. Un port dedie evite que l'apercu pointe sur une autre application.
+   * Le port 5180 sert la plateforme locale compilée (`npm start`), sans client
+   * de rechargement. Le développement HMR est isolé sur 5181 : une reconnexion
+   * de son WebSocket ne doit pas réinitialiser les formulaires de l'usage local.
    */
   server: {
     // Le navigateur de travail utilise explicitement 127.0.0.1. Sans cette
     // adresse, Node peut n'écouter que sur ::1 et laisser l'onglet en erreur
     // malgré un serveur annoncé comme démarré.
     host: '127.0.0.1',
-    port: 5180,
+    port: 5181,
     strictPort: true,
   },
   resolve: {

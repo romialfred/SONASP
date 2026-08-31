@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { Database } from '@/types/database';
 import { genererNumeroRecu } from './venteRecuNumberService';
 
 export interface ArtisanGoldSale {
@@ -36,6 +37,45 @@ export interface ArtisanStatistics {
   montant_ce_mois: number;
 }
 
+type ArtisanGoldSaleRow = Database['public']['Tables']['snp_artisan_ventes_or']['Row'];
+type ArtisanGoldSaleInsert = Database['public']['Tables']['snp_artisan_ventes_or']['Insert'];
+
+const SALE_STATUSES: ArtisanGoldSale['statut'][] = ['en_attente', 'validee', 'payee', 'annulee'];
+
+/**
+ * Ramene les colonnes nullables de la base vers le contrat stable utilise par
+ * l'interface. Les anciens enregistrements restent ainsi affichables sans
+ * propager des valeurs nulles dans tous les composants metier.
+ */
+function normalizeSale(row: ArtisanGoldSaleRow): ArtisanGoldSale {
+  const statut = SALE_STATUSES.includes(row.statut as ArtisanGoldSale['statut'])
+    ? (row.statut as ArtisanGoldSale['statut'])
+    : 'en_attente';
+
+  return {
+    id: row.id,
+    artisan_id: row.artisan_id,
+    date_vente: row.date_vente,
+    quantite_grammes: row.quantite_grammes,
+    type_or: row.type_or,
+    purete_karat: row.purete_karat,
+    prix_kg_fcfa: row.prix_kg_fcfa,
+    montant_brut_fcfa: row.montant_brut_fcfa,
+    tva_taux: row.tva_taux,
+    tva_montant_fcfa: row.tva_montant_fcfa ?? 0,
+    taxe_dev_comm_taux: row.taxe_dev_comm_taux ?? 0,
+    taxe_dev_comm_montant_fcfa: row.taxe_dev_comm_montant_fcfa ?? 0,
+    montant_total_fcfa: row.montant_total_fcfa,
+    numero_recu: row.numero_recu ?? undefined,
+    observations: row.observations ?? undefined,
+    statut,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    created_by: row.created_by ?? undefined,
+    updated_by: row.updated_by ?? undefined,
+  };
+}
+
 export const artisanGoldSalesService = {
   async getAll(): Promise<ArtisanGoldSale[]> {
     try {
@@ -45,7 +85,7 @@ export const artisanGoldSalesService = {
         .order('date_vente', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(normalizeSale);
     } catch (error) {
       console.error('Error fetching gold sales:', error);
       throw error;
@@ -61,7 +101,7 @@ export const artisanGoldSalesService = {
         .order('date_vente', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(normalizeSale);
     } catch (error) {
       console.error('Error fetching artisan gold sales:', error);
       throw error;
@@ -77,7 +117,7 @@ export const artisanGoldSalesService = {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data ? normalizeSale(data) : null;
     } catch (error) {
       console.error('Error fetching gold sale:', error);
       throw error;
@@ -90,6 +130,17 @@ export const artisanGoldSalesService = {
 
       if (!sale.artisan_id) {
         throw new Error('Artisan requis pour créer une vente');
+      }
+
+      if (
+        !sale.type_or ||
+        sale.quantite_grammes == null ||
+        sale.purete_karat == null ||
+        sale.prix_kg_fcfa == null ||
+        sale.montant_brut_fcfa == null ||
+        sale.montant_total_fcfa == null
+      ) {
+        throw new Error('Les données financières et la qualité de la vente sont requises');
       }
 
       const { data: artisan, error: artisanError } = await supabase
@@ -120,27 +171,33 @@ export const artisanGoldSalesService = {
       // numero different de celui annonce a l'ecran.
       const numeroRecu = sale.numero_recu || (await genererNumeroRecu());
 
+      const saleToInsert: ArtisanGoldSaleInsert = {
+        artisan_id: sale.artisan_id,
+        date_vente: sale.date_vente || new Date().toISOString().split('T')[0],
+        quantite_grammes: sale.quantite_grammes,
+        type_or: sale.type_or,
+        purete_karat: sale.purete_karat,
+        prix_kg_fcfa: sale.prix_kg_fcfa,
+        montant_brut_fcfa: sale.montant_brut_fcfa,
+        tva_taux: sale.tva_taux ?? 18.00,
+        tva_montant_fcfa: sale.tva_montant_fcfa,
+        taxe_dev_comm_taux: sale.taxe_dev_comm_taux ?? 1.00,
+        taxe_dev_comm_montant_fcfa: sale.taxe_dev_comm_montant_fcfa,
+        montant_total_fcfa: sale.montant_total_fcfa,
+        numero_recu: numeroRecu,
+        observations: sale.observations,
+        statut: sale.statut || 'en_attente',
+        created_by: user?.id,
+      };
+
       const { data, error } = await supabase
         .from('snp_artisan_ventes_or')
-        .insert([{
-          artisan_id: sale.artisan_id,
-          date_vente: sale.date_vente || new Date().toISOString().split('T')[0],
-          quantite_grammes: sale.quantite_grammes,
-          type_or: sale.type_or,
-          purete_karat: sale.purete_karat,
-          prix_kg_fcfa: sale.prix_kg_fcfa,
-          tva_taux: sale.tva_taux || 18.00,
-          taxe_dev_comm_taux: sale.taxe_dev_comm_taux || 1.00,
-          numero_recu: numeroRecu,
-          observations: sale.observations,
-          statut: sale.statut || 'en_attente',
-          created_by: user?.id
-        }])
+        .insert(saleToInsert)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return normalizeSale(data);
     } catch (error: any) {
       console.error('Error creating gold sale:', error);
       throw new Error(error.message || 'Impossible d\'enregistrer la vente');
@@ -159,7 +216,7 @@ export const artisanGoldSalesService = {
 
       if (fetchError) throw fetchError;
 
-      if (existingVente && ['validee', 'payee'].includes(existingVente.statut)) {
+      if (existingVente?.statut && ['validee', 'payee'].includes(existingVente.statut)) {
         throw new Error('Impossible de modifier une vente validée ou payée');
       }
 
@@ -174,7 +231,7 @@ export const artisanGoldSalesService = {
         .single();
 
       if (error) throw error;
-      return data;
+      return normalizeSale(data);
     } catch (error: any) {
       console.error('Error updating gold sale:', error);
       throw new Error(error.message || 'Impossible de mettre à jour la vente');
@@ -204,10 +261,13 @@ export const artisanGoldSalesService = {
   },
 
   calculateTaxes(quantite_grammes: number, prix_kg_fcfa: number, tva_taux: number = 18, taxe_dev_comm_taux: number = 1) {
-    const montant_brut = (quantite_grammes / 1000) * prix_kg_fcfa;
-    const tva_montant = montant_brut * (tva_taux / 100);
-    const taxe_dev_comm_montant = montant_brut * (taxe_dev_comm_taux / 100);
-    const montant_total = montant_brut + tva_montant + taxe_dev_comm_montant;
+    // La base applique le même arrondi au centime dans son trigger d'intégrité.
+    // Garder cette règle ici évite un écart visuel avant l'enregistrement.
+    const arrondir = (valeur: number) => Math.round((valeur + Number.EPSILON) * 100) / 100;
+    const montant_brut = arrondir((quantite_grammes / 1000) * prix_kg_fcfa);
+    const tva_montant = arrondir(montant_brut * (tva_taux / 100));
+    const taxe_dev_comm_montant = arrondir(montant_brut * (taxe_dev_comm_taux / 100));
+    const montant_total = arrondir(montant_brut + tva_montant + taxe_dev_comm_montant);
 
     return {
       montant_brut_fcfa: montant_brut,

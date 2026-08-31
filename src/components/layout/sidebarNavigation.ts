@@ -1,5 +1,6 @@
 import {
   Scale,
+  ShieldCheck,
   AlertTriangle,
   BarChart3,
   BellRing,
@@ -13,7 +14,9 @@ import {
   FlaskConical,
   Gavel,
   Grid2X2,
+  Landmark,
   Layers,
+  KeyRound,
   Mail,
   Mountain,
   PackageCheck,
@@ -26,25 +29,36 @@ import {
 } from 'lucide-react';
 import type { UserProfile } from '@/types/auth';
 import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
+import { hasGlobalPlatformAccess } from '@/lib/permissions';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { isMineScopedUser } from '@/lib/mineAccess';
 import { canAccessSonaspComptoirInbox } from '@/lib/sonaspComptoirAccess';
+import { moduleDomainForPath } from '@/lib/accessControl';
 import {
   accountTypeFor,
   canAccessPrivateRoute,
   type AccountType,
 } from '@/lib/routeAccessRegistry';
+import type {
+  ModuleAvailabilityMap,
+  PlatformModuleCode,
+} from '@/lib/platformModuleCatalog';
+import { ADMINISTRATION_SUBMODULE_CATALOG } from '@/lib/platformModuleCatalog';
 
 export type NavigationItem = {
   label: string;
   path: string;
   icon: LucideIcon;
   color: string;
+  /** Code du sous-module dans `snp_modules`, utilisé pour sa visibilité. */
+  catalogCode?: string;
 };
 
 export type NavigationGroup = NavigationItem & {
   id: string;
+  /** Code immuable partagé avec `modules.name` et `snp_modules.code`. */
+  moduleCode?: PlatformModuleCode;
   children?: NavigationItem[];
 };
 
@@ -53,6 +67,33 @@ export type NavigationSection = {
   title: string;
   groups: NavigationGroup[];
 };
+
+const ADMINISTRATION_ICONS: Record<string, LucideIcon> = {
+  'admin-users': Users,
+  'admin-modules': Layers,
+  'admin-roles': KeyRound,
+  'admin-messaging': Mail,
+  'admin-settings': SlidersHorizontal,
+  'admin-audit': ClipboardCheck,
+};
+
+const ADMINISTRATION_COLORS: Record<string, string> = {
+  'admin-users': '#f97316',
+  'admin-modules': '#8b5cf6',
+  'admin-roles': '#0f7a56',
+  'admin-messaging': '#2f6fec',
+  'admin-settings': '#f59e0b',
+  'admin-audit': '#64748b',
+};
+
+export const ADMINISTRATION_NAVIGATION_ITEMS: NavigationItem[] =
+  ADMINISTRATION_SUBMODULE_CATALOG.map((module) => ({
+    label: module.label,
+    path: module.route,
+    icon: ADMINISTRATION_ICONS[module.code] || Settings,
+    color: ADMINISTRATION_COLORS[module.code] || '#64748b',
+    catalogCode: module.code,
+  }));
 
 /**
  * Navigation principale, organisée en quatre sections métier.
@@ -68,6 +109,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'sites-miniers',
+        moduleCode: 'mining_sites',
         label: 'Sites miniers',
         path: '/artisan-sites',
         icon: Mountain,
@@ -79,6 +121,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'artisans',
+        moduleCode: 'artisan-minier',
         label: 'Artisans miniers',
         path: '/artisan-minier/liste',
         icon: Users,
@@ -93,6 +136,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'marche-artisanal',
+        moduleCode: 'artisan_gold_market',
         label: "Marché d'or artisanal",
         path: '/artisan-minier/paiements',
         icon: CircleDollarSign,
@@ -112,6 +156,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'conciliation',
+        moduleCode: 'conciliation',
         label: 'Conciliation',
         path: '/conciliation',
         icon: Scale,
@@ -124,6 +169,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
 
       {
         id: 'production',
+        moduleCode: 'production',
         label: "Collecte de l'or",
         path: '/production/daily',
         icon: Building2,
@@ -142,6 +188,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         // mines. Le groupe suit « Collecte de l'or », dont il consomme la
         // production déclarée.
         id: 'achats-industriels',
+        moduleCode: 'gold_purchases',
         label: 'Achats d’or',
         path: '/achats/plans',
         icon: CircleDollarSign,
@@ -160,6 +207,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'shipping',
+        moduleCode: 'shipping',
         label: 'Expéditions',
         path: '/shipping/preparation',
         icon: Truck,
@@ -173,6 +221,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'refining',
+        moduleCode: 'refining',
         label: 'Raffinage',
         path: '/refining',
         icon: FlaskConical,
@@ -184,18 +233,36 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'inventory',
+        moduleCode: 'gold_inventory',
         label: 'Suivi des stocks',
         path: '/inventory',
         icon: Layers,
         color: '#14b8a6',
         children: [
-          { label: "Stock d'or", path: '/inventory', icon: PackageCheck, color: '#d79a00' },
-          { label: "Stock d'argent", path: '/inventory/silver', icon: Layers, color: '#8b5cf6' },
-          { label: 'Nouvelle entrée', path: '/inventory/add', icon: Grid2X2, color: '#10976b' },
+          { label: 'Position des stocks', path: '/inventory', icon: Grid2X2, color: '#10976b', catalogCode: 'inventory-overview' },
+          { label: "Position argent", path: '/inventory/silver', icon: Layers, color: '#8b5cf6', catalogCode: 'inventory-silver' },
+          { label: 'Nouvelle entrée de stock', path: '/inventory/add', icon: ClipboardCheck, color: '#d79a00', catalogCode: 'inventory-new-entry' },
+        ],
+      },
+      {
+        id: 'national-reserve',
+        moduleCode: 'national_reserve',
+        label: 'Réserve nationale',
+        path: '/national-reserve',
+        icon: Landmark,
+        color: '#0c8a5f',
+        children: [
+          { label: 'Vue d’ensemble', path: '/national-reserve', icon: Grid2X2, color: '#10976b', catalogCode: 'reserve-overview' },
+          { label: 'Affectations à la réserve', path: '/national-reserve/allocations', icon: PackageCheck, color: '#10976b', catalogCode: 'inventory-allocations' },
+          { label: 'Réserve physique', path: '/national-reserve/physical', icon: Layers, color: '#d79a00', catalogCode: 'inventory-physical' },
+          { label: 'Contrôles & écarts', path: '/national-reserve/controls', icon: ClipboardCheck, color: '#2f6fec', catalogCode: 'inventory-controls' },
+          { label: 'Valorisation et analyse', path: '/national-reserve/valuation', icon: TrendingUp, color: '#8b5cf6', catalogCode: 'inventory-valuation' },
+          { label: 'Rapports et audit', path: '/national-reserve/audit', icon: FileText, color: '#64748b', catalogCode: 'inventory-audit' },
         ],
       },
       {
         id: 'market',
+        moduleCode: 'international_markets',
         label: 'Marchés internationaux',
         path: '/sales/trade-space',
         icon: TrendingUp,
@@ -208,6 +275,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'sales',
+        moduleCode: 'sales',
         label: 'Vente d’or international',
         path: '/sales',
         icon: CircleDollarSign,
@@ -219,14 +287,15 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'stakeholders',
+        moduleCode: 'stakeholders',
         label: 'Parties prenantes',
-        path: '/stakeholders/mining-companies',
+        path: '/stakeholders/organizations',
         icon: Users,
         color: '#10976b',
         children: [
+          { label: 'Organisations', path: '/stakeholders/organizations', icon: Landmark, color: '#10976b' },
           { label: 'Sociétés minières', path: '/stakeholders/mining-companies', icon: Building2, color: '#10976b' },
           { label: 'Clients internationaux', path: '/customers', icon: Users, color: '#14b8a6' },
-          { label: 'Approbateurs', path: '/stakeholders/approvers', icon: CheckCircle2, color: '#2f6fec' },
           { label: 'Transporteurs', path: '/stakeholders/freight-companies', icon: Truck, color: '#d79a00' },
           { label: 'Raffineries', path: '/stakeholders/refinery-plants', icon: FlaskConical, color: '#8b5cf6' },
           { label: 'Dépositaires', path: '/stakeholders/depositors', icon: Users, color: '#10976b' },
@@ -234,6 +303,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'documents',
+        moduleCode: 'documents',
         label: 'Documents',
         path: '/documents/assay-certificates',
         icon: FileText,
@@ -251,6 +321,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'settings',
+        moduleCode: 'settings',
         label: 'Paramètres',
         path: '/parameters',
         icon: SlidersHorizontal,
@@ -264,15 +335,12 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'administration',
+        moduleCode: 'administration',
         label: 'Administration',
         path: '/users',
         icon: Settings,
         color: '#f97316',
-        children: [
-          { label: 'Utilisateurs', path: '/users', icon: Users, color: '#f97316' },
-          { label: 'Modules', path: '/admin/modules', icon: Layers, color: '#8b5cf6' },
-          { label: 'Messagerie', path: '/admin/messagerie', icon: Mail, color: '#2f6fec' },
-        ],
+        children: ADMINISTRATION_NAVIGATION_ITEMS,
       },
     ],
   },
@@ -282,6 +350,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'vue-ventes',
+        moduleCode: 'sales_analytics',
         label: 'Analyses des ventes',
         path: '/analytics/ventes',
         icon: CircleDollarSign,
@@ -289,6 +358,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'vue-production',
+        moduleCode: 'production_analytics',
         label: 'Rapports de production',
         path: '/analytics/production',
         icon: Building2,
@@ -296,6 +366,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'rapports-institutionnels',
+        moduleCode: 'reports',
         label: 'Rapports institutionnels',
         path: '/reports',
         icon: FileText,
@@ -303,6 +374,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'performance-nationale',
+        moduleCode: 'analytics',
         label: 'Performance nationale',
         path: '/analytics',
         icon: TrendingUp,
@@ -324,6 +396,7 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'comptoir-achats',
+        moduleCode: 'artisan_gold_market',
         label: "Achats d’or",
         path: '/artisan-minier/ventes-or',
         icon: CircleDollarSign,
@@ -335,6 +408,7 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'comptoir-orpailleurs',
+        moduleCode: 'artisan-minier',
         label: 'Orpailleurs rattachés',
         path: '/artisan-minier/liste',
         icon: Users,
@@ -348,6 +422,7 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'comptoir-factures',
+        moduleCode: 'artisan_gold_market',
         label: 'DGI et paiements',
         path: '/artisan-minier/paiements',
         icon: FileSignature,
@@ -366,6 +441,7 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'comptoir-stock-or',
+        moduleCode: 'gold_inventory',
         label: "Stock d’or",
         path: '/portail-comptoir/stock',
         icon: Layers,
@@ -373,6 +449,7 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'comptoir-cessions',
+        moduleCode: 'sales',
         label: 'Cessions à la SONASP',
         path: '/portail-comptoir/ventes-sonasp',
         icon: Building2,
@@ -386,6 +463,7 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'comptoir-rapports',
+        moduleCode: 'analytics',
         label: 'Rapports et analyses',
         path: '/artisan-minier/rapports',
         icon: BarChart3,
@@ -412,6 +490,7 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'collecteur-accueil',
+        moduleCode: 'dashboard',
         label: 'Mon espace',
         path: '/portail-collecteur',
         icon: Grid2X2,
@@ -419,6 +498,7 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'collecteur-orpailleurs',
+        moduleCode: 'artisan-minier',
         label: 'Orpailleurs assignés',
         path: '/artisan-minier/liste',
         icon: Users,
@@ -426,6 +506,7 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'collecteur-registre',
+        moduleCode: 'artisan_gold_market',
         label: 'Registre des collectes',
         path: '/artisan-minier/ventes-or',
         icon: CircleDollarSign,
@@ -439,6 +520,7 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
     groups: [
       {
         id: 'collecteur-stock',
+        moduleCode: 'gold_inventory',
         label: 'Stock du comptoir',
         path: '/portail-collecteur/stock',
         icon: Layers,
@@ -446,6 +528,7 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'collecteur-paiements',
+        moduleCode: 'artisan_gold_market',
         label: 'Paiements',
         path: '/artisan-minier/paiements/historique',
         icon: CircleDollarSign,
@@ -453,6 +536,7 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'collecteur-taxes',
+        moduleCode: 'artisan_gold_market',
         label: 'Taxes et retenues',
         path: '/artisan-minier/rapports/taxes',
         icon: BarChart3,
@@ -460,6 +544,7 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       {
         id: 'collecteur-documents',
+        moduleCode: 'documents',
         label: 'Documents',
         path: '/portail-collecteur/documents',
         icon: FileText,
@@ -469,12 +554,39 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
   },
 ];
 
+export const DGMG_NAVIGATION_SECTIONS: NavigationSection[] = [{
+  id: 'dgmg-supervision',
+  title: 'Supervision DGMG',
+  groups: [
+    { id: 'dgmg-overview', moduleCode: 'dashboard', label: 'Vue réglementaire', path: '/portail-dgmg', icon: Building2, color: '#0f7a56' },
+    { id: 'dgmg-sites', moduleCode: 'mining_sites', label: 'Registre des sites', path: '/artisan-sites', icon: Mountain, color: '#0f7a56' },
+    { id: 'dgmg-artisans', moduleCode: 'artisan-minier', label: 'Artisans et opérateurs', path: '/artisan-minier/liste', icon: Users, color: '#10976b' },
+    { id: 'dgmg-productions', moduleCode: 'production', label: 'Productions déclarées', path: '/production/daily', icon: TrendingUp, color: '#2f6fec' },
+    { id: 'dgmg-reserve-validations', moduleCode: 'national_reserve', label: 'Validations Réserve', path: '/portail-dgmg/reserve-validations', icon: ShieldCheck, color: '#8b5cf6' },
+  ],
+}];
+
+export const DGI_NAVIGATION_SECTIONS: NavigationSection[] = [{
+  id: 'dgi-fiscalite',
+  title: 'Contrôle fiscal',
+  groups: [
+    { id: 'dgi-overview', moduleCode: 'dashboard', label: 'Vue fiscale', path: '/portail-dgi', icon: Scale, color: '#d99a00' },
+    { id: 'dgi-productions', moduleCode: 'production', label: 'Productions', path: '/production/daily', icon: TrendingUp, color: '#2f6fec' },
+    { id: 'dgi-ventes', moduleCode: 'artisan_gold_market', label: 'Ventes déclarées', path: '/artisan-minier/ventes-or', icon: CircleDollarSign, color: '#0f7a56' },
+    { id: 'dgi-paiements', moduleCode: 'artisan_gold_market', label: 'Paiements fiscaux', path: '/portail-dgi/paiements', icon: FileSignature, color: '#7b3f61' },
+    { id: 'dgi-taxes', moduleCode: 'artisan_gold_market', label: 'Taxes et redevances', path: '/artisan-minier/rapports/taxes', icon: BarChart3, color: '#c47a3b' },
+    { id: 'dgi-conciliations', moduleCode: 'conciliation', label: 'Conciliations', path: '/conciliation', icon: ClipboardCheck, color: '#635bff' },
+    { id: 'dgi-regles', moduleCode: 'conciliation', label: 'Règles fiscales', path: '/conciliation/regles-fiscales', icon: Gavel, color: '#b97f00' },
+  ],
+}];
+
 export const SONASP_COMPTOIR_NAVIGATION_SECTION: NavigationSection = {
   id: 'relations-comptoirs',
   title: 'Relations avec les comptoirs',
   groups: [
     {
       id: 'sonasp-cessions-comptoirs',
+      moduleCode: 'gold_purchases',
       label: 'Cessions comptoirs',
       path: '/sonasp/cessions-comptoirs',
       icon: Building2,
@@ -488,24 +600,47 @@ export const ALL_GROUPS: NavigationGroup[] = [
   ...NAVIGATION_SECTIONS,
   ...COMPTOIR_NAVIGATION_SECTIONS,
   ...COLLECTOR_NAVIGATION_SECTIONS,
+  ...DGMG_NAVIGATION_SECTIONS,
+  ...DGI_NAVIGATION_SECTIONS,
   SONASP_COMPTOIR_NAVIGATION_SECTION,
 ].flatMap((section) => section.groups);
 
 function filterNavigationSections(
   sections: NavigationSection[],
   user: UserProfile,
+  moduleAvailability?: ModuleAvailabilityMap | null,
 ): NavigationSection[] {
-  const canNavigate = (path: string) => (
-    path !== '/production/licenses/requests'
-    || hasSensitiveCapability(user, CAPABILITIES.SONASP_APPROVE)
-  ) && canAccessPrivateRoute(user, path);
+  const ownerHasGlobalAccess = hasGlobalPlatformAccess(user);
+  // Les codes canoniques sont plus précis que les domaines : un groupe achats
+  // comprend aussi des contrats. Ne pas refuser son enfant avec un second filtre
+  // de domaine quand le registre a déjà vérifié l'attribution du module parent.
+  const effectiveDomains = ownerHasGlobalAccess || Array.isArray(user.module_codes) || !user.module_domains
+    ? null
+    : new Set(user.module_domains);
+  const canNavigate = (path: string) => ownerHasGlobalAccess || ((
+      path !== '/production/licenses/requests'
+      || hasSensitiveCapability(user, CAPABILITIES.SONASP_APPROVE)
+    ) && canAccessPrivateRoute(user, path)
+      && (!moduleDomainForPath(path) || effectiveDomains === null || effectiveDomains.has(moduleDomainForPath(path) as string)));
 
   return sections.flatMap((section) => {
     const groups = section.groups.flatMap((group) => {
+      if (!ownerHasGlobalAccess && moduleAvailability && group.moduleCode) {
+        const state = moduleAvailability[group.moduleCode];
+        // Les bascules s'appliquent aux comptes habilités, jamais au Owner :
+        // son accès de continuité couvre aussi un catalogue en retard.
+        if (!state?.isActive || !state.isVisibleInMenu) return [];
+      }
       const groupAllowed = canNavigate(group.path);
       if (!group.children?.length) return groupAllowed ? [group] : [];
 
-      const children = group.children.filter((item) => canNavigate(item.path));
+      const children = group.children.filter((item) => {
+        if (!ownerHasGlobalAccess && moduleAvailability && item.catalogCode) {
+          const state = moduleAvailability[item.catalogCode];
+          if (!state?.isActive || !state.isVisibleInMenu) return false;
+        }
+        return canNavigate(item.path);
+      });
       if (children.length === 0) return groupAllowed ? [{ ...group, children: undefined }] : [];
       return [{
         ...group,
@@ -543,6 +678,7 @@ const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
   sales: new Set(['/sales', '/payments']),
   stakeholders: new Set([
     '/customers',
+    '/stakeholders/organizations',
     '/stakeholders/freight-companies',
     '/stakeholders/refinery-plants',
     '/stakeholders/depositors',
@@ -551,16 +687,21 @@ const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
 };
 
 /** Navigation unique, projetée selon le périmètre autoritatif du compte. */
-export function getNavigationSectionsForUser(user: UserProfile | null): NavigationSection[] {
+export function getNavigationSectionsForUser(
+  user: UserProfile | null,
+  moduleAvailability?: ModuleAvailabilityMap | null,
+): NavigationSection[] {
   const accountType: AccountType = accountTypeFor(user);
   if (!user || accountType === 'unknown' || accountType === 'direction') return [];
-  if (isCollectorScopedUser(user)) return filterNavigationSections(COLLECTOR_NAVIGATION_SECTIONS, user);
-  if (isComptoirScopedUser(user)) return filterNavigationSections(COMPTOIR_NAVIGATION_SECTIONS, user);
+  if (accountType === 'dgmg') return filterNavigationSections(DGMG_NAVIGATION_SECTIONS, user, moduleAvailability);
+  if (accountType === 'dgi') return filterNavigationSections(DGI_NAVIGATION_SECTIONS, user, moduleAvailability);
+  if (isCollectorScopedUser(user)) return filterNavigationSections(COLLECTOR_NAVIGATION_SECTIONS, user, moduleAvailability);
+  if (isComptoirScopedUser(user)) return filterNavigationSections(COMPTOIR_NAVIGATION_SECTIONS, user, moduleAvailability);
   if (!isMineScopedUser(user)) {
     const candidate = canAccessSonaspComptoirInbox(user)
       ? [...NAVIGATION_SECTIONS, SONASP_COMPTOIR_NAVIGATION_SECTION]
       : NAVIGATION_SECTIONS;
-    return filterNavigationSections(candidate, user);
+    return filterNavigationSections(candidate, user, moduleAvailability);
   }
 
   const industrial = NAVIGATION_SECTIONS.find((section) => section.id === 'industrielles');
@@ -575,5 +716,5 @@ export function getNavigationSectionsForUser(user: UserProfile | null): Navigati
       if (children.length === 0) return [];
       return [{ ...group, path: children[0].path, children }];
     }),
-  }], user);
+  }], user, moduleAvailability);
 }

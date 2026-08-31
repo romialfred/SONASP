@@ -11,24 +11,12 @@ import { Tabs } from '@/components/ui/Tabs';
 import { shippingPreparationService, ShippingPreparation, ShippingProductionItem, ShippingSignatory, ShippingDocument } from '@/services/shippingPreparationService';
 import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
 import { ShippingStatusWorkflowEnhanced } from '@/components/shipping/ShippingStatusWorkflowEnhanced';
-import { ShippingStatusHistory } from '@/components/shipping/ShippingStatusHistory';
-import { ShippingStatus } from '@/constants/shippingStatuses';
+import { ShippingStatusHistory, type ShippingStatusHistoryEntry } from '@/components/shipping/ShippingStatusHistory';
+import { SHIPPING_STATUSES, ShippingStatus } from '@/constants/shippingStatuses';
 import { supabase } from '@/lib/supabase';
 import { useDialog } from '@/contexts/DialogContext';
 import { getCertificateUrl, getShippingCertificates, AssayCertificate } from '@/services/assayCertificateService';
 import { shippingStatusService } from '@/services/shippingStatusService';
-
-interface ShippingStatusHistoryEntry {
-  id: string;
-  entity_id: string;
-  old_status: string | null;
-  new_status: string;
-  changed_by: string | null;
-  changed_at: string;
-  notes: string | null;
-  action_description: string | null;
-  user_email?: string;
-}
 
 interface MiningCompany {
   id: string;
@@ -50,9 +38,12 @@ interface TransportCompany {
 interface ExportLicense {
   id: string;
   license_number: string;
-  issue_date?: string;
-  expiry_date?: string;
+  start_date?: string;
+  end_date?: string;
 }
+
+const isShippingStatus = (status: string | null): status is ShippingStatus =>
+  Boolean(status && status in SHIPPING_STATUSES);
 
 const getDocumentType = (title: string): { type: string; order: number; icon: any; label: string } => {
   const titleLower = title.toLowerCase();
@@ -177,7 +168,7 @@ export function ShippingPreparationDetailsEnhanced() {
       if (prep.export_license_id) {
         const { data } = await supabase
           .from('export_licenses')
-          .select('id, license_number, issue_date, expiry_date')
+          .select('id, license_number, start_date, end_date')
           .eq('id', prep.export_license_id)
           .maybeSingle();
         if (data) setLicense(data);
@@ -289,9 +280,17 @@ export function ShippingPreparationDetailsEnhanced() {
             }
           }
           return {
-            ...entry,
-            user_email: userEmail
-          } as ShippingStatusHistoryEntry;
+            id: entry.id,
+            shipping_preparation_id: entry.entity_id,
+            old_status: isShippingStatus(entry.old_status) ? entry.old_status : null,
+            new_status: isShippingStatus(entry.new_status)
+              ? entry.new_status
+              : 'waiting_for_customs_approval',
+            changed_by: entry.changed_by ?? 'system',
+            changed_at: entry.changed_at,
+            notes: entry.notes,
+            user_email: userEmail,
+          } satisfies ShippingStatusHistoryEntry;
         })
       );
 
@@ -389,6 +388,7 @@ export function ShippingPreparationDetailsEnhanced() {
     <MainLayout>
       {error && (
         <ErrorDialog
+          isOpen
           title={error.title}
           message={error.message}
           onClose={() => setError(null)}
@@ -530,24 +530,24 @@ export function ShippingPreparationDetailsEnhanced() {
                                         <span className="text-xs text-gray-900 font-semibold">{license.license_number}</span>
                                       </div>
 
-                                      {license.issue_date && (
+                                      {license.start_date && (
                                         <div className="flex justify-between">
                                           <span className="text-xs font-medium text-gray-600">Date d'Émission :</span>
-                                          <span className="text-xs text-gray-900">{formatDate(license.issue_date)}</span>
+                                          <span className="text-xs text-gray-900">{formatDate(license.start_date)}</span>
                                         </div>
                                       )}
 
-                                      {license.expiry_date && (
+                                      {license.end_date && (
                                         <div className="flex justify-between">
                                           <span className="text-xs font-medium text-gray-600">Date d'Expiration :</span>
-                                          <span className="text-xs text-gray-900">{formatDate(license.expiry_date)}</span>
+                                          <span className="text-xs text-gray-900">{formatDate(license.end_date)}</span>
                                         </div>
                                       )}
 
-                                      {license.expiry_date && (
+                                      {license.end_date && (
                                         <div className="mt-2 pt-2 border-t border-gray-200">
                                           <div className="flex items-center gap-1.5">
-                                            {new Date(license.expiry_date) > new Date() ? (
+                                            {new Date(license.end_date) > new Date() ? (
                                               <>
                                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                                 <span className="text-xs text-green-700 font-medium">Licence Valide</span>

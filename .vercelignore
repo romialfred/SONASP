@@ -1,0 +1,12 @@
+.git/
+.vercel/
+node_modules/
+dist/
+coverage/
+.env*
+
+# Artefacts locaux et pièces de conception non nécessaires au build Vite.
+design/
+output/
+docs/audits/
+*.txt

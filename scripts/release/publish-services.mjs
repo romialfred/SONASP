@@ -27,7 +27,7 @@ if (Object.keys(settings).length) {
   finally { unlinkSync(secretFile); }
   console.log(JSON.stringify({configured:Object.keys(settings)}));
 }
-const targets = ['delete-user','revoke-user-sessions','envoyer-courriel','get-user-details','get-users','manage-user-status','reset-user-password','activate-account','public-assistance','fetch-daily-fx-rates','fetch-daily-lbma-prices','scheduled-tasks'];
+const targets = ['create-user','delete-user','revoke-user-sessions','envoyer-courriel','get-user-details','get-users','manage-user-status','reset-user-password','sensitive-upload','activate-account','public-assistance','fetch-daily-fx-rates','fetch-daily-lbma-prices','scheduled-tasks'];
 const receipts=[];
 const hash = s => createHash('sha256').update(s.replace(/\r\n?/g,'\n').trim()).digest('hex');
 for (const slug of targets) {

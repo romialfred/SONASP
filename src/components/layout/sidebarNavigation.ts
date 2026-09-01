@@ -51,6 +51,10 @@ export type NavigationItem = {
   path: string;
   icon: LucideIcon;
   color: string;
+  /** Regroupement visuel facultatif dans un sous-menu, sans niveau cliquable supplémentaire. */
+  category?: string;
+  /** Module canonique de l'entrée lorsqu'il diffère de celui du groupe visuel. */
+  moduleCode?: PlatformModuleCode;
   /** Code du sous-module dans `snp_modules`, utilisé pour sa visibilité. */
   catalogCode?: string;
 };
@@ -96,7 +100,7 @@ export const ADMINISTRATION_NAVIGATION_ITEMS: NavigationItem[] =
   }));
 
 /**
- * Navigation principale, organisée en quatre sections métier.
+ * Navigation principale, organisée selon la chaîne de valeur SONASP.
  *
  * Chaque entrée pointe vers une route effectivement déclarée dans `App.tsx` : une
  * entrée de menu vers une page inexistante est un cul-de-sac, défaut déjà relevé
@@ -105,7 +109,7 @@ export const ADMINISTRATION_NAVIGATION_ITEMS: NavigationItem[] =
 export const NAVIGATION_SECTIONS: NavigationSection[] = [
   {
     id: 'semi-mecanise',
-    title: 'Mines semi-mécanisées',
+    title: 'Mine semi-mécanisée',
     groups: [
       {
         id: 'sites-miniers',
@@ -134,81 +138,60 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: 'Expirations', path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, color: '#f36b21' },
         ],
       },
-      {
-        id: 'marche-artisanal',
-        moduleCode: 'artisan_gold_market',
-        label: "Marché d'or artisanal",
-        path: '/artisan-minier/paiements',
-        icon: CircleDollarSign,
-        color: '#d79a00',
-        children: [
-          { label: "Vue d'ensemble", path: '/artisan-minier/paiements', icon: Grid2X2, color: '#16a363' },
-          { label: "Ventes d'or", path: '/artisan-minier/ventes-or', icon: CircleDollarSign, color: '#d79a00' },
-          { label: 'Paiements', path: '/artisan-minier/paiements/historique', icon: CircleDollarSign, color: '#2f6fec' },
-          { label: 'Rapports et analyses', path: '/artisan-minier/rapports', icon: BarChart3, color: '#8b5cf6' },
-        ],
-      },
     ],
   },
   {
     id: 'industrielles',
-    title: 'Mines industrielles',
+    title: 'Mine industrielle',
     groups: [
       {
-        id: 'conciliation',
-        moduleCode: 'conciliation',
-        label: 'Conciliation',
-        path: '/conciliation',
-        icon: Scale,
-        color: '#635bff',
+        id: 'previsions-licences',
+        moduleCode: 'production',
+        label: 'Prévisions & licences',
+        path: '/production/licenses/requests',
+        icon: FileSignature,
+        color: '#2f6fec',
         children: [
-          { label: 'Dossiers', path: '/conciliation', icon: Scale, color: '#635bff' },
-          { label: 'Règles fiscales', path: '/conciliation/regles-fiscales', icon: Gavel, color: '#b97f00' },
+          { label: 'Demandes de licence', path: '/production/licenses/requests', icon: ClipboardCheck, color: '#0f7a56' },
+          { label: 'Licences d’exportation', path: '/production/licenses', icon: FileText, color: '#2f6fec' },
+          { label: 'Prévisions & Forecast', path: '/performance/budgets', icon: TrendingUp, color: '#14b8a6' },
         ],
       },
-
       {
         id: 'production',
         moduleCode: 'production',
-        label: "Collecte de l'or",
+        label: 'Gestion de la production',
         path: '/production/daily',
         icon: Building2,
         color: '#10976b',
         children: [
           { label: 'Production journalière', path: '/production/daily', icon: Building2, color: '#10976b' },
-          { label: 'Achats aux mines', path: '/production/achats-mines', icon: CircleDollarSign, color: '#d79a00' },
           { label: 'Or en coffre', path: '/production/in-safe', icon: PackageCheck, color: '#d79a00' },
-          { label: "Licences d'exportation", path: '/production/licenses', icon: FileText, color: '#2f6fec' },
-          { label: 'Demandes de licences', path: '/production/licenses/requests', icon: ClipboardCheck, color: '#0f7a56' },
-          { label: 'Prévisions & Forecast', path: '/performance/budgets', icon: TrendingUp, color: '#14b8a6' },
         ],
       },
       {
-        // Achat d'or industriel : de la planification mensuelle au règlement des
-        // mines. Le groupe suit « Collecte de l'or », dont il consomme la
-        // production déclarée.
         id: 'achats-industriels',
         moduleCode: 'gold_purchases',
-        label: 'Achats d’or',
+        label: 'Achat aux mines industrielles',
         path: '/achats/plans',
         icon: CircleDollarSign,
         color: '#d79a00',
         children: [
-          // Le contrat precede le plan : c'est lui qui fixe les quantites que le
-          // plan mensuel reprend comme besoins prioritaires.
+          { label: 'Achat aux mines', path: '/production/achats-mines', icon: CircleDollarSign, color: '#d79a00' },
           { label: 'Contrats de fourniture', path: '/contrats', icon: FileSignature, color: '#0f7a56' },
           { label: 'Pilotage des engagements', path: '/contrats/pilotage', icon: BellRing, color: '#b97f00' },
           { label: 'Plans mensuels', path: '/achats/plans', icon: CalendarRange, color: '#d79a00' },
           { label: 'Demandes aux mines', path: '/achats/demandes', icon: FileText, color: '#2f6fec' },
           { label: 'Réquisitions', path: '/requisitions', icon: Gavel, color: '#b3261e' },
-          { label: 'Règlements', path: '/achats/reglements', icon: CircleDollarSign, color: '#10976b' },
-          { label: 'Comptes des mines', path: '/achats/comptes', icon: BarChart3, color: '#8b5cf6' },
+          { label: 'Vue d’ensemble', path: '/achats/comptes-paiements', icon: Grid2X2, color: '#10976b', category: 'Suivi des comptes & paiements' },
+          { label: 'Suivi des paiements', path: '/achats/reglements', icon: CircleDollarSign, color: '#10976b', category: 'Suivi des comptes & paiements' },
+          { label: 'Comptes des mines', path: '/achats/comptes', icon: BarChart3, color: '#8b5cf6', category: 'Suivi des comptes & paiements' },
         ],
       },
       {
         id: 'shipping',
         moduleCode: 'shipping',
-        label: 'Expéditions',
+        label: 'Gestion des expéditions',
         path: '/shipping/preparation',
         icon: Truck,
         color: '#2f6fec',
@@ -219,10 +202,35 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: 'Formalités douanières', path: '/freight-customs', icon: FileText, color: '#8b5cf6' },
         ],
       },
+    ],
+  },
+  {
+    id: 'vente-achat-or',
+    title: 'Vente & achat d’or',
+    groups: [
+      {
+        id: 'marche-artisanal',
+        moduleCode: 'artisan_gold_market',
+        label: 'Marché d’or artisanal',
+        path: '/artisan-minier/paiements',
+        icon: CircleDollarSign,
+        color: '#d79a00',
+        children: [
+          { label: 'Vue d’ensemble', path: '/artisan-minier/paiements', icon: Grid2X2, color: '#16a363' },
+          { label: 'Achat d’or local', path: '/artisan-minier/ventes-or', icon: CircleDollarSign, color: '#d79a00' },
+          { label: 'Paiements', path: '/artisan-minier/paiements/historique', icon: CircleDollarSign, color: '#2f6fec' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'raffinage-stocks',
+    title: 'Raffinage & stocks',
+    groups: [
       {
         id: 'refining',
         moduleCode: 'refining',
-        label: 'Raffinage',
+        label: 'Gestion du raffinage',
         path: '/refining',
         icon: FlaskConical,
         color: '#8b5cf6',
@@ -234,7 +242,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       {
         id: 'inventory',
         moduleCode: 'gold_inventory',
-        label: 'Suivi des stocks',
+        label: 'Suivi du stock d’or',
         path: '/inventory',
         icon: Layers,
         color: '#14b8a6',
@@ -244,10 +252,16 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: 'Nouvelle entrée de stock', path: '/inventory/add', icon: ClipboardCheck, color: '#d79a00', catalogCode: 'inventory-new-entry' },
         ],
       },
+    ],
+  },
+  {
+    id: 'reserve-or-burkina',
+    title: 'Réserve d’or du Burkina Faso',
+    groups: [
       {
         id: 'national-reserve',
         moduleCode: 'national_reserve',
-        label: 'Réserve nationale',
+        label: 'Réserve nationale d’or',
         path: '/national-reserve',
         icon: Landmark,
         color: '#0c8a5f',
@@ -260,6 +274,12 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: 'Rapports et audit', path: '/national-reserve/audit', icon: FileText, color: '#64748b', catalogCode: 'inventory-audit' },
         ],
       },
+    ],
+  },
+  {
+    id: 'vente-internationale',
+    title: 'Vente internationale',
+    groups: [
       {
         id: 'market',
         moduleCode: 'international_markets',
@@ -276,13 +296,15 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
       {
         id: 'sales',
         moduleCode: 'sales',
-        label: 'Vente d’or international',
+        label: 'Ventes d’or internationales',
         path: '/sales',
         icon: CircleDollarSign,
         color: '#ec4899',
         children: [
           { label: 'Ventes', path: '/sales', icon: CircleDollarSign, color: '#ec4899' },
           { label: 'Paiements', path: '/payments', icon: CircleDollarSign, color: '#16a363' },
+          { label: 'Dossiers de conciliation', path: '/conciliation', icon: Scale, color: '#635bff', category: 'Conciliation', moduleCode: 'conciliation' },
+          { label: 'Règles fiscales', path: '/conciliation/regles-fiscales', icon: Gavel, color: '#b97f00', category: 'Conciliation', moduleCode: 'conciliation' },
         ],
       },
       {
@@ -310,7 +332,6 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         color: '#8b5cf6',
         children: [
           { label: "Certificats d'essai", path: '/documents/assay-certificates', icon: FileText, color: '#8b5cf6' },
-          { label: 'Rapports', path: '/reports', icon: BarChart3, color: '#2f6fec' },
         ],
       },
     ],
@@ -625,16 +646,19 @@ function filterNavigationSections(
 
   return sections.flatMap((section) => {
     const groups = section.groups.flatMap((group) => {
-      if (!ownerHasGlobalAccess && moduleAvailability && group.moduleCode) {
-        const state = moduleAvailability[group.moduleCode];
-        // Les bascules s'appliquent aux comptes habilités, jamais au Owner :
-        // son accès de continuité couvre aussi un catalogue en retard.
-        if (!state?.isActive || !state.isVisibleInMenu) return [];
-      }
-      const groupAllowed = canNavigate(group.path);
+      const moduleVisible = (code?: PlatformModuleCode) => {
+        if (ownerHasGlobalAccess || !moduleAvailability || !code) return true;
+        const state = moduleAvailability[code];
+        return Boolean(state?.isActive && state.isVisibleInMenu);
+      };
+      const groupAllowed = moduleVisible(group.moduleCode) && canNavigate(group.path);
       if (!group.children?.length) return groupAllowed ? [group] : [];
 
       const children = group.children.filter((item) => {
+        // Un groupe est une famille visuelle, pas une frontière d'autorisation.
+        // Ainsi les dossiers de conciliation restent gouvernés par le module
+        // `conciliation`, même lorsqu'ils sont rangés avec les ventes.
+        if (!moduleVisible(item.moduleCode ?? group.moduleCode)) return false;
         if (!ownerHasGlobalAccess && moduleAvailability && item.catalogCode) {
           const state = moduleAvailability[item.catalogCode];
           if (!state?.isActive || !state.isVisibleInMenu) return false;
@@ -653,12 +677,14 @@ function filterNavigationSections(
 }
 
 const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
-  production: new Set([
-    '/production/daily',
-    '/production/in-safe',
+  'previsions-licences': new Set([
     '/production/licenses',
     '/performance/budgets',
     '/performance/forecasts',
+  ]),
+  production: new Set([
+    '/production/daily',
+    '/production/in-safe',
   ]),
   'achats-industriels': new Set([
     '/contrats',
@@ -683,7 +709,8 @@ const MINE_GROUP_CHILDREN: Record<string, Set<string>> = {
     '/stakeholders/refinery-plants',
     '/stakeholders/depositors',
   ]),
-  documents: new Set(['/documents/assay-certificates', '/reports']),
+  documents: new Set(['/documents/assay-certificates']),
+  'rapports-institutionnels': new Set(['/reports']),
 };
 
 /** Navigation unique, projetée selon le périmètre autoritatif du compte. */
@@ -704,17 +731,17 @@ export function getNavigationSectionsForUser(
     return filterNavigationSections(candidate, user, moduleAvailability);
   }
 
-  const industrial = NAVIGATION_SECTIONS.find((section) => section.id === 'industrielles');
-  if (!industrial) return [];
-
-  return filterNavigationSections([{
-    ...industrial,
-    groups: industrial.groups.flatMap((group) => {
+  const projected = NAVIGATION_SECTIONS.flatMap((section) => {
+    const groups = section.groups.flatMap((group) => {
       const allowed = MINE_GROUP_CHILDREN[group.id];
       if (!allowed) return [];
+      if (!group.children?.length) return allowed.has(group.path) ? [group] : [];
       const children = group.children?.filter((item) => allowed.has(item.path)) || [];
       if (children.length === 0) return [];
       return [{ ...group, path: children[0].path, children }];
-    }),
-  }], user, moduleAvailability);
+    });
+    return groups.length > 0 ? [{ ...section, groups }] : [];
+  });
+
+  return filterNavigationSections(projected, user, moduleAvailability);
 }

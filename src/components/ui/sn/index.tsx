@@ -120,10 +120,10 @@ export function PageHeader({ title, subtitle, icon: Icon, breadcrumb, actions, a
           </span>
         )}
         <div>
-          <h2>
+          <h1 className="sn-page__title">
             {title}
             {info && <Infobulle titre={info.titre}>{info.contenu}</Infobulle>}
-          </h2>
+          </h1>
           {subtitle && <p className="sn-page__subtitle">{subtitle}</p>}
         </div>
         {aside}
@@ -309,21 +309,29 @@ export function Tabs<T extends string>({ value, options, onChange, ariaLabel, va
   ariaLabel: string;
   variant?: 'underline' | 'pill';
 }) {
-  const deplacer = (pas: number) => {
-    const index = options.findIndex((option) => option.value === value);
-    if (index < 0) return;
-    const cible = options[(index + pas + options.length) % options.length];
+  const boutons = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const selectionnerEtFocaliser = (index: number) => {
+    const cible = options[index];
+    if (!cible) return;
     onChange(cible.value);
+    boutons.current[index]?.focus();
+  };
+
+  const deplacer = (index: number, pas: number) => {
+    if (options.length === 0) return;
+    selectionnerEtFocaliser((index + pas + options.length) % options.length);
   };
 
   return (
     <div className={`sn-tabs sn-tabs--${variant}`} role="tablist" aria-label={ariaLabel}>
-      {options.map((option) => {
+      {options.map((option, index) => {
         const Icon = option.icon;
         const actif = option.value === value;
         return (
           <button
             key={option.value}
+            ref={(element) => { boutons.current[index] = element; }}
             type="button"
             role="tab"
             id={`sn-tab-${option.value}`}
@@ -333,8 +341,10 @@ export function Tabs<T extends string>({ value, options, onChange, ariaLabel, va
             className={`sn-tabs__item${actif ? ' is-active' : ''}`}
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => {
-              if (event.key === 'ArrowRight') { event.preventDefault(); deplacer(1); }
-              if (event.key === 'ArrowLeft') { event.preventDefault(); deplacer(-1); }
+              if (event.key === 'ArrowRight') { event.preventDefault(); deplacer(index, 1); }
+              if (event.key === 'ArrowLeft') { event.preventDefault(); deplacer(index, -1); }
+              if (event.key === 'Home') { event.preventDefault(); selectionnerEtFocaliser(0); }
+              if (event.key === 'End') { event.preventDefault(); selectionnerEtFocaliser(options.length - 1); }
             }}
           >
             {Icon && <Icon aria-hidden="true" />}
@@ -521,7 +531,13 @@ export function DataTable<T extends { id?: string }>({ columns, rows, onRowClick
             <tr
               key={row.id || index}
               className={onRowClick ? 'is-clickable' : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
+              onKeyDown={onRowClick ? (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                onRowClick(row);
+              } : undefined}
             >
               {columns.map((column) => (
                 <td key={column.key} className={column.numeric ? 'sn-table__num' : undefined}>

@@ -80,7 +80,7 @@ export function SilverInventoryManagement() {
           icon={Coins}
           title="Position argent associée"
           subtitle="Teneur en argent déclarée dans les lots d’or du stock opérationnel."
-          breadcrumb={[{ label: 'Suivi des stocks', to: '/inventory' }, { label: 'Position argent' }]}
+          breadcrumb={[{ label: 'Raffinage & stocks' }, { label: 'Suivi du stock d’or', to: '/inventory' }, { label: 'Position argent' }]}
           info={{
             titre: 'Périmètre de calcul',
             contenu: <>Cette vue dérive l’argent associé aux lots depuis le poids après fonte et la teneur certifiée. Elle ne constitue pas un registre d’argent autonome.</>,

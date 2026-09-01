@@ -773,7 +773,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
                 ? 'Objectifs mensuels et suivi de la production annuelle.'
                 : `Révision du trimestre ${selectedQuarter || ''}.`
             }
-            breadcrumb={[{ label: 'Production' }, { label: 'Prévisions' }]}
+            breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Prévisions & licences' }, { label: 'Prévisions & Forecast' }]}
             actions={
               <>
                 <button type="button" className="sn-btn" onClick={() => navigate('/production/daily')}>

@@ -1,7 +1,7 @@
 /* Scoped payment register: the national chrome and other forms stay unchanged. */
 .ip-list { font-family: Inter, Arial, sans-serif; color: var(--sn-ink); padding: 18px 24px 30px; min-width: 0; container: payment-register / inline-size; }
 .ip-list .sn-page__head { margin: 20px 0 27px; }
-.ip-list .sn-page__head h2 { font-size: 22px; letter-spacing: -.5px; }
+.ip-list .sn-page__title { font-size: 22px; letter-spacing: -.5px; }
 .ip-list .sn-page__subtitle { font-size: 12px; }
 .ip-list .sn-page__icon { width: 46px; height: 46px; border-radius: 18px; background: var(--sn-green-soft); }
 .ip-list .sn-page__actions .sn-btn { min-height: 44px; padding-inline: 21px; }
@@ -117,7 +117,7 @@
 @media (max-width: 700px) {
  .ip-list { padding: 16px 14px 24px; }
  .ip-list .sn-page__head { margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
- .ip-list .sn-page__head h2 { font-size: 21px; }
+ .ip-list .sn-page__title { font-size: 21px; }
  .ip-list .sn-page__actions { width: 100%; margin: 4px 0 0; }
  .ip-list .sn-page__actions .sn-btn { flex: 1; padding: 8px 12px; font-size: 12px; }
  .ip-list__metrics { gap: 10px; margin-bottom: 18px; }

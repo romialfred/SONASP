@@ -2130,6 +2130,126 @@
       "sha256": "0a155bfe406675330ac420923586ac0443fc3c6d6218860e5b0a7f8a38d816c5"
     },
     {
+      "path": "supabase/migrations/20260831223000_durcir_workflow_freight_shipments.sql",
+      "version": "20260831223000",
+      "description": "durcir_workflow_freight_shipments",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 18292,
+      "sha256": "a52f2f71d92f482a423c2b779d13c51f292e66f85e26e47da855f1b56c199d0c"
+    },
+    {
+      "path": "supabase/migrations/20260901130000_interdire_suppression_directe_ventes.sql",
+      "version": "20260901130000",
+      "description": "interdire_suppression_directe_ventes",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1110,
+      "sha256": "57b811cddb01468ebdf552818d619c10024beff7f9a1e0e5984edd5474b4b4db"
+    },
+    {
+      "path": "supabase/migrations/20260901133000_synchroniser_resume_paiements_vente.sql",
+      "version": "20260901133000",
+      "description": "synchroniser_resume_paiements_vente",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 5207,
+      "sha256": "dbd3ed3141b07f1b4f5b08c57d0cc81317c4d53955dfaa96256c4e6e3afb871c"
+    },
+    {
+      "path": "supabase/migrations/20260901150000_creer_fret_atomiquement.sql",
+      "version": "20260901150000",
+      "description": "creer_fret_atomiquement",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 34103,
+      "sha256": "d6700a020a9e707c63e94ce94e2901c0ec4050fbbdaef4c89a2382ce423b2f2d"
+    },
+    {
+      "path": "supabase/migrations/20260901151000_reconcilier_affectations_expedition_heritees.sql",
+      "version": "20260901151000",
+      "description": "reconcilier_affectations_expedition_heritees",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 4379,
+      "sha256": "14d6ea6ffd4a0e6253292bb0d446fe853a4bac502bca9bd32ee87094e39f952e"
+    },
+    {
+      "path": "supabase/migrations/20260901152000_interdire_surallocation_preparations.sql",
+      "version": "20260901152000",
+      "description": "interdire_surallocation_preparations",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 15290,
+      "sha256": "8b27ce61212044fb6253232b2763bfcd3b182434f421c92819cbb521e951d379"
+    },
+    {
+      "path": "supabase/migrations/20260901153000_creation_compte_transactionnelle.sql",
+      "version": "20260901153000",
+      "description": "creation_compte_transactionnelle",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 22252,
+      "sha256": "d62958eb3ec42a3f6413f56d7dd29e0afa65b1cb793d9528f3c2d85b7515ef72"
+    },
+    {
+      "path": "supabase/migrations/20260901154000_adosser_ventes_export_stock_physique.sql",
+      "version": "20260901154000",
+      "description": "adosser_ventes_export_stock_physique",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 25323,
+      "sha256": "50d37eebe1e33b1d25002adde98de38cf7dc20f22abda235d538f92358e6dcae"
+    },
+    {
+      "path": "supabase/migrations/20260901210000_figer_productions_engagees.sql",
+      "version": "20260901210000",
+      "description": "figer_productions_engagees",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 8938,
+      "sha256": "fc5f5aae30555be65071ca6857da82c05d64e1800bd91e3a18978d6ca1d8421d"
+    },
+    {
+      "path": "supabase/migrations/20260901213000_synchroniser_conciliation_vente_paiements_avoirs.sql",
+      "version": "20260901213000",
+      "description": "synchroniser_conciliation_vente_paiements_avoirs",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 36771,
+      "sha256": "aab888fa5310124b018510f6f6d641b3639096f823c3b57c86de5e327a9491d2"
+    },
+    {
+      "path": "supabase/migrations/20260901220000_figer_valorisation_et_activation_reserve.sql",
+      "version": "20260901220000",
+      "description": "figer_valorisation_et_activation_reserve",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 19949,
+      "sha256": "b1597cf8969f9770bf603833f61f82fdb8cf3fb36973caaccf289f6833eb8130"
+    },
+    {
+      "path": "supabase/migrations/20260901223000_exposer_lots_vente_export_eligibles.sql",
+      "version": "20260901223000",
+      "description": "exposer_lots_vente_export_eligibles",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 13979,
+      "sha256": "95405baa508a9823239959237eed2212622551b7148528e46c1c61d0f3e77212"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3123,10 +3243,10 @@
       },
       {
         "digits": 14,
-        "count": 116
+        "count": 128
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "f30870f049a9746aa5ee67ff42dd9ed8be316bc53b08e65fc0a3212c7cfb6d2d"
+  "catalogueSha256": "87597a0a2de83ac109a27950dd707c39d775e59e4f319a6da2ef3e1eaa18dab2"
 }

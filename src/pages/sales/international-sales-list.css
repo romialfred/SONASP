@@ -1,7 +1,7 @@
 .international-sales { padding: 16px 24px 24px; min-height: 100%; }
 .international-sales .sn-breadcrumb { margin-bottom: 10px; }
 .international-sales .sn-page__head { margin-bottom: 22px; }
-.international-sales .sn-page__head h2 { font-size: 23px; }
+.international-sales .sn-page__title { font-size: 23px; }
 .international-sales .sn-page__icon { border: 1px solid var(--sn-line); border-radius: var(--sn-radius); }
 .international-sales .sn-btn { min-height: 34px; font-size: 12px; gap: 9px; }
 .international-sales .sn-btn svg { width: 16px; height: 16px; }
@@ -105,7 +105,7 @@
 @media (max-width: 760px) {
   .international-sales { padding: 16px; }
   .international-sales .sn-page__head { flex-wrap: wrap; gap: 12px; }
-  .international-sales .sn-page__head h2 { font-size: 20px; }
+  .international-sales .sn-page__title { font-size: 20px; }
   .international-sales .sn-page__actions { width: 100%; justify-content: flex-end; }
   .international-sales__statuses { gap: 8px; }
   .international-sales__chip { min-height: 38px; }

@@ -33,6 +33,51 @@ const operation = {
   updated_at: '2026-08-24T00:00:00Z',
 };
 
+describe('freightCustomsService – live read contract', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  function query(result: unknown = []) {
+    const builder = {
+      select: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(), is: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockReturnThis(),
+      then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: result, error: null }).then(resolve),
+    };
+    mocks.from.mockReturnValue(builder);
+    return builder;
+  }
+
+  it.each(['listOperations', 'getOperationById'] as const)('%s disambiguates every duplicated foreign key', async (method) => {
+    const builder = query(method === 'listOperations' ? [] : null);
+    await freightCustomsService[method]('operation-id');
+    const select = builder.select.mock.calls[0][0] as string;
+    expect(select).toContain('shipping_preparations!fk_shipping_preparation');
+    expect(select).toContain('freight_customs_documents!fk_freight_operation(');
+    expect(select).toContain('freight_customs_invoice_data!fk_freight_operation_invoice(');
+    expect(select).not.toMatch(/\bshipping_preparation_items\(/);
+    expect(select).not.toMatch(/\bdaily_productions\(/);
+  });
+
+  it('loads eligible shipments using canonical columns and a left anti-join', async () => {
+    const builder = query();
+    await freightCustomsService.getAvailableShipments();
+    const select = builder.select.mock.calls[0][0] as string;
+    expect(select).toContain('reference_number:expedition_lot_number');
+    expect(select).toContain('total_weight_grams:total_net_weight_grams');
+    expect(select).toContain('freight_customs_operations!fk_shipping_preparation(id)');
+    expect(select).not.toContain('!inner');
+    expect(builder.eq).toHaveBeenCalledWith('status', 'ready_for_expedition');
+    expect(builder.is).toHaveBeenCalledWith('freight_customs_operations.id', null);
+    expect(builder.order).toHaveBeenCalledWith('prepared_at', { ascending: false });
+  });
+
+  it('propagates denied reads instead of returning an empty result', async () => {
+    const denied = { code: '42501', message: 'denied' };
+    const builder = query();
+    builder.then = (resolve) => Promise.resolve({ data: null, error: denied }).then(resolve);
+    await expect(freightCustomsService.listOperations()).rejects.toBe(denied);
+  });
+});
+
 describe('freightCustomsService – mutations 4F', () => {
   beforeEach(() => vi.clearAllMocks());
 

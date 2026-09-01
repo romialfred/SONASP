@@ -7,6 +7,7 @@ import {
   parseCertificate,
 } from '@/services/assayCertificateService';
 import { useAuth } from '@/contexts/AuthContext';
+import { ActionErrorDialog } from '@/components/ui/ActionErrorDialog';
 
 interface AssayCertificateUploadProps {
   shippingPreparationId: string;
@@ -25,6 +26,13 @@ export function AssayCertificateUploadForShipping({
     success: boolean;
     message: string;
   } | null>(null);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('The certificate could not be uploaded.');
+
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setErrorOpen(true);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -32,7 +40,8 @@ export function AssayCertificateUploadForShipping({
       setSelectedFile(file);
       setUploadResult(null);
     } else {
-      alert('Veuillez sélectionner un fichier PDF');
+      setSelectedFile(null);
+      showError('Select a PDF file of no more than 10 MB.');
     }
   };
 
@@ -53,14 +62,15 @@ export function AssayCertificateUploadForShipping({
       if (!uploadResult.success || !uploadResult.data) {
         setUploadResult({
           success: false,
-          message: uploadResult.error || 'Échec de l\'upload',
+          message: 'The certificate could not be uploaded.',
         });
+        showError('The certificate could not be uploaded. Check the file and try again.');
         return;
       }
 
       setUploadResult({
         success: true,
-        message: 'Certificat uploadé avec succès!',
+        message: 'Certificate uploaded successfully.',
       });
 
       // Parse certificate in background
@@ -79,11 +89,12 @@ export function AssayCertificateUploadForShipping({
       if (onUploadComplete) {
         onUploadComplete();
       }
-    } catch (error: any) {
+    } catch {
       setUploadResult({
         success: false,
-        message: error.message || 'Erreur lors de l\'upload',
+        message: 'The certificate could not be uploaded.',
       });
+      showError('The certificate could not be uploaded. Check your connection and try again.');
     } finally {
       setUploading(false);
     }
@@ -108,9 +119,9 @@ export function AssayCertificateUploadForShipping({
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               <Upload className="w-10 h-10 mb-3 text-gray-400" />
               <p className="mb-2 text-sm text-gray-600">
-                <span className="font-semibold">Cliquez pour uploader</span> ou glissez-déposez
+                <span className="font-semibold">Click to select</span> or drag and drop
               </p>
-              <p className="text-xs text-gray-500">PDF uniquement (MAX. 10MB)</p>
+              <p className="text-xs text-gray-500">PDF only (max. 10 MB)</p>
             </div>
             <input
               type="file"
@@ -153,12 +164,12 @@ export function AssayCertificateUploadForShipping({
           {uploading ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Upload en cours...
+              Uploading...
             </>
           ) : parsing ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Parsing du PDF...
+              Analysing PDF...
             </>
           ) : (
             <>
@@ -193,7 +204,7 @@ export function AssayCertificateUploadForShipping({
             </p>
             {uploadResult.success && parsing && (
               <p className="text-sm text-green-700 mt-1">
-                Le certificat est en cours d'analyse automatique...
+                The certificate is being analysed automatically...
               </p>
             )}
           </div>
@@ -203,11 +214,17 @@ export function AssayCertificateUploadForShipping({
       {/* Info Note */}
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-900">
-          <span className="font-semibold">Note:</span> Le certificat sera automatiquement analysé
-          après l'upload. Les données extraites pourront être vérifiées et approuvées par la
-          suite.
+          <span className="font-semibold">Note:</span> The certificate will be analysed automatically
+          after upload. Extracted data can then be reviewed and approved.
         </p>
       </div>
+      <ActionErrorDialog
+        isOpen={errorOpen}
+        onClose={() => setErrorOpen(false)}
+        title="Certificate upload failed"
+        message={errorMessage}
+        recovery="Keep this page open, verify the PDF, then try again."
+      />
     </Card>
   );
 }

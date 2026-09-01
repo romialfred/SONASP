@@ -255,7 +255,7 @@ export function DailyProductionPage() {
               ? `Déclarations de doré et d’or fin de ${mineName}.`
               : 'Déclarations de doré et d’or fin par compagnie minière.'
           }
-          breadcrumb={[{ label: 'Production' }, { label: 'Production journalière' }]}
+          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Gestion de la production' }, { label: 'Production journalière' }]}
           actions={
             <>
               {/* Le bouton menait vers `/production/budget`, route qui n'existe pas. */}

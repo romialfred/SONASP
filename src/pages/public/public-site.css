@@ -6,6 +6,11 @@
   --public-green-600: #07945c;
   --public-gold: #d8a32a;
   --public-gold-soft: #f0cf7b;
+  --public-gold-ink: #12382b;
+  --public-gold-border: #d8af50;
+  --public-gold-border-hover: #b88925;
+  --public-gold-gradient: linear-gradient(115deg, #f4dea0 0%, #fff0b5 28%, #ebca76 64%, #e3b94f 100%);
+  --public-champagne-gradient: linear-gradient(115deg, #fffdf7, #fbefd0);
   --public-ink: #15231e;
   --public-muted: #5f6f68;
   --public-ivory: #f8f5ec;
@@ -3113,9 +3118,9 @@
 }
 
 .institutional-bar {
-  min-height: 58px;
+  min-height: 54px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(102deg, #00392f 0%, #005440 52%, #004737 100%);
+  background: linear-gradient(105deg, #032e23, #004333 52%, #032e23);
   color: #fff;
   font-size: 0.86rem;
   letter-spacing: 0;
@@ -3123,9 +3128,9 @@
 
 .institutional-bar__inner {
   display: grid;
-  min-height: 58px;
-  grid-template-columns: minmax(350px, 1fr) auto minmax(350px, 1fr);
-  gap: 28px;
+  min-height: 54px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 24px;
 }
 
 .institutional-bar__identity {
@@ -3158,13 +3163,17 @@
   display: flex;
   align-items: center;
   justify-self: center;
-  gap: 17px;
+  gap: 12px;
+  padding: 7px 18px;
+  border: 1px solid rgba(216, 175, 80, 0.65);
+  border-radius: 999px;
+  background: rgba(0, 24, 18, 0.2);
   white-space: nowrap;
 }
 
 .institutional-bar__gold {
-  width: 32px;
-  height: 25px;
+  width: 26px;
+  height: 21px;
   color: #f2b800;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.22));
 }
@@ -3230,7 +3239,7 @@
 
 .institutional-bar__actions select {
   min-width: 38px;
-  min-height: 36px;
+  min-height: 44px;
   appearance: none;
   padding: 0;
   border: 0;
@@ -3253,18 +3262,26 @@
 }
 
 .public-header {
-  border-bottom: 1px solid rgba(7, 56, 46, 0.08);
-  background: rgba(255, 255, 255, 0.985);
-  box-shadow: 0 4px 18px rgba(7, 42, 33, 0.035);
+  border-bottom: 1px solid var(--public-gold-border);
+  background: linear-gradient(110deg, #fff, #fffefa);
+  box-shadow: 0 4px 18px rgba(91, 68, 19, 0.035);
 }
 
 .public-header__inner {
-  min-height: 102px;
+  min-height: 98px;
   gap: 32px;
 }
 
 .public-header--condensed .public-header__inner {
   min-height: 68px;
+}
+
+.public-header--condensed .public-nav a {
+  padding-block: 22px;
+}
+
+.public-header--condensed .public-nav a::after {
+  bottom: 12px;
 }
 
 .public-brand {
@@ -3288,8 +3305,8 @@
 }
 
 .public-nav a {
-  padding: 38px 0 35px;
-  color: #25313a;
+  padding: 35px 0;
+  color: var(--public-green-950);
   font-size: 0.92rem;
   font-weight: 640;
 }
@@ -3457,9 +3474,33 @@
 .public-hero .public-button--secondary {
   min-width: 258px;
   color: #173d32;
-  border-color: #0a7250;
-  background: rgba(255, 255, 255, 0.84);
+  border-color: var(--public-gold-border);
+  background: var(--public-champagne-gradient);
   backdrop-filter: none;
+}
+
+.public-hero .public-button.public-button--secondary {
+  min-height: 54px;
+  border-radius: 9px;
+  font-size: 0.9rem;
+}
+
+.public-hero .public-button--secondary > svg {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 5px;
+  border: 1px solid var(--public-gold-border);
+  border-radius: 50%;
+}
+
+.public-hero .public-button--secondary:hover {
+  border-color: var(--public-gold-border-hover);
+  box-shadow: 0 4px 12px rgba(137, 98, 24, 0.12);
+}
+
+.public-hero .public-button--secondary:focus-visible {
+  outline-color: var(--public-green-800);
 }
 
 .public-hero__trust {
@@ -4901,7 +4942,7 @@
 @media (min-width: 1220px) {
   .public-header__inner {
     display: grid;
-    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(228px, 1fr) auto minmax(228px, 1fr);
     gap: clamp(20px, 1.8vw, 34px);
   }
 
@@ -4932,6 +4973,7 @@
 
   .public-header__actions {
     flex: 0 0 auto;
+    justify-self: end;
   }
 
   .public-button--compact {
@@ -7719,13 +7761,11 @@
   grid-template-columns: 88px minmax(30px, 1fr) 98px minmax(30px, 1fr) 88px;
   align-items: center;
   margin-top: 16px;
-  border: 1px solid rgba(8, 118, 75, 0.2);
+  border: 1px solid rgba(201, 145, 22, 0.25);
   border-radius: 12px;
   padding: 8px 14px;
   color: #123b30;
-  background:
-    linear-gradient(90deg, rgba(8, 118, 75, 0.07), transparent 42%, rgba(201, 145, 22, 0.08)),
-    rgba(255, 255, 255, 0.9);
+  background: linear-gradient(110deg, #fffdf8, #fcf8ee);
   box-shadow: 0 10px 26px rgba(16, 58, 44, 0.09);
 }
 
@@ -7737,7 +7777,7 @@
   height: 2px;
   border-radius: 999px;
   background: linear-gradient(90deg, #08764b, #c99116);
-  content: '';
+  content: none;
 }
 
 .public-hero__content .public-hero-flow > div {

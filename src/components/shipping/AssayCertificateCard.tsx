@@ -80,7 +80,7 @@ export function AssayCertificateCard({
               {certificate.certificate_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  {new Date(certificate.certificate_date).toLocaleDateString('fr-FR')}
+                  {new Date(certificate.certificate_date).toLocaleDateString('en-GB')}
                 </span>
               )}
             </div>
@@ -97,7 +97,7 @@ export function AssayCertificateCard({
             className="gap-2"
           >
             <Eye className="w-4 h-4" />
-            Voir
+            View
           </Button>
         </div>
       )}

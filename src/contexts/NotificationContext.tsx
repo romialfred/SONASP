@@ -48,9 +48,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     options?: NotificationOptions
   ) => {
     const defaultTitles = {
-      success: 'Succès',
-      error: 'Erreur',
-      warning: 'Attention',
+      success: 'Success',
+      error: 'Error',
+      warning: 'Attention required',
       info: 'Information',
     } as const;
     setNotification({

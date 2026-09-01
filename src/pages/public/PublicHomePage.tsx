@@ -38,6 +38,7 @@ import {
 } from './PublicComponents';
 import { usePublicLocale } from './PublicLocaleContext';
 import { PublicProcessWorkflow } from './PublicProcessWorkflow';
+import { PortalAccessButton } from './PortalAccessButton';
 import './public-site.css';
 
 function HeroSection() {
@@ -67,9 +68,7 @@ function HeroSection() {
           </h1>
           <p>{content.hero.description}</p>
           <div className="public-hero__actions">
-            <AccessibleButton to="/portail-mine">
-              {content.hero.primary}<ArrowRight aria-hidden="true" />
-            </AccessibleButton>
+            <PortalAccessButton label={content.hero.primary} />
             <a className="public-button public-button--secondary" href="#plateforme">
               <Compass aria-hidden="true" />{content.hero.secondary}
             </a>
@@ -587,7 +586,7 @@ function FinalCallToAction() {
       <div className="public-shell public-final-cta__inner">
         <div><span>Portail Mine</span><h2>{content.finalCta.title}</h2><p>{content.finalCta.description}</p></div>
         <div className="public-final-cta__actions">
-          <AccessibleButton to="/portail-mine">{content.finalCta.portal}<ArrowRight aria-hidden="true" /></AccessibleButton>
+          <PortalAccessButton label={content.finalCta.portal} />
           <AccessibleButton to="/assistance" variant="secondary">{content.finalCta.assistance}</AccessibleButton>
         </div>
       </div>

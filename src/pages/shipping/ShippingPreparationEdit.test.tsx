@@ -17,8 +17,8 @@ vi.mock('@/services/shippingPreparationService', () => ({
   shippingPreparationService: serviceMock,
 }));
 vi.mock('@/lib/supabase', () => ({ supabase: supabaseMock }));
-vi.mock('@/components/layout/MainLayout', () => ({
-  MainLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+vi.mock('@/components/layout/NationalDashboardLayout', () => ({
+  NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 vi.mock('@/components/ui/ErrorDialog', () => ({ ErrorDialog: () => null }));
 vi.mock('@/components/ui/SuccessDialog', () => ({ SuccessDialog: () => null }));
@@ -89,13 +89,13 @@ describe('ShippingPreparationEdit', () => {
   it('affiche le statut en lecture seule sans choix arbitraire', async () => {
     renderEdit();
 
-    await screen.findByRole('heading', { name: /Modifier l'Expédition/i });
-    expect(screen.getByText(/statut se modifie uniquement depuis le workflow/i)).toBeInTheDocument();
+    await screen.findByRole('heading', { name: 'Edit shipment preparation' });
+    expect(screen.getByText(/Status changes are only available through the shipment workflow/i)).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Douane Approuvée' })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Prêt pour Expédition' })).not.toBeInTheDocument();
   });
 
-  it.each(['Retour', 'Annuler'])('redirige le bouton %s vers les détails canoniques', async (label) => {
+  it.each(['Back', 'Cancel'])('redirige le bouton %s vers les détails canoniques', async (label) => {
     renderEdit();
 
     fireEvent.click(await screen.findByRole('button', { name: label }));
@@ -105,11 +105,11 @@ describe('ShippingPreparationEdit', () => {
 
   it('enregistre uniquement les informations générales puis revient aux détails canoniques', async () => {
     renderEdit();
-    await screen.findByRole('heading', { name: /Modifier l'Expédition/i });
+    await screen.findByRole('heading', { name: 'Edit shipment preparation' });
     vi.useFakeTimers();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
       await Promise.resolve();
     });
 
@@ -117,7 +117,8 @@ describe('ShippingPreparationEdit', () => {
       'shipping-1',
       expect.not.objectContaining({ status: expect.anything() }),
     );
-    await act(async () => vi.advanceTimersByTimeAsync(1_500));
+    expect(serviceMock.updatePreparation).toHaveBeenCalledWith('shipping-1', expect.not.objectContaining({ expedition_lot_number: expect.anything() }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open preparation' }));
 
     expect(screen.getByText('Détails canoniques')).toBeInTheDocument();
   });

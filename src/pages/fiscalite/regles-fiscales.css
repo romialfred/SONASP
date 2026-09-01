@@ -32,7 +32,7 @@
   height: 28px;
 }
 
-.rf-page .sn-page__head h2 {
+.rf-page .sn-page__title {
   font-size: 24px;
   line-height: 1.15;
 }
@@ -608,7 +608,7 @@
     border-radius: 13px;
   }
 
-  .rf-page .sn-page__head h2 { font-size: 21px; }
+  .rf-page .sn-page__title { font-size: 21px; }
   .rf-page .sn-page__actions { width: 100%; }
   .rf-page .sn-page__actions .sn-btn { width: 100%; }
   .rf-barre .sn-tabs { width: 100%; }

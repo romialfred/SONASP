@@ -73,7 +73,7 @@ export function getFreightTransitionAccess(
 ): FreightTransitionAccess {
   const nextStatus = nextFreightStatus(operation.status);
   if (!nextStatus) {
-    return { allowed: false, nextStatus: null, reason: 'Le dossier est dans son état final.' };
+    return { allowed: false, nextStatus: null, reason: 'This file is already in its final state.' };
   }
 
   const capability = operation.status === 'customs_pending'
@@ -86,7 +86,7 @@ export function getFreightTransitionAccess(
     return {
       allowed: false,
       nextStatus,
-      reason: 'La session AAL2 ne possède pas la capacité requise pour cette étape.',
+      reason: 'The verified AAL2 session does not have the capability required for this step.',
     };
   }
 
@@ -97,7 +97,7 @@ export function getFreightTransitionAccess(
     return {
       allowed: false,
       nextStatus,
-      reason: 'Le préparateur ne peut pas approuver son propre dossier douanier.',
+      reason: 'The preparer cannot approve their own customs file.',
     };
   }
 
@@ -108,7 +108,7 @@ export function getFreightTransitionAccess(
     return {
       allowed: false,
       nextStatus,
-      reason: 'L’approbateur ne peut pas préparer lui-même le transport.',
+      reason: 'The customs approver cannot also prepare transport.',
     };
   }
 
@@ -119,7 +119,7 @@ export function getFreightTransitionAccess(
     return {
       allowed: false,
       nextStatus,
-      reason: 'L’approbateur ou le créateur ne peut pas constater seul l’expédition.',
+      reason: 'The approver or creator cannot confirm dispatch alone.',
     };
   }
 

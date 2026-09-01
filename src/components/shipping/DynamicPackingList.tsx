@@ -71,10 +71,10 @@ export function DynamicPackingList({
               nom de la SONASP et de la mine d'origine. */}
           <div className="bg-yellow-50 p-3 rounded-lg border-2 border-yellow-600">
             <div className="text-yellow-900 font-bold text-base">{miningCompany}</div>
-            <div className="text-xs text-yellow-800">MINE D’ORIGINE</div>
+            <div className="text-xs text-yellow-800">MINE OF ORIGIN</div>
           </div>
           <div className="mt-3 text-xs">
-            <div><strong>Expéditeur :</strong></div>
+            <div><strong>Shipper:</strong></div>
             <div>SONASP</div>
             <div>Société Nationale des Substances Précieuses</div>
             <div>Ouagadougou, {PAYS_NATIONAL}</div>

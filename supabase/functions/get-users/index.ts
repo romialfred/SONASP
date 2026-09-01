@@ -33,7 +33,7 @@ Deno.serve(creerHandlerAdministration({
       global: { headers: { Authorization: authHeader } },
     });
 
-    const garde = await verifierSessionAdministration(supabaseActeur);
+    const garde = await verifierSessionAdministration(supabaseActeur, 'view');
     if (!garde.ok) {
       const message = garde.status === 503
         ? 'La vérification de vos habilitations est indisponible.'

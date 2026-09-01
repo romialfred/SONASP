@@ -5,6 +5,7 @@ import {
 } from '../_shared/account-role-policy.ts';
 import { reponseJson } from '../_shared/cors.ts';
 import {
+  clesJsonValides,
   creerHandlerAdministration,
   lireJsonLimite,
   verifierSessionAdministration,
@@ -78,7 +79,7 @@ Deno.serve(creerHandlerAdministration({
       auth: { autoRefreshToken: false, persistSession: false },
       global: { headers: { Authorization: autorisation } },
     });
-    const garde = await verifierSessionAdministration(supabaseActeur);
+    const garde = await verifierSessionAdministration(supabaseActeur, 'view');
     if (!garde.ok) {
       throw new ErreurPublique(
         garde.status,
@@ -105,7 +106,9 @@ Deno.serve(creerHandlerAdministration({
 
     const url = new URL(req.url);
     const corps = req.method === 'POST' ? await lireJsonLimite(req) : {};
-    if (!corps) throw new ErreurPublique(400, 'La demande de consultation est invalide.');
+    if (!corps || (req.method === 'POST' && !clesJsonValides(corps, ['user_id'], ['user_id']))) {
+      throw new ErreurPublique(400, 'La demande de consultation est invalide.');
+    }
     const utilisateurId = texte(corps.user_id ?? url.searchParams.get('user_id'), 64);
     if (!UUID.test(utilisateurId)) throw new ErreurPublique(400, 'Le compte demandé est invalide.');
 

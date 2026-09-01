@@ -15,7 +15,7 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
     switch (status) {
       case 'customs_pending':
         return {
-          label: 'En Attente Douane',
+          label: "Awaiting customs approval",
           icon: Package,
           bgColor: 'bg-gray-100',
           textColor: 'text-gray-700',
@@ -23,7 +23,7 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
         };
       case 'customs_approved':
         return {
-          label: 'Approuvé Douane',
+          label: "Customs approved",
           icon: CheckCircle,
           bgColor: 'bg-emerald-50',
           textColor: 'text-emerald-700',
@@ -31,7 +31,7 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
         };
       case 'ready_for_transport':
         return {
-          label: 'Prêt Transport',
+          label: "Ready for transport",
           icon: Truck,
           bgColor: 'bg-blue-50',
           textColor: 'text-blue-700',
@@ -39,7 +39,7 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
         };
       case 'ready_for_expedition':
         return {
-          label: 'Prêt pour Expédition',
+          label: "Ready for shipment",
           icon: Plane,
           bgColor: 'bg-indigo-50',
           textColor: 'text-indigo-700',
@@ -47,7 +47,7 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
         };
       case 'shipped_to_refinery':
         return {
-          label: 'Expédié',
+          label: "Dispatched",
           icon: Plane,
           bgColor: 'bg-slate-100',
           textColor: 'text-slate-700',
@@ -55,7 +55,7 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
         };
       case 'received_at_refinery':
         return {
-          label: 'Reçu à la Raffinerie',
+          label: "Received at refinery",
           icon: CheckCircle,
           bgColor: 'bg-emerald-100',
           textColor: 'text-emerald-800',
@@ -63,7 +63,7 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
         };
       case 'pending':
         return {
-          label: 'En Attente',
+          label: "Pending",
           icon: Package,
           bgColor: 'bg-amber-50',
           textColor: 'text-amber-700',
@@ -71,7 +71,7 @@ export function FreightStatusBadge({ status, size = 'md', showIcon = true }: Fre
         };
       case 'approved':
         return {
-          label: 'Approuvé',
+          label: "Approved",
           icon: CheckCircle,
           bgColor: 'bg-blue-100',
           textColor: 'text-blue-800',

@@ -95,6 +95,7 @@ export interface AvailableShippingPreparation {
   shipped_at: string | null;
   total_net_weight_grams: number;
   total_gross_weight_grams: number;
+  total_boxes?: number | null;
   shipped_to_company: string | null;
   shipped_to_country: string | null;
   items: Array<{
@@ -114,6 +115,15 @@ export interface AvailableShippingPreparation {
   }>;
 }
 
+/** The parent row exists. Retrying would create a duplicate shipment. */
+export class FreightShipmentPartialSaveError extends Error {
+  constructor(public readonly shipmentId: string, public readonly reference: string, cause: unknown) {
+    super('The freight shipment exists, but its related records were not fully saved. Open the existing shipment; do not create another one.');
+    this.name = 'FreightShipmentPartialSaveError';
+    this.cause = cause;
+  }
+}
+
 export const freightShipmentService = {
   async listShipments(): Promise<FreightShipment[]> {
     const { data, error } = await supabase
@@ -128,7 +138,39 @@ export const freightShipmentService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    const shipments = (data || []) as FreightShipment[];
+    const productionIds = Array.from(new Set(shipments.flatMap(shipment =>
+      (shipment.productions || []).map(production => production.production_id).filter(Boolean),
+    )));
+    if (productionIds.length === 0) return shipments;
+
+    const { data: sourceProductions, error: sourceError } = await supabase
+      .from('daily_production')
+      .select('id, mining_company_id')
+      .in('id', productionIds);
+    if (sourceError) throw sourceError;
+    const productionCompany = new Map((sourceProductions || []).map(row => [row.id, row.mining_company_id]));
+    const companyIds = Array.from(new Set([...productionCompany.values()].filter((id): id is string => Boolean(id))));
+    if (companyIds.length === 0) return shipments.map(shipment => ({ ...shipment, source_mining_companies: [] }));
+
+    const { data: companies, error: companiesError } = await supabase
+      .from('mining_companies')
+      .select('id, name, address, city, localite, country, tax_id')
+      .in('id', companyIds);
+    if (companiesError) throw companiesError;
+    const companyById = new Map((companies || []).map(company => [company.id, company]));
+
+    return shipments.map(shipment => {
+      const sourceIds = new Set((shipment.productions || [])
+        .map(production => productionCompany.get(production.production_id))
+        .filter((companyId): companyId is string => Boolean(companyId)));
+      return {
+        ...shipment,
+        source_mining_companies: [...sourceIds]
+          .map(companyId => companyById.get(companyId))
+          .filter((company): company is FreightShipmentMiningCompany => Boolean(company)),
+      };
+    });
   },
 
   async getShipmentById(id: string): Promise<FreightShipment | null> {
@@ -207,6 +249,7 @@ export const freightShipmentService = {
         shipped_at,
         total_net_weight_grams,
         total_gross_weight_grams,
+        total_boxes,
         shipped_to_company,
         shipped_to_country,
         items:shipping_production_items(
@@ -230,11 +273,10 @@ export const freightShipmentService = {
 
     if (prepError) throw prepError;
 
-    // Filter out shipping preparations where all productions are already used
+    // Selection is by whole preparation: a partly used preparation is not eligible.
     const availablePreps = (shippingPreps || []).filter((prep: any) => {
       const items = prep.items || [];
-      // Keep only if at least one production is not yet used in freight shipments
-      return items.some((item: any) => !usedProductionIds.includes(item.daily_production_id));
+      return items.length > 0 && items.every((item: any) => !usedProductionIds.includes(item.daily_production_id));
     });
 
     return availablePreps as AvailableShippingPreparation[];
@@ -250,121 +292,88 @@ export const freightShipmentService = {
     exchange_rate: number;
     local_currency: string;
     notes?: string;
+    /** Reuse this key after an uncertain network response. */
+    idempotency_key?: string;
+    /** Display-only preview; the server copies authoritative source signatories. */
     signatories?: Array<{ position: string; full_name: string; display_order: number }>;
   }): Promise<FreightShipment> {
-    const { data: userData } = await supabase.auth.getUser();
+    const preparationIds = Array.from(new Set(data.shipping_preparation_ids.filter(Boolean)));
+    if (preparationIds.length === 0 || preparationIds.length !== data.shipping_preparation_ids.length) {
+      throw new Error('Select one or more distinct shipment preparations.');
+    }
+    if (!data.destination_refinery_id) {
+      throw new Error('Select the destination refinery.');
+    }
+    if (!Number.isInteger(data.number_of_boxes) || data.number_of_boxes <= 0) {
+      throw new Error('The number of packages must be a positive whole number.');
+    }
+    if (!data.box_type.trim()) {
+      throw new Error('Enter the package type.');
+    }
+    if (!Number.isFinite(data.gold_price_usd_per_oz) || data.gold_price_usd_per_oz <= 0) {
+      throw new Error('Enter a valid gold price.');
+    }
+    if (!Number.isFinite(data.exchange_rate) || data.exchange_rate <= 0) {
+      throw new Error('Enter a valid exchange rate.');
+    }
+    if (!data.local_currency.trim()) {
+      throw new Error('Select the settlement currency.');
+    }
+    const currency = data.local_currency.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      throw new Error('The settlement currency must use a three-letter ISO code.');
+    }
+    const boxType = data.box_type.trim();
+    if (boxType.length > 100) {
+      throw new Error('The package type cannot exceed 100 characters.');
+    }
+    const notes = data.notes?.trim() || null;
+    if (notes && notes.length > 5_000) {
+      throw new Error('Notes cannot exceed 5,000 characters.');
+    }
+    const shipmentDate = data.shipment_date?.trim() || new Date().toISOString();
+    if (!Number.isFinite(Date.parse(shipmentDate))) {
+      throw new Error('Enter a valid shipment date.');
+    }
 
-    const { data: refData, error: refError } = await supabase.rpc(
-      'generate_freight_shipment_reference'
+    const idempotencyKey = data.idempotency_key || crypto.randomUUID();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idempotencyKey)) {
+      throw new Error('The shipment request identifier is invalid.');
+    }
+
+    // The database owns the entire creation saga: tenant/status checks,
+    // quantity locks, canonical reference and every child snapshot either all
+    // commit or all roll back.
+    const { data: result, error } = await supabase.rpc(
+      'snp_create_freight_shipment_atomic',
+      {
+        p_idempotency_key: idempotencyKey,
+        p_shipping_preparation_ids: preparationIds,
+        p_shipment_date: shipmentDate,
+        p_destination_refinery_id: data.destination_refinery_id,
+        p_number_of_boxes: data.number_of_boxes,
+        p_box_type: boxType,
+        p_gold_price_usd_per_oz: data.gold_price_usd_per_oz,
+        p_exchange_rate: data.exchange_rate,
+        p_local_currency: currency,
+        p_notes: notes,
+      },
     );
 
-    if (refError) throw refError;
-
-    const { data: shippingPreps, error: prepError } = await supabase
-      .from('shipping_preparations')
-      .select(`
-        id,
-        expedition_lot_number,
-        total_net_weight_grams,
-        total_gross_weight_grams,
-        packing_list_url,
-        items:shipping_production_items(
-          id,
-          daily_production_id,
-          daily_production:daily_production_id(
-            id,
-            production_date,
-            bar_reference,
-            bullion_grams,
-            estimated_fineness_pct,
-            estimated_silver_pct,
-            pure_gold_grams,
-            estimated_oz,
-            silver_content_grams
-          )
-        )
-      `)
-      .in('id', data.shipping_preparation_ids);
-
-    if (prepError) throw prepError;
-    if (!shippingPreps || shippingPreps.length === 0) {
-      throw new Error('Aucune shipping preparation trouvée');
+    if (error) throw error;
+    if (!result || typeof result !== 'object' || Array.isArray(result)) {
+      throw new Error('The atomic freight creation returned an invalid response.');
+    }
+    const shipmentId = 'id' in result && typeof result.id === 'string' ? result.id : null;
+    if (!shipmentId) {
+      throw new Error('The atomic freight creation did not return a shipment identifier.');
     }
 
-    const allProductions: any[] = [];
-    shippingPreps.forEach((prep: any) => {
-      if (prep.items) {
-        prep.items.forEach((item: any) => {
-          if (item.daily_production) {
-            allProductions.push(item.daily_production);
-          }
-        });
-      }
-    });
-
-    if (allProductions.length === 0) {
-      throw new Error('Aucune production trouvée dans les shipping preparations');
+    const shipment = await this.getShipmentById(shipmentId);
+    if (!shipment) {
+      throw new Error('The created freight shipment is not visible in the authorised perimeter.');
     }
-
-    const { data: shipment, error: shipmentError } = await supabase
-      .from('freight_shipments')
-      .insert({
-        reference_number: refData,
-        status: 'pending',
-        shipment_date: data.shipment_date || new Date().toISOString(),
-        destination_refinery_id: data.destination_refinery_id,
-        number_of_boxes: data.number_of_boxes,
-        box_type: data.box_type,
-        gold_price_usd_per_oz: data.gold_price_usd_per_oz,
-        exchange_rate: data.exchange_rate,
-        local_currency: data.local_currency,
-        shipping_preparation_id: data.shipping_preparation_ids[0] || null,
-        expedition_number: shippingPreps[0]?.expedition_lot_number || null,
-        packing_list_pdf_path: shippingPreps[0]?.packing_list_url || null,
-        notes: data.notes,
-        created_by: userData?.user?.id,
-      })
-      .select()
-      .single();
-
-    if (shipmentError) throw shipmentError;
-
-    const productionsToInsert = allProductions.map((prod: any) => ({
-      freight_shipment_id: shipment.id,
-      production_id: prod.id,
-      production_date: prod.production_date,
-      bar_reference: prod.bar_reference,
-      bullion_grams: prod.bullion_grams,
-      estimated_fineness_pct: prod.estimated_fineness_pct,
-      estimated_silver_pct: prod.estimated_silver_pct || 0,
-      pure_gold_grams: prod.pure_gold_grams,
-      pure_gold_oz: prod.estimated_oz,
-      silver_content_grams: prod.silver_content_grams || 0,
-      added_by: userData?.user?.id,
-    }));
-
-    const { error: prodInsertError } = await supabase
-      .from('freight_shipment_productions')
-      .insert(productionsToInsert);
-
-    if (prodInsertError) throw prodInsertError;
-
-    if (data.signatories && data.signatories.length > 0) {
-      const signatoriesToInsert = data.signatories.map((sig) => ({
-        freight_shipment_id: shipment.id,
-        position: sig.position,
-        full_name: sig.full_name,
-        display_order: sig.display_order,
-      }));
-
-      const { error: sigError } = await supabase
-        .from('freight_shipment_signatories')
-        .insert(signatoriesToInsert);
-
-      if (sigError) throw sigError;
-    }
-
-    return this.getShipmentById(shipment.id) as Promise<FreightShipment>;
+    return shipment;
   },
 
   async updateShipment(
@@ -387,34 +396,28 @@ export const freightShipmentService = {
     status: FreightShipmentStatus,
     notes?: string
   ): Promise<FreightShipment> {
-    const { data: userData } = await supabase.auth.getUser();
-    const updates: any = { status };
+    const { data: current, error: currentError } = await supabase
+      .from('freight_shipments')
+      .select('status')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .single();
+    if (currentError) throw currentError;
 
-    if (status === 'approved') {
-      updates.approved_at = new Date().toISOString();
-      updates.approved_by = userData?.user?.id;
-    } else if (status === 'shipped_to_refinery') {
-      updates.shipped_at = new Date().toISOString();
-      updates.shipped_by = userData?.user?.id;
-    } else if (status === 'received_at_refinery') {
-      updates.received_at = new Date().toISOString();
-      updates.received_by = userData?.user?.id;
-    } else if (status === 'processing') {
-      updates.processing_started_at = new Date().toISOString();
-      updates.processing_started_by = userData?.user?.id;
-    } else if (status === 'processed') {
-      updates.processed_at = new Date().toISOString();
-      updates.processed_by = userData?.user?.id;
-    } else if (status === 'in_stock') {
-      updates.stocked_at = new Date().toISOString();
-      updates.stocked_by = userData?.user?.id;
-    }
-
-    if (notes) {
-      updates.refining_notes = notes;
-    }
-
-    return this.updateShipment(id, updates);
+    const { data: transitioned, error: transitionError } = await supabase.rpc(
+      'snp_transition_freight_shipment',
+      {
+        p_shipment_id: id,
+        p_expected_status: current.status,
+        p_new_status: status,
+        p_request_id: crypto.randomUUID(),
+        p_notes: notes?.trim() || null,
+      }
+    );
+    if (!transitionError) return transitioned as FreightShipment;
+    // Fail closed when the secured RPC is unavailable. A browser-side UPDATE
+    // would bypass the workflow graph, separation of duties and audit trail.
+    throw transitionError;
   },
 
   async addSignatory(

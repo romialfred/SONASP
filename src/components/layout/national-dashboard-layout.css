@@ -320,6 +320,16 @@
   text-overflow: ellipsis;
 }
 
+.national-sidebar__subnav-category {
+  margin: 8px 8px 3px 9px;
+  color: rgb(253 213 92 / 82%);
+  font-size: 9px;
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
 
 .national-sidebar.is-collapsed .national-sidebar__dashboard-link > span:not(.national-sidebar__icon),
 .national-sidebar.is-collapsed .national-sidebar__group-trigger > span:not(.national-sidebar__icon),

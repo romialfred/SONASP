@@ -13,13 +13,15 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, error, success, label, helperText, id, children, ...props }, ref) => {
+  ({ className, error, success, label, helperText, id, children, 'aria-describedby': describedBy, ...props }, ref) => {
     const generatedId = useId();
     const selectId = id ?? generatedId;
 
     const hasError = Boolean(error);
     const errorMessage = typeof error === 'string' ? error : undefined;
     const shownHelper = errorMessage ?? helperText;
+    const helperId = shownHelper ? `${selectId}-description` : undefined;
+    const ariaDescribedBy = [describedBy, helperId].filter(Boolean).join(' ') || undefined;
 
     const baseStyles = 'sn-input sn-input--select';
 
@@ -31,6 +33,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={selectId}
           ref={ref}
           aria-invalid={hasError || undefined}
+          aria-describedby={ariaDescribedBy}
           className={cn(baseStyles, stateStyles, className)}
           {...props}
         >
@@ -51,7 +54,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
         {fieldEl}
         {shownHelper && (
-          <p className={cn('text-xs', hasError ? 'text-red-600' : 'text-gray-500')}>{shownHelper}</p>
+          <p id={helperId} className={cn('text-xs', hasError ? 'text-red-600' : 'text-gray-500')}>{shownHelper}</p>
         )}
       </div>
     );

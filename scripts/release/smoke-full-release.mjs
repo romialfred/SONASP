@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
-const [mode, folder] = process.argv.slice(2);
+const [mode, folder, expectedBuildId] = process.argv.slice(2);
 if (!['services','frontend'].includes(mode)||!folder) throw new Error('mode and audit folder required');
 const results=[];
 const origin='https://sonasp.data-univers.com';
@@ -27,7 +27,8 @@ if (mode==='services') {
   const versionResponse=await fetch(origin+'/build-version.json',{cache:'no-store',signal:AbortSignal.timeout(30000)});
   assert.equal(versionResponse.status,200);
   const version=await versionResponse.json();
-  assert.equal(version.buildId,'f37a3f7f2c3a-mtge6ddc');
+  assert.ok(expectedBuildId,'expected build id required for frontend smoke');
+  assert.equal(version.buildId,expectedBuildId);
   results.push({test:'public-build',...version});
   const assets=new Set();
   for(const route of ['/','/login','/users/new','/national-reserve/allocations','/sales','/payments','/assistance']) {

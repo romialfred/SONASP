@@ -45,11 +45,20 @@ export function RoleDashboardShell({
   const navigate = useNavigate();
   const [data, setData] = useState<RoleDashboardData>(EMPTY_ROLE_DASHBOARD);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const charger = useCallback(async () => {
     setLoading(true);
-    setData(await load());
-    setLoading(false);
+    setLoadError(false);
+    try {
+      setData(await load());
+    } catch (error) {
+      console.error('Role dashboard loading failed:', error);
+      setData(EMPTY_ROLE_DASHBOARD);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [load]);
 
   useEffect(() => {
@@ -75,6 +84,17 @@ export function RoleDashboardShell({
           <Note tone="warning" icon={AlertTriangle}>
             Données partielles : {data.unavailable.join(', ')} n’ont pas pu être chargées.
           </Note>
+        )}
+
+        {loadError && (
+          <div>
+            <Note tone="danger" icon={AlertTriangle}>
+              Les indicateurs sont temporairement indisponibles.
+              <button type="button" className="sn-btn sn-btn--secondary" onClick={() => void charger()}>
+                Réessayer
+              </button>
+            </Note>
+          </div>
         )}
 
         {loading ? (

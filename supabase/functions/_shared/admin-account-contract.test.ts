@@ -42,6 +42,20 @@ describe('contrat statique des Edge d’administration', () => {
     expect(source).not.toContain(".select('id, event_type, user_agent, ip_address, details, created_at')");
     expect(source).not.toContain('status, error_message, ip_address, user_agent, created_at');
   });
+
+  it.each([
+    'create-user',
+    'reset-user-password',
+    'envoyer-courriel',
+    'manage-user-status',
+    'delete-user',
+    'get-user-details',
+  ])('%s utilise le lecteur JSON borné et un contrat de clés', (fonction) => {
+    const source = lire(`supabase/functions/${fonction}/index.ts`);
+    expect(source).toContain('lireJsonLimite');
+    expect(source).toContain('clesJsonValides');
+    expect(source).not.toMatch(/\breq\.json\s*\(/u);
+  });
 });
 
 describe('configuration reproductible des fonctions', () => {

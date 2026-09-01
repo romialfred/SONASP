@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -10,36 +10,56 @@ export interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '5xl' | 'full';
   maxWidth?: string;
   className?: string;
+  ariaLabel?: string;
 }
 
-export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth, className }: ModalProps) {
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth, className, ariaLabel }: ModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  const titleId = useId();
+  closeRef.current = onClose;
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
+    if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panelRef.current?.focus();
+
+    const focusable = () => [...(panelRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]',
+    ) ?? [])].filter(element => !element.closest('[hidden]'));
+
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closeRef.current();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const controls = focusable();
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (!first) {
+        event.preventDefault();
+        panelRef.current?.focus();
+      } else if (event.shiftKey && (document.activeElement === first || document.activeElement === panelRef.current)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !panelRef.current?.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
+    document.addEventListener('keydown', handleKey, true);
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKey, true);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -61,6 +81,7 @@ export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth,
         aria-hidden="true"
       />
       <div
+        ref={panelRef}
         className={cn(
           'relative z-50 w-full bg-white rounded-lg shadow-2xl max-h-[92vh] flex flex-col',
           maxWidth || sizeStyles[size as keyof typeof sizeStyles] || sizeStyles.md,
@@ -68,10 +89,13 @@ export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth,
         )}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : (ariaLabel || 'Dialog')}
+        tabIndex={-1}
       >
         {title ? (
           <>
-            <ModalHeader onClose={onClose}>{title}</ModalHeader>
+            <ModalHeader onClose={onClose} titleId={titleId}>{title}</ModalHeader>
             {children}
           </>
         ) : (
@@ -82,10 +106,10 @@ export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth,
   );
 }
 
-export function ModalHeader({ children, onClose }: { children: ReactNode; onClose?: () => void }) {
+export function ModalHeader({ children, onClose, titleId }: { children: ReactNode; onClose?: () => void; titleId?: string }) {
   return (
     <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-      <div className="font-heading text-lg font-semibold">{children}</div>
+      <div id={titleId} className="font-heading text-lg font-semibold">{children}</div>
       {onClose && (
         <button
           onClick={onClose}

@@ -8,6 +8,38 @@ import {
   normalizeMailAction,
   requiredCapabilityForMailAction,
 } from '../_shared/mail-action-policy.ts';
+import {
+  clesJsonValides,
+  lireJsonLimite,
+} from '../_shared/admin-account-edge.ts';
+
+const TAILLE_MAXIMALE_CORPS = 16_384;
+const CLES_REQUETE_COURRIEL = [
+  'action',
+  'to',
+  'nom_complet',
+  'lien_activation',
+  'role',
+  'limite',
+] as const;
+const CONTRATS_REQUETE_COURRIEL = {
+  bienvenue: {
+    autorisees: ['action', 'to', 'nom_complet', 'lien_activation', 'role'],
+    obligatoires: ['action', 'to', 'lien_activation'],
+  },
+  reinitialisation: {
+    autorisees: ['action', 'to', 'nom_complet', 'lien_activation'],
+    obligatoires: ['action', 'to', 'lien_activation'],
+  },
+  test: {
+    autorisees: ['action', 'to'],
+    obligatoires: ['action'],
+  },
+  file: {
+    autorisees: ['action', 'limite'],
+    obligatoires: [],
+  },
+} as const;
 
 /**
  * Envoi des courriels de la plateforme SONASP.
@@ -195,9 +227,23 @@ Deno.serve(async (req: Request) => {
     const { data: utilisateur } = await admin.auth.getUser(jeton);
     if (!utilisateur?.user) return json({ erreur: 'Session invalide.' }, 401);
 
-    const requete = await req.json().catch(() => ({}));
+    const requete = await lireJsonLimite(req, TAILLE_MAXIMALE_CORPS);
+    if (!clesJsonValides(requete, CLES_REQUETE_COURRIEL)) {
+      return json({ erreur: 'Requête invalide.' }, 400);
+    }
     const action = normalizeMailAction(requete?.action);
     if (!action) return json({ erreur: 'Action de messagerie inconnue.' }, 400);
+    const contrat = CONTRATS_REQUETE_COURRIEL[action];
+    if (!clesJsonValides(requete, contrat.autorisees, contrat.obligatoires)) {
+      return json({ erreur: 'Requête invalide.' }, 400);
+    }
+    if (
+      action === 'file'
+      && requete.limite !== undefined
+      && (!Number.isSafeInteger(requete.limite) || Number(requete.limite) < 1 || Number(requete.limite) > 100)
+    ) {
+      return json({ erreur: 'Requête invalide.' }, 400);
+    }
 
     const { data: profil } = await admin
       .from('user_profiles')

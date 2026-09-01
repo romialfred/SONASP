@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -22,16 +22,18 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const uploadLock = useRef(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedFile(null);
     const file = e.target.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        showError('Erreur', 'Seuls les fichiers PDF sont acceptés');
+        showError("Error", "Only PDF files are accepted");
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
-        showError('Erreur', 'Le fichier ne doit pas dépasser 10 MB');
+        showError("Error", "The file must not exceed 10 MB");
         return;
       }
       setSelectedFile(file);
@@ -40,30 +42,34 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadLock.current) return;
 
     if (!formData.title.trim()) {
-      showError('Erreur', 'Le titre est requis');
+      showError("Error", "A document title is required");
       return;
     }
 
     if (!selectedFile) {
-      showError('Erreur', 'Veuillez sélectionner un fichier PDF');
+      showError("Error", "Select a PDF file");
       return;
     }
 
     try {
+      uploadLock.current = true;
       setUploading(true);
       await freightCustomsService.uploadDocument(
         operationId,
         formData.documentType,
-        formData.title,
+        formData.title.trim(),
         selectedFile,
         formData.description || undefined
       );
       onSuccess();
-    } catch (error: any) {
-      showError('Erreur', 'Erreur lors de l\'upload: ' + error.message);
+    } catch (error) {
+      console.error('Document upload failed:', error);
+      showError('Document upload failed', 'The PDF could not be stored. Keep the form open and try again.');
     } finally {
+      uploadLock.current = false;
       setUploading(false);
     }
   };
@@ -73,7 +79,7 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
       <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Ajouter un Document</h2>
+          <h2 className="text-xl font-bold text-gray-900">Add document</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -86,51 +92,51 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Type de Document <span className="text-red-500">*</span>
+              Document type <span className="text-red-500">*</span>
             </label>
             <Select
               value={formData.documentType}
               onChange={(e) => setFormData({ ...formData, documentType: e.target.value as FreightDocumentType })}
               required
             >
-              <option value="customs_declaration">Déclaration en Douane</option>
-              <option value="customs_approval">Approbation Douanière</option>
-              <option value="transport_document">Document de Transport</option>
-              <option value="bill_of_lading">Connaissement</option>
-              <option value="export_invoice">Facture d'Exportation</option>
-              <option value="bullion_summary">Résumé des Lingots</option>
-              <option value="other">Autre</option>
+              <option value="customs_declaration">Customs declaration</option>
+              <option value="customs_approval">Customs approval</option>
+              <option value="transport_document">Transport document</option>
+              <option value="bill_of_lading">Bill of lading</option>
+              <option value="export_invoice">Export invoice</option>
+              <option value="bullion_summary">Bullion summary</option>
+              <option value="other">Other</option>
             </Select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Titre <span className="text-red-500">*</span>
+              Title <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Ex: Déclaration douanière - Janvier 2025"
+              placeholder="e.g. Customs declaration"
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description (optionnelle)
+              Description (optional)
             </label>
             <TextArea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Notes ou informations complémentaires..."
+              placeholder="Notes or additional information…"
               rows={3}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fichier PDF <span className="text-red-500">*</span>
+              PDF file <span className="text-red-500">*</span>
             </label>
             <div className="mt-2">
               <label className="flex items-center justify-center px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
@@ -146,7 +152,7 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
                   ) : (
                     <>
                       <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">Cliquez pour sélectionner un fichier PDF</p>
+                      <p className="text-sm text-gray-600">Select a PDF file</p>
                       <p className="text-xs text-gray-500 mt-1">Maximum 10 MB</p>
                     </>
                   )}
@@ -170,14 +176,14 @@ export function AddDocumentModal({ operationId, onClose, onSuccess }: AddDocumen
               onClick={onClose}
               disabled={uploading}
             >
-              Annuler
+              Cancel
             </Button>
             <Button
               type="submit"
               disabled={uploading || !selectedFile}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {uploading ? 'Upload en cours...' : 'Ajouter le Document'}
+              {uploading ? "Uploading…" : "Add document"}
             </Button>
           </div>
         </form>

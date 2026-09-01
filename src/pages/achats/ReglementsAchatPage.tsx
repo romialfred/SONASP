@@ -250,7 +250,9 @@ export function ReglementsAchatPage() {
           subtitle={isMine
             ? 'Versements exécutés par la SONASP : confirmez leur réception ou signalez un écart.'
             : 'Sommes versées par la SONASP et leur imputation sur les factures d’achat.'}
-          breadcrumb={[{ label: isMine ? 'Relations avec la SONASP' : 'Achats industriels' }, { label: 'Règlements' }]}
+          breadcrumb={isMine
+            ? [{ label: 'Relations avec la SONASP' }, { label: 'Suivi des paiements' }]
+            : [{ label: 'Mine industrielle' }, { label: 'Achat aux mines industrielles' }, { label: 'Suivi des comptes & paiements', to: '/achats/comptes-paiements' }, { label: 'Suivi des paiements' }]}
           info={{
             titre: 'Pourquoi un règlement n’est pas une facture',
             contenu:

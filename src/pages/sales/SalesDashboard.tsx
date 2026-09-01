@@ -133,7 +133,7 @@ export function InternationalSalesRegister({ sales, loading, failed, canCreate, 
 
   return <div className="sn-page international-sales">
     <PageHeader title={copy.title} subtitle={copy.subtitle} icon={ShoppingCart}
-      breadcrumb={[{ label: copy.sales, to: '/sales' }, { label: copy.allSales }]}
+      breadcrumb={[{ label: 'Vente internationale' }, { label: 'Ventes d’or internationales', to: '/sales' }, { label: copy.allSales }]}
       actions={<>
         <button className="sn-btn sn-btn--sm" type="button" disabled={loading || failed || !filtered.length || exporting} onClick={() => void exportSales()}>
           {exporting ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Download aria-hidden="true" />}{copy.export}

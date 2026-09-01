@@ -20,7 +20,13 @@ import {
   type AuthorizedCustomer
 } from '@/services/goldSalesSettingsService';
 import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspService';
-import { composer, tracabiliteVenteService, validerComposition } from '@/services/tracabiliteVenteService';
+import {
+  composer,
+  messageIndisponibiliteLots,
+  tracabiliteVenteService,
+  validerComposition,
+  type LotsVenteDisponibles,
+} from '@/services/tracabiliteVenteService';
 import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
 import { formatNumberInWords } from '@/utils/numberToWords';
 import { createExportSale, createMineExportSale } from '@/services/saleCreationService';
@@ -70,6 +76,8 @@ export function SaleCreate() {
   const [availableInventory, setAvailableInventory] = useState({ availableOz: 0, availableGrams: 0 });
   const [stockExport, setStockExport] = useState<StockSonasp | null>(null);
   const [mineStock, setMineStock] = useState<MineExportableStock | null>(null);
+  const [saleEligibility, setSaleEligibility] = useState<LotsVenteDisponibles | null>(null);
+  const [eligibilityLoadFailed, setEligibilityLoadFailed] = useState(false);
   const [loadingInventory, setLoadingInventory] = useState(false);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [invoicePreviewData, setInvoicePreviewData] = useState<InvoicePreviewData | null>(null);
@@ -85,6 +93,8 @@ export function SaleCreate() {
     } else {
       setAuthorizedCustomers([]);
       setAvailableInventory({ availableOz: 0, availableGrams: 0 });
+      setSaleEligibility(null);
+      setEligibilityLoadFailed(false);
     }
   }, [formData.miningCompanyId]);
 
@@ -157,17 +167,30 @@ export function SaleCreate() {
         const stock = await mineStockService.stock(formData.miningCompanyId);
         setMineStock(stock);
         setStockExport(null);
+        setSaleEligibility(null);
+        setEligibilityLoadFailed(false);
         setAvailableInventory({ availableOz: stock.availableOz, availableGrams: stock.availableGrams });
       } else {
-        const stock = await stockSonaspService.stock(formData.miningCompanyId);
+        const [eligibility, stock] = await Promise.all([
+          tracabiliteVenteService.lotsDisponibles(),
+          stockSonaspService.stock(formData.miningCompanyId).catch((error) => {
+            console.warn('Acquisition summary unavailable:', error);
+            return null;
+          }),
+        ]);
+        const availableOz = eligibility.lots.reduce((total, lot) => total + lot.disponibleOz, 0);
         setStockExport(stock);
         setMineStock(null);
-        setAvailableInventory({ availableOz: stock.disponibleOz, availableGrams: stock.disponibleGrammes });
+        setSaleEligibility(eligibility);
+        setEligibilityLoadFailed(false);
+        setAvailableInventory({ availableOz, availableGrams: ouncesToGrams(availableOz) });
       }
     } catch (error) {
       console.error('Error fetching inventory:', error);
       setStockExport(null);
       setMineStock(null);
+      setSaleEligibility(null);
+      setEligibilityLoadFailed(!isMineAccount);
       setAvailableInventory({ availableOz: 0, availableGrams: 0 });
     } finally {
       setLoadingInventory(false);
@@ -333,10 +356,21 @@ export function SaleCreate() {
     try {
       const requestedQuantityOz = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
 
+      const currentEligibility = isMineAccount
+        ? null
+        : await tracabiliteVenteService.lotsDisponibles();
       const composition = isMineAccount
         ? { affectations: [], resteOz: 0, couverte: true }
-        : composer(await tracabiliteVenteService.lotsDisponibles(), requestedQuantityOz);
+        : composer(currentEligibility?.lots ?? [], requestedQuantityOz);
       if (!isMineAccount) {
+        const eligibilityRefusal = currentEligibility
+          ? messageIndisponibiliteLots(currentEligibility)
+          : 'La disponibilité physique des lots n’a pas pu être vérifiée.';
+        if (eligibilityRefusal) {
+          alert.error(eligibilityRefusal);
+          setSubmitting(false);
+          return;
+        }
         const refus = validerComposition(composition, requestedQuantityOz);
         if (refus) {
           alert.error(refus);
@@ -548,7 +582,9 @@ export function SaleCreate() {
                         </div>
 
                         <div className="text-right ml-4 bg-white rounded-lg px-3 py-2 border border-amber-200">
-                          <p className="text-xs text-gray-600 mb-0.5">Stock exportable</p>
+                          <p className="text-xs text-gray-600 mb-0.5">
+                            {isMineAccount ? 'Stock exportable' : 'Stock physique éligible'}
+                          </p>
                           <p className={`text-xl ${availableInventoryOz > 0 ? 'text-amber-700' : 'text-red-600'}`}>
                             {loadingInventory ? '…' : `${availableInventoryOz.toFixed(3)} oz`}
                           </p>
@@ -576,6 +612,10 @@ export function SaleCreate() {
                             <p className="text-gray-600">Déjà vendu à l’export</p>
                             <p className="text-gray-900">{stockExport.venduOz.toFixed(3)} oz</p>
                           </div>
+                          <p className="col-span-2 text-gray-600 sm:col-span-4">
+                            Ces totaux décrivent les acquisitions. Seuls les achats miniers reliés au stock physique
+                            sont inclus dans le stock éligible affiché ci-dessus.
+                          </p>
                         </div>
                       )}
 
@@ -611,6 +651,29 @@ export function SaleCreate() {
                       </Alert>
                     )}
 
+                    {eligibilityLoadFailed && (
+                      <Alert type="error" title="Vérification physique indisponible" className="mt-3">
+                        La chaîne achat–production–fret–inventaire n’a pas pu être vérifiée. La création reste
+                        bloquée afin de ne proposer aucun stock incertain.
+                      </Alert>
+                    )}
+
+                    {saleEligibility?.diagnostic.blocked && (
+                      <Alert type="error" title="Rapprochement physique requis" className="mt-3">
+                        Des ventes historiques doivent être rapprochées du stock physique avant toute nouvelle
+                        vente export. Aucun détail hors de votre périmètre n’est affiché.
+                      </Alert>
+                    )}
+
+                    {!saleEligibility?.diagnostic.blocked
+                      && (saleEligibility?.diagnostic.excludedUntraceableSourceCount ?? 0) > 0 && (
+                      <Alert type="warning" title="Filières sans provenance physique complète" className="mt-3">
+                        Les acquisitions artisanales et les cessions de comptoir ne sont pas proposées tant
+                        qu’elles ne sont pas reliées à une production, un fret reçu en stock et un inventaire
+                        raffiné vérifiables.
+                      </Alert>
+                    )}
+
                     {mineStock?.overAllocated && (
                       <Alert type="error" title="Production surallouée" className="mt-3">
                         Les achats SONASP et les ventes engagées dépassent la production déclarée. Aucune nouvelle vente
@@ -618,11 +681,17 @@ export function SaleCreate() {
                       </Alert>
                     )}
 
-                    {!loadingInventory && availableInventoryOz === 0 && !stockExport?.decouvert && !mineStock?.overAllocated && (
+                    {!loadingInventory
+                      && availableInventoryOz === 0
+                      && !stockExport?.decouvert
+                      && !mineStock?.overAllocated
+                      && !eligibilityLoadFailed
+                      && !saleEligibility?.diagnostic.blocked
+                      && (saleEligibility?.diagnostic.excludedUntraceableSourceCount ?? 0) === 0 && (
                       <Alert type="warning" title="Aucun stock disponible" className="mt-3">
                         {isMineAccount
                           ? "Toute votre production disponible est déjà rachetée ou engagée dans une vente."
-                          : "La SONASP ne détient aucune once mobilisable. Enregistrez un achat avant de créer une vente."}
+                          : "Aucun achat minier ne dispose d’une chaîne physique complète jusqu’au stock raffiné."}
                       </Alert>
                     )}
                   </div>

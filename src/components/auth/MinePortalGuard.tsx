@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { UserProfile } from '@/types/auth';
 import { Loading } from '@/components/ui/Loading';
 import { isMineScopedUser, isMineTenantProfile } from '@/lib/mineAccess';
+import { hasGlobalPlatformAccess } from '@/lib/permissions';
 
 type MinePortalAccess = {
   companyId: string;
@@ -49,6 +50,13 @@ export function MinePortalGuard({ children }: { children: ReactNode }) {
     return <GuardMessage title="Compte désactivé" description="Ce compte ne peut plus accéder au Portail Mine. Contactez l’administrateur SONASP." />;
   }
 
+  // Les anciens liens publics menaient aussi Owner au portail Mine. Ses droits
+  // nationaux s'exercent dans SONASP, sans exiger ni emprunter l'identité d'une
+  // mine. Ne monter aucun contexte Mine et ne jamais déduire un tenant de l'URL.
+  if (hasGlobalPlatformAccess(user)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const canChooseCompany = false;
 
   if (!canChooseCompany && isMineTenantProfile(user) && !isMineScopedUser(user)) {
@@ -70,7 +78,7 @@ export function MinePortalGuard({ children }: { children: ReactNode }) {
   }
 
   // Tout paramètre d'URL est ignoré : seule la société du profil autoritatif
-  // peut ouvrir ce portail, y compris face à un compte Owner technique.
+  // du représentant minier peut ouvrir ce portail.
   const companyId = user.mining_company_id;
   if (!companyId) {
     return (

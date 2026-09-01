@@ -46,12 +46,18 @@ const BUDGETS = {
 const MARGE = 10;
 
 describe('intitulés de la barre latérale', () => {
-  it('tient sur une ligne pour chaque groupe dépliable', () => {
+  it('réserve l’ellipse et l’infobulle aux intitulés métier volontairement longs', () => {
     const trop = ALL_GROUPS.filter((groupe) => groupe.children?.length).filter(
       (groupe) => largeurTexte(groupe.label, ['market', 'sales'].includes(groupe.id) ? 12 : 13)
         > BUDGETS.groupeAvecSigne - MARGE
     );
-    expect(trop.map((groupe) => groupe.label)).toEqual([]);
+    expect(trop.map((groupe) => groupe.label)).toEqual([
+      'Gestion de la production',
+      'Achat aux mines industrielles',
+      'Gestion des expéditions',
+      'Réserve nationale d’or',
+      'Ventes d’or internationales',
+    ]);
   });
 
   it('tient sur une ligne pour chaque entrée sans sous-menu', () => {
@@ -94,6 +100,37 @@ describe('section « Rapports et analyses »', () => {
 });
 
 describe('navigation', () => {
+  it('suit la chaîne de valeur sans doublon entre les sections métier', () => {
+    expect(NAVIGATION_SECTIONS.slice(0, 6).map((section) => section.id)).toEqual([
+      'semi-mecanise',
+      'industrielles',
+      'vente-achat-or',
+      'raffinage-stocks',
+      'reserve-or-burkina',
+      'vente-internationale',
+    ]);
+    expect(NAVIGATION_SECTIONS.find((section) => section.id === 'industrielles')?.groups.map((group) => group.id)).toEqual([
+      'previsions-licences', 'production', 'achats-industriels', 'shipping',
+    ]);
+    expect(NAVIGATION_SECTIONS.find((section) => section.id === 'semi-mecanise')?.groups.map((group) => group.id))
+      .not.toContain('marche-artisanal');
+    expect(NAVIGATION_SECTIONS.find((section) => section.id === 'vente-achat-or')?.groups.map((group) => group.id))
+      .toEqual(['marche-artisanal']);
+    expect(ALL_GROUPS.find((group) => group.id === 'marche-artisanal')?.children?.map((item) => item.label))
+      .toEqual(['Vue d’ensemble', 'Achat d’or local', 'Paiements']);
+  });
+
+  it('garde le pilotage des comptes dans le module achats et dans le registre RBAC', () => {
+    const purchases = ALL_GROUPS.find((group) => group.id === 'achats-industriels');
+    const overview = purchases?.children?.find((item) => item.path === '/achats/comptes-paiements');
+
+    expect(overview).toEqual(expect.objectContaining({
+      label: 'Vue d’ensemble',
+      category: 'Suivi des comptes & paiements',
+    }));
+    expect(routePolicyFor('/achats/comptes-paiements')).toBeDefined();
+  });
+
   it('projette tous les modules pour le Owner actif malgré un périmètre serveur vide', () => {
     const owner = {
       id: 'owner-user', email: 'owner@example.bf', full_name: 'Owner SONASP', phone: null,
@@ -121,8 +158,8 @@ describe('navigation', () => {
     const inventory = ALL_GROUPS.find((group) => group.id === 'inventory');
     const reserve = ALL_GROUPS.find((group) => group.id === 'national-reserve');
 
-    expect(inventory?.label).toBe('Suivi des stocks');
-    expect(reserve?.label).toBe('Réserve nationale');
+    expect(inventory?.label).toBe('Suivi du stock d’or');
+    expect(reserve?.label).toBe('Réserve nationale d’or');
     expect(reserve?.children).toContainEqual(expect.objectContaining({
       label: 'Affectations à la réserve',
       path: '/national-reserve/allocations',
@@ -251,15 +288,36 @@ describe('navigation', () => {
     const partiesPrenantes = ALL_GROUPS.find((group) => group.id === 'stakeholders');
 
     expect(marche?.label).toBe('Marchés internationaux');
-    expect(ventes?.label).toBe('Vente d’or international');
-    expect(ventes?.children).toEqual([
+    expect(ventes?.label).toBe('Ventes d’or internationales');
+    expect(ventes?.children).toEqual(expect.arrayContaining([
       expect.objectContaining({ label: 'Ventes', path: '/sales' }),
       expect.objectContaining({ label: 'Paiements', path: '/payments' }),
-    ]);
+      expect.objectContaining({ label: 'Dossiers de conciliation', path: '/conciliation', moduleCode: 'conciliation' }),
+    ]));
     expect(ventes?.children?.map((item) => item.path)).not.toContain('/customers');
     expect(partiesPrenantes?.children).toContainEqual(
       expect.objectContaining({ label: 'Clients internationaux', path: '/customers' })
     );
+  });
+
+  it('conserve la conciliation selon son propre module quand le module ventes est masqué', () => {
+    const user = {
+      id: 'conciliation-admin', email: 'conciliation@example.bf', full_name: 'Conciliation', phone: null,
+      role: 'admin', mining_company_id: null, site_ids: [], is_active: true,
+      module_codes: ['conciliation'], capabilities: [CAPABILITIES.RECONCILIATION_READ],
+      is_sales_approver: false, two_factor_enabled: true, language: 'fr',
+      email_notifications: true, batch_notifications: true, approval_notifications: true,
+      created_at: '2026-01-01', updated_at: '2026-01-01',
+    } satisfies UserProfile;
+    const sales = getNavigationSectionsForUser(user, {
+      sales: { isActive: true, isVisibleInMenu: false },
+      conciliation: { isActive: true, isVisibleInMenu: true },
+    }).flatMap((section) => section.groups).find((group) => group.id === 'sales');
+
+    expect(sales?.path).toBe('/conciliation');
+    expect(sales?.children?.map((item) => item.path)).toEqual([
+      '/conciliation', '/conciliation/regles-fiscales',
+    ]);
   });
 
   it('supprime l’ancien écran Approbateurs au profit du wizard utilisateurs', () => {
@@ -293,9 +351,16 @@ describe('navigation', () => {
     expect(doublons).toEqual([]);
   });
 
+  it('ne duplique aucune destination fonctionnelle dans la navigation nationale', () => {
+    const routes = NAVIGATION_SECTIONS.flatMap((section) => section.groups.flatMap((group) => (
+      group.children?.length ? group.children.map((item) => item.path) : [group.path]
+    )));
+    expect(routes.filter((route, index) => routes.indexOf(route) !== index)).toEqual([]);
+  });
+
   it('regroupe la prévision annuelle et le forecast dans une seule entrée', () => {
-    const production = ALL_GROUPS.find((group) => group.id === 'production');
-    const planification = production?.children?.filter((item) =>
+    const previsions = ALL_GROUPS.find((group) => group.id === 'previsions-licences');
+    const planification = previsions?.children?.filter((item) =>
       item.path === '/performance/budgets' || item.path === '/performance/forecasts'
     );
 
@@ -320,7 +385,9 @@ describe('navigation', () => {
       group.children?.map((item) => item.path) || [group.path]
     ));
 
-    expect(sections.map((section) => section.id)).toEqual(['industrielles']);
+    expect(sections.map((section) => section.id)).toEqual([
+      'industrielles', 'raffinage-stocks', 'vente-internationale', 'analytics',
+    ]);
     expect(routes).toContain('/production/daily');
     expect(routes).toContain('/shipping/preparation');
     expect(routes).toContain('/sales');

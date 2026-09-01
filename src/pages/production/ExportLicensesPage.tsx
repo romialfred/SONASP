@@ -164,7 +164,7 @@ export function ExportLicensesPage() {
           subtitle={isMine
             ? `Autorisations, échéances et volumes disponibles${companyCode ? ` pour ${companyCode}` : ''}.`
             : 'Vue consolidée des autorisations et des volumes exportables.'}
-          breadcrumb={[{ label: 'Production' }, { label: 'Licences d’exportation' }]}
+          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Prévisions & licences' }, { label: 'Licences d’exportation' }]}
           actions={
             <button
               type="button"

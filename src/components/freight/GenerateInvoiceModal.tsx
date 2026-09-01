@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { X, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -29,6 +29,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
   const canManageInvoice = hasFreightCapability(user, FREIGHT_CAPABILITIES.INVOICE_MANAGE);
   const [activeTab, setActiveTab] = useState('bullion');
   const [generating, setGenerating] = useState(false);
+  const generationLock = useRef(false);
 
   const shipping = operation.shipping_preparation;
   /**
@@ -70,7 +71,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
     senderNIF: savedInvoice?.sender_nif || miningCompany?.tax_id || '',
 
     // Recipient
-    recipientName: savedInvoice?.recipient_name || shipping?.destination || '',
+    recipientName: savedInvoice?.recipient_name || shipping?.shipped_to_company || '',
     recipientAddress: savedInvoice?.recipient_address || '',
     recipientCity: savedInvoice?.recipient_city || '',
     recipientCountry: savedInvoice?.recipient_country || '',
@@ -86,33 +87,46 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
     // Boxes
     numberOfBoxes: savedInvoice?.number_of_boxes || 0,
-    boxType: savedInvoice?.box_type || 'Boîte sécurisée'
+    boxType: savedInvoice?.box_type || "Secure box"
   });
 
   const generateBullionSummary = async () => {
+    if (generationLock.current) return;
     if (!canPrepare) {
-      showError('Erreur', 'Une session AAL2 avec la capacité de préparation fret est requise.');
+      showError("Error", "A verified AAL2 session with freight preparation access is required.");
       return;
     }
     if (!bullionFormData.operatorName || !bullionFormData.financeName) {
-      showError('Erreur', 'Veuillez remplir les noms pour les signatures');
+      showError("Error", "Enter the names of the signatories");
       return;
     }
 
     if (!shipping?.items || shipping.items.length === 0) {
-      showError('Erreur', 'Aucune barre trouvée dans l\'expédition');
+      showError("Error", "No bars were found in this shipment");
+      return;
+    }
+
+    if (!Number.isFinite(invoiceFormData.metalPriceCFAPerKg) || invoiceFormData.metalPriceCFAPerKg <= 0
+      || !Number.isFinite(invoiceFormData.exchangeRateFCFAUSD) || invoiceFormData.exchangeRateFCFAUSD <= 0) {
+      showError('Pricing required', 'Enter a positive metal price and exchange rate in the invoice tab before generating valued documents.');
+      return;
+    }
+    if (shipping.items.some((item: any) => !item.daily_productions
+      || !Number.isFinite(item.daily_productions.pure_gold_grams) || item.daily_productions.pure_gold_grams <= 0)) {
+      showError('Incomplete assay data', 'Every lot needs a valid fine gold weight before a document can be generated.');
       return;
     }
 
     if (!miningCompany?.name) {
       showError(
-        'Erreur',
-        'La société minière d’origine doit être renseignée avant de générer le document.',
+        "Error",
+        "The source mining company must be recorded before generating this document.",
       );
       return;
     }
 
     try {
+      generationLock.current = true;
       setGenerating(true);
 
       // Préparer les données
@@ -157,25 +171,28 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         'bullion_summary',
         `Bullion Summary - ${referenceExpedition}`,
         file,
-        'Généré automatiquement'
+        "Generated automatically"
       );
 
-      showSuccess('Succès', 'Bullion Summary généré et ajouté aux documents');
+      showSuccess("Success", "Bullion summary generated and attached");
       onSuccess();
-    } catch (error: any) {
-      showError('Erreur', 'Erreur lors de la génération: ' + error.message);
+    } catch (error) {
+      console.error('Bullion summary generation failed:', error);
+      showError('Document generation failed', 'The bullion summary could not be generated or stored. Review the data and try again.');
     } finally {
       setGenerating(false);
+      generationLock.current = false;
     }
   };
 
   const generateExportInvoice = async () => {
+    if (generationLock.current) return;
     if (!canManageInvoice || !canPrepare) {
-      showError('Erreur', 'Les capacités AAL2 de facturation et de préparation fret sont requises.');
+      showError("Error", "Verified AAL2 invoice management and freight preparation access are required.");
       return;
     }
     if (!invoiceFormData.senderName || !invoiceFormData.recipientName) {
-      showError('Erreur', 'Veuillez remplir les informations expéditeur et destinataire');
+      showError("Error", "Enter the sender and recipient details");
       return;
     }
 
@@ -185,18 +202,19 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
       invoiceFormData.numberOfBoxes <= 0
     ) {
       showError(
-        'Erreur',
-        'Renseignez un taux de change, un prix du métal et un nombre de boîtes strictement positifs.',
+        "Error",
+        "Enter a positive exchange rate, metal price and package count.",
       );
       return;
     }
 
     if (!shipping) {
-      showError('Erreur', 'Données d\'expédition manquantes');
+      showError("Error", "Missing shipment data");
       return;
     }
 
     try {
+      generationLock.current = true;
       setGenerating(true);
 
       const netWeightKg = (shipping.total_weight_grams || 0) / 1000;
@@ -228,8 +246,8 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         countryOfOrigin: invoiceFormData.senderCountry,
         mineName: invoiceFormData.mineName || miningCompany?.name || '',
 
-        awbNumber: operation.awb_number || referenceExpedition.replace('SHIP', ''),
-        lotNumber: referenceExpedition.split('-')[1] || '2025',
+        awbNumber: operation.awb_number || '',
+        lotNumber: referenceExpedition,
         numberOfBoxes: invoiceFormData.numberOfBoxes,
         boxType: invoiceFormData.boxType,
         description: 'Dore: Gold, Silver, ingot packed in boxes',
@@ -275,15 +293,17 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         'export_invoice',
         `Invoice - ${referenceExpedition}`,
         file,
-        'Facture d\'exportation pour besoins de la douane'
+        'Export invoice for customs clearance'
       );
 
-      showSuccess('Succès', 'Facture d\'exportation générée et ajoutée aux documents');
+      showSuccess("Success", "Export invoice generated and attached");
       onSuccess();
-    } catch (error: any) {
-      showError('Erreur', 'Erreur lors de la génération: ' + error.message);
+    } catch (error) {
+      console.error('Export invoice generation failed:', error);
+      showError('Document generation failed', 'The export invoice could not be generated or stored. Review the data and try again.');
     } finally {
       setGenerating(false);
+      generationLock.current = false;
     }
   };
 
@@ -293,9 +313,9 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Générer Facture d'Exportation</h2>
+            <h2 className="text-xl font-bold text-gray-900">Generate export invoice</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Expédition: {referenceExpedition}
+              Shipment: {referenceExpedition}
             </p>
           </div>
           <button
@@ -338,25 +358,25 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
             <div className="space-y-6">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <p className="text-sm text-slate-800">
-                  Ce document génère un résumé détaillé de toutes les barres incluses dans l'expédition avec les signatures requises.
+                  This document lists every bar included in the shipment and the required signatories.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date du Rapport
+                    Report date
                   </label>
                   <Input
                     type="text"
                     value={bullionFormData.reportDate}
                     onChange={(e) => setbullionFormData({ ...bullionFormData, reportDate: e.target.value })}
-                    placeholder="31-août-26"
+                    placeholder="31-Aug-26"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre de Barres
+                    Number of bars
                   </label>
                   <Input
                     type="text"
@@ -375,7 +395,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     type="text"
                     value={bullionFormData.operatorName}
                     onChange={(e) => setbullionFormData({ ...bullionFormData, operatorName: e.target.value })}
-                    placeholder="Nom du responsable"
+                    placeholder="Authorised operator name"
                     required
                   />
                 </div>
@@ -387,7 +407,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     type="text"
                     value={bullionFormData.financeName}
                     onChange={(e) => setbullionFormData({ ...bullionFormData, financeName: e.target.value })}
-                    placeholder="Nom du destinataire"
+                    placeholder="Finance signatory name"
                     required
                   />
                 </div>
@@ -400,7 +420,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                   className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <FileText className="w-4 h-4 mr-2" />
-                  {generating ? 'Génération...' : 'Générer Bullion Summary'}
+                  {generating ? "Generating…" : "Generate bullion summary"}
                 </Button>
               </div>
             </div>
@@ -410,16 +430,16 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
             <div className="space-y-6">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <p className="text-sm text-slate-800">
-                  Cette facture sera utilisée pour les besoins de la douane. Les informations de l'expédition sont pré-remplies.
+                  This invoice is intended for customs. Recorded shipment details are prefilled.
                 </p>
               </div>
 
               {/* Expéditeur */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Expéditeur (From)</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Sender</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Nom</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
                     <Input
                       type="text"
                       value={invoiceFormData.senderName}
@@ -435,7 +455,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Adresse</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Address</label>
                     <Input
                       type="text"
                       value={invoiceFormData.senderAddress}
@@ -443,7 +463,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Ville</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">City</label>
                     <Input
                       type="text"
                       value={invoiceFormData.senderCity}
@@ -452,7 +472,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Pays</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Country</label>
                     <Input
                       type="text"
                       value={invoiceFormData.senderCountry}
@@ -464,10 +484,10 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
               {/* Destinataire */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Destinataire (Shipped to)</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Recipient (shipped to)</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Nom</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
                     <Input
                       type="text"
                       value={invoiceFormData.recipientName}
@@ -475,7 +495,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Adresse</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Address</label>
                     <Input
                       type="text"
                       value={invoiceFormData.recipientAddress}
@@ -483,7 +503,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Ville, Pays</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">City</label>
                     <Input
                       type="text"
                       value={invoiceFormData.recipientCity}
@@ -491,7 +511,15 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Téléphone</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Country</label>
+                    <Input
+                      type="text"
+                      value={invoiceFormData.recipientCountry}
+                      onChange={(e) => setInvoiceFormData({ ...invoiceFormData, recipientCountry: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
                     <Input
                       type="text"
                       value={invoiceFormData.recipientPhone}
@@ -506,16 +534,16 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">Mine</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Nom de la Mine</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Mine name</label>
                     <Input
                       type="text"
                       value={invoiceFormData.mineName}
                       disabled
-                      placeholder="Nom officiel de la mine"
+                      placeholder="Official mine name"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Localisation</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Location</label>
                     <Input
                       type="text"
                       value={invoiceFormData.mineLocation}
@@ -528,11 +556,11 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
 
               {/* Informations Financières */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Informations Financières</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Financial information</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Taux Change FCFA/USD
+                      Exchange rate (XOF/USD)
                     </label>
                     <Input
                       type="number"
@@ -543,7 +571,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Prix Métal CFA/kg
+                      Metal price (XOF/kg)
                     </label>
                     <Input
                       type="number"
@@ -554,7 +582,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Nombre de Boîtes
+                      Number of packages
                     </label>
                     <Input
                       type="number"
@@ -572,7 +600,7 @@ export function GenerateInvoiceModal({ operation, onClose, onSuccess }: Generate
                   className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <FileText className="w-4 h-4 mr-2" />
-                  {generating ? 'Génération...' : 'Générer Export Invoice'}
+                  {generating ? "Generating…" : "Generate export invoice"}
                 </Button>
               </div>
             </div>

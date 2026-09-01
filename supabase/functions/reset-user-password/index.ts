@@ -6,8 +6,13 @@ import {
   ACCOUNT_MANAGEMENT_CAPABILITY,
   canManageAccountTarget,
 } from '../_shared/account-role-policy.ts';
+import {
+  clesJsonValides,
+  lireJsonLimite,
+} from '../_shared/admin-account-edge.ts';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const TAILLE_MAXIMALE_CORPS = 2_048;
 
 class ErreurPublique extends Error {
   constructor(public statut: number, message: string) {
@@ -79,10 +84,13 @@ Deno.serve(async (req: Request) => {
       throw new ErreurPublique(403, 'Vous ne disposez pas du droit de réinitialiser ce compte.');
     }
 
-    const corps = await req.json().catch(() => ({}));
+    const corps = await lireJsonLimite(req, TAILLE_MAXIMALE_CORPS);
+    if (!clesJsonValides(corps, ['user_id'], ['user_id'])) {
+      throw new ErreurPublique(400, 'La demande de récupération est invalide.');
+    }
     const utilisateurId = String(corps?.user_id ?? '').trim();
     if (!UUID.test(utilisateurId)) {
-      throw new ErreurPublique(400, 'Le compte demandé est invalide.');
+      throw new ErreurPublique(400, 'La demande de récupération est invalide.');
     }
     if (utilisateurId === acteur.id) {
       throw new ErreurPublique(400, 'Utilisez la procédure « Mot de passe oublié » pour votre propre compte.');

@@ -642,7 +642,7 @@ export function BusinessIntelligenceWorkspace({ view }: BusinessIntelligenceWork
           <div className="bi-empty">
             <BarChart3 size={32} />
             <h2>Aucune donnée sur cette sélection</h2>
-            <p>Élargissez la période ou retirez un filtre. Aucun chiffre de démonstration n’est substitué aux données absentes.</p>
+            <p>Élargissez la période ou retirez un filtre pour retrouver vos données.</p>
           </div>
         ) : (
           <>

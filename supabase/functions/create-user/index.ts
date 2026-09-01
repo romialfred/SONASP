@@ -3,10 +3,42 @@ import { reponseJson, reponsePrevol } from '../_shared/cors.ts';
 import { niveauAssurance } from '../_shared/assurance.ts';
 import { accountOrganizationType, canCreateAccountRole, isInteractiveAccountRole } from '../_shared/account-role-policy.ts';
 import { urlModificationMotDePasse, urlRecuperationCompte } from '../_shared/application-url.ts';
-import { verifierSessionAdministration } from '../_shared/admin-account-edge.ts';
+import {
+  clesJsonValides,
+  lireJsonLimite,
+  verifierSessionAdministration,
+} from '../_shared/admin-account-edge.ts';
 
 const ROLES_CREATEURS = new Set(['owner', 'admin']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const TAILLE_MAXIMALE_CORPS = 65_536;
+const CLES_REQUETE_CREATION = [
+  'email',
+  'full_name',
+  'phone',
+  'role',
+  'is_active',
+  'mining_company_id',
+  'account_type',
+  'organization_id',
+  'organization_code',
+  'organization_name',
+  'permissions',
+  'capabilities',
+  'responsibilities',
+  'collector_id',
+] as const;
+const CLES_PERMISSION_MODULE = [
+  'module_id',
+  'can_view',
+  'can_create',
+  'can_edit',
+  'can_delete',
+  'can_approve',
+  'field_permissions',
+] as const;
+const CLES_PERMISSION_CHAMP = ['can_view', 'can_edit'] as const;
+const CLE_IDEMPOTENCE = /^[A-Za-z0-9._:-]{8,128}$/;
 
 interface PermissionModule {
   module_id: string;
@@ -33,6 +65,18 @@ interface RequeteCreation {
   capabilities?: unknown;
   responsibilities?: unknown;
   collector_id?: unknown;
+}
+
+interface ResultatCreationPostgresql {
+  user_id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  account_type?: string | null;
+  organization_id?: string | null;
+  organization_created?: boolean;
+  replayed: boolean;
+  email_sent: boolean;
 }
 
 const CAPACITES_OPERATIONNELLES = new Set([
@@ -109,6 +153,60 @@ class ErreurPublique extends Error {
 const texte = (valeur: unknown, longueur: number) =>
   typeof valeur === 'string' ? valeur.trim().slice(0, longueur) : '';
 
+const estObjetJson = (valeur: unknown): valeur is Record<string, unknown> =>
+  Boolean(valeur && typeof valeur === 'object' && !Array.isArray(valeur));
+
+function permissionsValides(brut: unknown): boolean {
+  if (brut === undefined || brut === null) return true;
+  if (!estObjetJson(brut)) return false;
+  const permissions = Object.values(brut);
+  if (permissions.length > 250) return false;
+
+  return permissions.every((valeur) => {
+    if (!clesJsonValides(valeur, CLES_PERMISSION_MODULE, ['module_id'])) return false;
+    if (typeof valeur.module_id !== 'string') return false;
+    for (const cle of ['can_view', 'can_create', 'can_edit', 'can_delete', 'can_approve'] as const) {
+      if (valeur[cle] !== undefined && typeof valeur[cle] !== 'boolean') return false;
+    }
+
+    const champs = valeur.field_permissions;
+    if (champs === undefined || champs === null) return true;
+    if (!estObjetJson(champs)) return false;
+    const permissionsChamps = Object.entries(champs);
+    if (permissionsChamps.length > 100) return false;
+    return permissionsChamps.every(([champ, droits]) =>
+      champ.length > 0
+      && champ.length <= 100
+      && !/[\u0000-\u001F\u007F]/u.test(champ)
+      && clesJsonValides(droits, CLES_PERMISSION_CHAMP)
+      && (droits.can_view === undefined || typeof droits.can_view === 'boolean')
+      && (droits.can_edit === undefined || typeof droits.can_edit === 'boolean')
+    );
+  });
+}
+
+function typesRequeteCreationValides(corps: Record<string, unknown>): boolean {
+  const chainesObligatoires = ['email', 'full_name', 'role'] as const;
+  if (chainesObligatoires.some((cle) => typeof corps[cle] !== 'string')) return false;
+  const chainesOptionnelles = [
+    'phone',
+    'mining_company_id',
+    'account_type',
+    'organization_id',
+    'organization_code',
+    'organization_name',
+    'collector_id',
+  ] as const;
+  if (chainesOptionnelles.some((cle) =>
+    corps[cle] !== undefined && corps[cle] !== null && typeof corps[cle] !== 'string'
+  )) return false;
+  if (corps.is_active !== undefined && typeof corps.is_active !== 'boolean') return false;
+  if (!permissionsValides(corps.permissions)) return false;
+  return [corps.capabilities, corps.responsibilities].every((valeur) =>
+    valeur === undefined || valeur === null || estObjetJson(valeur)
+  );
+}
+
 function motDePasseProvisoire(longueur = 24): string {
   const familles = [
     'ABCDEFGHJKLMNPQRSTUVWXYZ',
@@ -166,29 +264,68 @@ function normaliserPermissions(brut: unknown, role: string): PermissionModule[] 
       permission.can_view || permission.can_create || permission.can_edit
       || permission.can_delete || permission.can_approve
       || Object.values(permission.field_permissions ?? {}).some((droits) => droits.can_view || droits.can_edit)
-    );
+    )
+    .sort((gauche, droite) => gauche.module_id.localeCompare(droite.module_id));
 }
 
-async function annulerCreation(admin: SupabaseClient, utilisateurId: string): Promise<void> {
-  const erreurs: string[] = [];
-  const suppressions = [
-    ['comptes collecteur', admin.from('snp_collector_accounts').delete().eq('user_id', utilisateurId)],
-    ['rattachements organisationnels', admin.from('snp_user_organization_memberships').delete().eq('user_id', utilisateurId)],
-    ['responsabilités', admin.from('snp_user_responsibilities').delete().eq('user_id', utilisateurId)],
-    ['capacités explicites', admin.from('snp_user_capabilities').delete().eq('user_id', utilisateurId)],
-    ['habilitations', admin.from('user_permissions').delete().eq('user_id', utilisateurId)],
-    ['profil', admin.from('user_profiles').delete().eq('id', utilisateurId)],
-  ] as const;
+async function resoudreCleIdempotence(req: Request, acteurId: string, email: string): Promise<string> {
+  const fournie = req.headers.get('Idempotency-Key')?.trim();
+  if (fournie) {
+    if (!CLE_IDEMPOTENCE.test(fournie)) {
+      throw new ErreurPublique(400, 'La clé d’idempotence de création est invalide.');
+    }
+    return fournie;
+  }
+  // Compatibilité des clients existants : une même adresse, pour un même
+  // acteur, produit la même clé jusqu'à réussite ou compensation complète.
+  const empreinte = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(`sonasp:create-user:${acteurId}:${email}`),
+  );
+  return Array.from(new Uint8Array(empreinte), (octet) => octet.toString(16).padStart(2, '0')).join('');
+}
 
-  for (const [libelle, requete] of suppressions) {
-    const { error } = await requete;
-    if (error) erreurs.push(`${libelle}: ${error.message}`);
+function erreurAuthUtilisateurAbsent(erreur: { status?: number; code?: string; message?: string } | null): boolean {
+  return Boolean(erreur && (
+    erreur.status === 404
+    || erreur.code === 'user_not_found'
+    || /not found|does not exist/i.test(erreur.message ?? '')
+  ));
+}
+
+async function supprimerIdentiteAuthEtVerifier(admin: SupabaseClient, utilisateurId: string): Promise<void> {
+  let derniereErreur = 'La suppression de l’identité Auth n’a pas pu être vérifiée.';
+  for (let tentative = 0; tentative < 2; tentative += 1) {
+    const { error: erreurSuppression } = await admin.auth.admin.deleteUser(utilisateurId);
+    const { data: verification, error: erreurVerification } = await admin.auth.admin.getUserById(utilisateurId);
+    if (!verification?.user && erreurAuthUtilisateurAbsent(erreurVerification)) return;
+    if (erreurSuppression && !erreurAuthUtilisateurAbsent(erreurSuppression)) {
+      derniereErreur = `identité Auth: ${erreurSuppression.message}`;
+    } else if (erreurVerification && !erreurAuthUtilisateurAbsent(erreurVerification)) {
+      derniereErreur = `vérification Auth: ${erreurVerification.message}`;
+    }
   }
-  const { error: erreurAuth } = await admin.auth.admin.deleteUser(utilisateurId);
-  if (erreurAuth) erreurs.push(`identité Auth: ${erreurAuth.message}`);
-  if (erreurs.length > 0) {
-    throw new Error(`Retour arrière incomplet (${erreurs.join(' ; ')})`);
+  throw new Error(derniereErreur);
+}
+
+async function annulerCreation(
+  admin: SupabaseClient,
+  clientActeur: SupabaseClient,
+  utilisateurId: string,
+  cleIdempotence: string,
+  postgresqlCree: boolean,
+): Promise<void> {
+  const { data, error } = await clientActeur.rpc('snp_annuler_creation_compte_postgresql', {
+    p_idempotency_key: cleIdempotence,
+    p_user_id: utilisateurId,
+  });
+  const creationPostgresqlAbsente = error?.code === 'P0002';
+  if ((postgresqlCree && (error || !data || data.removed !== true))
+    || (!postgresqlCree && error && !creationPostgresqlAbsente)
+    || (!postgresqlCree && !error && data?.removed !== true)) {
+    throw new Error(`annulation PostgreSQL: ${error?.message ?? 'confirmation absente'}`);
   }
+  await supprimerIdentiteAuthEtVerifier(admin, utilisateurId);
 }
 
 Deno.serve(async (req: Request) => {
@@ -207,7 +344,9 @@ Deno.serve(async (req: Request) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   let utilisateurCree: string | null = null;
-  let organisationCreee: string | null = null;
+  let cleIdempotence: string | null = null;
+  let postgresqlCree = false;
+  let clientActeurRetour: SupabaseClient | null = null;
 
   try {
     const autorisation = req.headers.get('Authorization') ?? '';
@@ -223,7 +362,8 @@ Deno.serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
       global: { headers: { Authorization: autorisation } },
     });
-    const sessionAdministration = await verifierSessionAdministration(clientActeur);
+    clientActeurRetour = clientActeur;
+    const sessionAdministration = await verifierSessionAdministration(clientActeur, 'create');
     if (!sessionAdministration.ok) {
       throw new ErreurPublique(sessionAdministration.status, 'Votre session administrative n’est plus autorisée.');
     }
@@ -251,20 +391,26 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const corps = await req.json().catch(() => null) as RequeteCreation | null;
-    if (!corps) throw new ErreurPublique(400, 'Les informations du compte sont illisibles.');
+    const corps = await lireJsonLimite(req, TAILLE_MAXIMALE_CORPS);
+    if (
+      !clesJsonValides(corps, CLES_REQUETE_CREATION, ['email', 'full_name', 'role'])
+      || !typesRequeteCreationValides(corps)
+    ) {
+      throw new ErreurPublique(400, 'Les informations du compte sont illisibles.');
+    }
+    const requete = corps as RequeteCreation;
 
-    const email = texte(corps.email, 254).toLowerCase();
-    const nomComplet = texte(corps.full_name, 160);
-    const telephone = texte(corps.phone, 40) || null;
-    const role = texte(corps.role, 40).toLowerCase();
-    const societeMiniere = texte(corps.mining_company_id, 64) || null;
-    const typeCompte = texte(corps.account_type, 40).toLowerCase() || null;
-    const organisationDemandee = texte(corps.organization_id, 64) || null;
-    const codeOrganisation = texte(corps.organization_code, 20).toUpperCase() || null;
-    const nomOrganisation = texte(corps.organization_name, 160) || null;
-    const actif = corps.is_active !== false;
-    const collecteurId = texte(corps.collector_id, 64) || null;
+    const email = texte(requete.email, 254).toLowerCase();
+    const nomComplet = texte(requete.full_name, 160);
+    const telephone = texte(requete.phone, 40) || null;
+    const role = texte(requete.role, 40).toLowerCase();
+    const societeMiniere = texte(requete.mining_company_id, 64) || null;
+    const typeCompte = texte(requete.account_type, 40).toLowerCase() || null;
+    const organisationDemandee = texte(requete.organization_id, 64) || null;
+    const codeOrganisation = texte(requete.organization_code, 20).toUpperCase() || null;
+    const nomOrganisation = texte(requete.organization_name, 160) || null;
+    const actif = requete.is_active !== false;
+    const collecteurId = texte(requete.collector_id, 64) || null;
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new ErreurPublique(400, 'Renseignez une adresse e-mail valide.');
@@ -361,12 +507,8 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const { data: profilExistant } = await admin
-      .from('user_profiles').select('id').eq('email', email).maybeSingle();
-    if (profilExistant) throw new ErreurPublique(409, 'Un compte utilise déjà cette adresse e-mail.');
-
-    const permissions = normaliserPermissions(corps.permissions, role);
-    const capacites = normaliserCapacites(corps.responsibilities ?? corps.capabilities, role);
+    const permissions = normaliserPermissions(requete.permissions, role);
+    const capacites = normaliserCapacites(requete.responsibilities ?? requete.capabilities, role);
     if (role === 'comptoir' && !capacites.some(
       (capacite) => capacite.code === 'comptoir.manage' && capacite.allowed
     )) {
@@ -398,212 +540,139 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const { data: creationAuth, error: erreurCreationAuth } = await admin.auth.admin.createUser({
-      email,
-      password: motDePasseProvisoire(),
-      email_confirm: true,
-      user_metadata: { full_name: nomComplet, phone: telephone ?? '' },
-      app_metadata: { role, mining_company_id: role === 'mine' ? societeMiniere : null },
-    });
-    if (erreurCreationAuth || !creationAuth.user) {
-      const conflit = /already|registered|exist/i.test(erreurCreationAuth?.message ?? '');
-      throw new ErreurPublique(
-        conflit ? 409 : 400,
-        conflit ? 'Un compte utilise déjà cette adresse e-mail.' : 'Le compte d’authentification n’a pas pu être créé.',
+    const responsabilites = Object.fromEntries(capacites.map(({ code, allowed }) => [code, allowed]));
+    cleIdempotence = await resoudreCleIdempotence(req, acteur.id, email);
+    const parametresPostgresql = {
+      p_idempotency_key: cleIdempotence,
+      p_email: email,
+      p_full_name: nomComplet,
+      p_phone: telephone,
+      p_role: role,
+      p_is_active: actif,
+      p_mining_company_id: societeMiniere,
+      p_account_type: typeCompte,
+      p_organization_id: organisationDemandee,
+      p_organization_code: codeOrganisation,
+      p_organization_name: nomOrganisation,
+      p_collector_id: collecteurId,
+      p_responsibilities: responsabilites,
+      p_permissions: role === 'owner' ? [] : permissions,
+    };
+
+    const { data: creationPrecedente, error: erreurLectureIdempotence } = await clientActeur.rpc(
+      'snp_lire_creation_compte_idempotente',
+      parametresPostgresql,
+    );
+    if (erreurLectureIdempotence) {
+      if (erreurLectureIdempotence.code === '23505') {
+        throw new ErreurPublique(409, 'Cette demande de création a déjà été utilisée avec d’autres informations.');
+      }
+      throw new Error(`lecture idempotente: ${erreurLectureIdempotence.message}`);
+    }
+
+    let resultatCreation = creationPrecedente as ResultatCreationPostgresql | null;
+    if (!resultatCreation) {
+      const { data: profilExistant } = await admin
+        .from('user_profiles').select('id').eq('email', email).maybeSingle();
+      if (profilExistant) throw new ErreurPublique(409, 'Un compte utilise déjà cette adresse e-mail.');
+
+      const { data: creationAuth, error: erreurCreationAuth } = await admin.auth.admin.createUser({
+        email,
+        password: motDePasseProvisoire(),
+        email_confirm: true,
+        user_metadata: { full_name: nomComplet, phone: telephone ?? '' },
+        app_metadata: {
+          role,
+          mining_company_id: role === 'mine' ? societeMiniere : null,
+          account_creation_key: cleIdempotence,
+          account_created_by: acteur.id,
+        },
+      });
+      if (erreurCreationAuth || !creationAuth.user) {
+        const conflit = /already|registered|exist/i.test(erreurCreationAuth?.message ?? '');
+        throw new ErreurPublique(
+          conflit ? 409 : 400,
+          conflit ? 'Un compte utilise déjà cette adresse e-mail.' : 'Le compte d’authentification n’a pas pu être créé.',
+        );
+      }
+      utilisateurCree = creationAuth.user.id;
+
+      const { data: resultatPostgresql, error: erreurPostgresql } = await clientActeur.rpc(
+        'snp_creer_compte_postgresql_transactionnel',
+        { ...parametresPostgresql, p_user_id: utilisateurCree },
       );
-    }
-    utilisateurCree = creationAuth.user.id;
-
-    const { error: erreurProfil } = await admin.from('user_profiles').insert({
-      id: utilisateurCree,
-      email,
-      full_name: nomComplet,
-      phone: telephone,
-      // Owner n'est jamais activé par la seule clé de service : le RPC vérifie
-      // à nouveau le JWT et la hiérarchie avant promotion et journalisation.
-      role: role === 'owner' ? 'customer' : role,
-      mining_company_id: role === 'mine' ? societeMiniere : null,
-      is_active: role === 'owner' ? false : actif,
-      two_factor_enabled: false,
-      mfa_enrolled_at: null,
-      must_change_password: true,
-      password_changed_at: null,
-    });
-    if (erreurProfil) {
-      const conflitCompteMine = role === 'mine' && (
-        erreurProfil.code === '23505'
-        || /compte_mine|mining_company|société minière/i.test(erreurProfil.message)
-      );
-      if (conflitCompteMine) {
-        throw new ErreurPublique(409, 'Cette société minière possède déjà un compte.');
-      }
-      throw new Error(`profil: ${erreurProfil.message}`);
-    }
-
-    let organisationId = organisationDemandee;
-    if (role === 'comptoir') {
-      if (!organisationId) {
-        const { data: ministereTutelle, error: erreurMinistereTutelle } = await admin
-          .from('snp_ministries')
-          .select('id')
-          .eq('code', 'MEMC')
-          .eq('is_active', true)
-          .maybeSingle();
-        if (erreurMinistereTutelle || !ministereTutelle?.id) {
-          throw new Error(
-            `ministère de tutelle du comptoir: ${erreurMinistereTutelle?.message ?? 'MEMC actif introuvable'}`,
-          );
+      if (erreurPostgresql || !resultatPostgresql) {
+        if (erreurPostgresql?.code === '23505') {
+          throw new ErreurPublique(409, 'Un compte ou un périmètre utilise déjà ces informations.');
         }
-        const { data: nouvelleOrganisation, error: erreurNouvelleOrganisation } = await admin
-          .from('snp_organizations')
-          .insert({
-            code: codeOrganisation,
-            name: nomOrganisation,
-            organization_type: 'comptoir',
-            supervising_ministry_id: ministereTutelle.id,
-            is_active: true,
-            created_by: acteur.id,
-          })
-          .select('id')
-          .single();
-        if (erreurNouvelleOrganisation || !nouvelleOrganisation?.id) {
-          const conflit = erreurNouvelleOrganisation?.code === '23505';
-          throw new ErreurPublique(
-            conflit ? 409 : 400,
-            conflit
-              ? 'Un comptoir utilise déjà ce code.'
-              : 'Le périmètre du comptoir n’a pas pu être créé.',
-          );
+        if (erreurPostgresql?.code === '42501') {
+          throw new ErreurPublique(403, 'La création de ce rôle ou de ces habilitations a été refusée.');
         }
-        organisationId = nouvelleOrganisation.id;
-        organisationCreee = organisationId;
+        throw new Error(`transaction de création PostgreSQL: ${erreurPostgresql?.message ?? 'résultat absent'}`);
       }
-
+      resultatCreation = resultatPostgresql as ResultatCreationPostgresql;
+      postgresqlCree = true;
     }
 
-    if (role === 'mine') {
-      const { data: mineOrganization, error: mineOrganizationError } = await admin
-        .from('snp_organizations')
-        .select('id')
-        .eq('mining_company_id', societeMiniere)
-        .eq('organization_type', 'mine')
-        .maybeSingle();
-      if (mineOrganizationError || !mineOrganization?.id) {
-        throw new Error(`organisation minière: ${mineOrganizationError?.message ?? 'introuvable'}`);
-      }
-      organisationId = mineOrganization.id;
+    if (!resultatCreation || !UUID.test(resultatCreation.user_id)) {
+      throw new Error('La création transactionnelle n’a pas retourné un compte valide.');
     }
+    const utilisateurIdFinal = resultatCreation.user_id;
 
-    if (organisationId) {
-      const { error: erreurRattachement } = await admin
-        .from('snp_user_organization_memberships')
-        .insert({
-          user_id: utilisateurCree,
-          organization_id: organisationId,
-          membership_role: ['mine', 'comptoir'].includes(role) ? 'manager' : 'operator',
-          is_primary: true,
-          reason: 'Rattachement lors de la création sécurisée du compte',
-          granted_by: acteur.id,
+    if (!resultatCreation.email_sent) {
+      const { data: lien, error: erreurLien } = await admin.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: { redirectTo: urlModificationMotDePasse(Deno.env.get('SONASP_APP_URL')) },
+      });
+      const jetonHache = lien?.properties?.hashed_token;
+      if (erreurLien || !jetonHache) throw new Error(`lien d’activation: ${erreurLien?.message ?? 'absent'}`);
+      const lienActivation = urlRecuperationCompte(jetonHache, Deno.env.get('SONASP_APP_URL'));
+
+      const reponseCourriel = await fetch(`${urlSupabase}/functions/v1/envoyer-courriel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': autorisation,
+          // Appel serveur-à-serveur : la clé de service franchit la passerelle,
+          // tandis que le jeton utilisateur reste l'identité vérifiée par la
+          // fonction destinataire. La clé ne quitte jamais l'environnement Deno.
+          'apikey': cleService,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'bienvenue',
+          to: email,
+          nom_complet: nomComplet,
+          role: typeCompte === 'comptoir' ? 'comptoir' : role,
+          lien_activation: lienActivation,
+        }),
+      });
+      const resultatCourriel = await reponseCourriel.json().catch(() => ({}));
+      if (!reponseCourriel.ok || !resultatCourriel?.envoye) {
+        console.error('[create-user] Courriel de bienvenue indisponible.', {
+          statut: reponseCourriel.status,
+          erreur: resultatCourriel?.erreur ?? 'réponse sans confirmation',
         });
-      if (erreurRattachement) {
-        throw new Error(`rattachement à l’organisation: ${erreurRattachement.message}`);
+        throw new ErreurPublique(
+          503,
+          'La messagerie n’a pas confirmé l’envoi du courriel de bienvenue. Aucun compte incomplet n’a été conservé.',
+        );
       }
-    }
-
-    if (role === 'collector' && collecteurId) {
-      const { error: collectorAccountError } = await admin.from('snp_collector_accounts').insert({
-        user_id: utilisateurCree,
-        collector_id: collecteurId,
-        comptoir_organization_id: organisationId,
-        is_active: true,
-        linked_by: acteur.id,
-        reason: 'Rattachement lors de la création sécurisée du compte Collecteur',
-      });
-      if (collectorAccountError) throw new Error(`profil collecteur: ${collectorAccountError.message}`);
-    }
-
-    if (capacites.length > 0) {
-      const responsibilityPayload = Object.fromEntries(capacites.map(({ code, allowed }) => [code, allowed]));
-      const { error: validationError } = await clientActeur.rpc('snp_validate_responsibilities', {
-        p_role: role,
-        p_responsibilities: responsibilityPayload,
-      });
-      if (validationError) throw new ErreurPublique(403, validationError.message);
-      const selectedResponsibilities = capacites.filter(({ allowed }) => allowed).map(({ code }) => ({
-        user_id: utilisateurCree,
-        responsibility_code: code,
-        granted_by: acteur.id,
-        reason: 'Attribution lors de la création sécurisée du compte',
-      }));
-      if (selectedResponsibilities.length > 0) {
-        const { error: responsibilitiesError } = await admin
-          .from('snp_user_responsibilities')
-          .insert(selectedResponsibilities);
-        if (responsibilitiesError) throw new Error(`responsabilités: ${responsibilitiesError.message}`);
-      }
-    }
-
-    if (role === 'owner') {
-      const { error: ownerError } = await clientActeur.rpc('snp_configurer_acces_compte', {
-        p_user_id: utilisateurCree, p_full_name: nomComplet, p_phone: telephone,
-        p_role: 'owner', p_is_active: actif, p_mining_company_id: null,
-        p_organization_id: organisationId, p_collector_id: null,
-        p_responsibilities: {}, p_permissions: [],
-      });
-      if (ownerError) throw new ErreurPublique(403, 'La création du compte Owner n’a pas été autorisée par le serveur.');
-    } else if (permissions.length > 0) {
-      // L'Edge Function possède la clé de service, mais ne contourne jamais le
-      // plafond du rôle : la même RPC autoritative gouverne création et édition.
-      const { error: erreurPermissions } = await clientActeur.rpc('snp_remplacer_habilitations_compte', {
-        p_user_id: utilisateurCree,
-        p_habilitations: permissions,
-      });
-      if (erreurPermissions) throw new Error(`habilitations: ${erreurPermissions.message}`);
-    }
-
-    const { data: lien, error: erreurLien } = await admin.auth.admin.generateLink({
-      type: 'recovery',
-      email,
-      options: { redirectTo: urlModificationMotDePasse(Deno.env.get('SONASP_APP_URL')) },
-    });
-    const jetonHache = lien?.properties?.hashed_token;
-    if (erreurLien || !jetonHache) throw new Error(`lien d’activation: ${erreurLien?.message ?? 'absent'}`);
-    const lienActivation = urlRecuperationCompte(jetonHache, Deno.env.get('SONASP_APP_URL'));
-
-    const reponseCourriel = await fetch(`${urlSupabase}/functions/v1/envoyer-courriel`, {
-      method: 'POST',
-      headers: {
-        'Authorization': autorisation,
-        // Appel serveur-à-serveur : la clé de service franchit la passerelle,
-        // tandis que le jeton utilisateur reste l'identité vérifiée par la
-        // fonction destinataire. La clé ne quitte jamais l'environnement Deno.
-        'apikey': cleService,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'bienvenue',
-        to: email,
-        nom_complet: nomComplet,
-        role: typeCompte === 'comptoir' ? 'comptoir' : role,
-        lien_activation: lienActivation,
-      }),
-    });
-    const resultatCourriel = await reponseCourriel.json().catch(() => ({}));
-    if (!reponseCourriel.ok || !resultatCourriel?.envoye) {
-      console.error('[create-user] Courriel de bienvenue indisponible.', {
-        statut: reponseCourriel.status,
-        erreur: resultatCourriel?.erreur ?? 'réponse sans confirmation',
-      });
-      throw new ErreurPublique(
-        503,
-        'La messagerie n’a pas confirmé l’envoi du courriel de bienvenue. Aucun compte incomplet n’a été conservé.',
+      const { error: erreurConfirmationCourriel } = await clientActeur.rpc(
+        'snp_confirmer_courriel_creation_compte',
+        { p_idempotency_key: cleIdempotence, p_user_id: utilisateurIdFinal },
       );
+      // Le courriel a déjà quitté le système : une indisponibilité du marqueur
+      // ne doit pas supprimer un compte valide ni invalider le lien envoyé.
+      if (erreurConfirmationCourriel) {
+        console.error('[create-user] Marqueur de courriel non confirmé.', erreurConfirmationCourriel.message);
+      }
     }
 
     const reponse = reponseJson(req, {
       success: true,
       user: {
-        id: utilisateurCree,
+        id: utilisateurIdFinal,
         email,
         full_name: nomComplet,
         role,
@@ -612,31 +681,28 @@ Deno.serve(async (req: Request) => {
       email_sent: true,
       requires_password_change: true,
       requires_mfa_enrollment: true,
-      message: 'Compte créé. Le courriel de bienvenue a été envoyé.',
-    }, 201);
+      replayed: resultatCreation.replayed,
+      message: resultatCreation.replayed
+        ? 'Cette création avait déjà été finalisée. Aucun compte n’a été dupliqué.'
+        : 'Compte créé. Le courriel de bienvenue a été envoyé.',
+    }, resultatCreation.replayed ? 200 : 201);
     utilisateurCree = null;
-    organisationCreee = null;
+    postgresqlCree = false;
     return reponse;
   } catch (erreur) {
     let retourArriereIncomplet = false;
-    if (utilisateurCree) {
+    if (utilisateurCree && cleIdempotence && clientActeurRetour) {
       try {
-        await annulerCreation(admin, utilisateurCree);
+        await annulerCreation(
+          admin,
+          clientActeurRetour,
+          utilisateurCree,
+          cleIdempotence,
+          postgresqlCree,
+        );
       } catch (raison) {
         retourArriereIncomplet = true;
         console.error('[create-user] Retour arrière incomplet.', raison);
-      }
-    }
-    if (organisationCreee) {
-      try {
-        const { error: erreurSuppressionOrganisation } = await admin
-          .from('snp_organizations')
-          .delete()
-          .eq('id', organisationCreee);
-        if (erreurSuppressionOrganisation) throw erreurSuppressionOrganisation;
-      } catch (raison) {
-        retourArriereIncomplet = true;
-        console.error('[create-user] Nettoyage du comptoir incomplet.', raison);
       }
     }
 

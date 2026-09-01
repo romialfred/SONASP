@@ -1,9 +1,14 @@
 [
-  "20260827203000_integrite_ventes_or_artisanales.sql",
-  "20260829204000_durcir_grand_livre_stock_reserve.sql",
-  "20260829213000_borner_portails_fiscaux_dgi_dgmg.sql",
-  "20260830110000_retablir_reponse_demande_portail_mine.sql",
-  "20260830120000_fiabiliser_conciliation_expeditions_et_impacts.sql",
-  "20260830171500_exiger_session_active_lecture_ventes.sql",
-  "20260830222700_completer_socle_workflows_sans_regression_iam.sql"
+  "20260831223000_durcir_workflow_freight_shipments.sql",
+  "20260901130000_interdire_suppression_directe_ventes.sql",
+  "20260901133000_synchroniser_resume_paiements_vente.sql",
+  "20260901150000_creer_fret_atomiquement.sql",
+  "20260901151000_reconcilier_affectations_expedition_heritees.sql",
+  "20260901152000_interdire_surallocation_preparations.sql",
+  "20260901153000_creation_compte_transactionnelle.sql",
+  "20260901154000_adosser_ventes_export_stock_physique.sql",
+  "20260901210000_figer_productions_engagees.sql",
+  "20260901213000_synchroniser_conciliation_vente_paiements_avoirs.sql",
+  "20260901220000_figer_valorisation_et_activation_reserve.sql",
+  "20260901223000_exposer_lots_vente_export_eligibles.sql"
 ]

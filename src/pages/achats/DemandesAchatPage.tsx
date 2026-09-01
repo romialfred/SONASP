@@ -141,7 +141,7 @@ export function DemandesAchatPage() {
           icon={FileSignature}
           title="Demandes d’achat"
           subtitle="Propositions adressées aux sociétés minières, et leurs réponses."
-          breadcrumb={[{ label: 'Achats industriels' }, { label: 'Demandes' }]}
+          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Achat aux mines industrielles' }, { label: 'Demandes aux mines' }]}
           info={{
             titre: 'Ce que voit chaque partie',
             contenu:

@@ -4,6 +4,8 @@ const FORMAT_JETON = /^[A-Za-z0-9._~-]{20,8192}$/;
 const TAILLE_CORPS_PAR_DEFAUT = 8_192;
 
 export const ACCOUNT_ADMIN_CAPABILITY = 'accounts.manage';
+export const ACCOUNT_ADMIN_MODULE = 'administration';
+export type AccountAdministrationAction = 'view' | 'create' | 'edit' | 'delete';
 
 export type ErreurRpc = { code?: string; message?: string } | null;
 
@@ -56,6 +58,7 @@ function statutErreurSession(error: ErreurRpc): 401 | 403 | 503 {
  */
 export async function verifierSessionAdministration(
   client: ClientRpc,
+  action: AccountAdministrationAction,
 ): Promise<ResultatGardeAdministration> {
   let session: { data: unknown; error: ErreurRpc };
   try {
@@ -79,7 +82,19 @@ export async function verifierSessionAdministration(
     return { ok: false, status: 503 };
   }
   if (capacite.error) return { ok: false, status: 503 };
-  return capacite.data === true
+  if (capacite.data !== true) return { ok: false, status: 403 };
+
+  let habilitation: { data: unknown; error: ErreurRpc };
+  try {
+    habilitation = await client.rpc('snp_actor_can_module_action', {
+      p_module_code: ACCOUNT_ADMIN_MODULE,
+      p_action: action,
+    });
+  } catch {
+    return { ok: false, status: 503 };
+  }
+  if (habilitation.error) return { ok: false, status: 503 };
+  return habilitation.data === true
     ? { ok: true }
     : { ok: false, status: 403 };
 }
@@ -88,6 +103,7 @@ export async function lireJsonLimite(
   req: Request,
   tailleMaximale = TAILLE_CORPS_PAR_DEFAUT,
 ): Promise<Record<string, unknown> | null> {
+  if (!Number.isSafeInteger(tailleMaximale) || tailleMaximale <= 0) return null;
   if (!/^application\/json(?:\s*;|$)/i.test(req.headers.get('Content-Type') ?? '')) {
     return null;
   }
@@ -131,6 +147,25 @@ export async function lireJsonLimite(
   } catch {
     return null;
   }
+}
+
+/**
+ * Valide le contrat de premier niveau d'un payload JSON administratif.
+ *
+ * Les valeurs sont validées par chaque fonction métier, mais les propriétés
+ * inattendues sont refusées ici afin d'éviter qu'un client ancien ou une
+ * requête forgée ne contourne silencieusement le contrat publié.
+ */
+export function clesJsonValides(
+  objet: unknown,
+  clesAutorisees: readonly string[],
+  clesObligatoires: readonly string[] = [],
+): objet is Record<string, unknown> {
+  if (!objet || typeof objet !== 'object' || Array.isArray(objet)) return false;
+  const autorisees = new Set(clesAutorisees);
+  const presentes = Object.keys(objet);
+  return presentes.every((cle) => autorisees.has(cle))
+    && clesObligatoires.every((cle) => Object.prototype.hasOwnProperty.call(objet, cle));
 }
 
 export interface ContexteHandlerAdministration {

@@ -3,6 +3,7 @@ import {
   deleteSensitiveResource,
   uploadSensitiveFile,
 } from '@/services/sensitiveUploadGateway';
+import { secureRandomId } from '@/lib/secureRandom';
 
 const db = supabase as any;
 export const GRAMMES_PAR_ONCE_TROY = 31.1034768;
@@ -99,8 +100,15 @@ export interface ReserveAllocation {
   planned_deposit_reference: string | null;
   planned_transfer_date: string | null;
   gold_price_fcfa_gram: number;
+  gold_price_usd_oz?: number | null;
+  gold_price_date?: string | null;
+  gold_price_source?: string | null;
   usd_xof_rate: number;
+  usd_xof_rate_date?: string | null;
+  usd_xof_rate_source?: string | null;
   eur_xof_rate: number;
+  eur_xof_rate_date?: string | null;
+  eur_xof_rate_source?: string | null;
   lot_count: number;
   ingot_count: number;
   gross_weight_grams: number;
@@ -111,6 +119,7 @@ export interface ReserveAllocation {
   indicative_value_eur: number;
   valuation_source: string;
   valuation_at: string;
+  valuation_frozen_at?: string | null;
   submitted_at: string | null;
   completed_at: string | null;
   created_by: string;
@@ -141,6 +150,40 @@ export interface ReserveAllocationPayload {
 }
 
 const asNumber = (value: unknown) => Number(value || 0);
+const reserveActivationKeys = new Map<string, string>();
+
+function activationStorageKey(allocationId: string) {
+  return `sonasp:reserve-activation:${allocationId}`;
+}
+
+function activationRequestKey(allocationId: string): string {
+  const storageKey = activationStorageKey(allocationId);
+  try {
+    const persisted = globalThis.sessionStorage?.getItem(storageKey);
+    if (persisted) return persisted;
+  } catch {
+    // Le stockage peut être indisponible dans un contexte navigateur privé.
+  }
+  const existing = reserveActivationKeys.get(allocationId);
+  if (existing) return existing;
+  const created = secureRandomId();
+  reserveActivationKeys.set(allocationId, created);
+  try {
+    globalThis.sessionStorage?.setItem(storageKey, created);
+  } catch {
+    // La mémoire de module conserve malgré tout la clé pendant la session.
+  }
+  return created;
+}
+
+function clearActivationRequestKey(allocationId: string) {
+  reserveActivationKeys.delete(allocationId);
+  try {
+    globalThis.sessionStorage?.removeItem(activationStorageKey(allocationId));
+  } catch {
+    // Aucun nettoyage supplémentaire n'est nécessaire.
+  }
+}
 
 function normalizeEligible(row: Record<string, unknown>): EligibleReserveInventory {
   return {
@@ -161,7 +204,7 @@ function normalizeAllocation(
   documents: ReserveAllocationDocument[],
 ): ReserveAllocation {
   const numericKeys = [
-    'gold_price_fcfa_gram', 'usd_xof_rate', 'eur_xof_rate', 'lot_count', 'ingot_count',
+    'gold_price_fcfa_gram', 'gold_price_usd_oz', 'usd_xof_rate', 'eur_xof_rate', 'lot_count', 'ingot_count',
     'gross_weight_grams', 'fine_weight_grams', 'weighted_fineness',
     'indicative_value_fcfa', 'indicative_value_usd', 'indicative_value_eur',
   ] as const;
@@ -169,6 +212,8 @@ function normalizeAllocation(
   numericKeys.forEach((key) => { normalized[key] = asNumber(row[key]); });
   return {
     ...(normalized as unknown as ReserveAllocation),
+    valuation_source: String(row.valuation_source || 'Indisponible'),
+    valuation_at: String(row.valuation_at || row.updated_at || row.created_at || ''),
     creator_name: profiles.get(String(row.created_by)) || 'Utilisateur SONASP',
     depository: row.depository_organization_id
       ? organizations.get(String(row.depository_organization_id)) || null
@@ -296,12 +341,23 @@ export const reserveAllocationService = {
   },
 
   async transition(id: string, target: ReserveAllocationStatus, comment?: string): Promise<void> {
-    const { error } = await db.rpc('snp_transition_reserve_allocation', {
-      p_allocation_id: id,
-      p_target_status: target,
-      p_comment: comment || null,
-    });
+    const isActivation = target === 'ACTIVE';
+    const { error } = await db.rpc(
+      isActivation ? 'snp_activate_reserve_allocation' : 'snp_transition_reserve_allocation',
+      isActivation
+        ? {
+            p_allocation_id: id,
+            p_request_key: activationRequestKey(id),
+            p_comment: comment || null,
+          }
+        : {
+            p_allocation_id: id,
+            p_target_status: target,
+            p_comment: comment || null,
+          },
+    );
     if (error) throw error;
+    if (isActivation) clearActivationRequestKey(id);
   },
 
   async uploadDocument(

@@ -1,0 +1,20 @@
+.sn-error-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgb(10 27 39 / 58%); backdrop-filter: blur(3px); }
+.sn-error-dialog { width: min(100%, 580px); max-height: 90dvh; overflow-y: auto; border: 1px solid var(--sn-border, #dbe5ec); border-radius: 18px; background: white; color: var(--sn-text, #122e43); box-shadow: 0 24px 80px rgb(0 0 0 / 22%); outline: none; }
+.sn-error-dialog__head { display: flex; align-items: flex-start; gap: 16px; padding: 24px; border-bottom: 1px solid #edf0f3; }
+.sn-error-dialog__icon { flex: 0 0 48px; height: 48px; display: grid; place-items: center; background: #fff1eb; color: #a74119; border-radius: 14px; }
+.sn-error-dialog__eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: #79512a; }
+.sn-error-dialog__head h2 { margin: 5px 0 0; font-size: 20px; line-height: 1.4; font-weight: 700; }
+.sn-error-dialog__close { flex: 0 0 44px; min-height: 44px; display: grid; place-items: center; margin: -8px -8px 0 auto; border-radius: 9px; }
+.sn-error-dialog__close:hover { background: #f1f5f7; }
+.sn-error-dialog__body { padding: 24px; font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; }
+.sn-error-dialog__body p { margin: 0; }
+.sn-error-dialog__recovery { background: #f7f9fb; border: 1px solid #e4eaef; border-radius: 10px; padding: 16px; margin-top: 20px; }
+.sn-error-dialog__recovery h3 { font-size: 13px; font-weight: 700; margin: 0 0 6px; }
+.sn-error-dialog__details { margin-top: 18px; color: #536575; font-size: 12px; }
+.sn-error-dialog__details summary { cursor: pointer; min-height: 44px; display: list-item; align-content: center; }
+.sn-error-dialog__details div { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.sn-error-dialog__details button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px; }
+.sn-error-dialog__details svg { width: 16px; height: 16px; }
+.sn-error-dialog__actions { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 24px; border-top: 1px solid #edf0f3; background: #fbfcfd; }
+.sn-error-dialog button:focus-visible, .sn-error-dialog summary:focus-visible { outline: 3px solid #087858; outline-offset: 3px; }
+@media (max-width: 480px) { .sn-error-overlay { padding: 12px; } .sn-error-dialog__head, .sn-error-dialog__body { padding: 18px; } .sn-error-dialog__head { gap: 12px; } .sn-error-dialog__actions { padding: 16px; } .sn-error-dialog__head h2 { font-size: 18px; } }

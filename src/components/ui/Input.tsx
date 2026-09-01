@@ -27,13 +27,15 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, success, icon, label, helperText, id, ...props }, ref) => {
+  ({ className, error, success, icon, label, helperText, id, 'aria-describedby': describedBy, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id ?? generatedId;
 
     const hasError = Boolean(error);
     const errorMessage = typeof error === 'string' ? error : undefined;
     const shownHelper = errorMessage ?? helperText;
+    const helperId = shownHelper ? `${inputId}-description` : undefined;
+    const ariaDescribedBy = [describedBy, helperId].filter(Boolean).join(' ') || undefined;
     const renderedIcon = icon && isIconComponent(icon)
       ? createElement(icon, { 'aria-hidden': true })
       : icon;
@@ -47,6 +49,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         id={inputId}
         ref={ref}
         aria-invalid={hasError || undefined}
+        aria-describedby={ariaDescribedBy}
         className={cn(baseStyles, stateStyles, icon ? 'sn-input--with-icon' : undefined, className)}
         {...props}
       />
@@ -74,7 +77,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         {fieldEl}
         {shownHelper && (
-          <p className={cn('text-xs', hasError ? 'text-red-600' : 'text-gray-500')}>{shownHelper}</p>
+          <p id={helperId} className={cn('text-xs', hasError ? 'text-red-600' : 'text-gray-500')}>{shownHelper}</p>
         )}
       </div>
     );

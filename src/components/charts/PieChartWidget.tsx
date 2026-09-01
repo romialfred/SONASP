@@ -1,9 +1,10 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from '@/lib/recharts';
 
-export interface PieChartData {
+export type PieChartData = {
   name: string;
   value: number;
-}
+  [key: string]: string | number;
+};
 
 export interface PieChartWidgetProps {
   data: PieChartData[];

@@ -56,7 +56,7 @@ const TARGET_CAPABILITY: Partial<Record<ReserveAllocationStatus, string>> = {
   RECEIVED: 'reserve.allocations.confirm_receipt',
   RECONCILIATION_PENDING: 'reserve.allocations.reconcile',
   RECONCILED: 'reserve.allocations.reconcile',
-  ACTIVE: 'reserve.allocations.reconcile',
+  ACTIVE: 'reserve.allocations.activate',
 };
 
 const terminalStatuses = new Set<ReserveAllocationStatus>(['ACTIVE', 'REJECTED', 'CANCELLED']);
@@ -210,7 +210,7 @@ export function ReserveAllocationsPage() {
         <PageHeader
           title="Affectations à la réserve"
           subtitle="Suivi des opérations d’affectation des lingots depuis les stocks vers la réserve nationale d’or."
-          breadcrumb={[{ label: 'Réserve nationale', to: '/inventory' }, { label: 'Affectations à la réserve' }]}
+          breadcrumb={[{ label: 'Réserve d’or du Burkina Faso' }, { label: 'Réserve nationale d’or', to: '/national-reserve' }, { label: 'Affectations à la réserve' }]}
           actions={(
             <>
               <button type="button" className="sn-btn" disabled={filtered.length === 0} onClick={() => downloadCsv(filtered)}>
@@ -318,7 +318,8 @@ export function ReserveAllocationsPage() {
                 ['Poids brut total', formatGrams(selected.gross_weight_grams)], ['Pureté moyenne', formatPercent(selected.weighted_fineness)],
                 ['Poids d’or fin total', formatGrams(selected.fine_weight_grams)], ['Valeur indicative', formatFcfa(selected.indicative_value_fcfa)],
                 ['Valeur indicative (USD)', formatUsd(selected.indicative_value_usd)], ['Valeur indicative (EUR)', formatEur(selected.indicative_value_eur)],
-                ['Source des cours', selected.valuation_source], ['Valorisée le', formatDateTime(selected.valuation_at)],
+                ['Source des cours', selected.valuation_source || 'Indisponible'],
+                ['Valorisée le', selected.valuation_at ? formatDateTime(selected.valuation_at) : 'Indisponible'],
               ]} />
               <DetailGroup title="Dépositaire & destination" rows={[
                 ['Dépositaire', selected.depository?.short_name || selected.depository?.name || 'À définir'],

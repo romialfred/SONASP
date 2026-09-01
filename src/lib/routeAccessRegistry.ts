@@ -202,7 +202,10 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   }),
   ...policies(['/artisan-sites/nouveau', '/artisan-sites/:siteId/modifier'], SONASP),
 
-  ...policies(['/production/achats-mines', '/achats/plans', '/achats/plans/:id', '/achats/comptes'], SONASP),
+  ...policies([
+    '/production/achats-mines', '/achats/plans', '/achats/plans/:id',
+    '/achats/comptes-paiements', '/achats/comptes',
+  ], SONASP),
   ...policies(['/achats/demandes'], {
     roles: ['management', 'mine', 'customer'], accountTypes: ['sonasp', 'mine'],
     capabilities: relationReadCapabilities, readOnly: true, national: false,

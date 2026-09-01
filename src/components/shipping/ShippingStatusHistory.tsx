@@ -35,16 +35,16 @@ export function ShippingStatusHistory({ history, siteCountry }: ShippingStatusHi
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
     return {
-      date: date.toLocaleDateString('fr-FR', {
+      date: date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
       }),
-      time: date.toLocaleTimeString('fr-FR', {
+      time: date.toLocaleTimeString('en-GB', {
         hour: '2-digit',
         minute: '2-digit'
       }),
-      full: date.toLocaleString('fr-FR', {
+      full: date.toLocaleString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -64,7 +64,7 @@ export function ShippingStatusHistory({ history, siteCountry }: ShippingStatusHi
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
     const parts = [];
-    if (days > 0) parts.push(`${days}j`);
+    if (days > 0) parts.push(`${days}d`);
     if (hours > 0) parts.push(`${hours}h`);
     if (minutes > 0 || parts.length === 0) parts.push(`${minutes}min`);
 
@@ -81,9 +81,9 @@ export function ShippingStatusHistory({ history, siteCountry }: ShippingStatusHi
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
           <Clock className="w-8 h-8 text-gray-400" />
         </div>
-        <p className="text-sm text-gray-600 font-medium">Aucun changement enregistré</p>
+        <p className="text-sm text-gray-600 font-medium">No status change recorded</p>
         <p className="text-xs text-gray-500 mt-1">
-          L'historique des changements apparaîtra ici
+          Status changes will appear here.
         </p>
       </div>
     );
@@ -138,13 +138,13 @@ export function ShippingStatusHistory({ history, siteCountry }: ShippingStatusHi
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
                         <ShippingStatusBadge status={entry.new_status as ShippingStatus} />
                         <span className="text-xs text-emerald-600 font-medium">
-                          (Création)
+                          (Created)
                         </span>
                       </div>
                     )}
                     {isFirst && (
                       <span className="ml-auto text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        RÉCENT
+                        LATEST
                       </span>
                     )}
                   </div>
@@ -157,7 +157,7 @@ export function ShippingStatusHistory({ history, siteCountry }: ShippingStatusHi
                     <span className="text-gray-300">|</span>
                     <div className="flex items-center gap-1">
                       <User className="w-3 h-3 text-gray-400" />
-                      <span>{entry.user_email || 'Système'}</span>
+                      <span>{entry.user_email || 'System'}</span>
                     </div>
                     {siteCountry && (
                       <>
@@ -173,7 +173,7 @@ export function ShippingStatusHistory({ history, siteCountry }: ShippingStatusHi
                   {duration && (
                     <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 mb-2">
                       <Timer className="w-3 h-3" />
-                      <span className="font-medium">Durée: {duration}</span>
+                      <span className="font-medium">Duration: {duration}</span>
                     </div>
                   )}
 
@@ -199,10 +199,10 @@ export function ShippingStatusHistory({ history, siteCountry }: ShippingStatusHi
 
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>{history.length} changement{history.length > 1 ? 's' : ''} enregistré{history.length > 1 ? 's' : ''}</span>
+          <span>{history.length} recorded change{history.length === 1 ? '' : 's'}</span>
           {history.length > 0 && (
             <span>
-              Premier: {formatDateTime(sortedHistory[sortedHistory.length - 1].changed_at).date}
+              First: {formatDateTime(sortedHistory[sortedHistory.length - 1].changed_at).date}
             </span>
           )}
         </div>

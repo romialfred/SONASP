@@ -103,7 +103,7 @@ export function ComptesMinesPage() {
           icon={Building2}
           title="Comptes des sociétés minières"
           subtitle="Ce que la SONASP doit à chaque mine, son ancienneté et le détail des mouvements."
-          breadcrumb={[{ label: 'Achats industriels' }, { label: 'Comptes des mines' }]}
+          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Achat aux mines industrielles' }, { label: 'Suivi des comptes & paiements', to: '/achats/comptes-paiements' }, { label: 'Comptes des mines' }]}
           info={{
             titre: 'Sens de lecture du relevé',
             contenu:

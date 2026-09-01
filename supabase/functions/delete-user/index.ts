@@ -4,6 +4,7 @@ import { canManageAccountTarget } from '../_shared/account-role-policy.ts';
 import { reponseJson } from '../_shared/cors.ts';
 import {
   appelerRpcIdempotent,
+  clesJsonValides,
   creerHandlerAdministration,
   lireJsonLimite,
   verifierSessionAdministration,
@@ -50,7 +51,7 @@ Deno.serve(creerHandlerAdministration({
       const acteur = donneesAuth.user;
       if (erreurAuth || !acteur) throw new ErreurPublique(401, 'Votre session n’est plus valide.');
 
-      const garde = await verifierSessionAdministration(acteurDb);
+      const garde = await verifierSessionAdministration(acteurDb, 'delete');
       if (!garde.ok) {
         throw new ErreurPublique(
           garde.status,
@@ -78,6 +79,9 @@ Deno.serve(creerHandlerAdministration({
       }
 
       const corps = await lireJsonLimite(req, 4_096);
+      if (!clesJsonValides(corps, ['user_id', 'motif'], ['user_id', 'motif'])) {
+        throw new ErreurPublique(400, 'La demande de suppression est invalide.');
+      }
       const utilisateurId = texte(corps?.user_id, 64);
       const motif = texte(corps?.motif, 500);
       if (!UUID.test(utilisateurId) || motif.length < 10) {

@@ -96,7 +96,7 @@ export function InternationalPaymentsView({ payments, loading = false, refreshin
   const canPaySale = (p: InternationalPaymentRecord) => canCreate && p.sale?.seller_type === 'sonasp' && ['waiting_for_payment', 'virtual_payment'].includes(p.sale.status);
   return <div className="sn-page ip-list">
     <PageHeader icon={Wallet} title="Paiements clients" subtitle="Suivi des règlements attendus, encaissés et en retard."
-      breadcrumb={[{ label: 'Ventes d’or', to: '/sales' }, { label: 'Paiements clients' }]}
+      breadcrumb={[{ label: 'Vente internationale' }, { label: 'Ventes d’or internationales', to: '/sales' }, { label: 'Paiements clients' }]}
       actions={<><button type="button" className="sn-btn" disabled={loading || refreshing} onClick={onRefresh}><RefreshCw className={refreshing ? 'sn-spin' : ''} aria-hidden="true" />{refreshing ? 'Actualisation…' : 'Actualiser'}</button>
         {canCreate && <button type="button" className="sn-btn sn-btn--primary" onClick={() => onCreate()}><Plus aria-hidden="true" />Enregistrer un paiement</button>}</>} />
     <section className="ip-list__metrics" aria-label="Synthèse des paiements filtrés" aria-busy={loading || refreshing}>

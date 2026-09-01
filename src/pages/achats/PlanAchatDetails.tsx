@@ -388,7 +388,8 @@ export function PlanAchatDetails() {
               : `${plan?.numero_plan ?? ''} · ${onces(plan?.quantite_cible_oz)} visées à l’échelle nationale.`
           }
           breadcrumb={[
-            { label: 'Achats industriels' },
+            { label: 'Mine industrielle' },
+            { label: 'Achat aux mines industrielles' },
             { label: 'Plans mensuels', to: '/achats/plans' },
             { label: plan?.numero_plan || '…' },
           ]}

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
+import { ActionErrorDialog } from '../ui/ActionErrorDialog';
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
@@ -14,6 +15,8 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const uploadLock = useRef(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -26,9 +29,12 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
 
   const handleSubmit = async () => {
     if (!file || !title.trim()) {
-      alert('Veuillez remplir le titre et sélectionner un fichier');
+      setErrorOpen(true);
       return;
     }
+
+    if (uploadLock.current) return;
+    uploadLock.current = true;
 
     try {
       setUploading(true);
@@ -38,9 +44,10 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
       onClose();
     } catch (error) {
       console.error('Error uploading document:', error);
-      alert('Erreur lors du téléchargement du document');
+      setErrorOpen(true);
     } finally {
       setUploading(false);
+      uploadLock.current = false;
     }
   };
 
@@ -51,17 +58,18 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Ajouter un Document">
+    <>
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add document">
       <div className="space-y-4">
         {/* Title Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Titre du Document *
+            Document title *
           </label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Certificate d'assurance"
+            placeholder="Example: Insurance certificate"
             className="text-sm"
           />
         </div>
@@ -69,7 +77,7 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
         {/* File Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Fichier *
+            File *
           </label>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow-500 transition-colors">
             <input
@@ -95,7 +103,7 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
                 <>
                   <Upload className="w-12 h-12 text-gray-400" />
                   <div className="text-sm font-medium text-gray-700">
-                    Cliquez pour sélectionner un fichier
+                    Click to select a file
                   </div>
                   <div className="text-xs text-gray-500">
                     PDF, Word, Image (Max 10MB)
@@ -115,7 +123,7 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
             className="text-sm"
           >
             <X className="w-4 h-4 mr-1" />
-            Annuler
+            Cancel
           </Button>
           <Button
             onClick={handleSubmit}
@@ -123,10 +131,20 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
             className="bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-sm"
           >
             <Upload className="w-4 h-4 mr-1" />
-            {uploading ? 'Téléchargement...' : 'Télécharger'}
+            {uploading ? 'Uploading...' : 'Upload'}
           </Button>
         </div>
       </div>
     </Modal>
+    <ActionErrorDialog
+      isOpen={errorOpen}
+      onClose={() => setErrorOpen(false)}
+      title="Document upload failed"
+      message={file && title.trim()
+        ? 'The document could not be uploaded.'
+        : 'Enter a document title and select a supported file.'}
+      recovery="Your entries remain available. Check the file, then try again."
+    />
+    </>
   );
 }

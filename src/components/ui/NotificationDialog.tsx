@@ -1,6 +1,8 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Info, XCircle, X } from 'lucide-react';
 import Button from './Button';
+import { ActionErrorDialog } from './ActionErrorDialog';
+import { presentError } from '@/lib/presentError';
 
 interface NotificationDialogProps {
   isOpen: boolean;
@@ -26,6 +28,16 @@ export function NotificationDialog({
   showCancel = false,
 }: NotificationDialogProps) {
   if (!isOpen) return null;
+
+  if (type === 'error' && typeof message === 'string') {
+    const technical = /PGRST|SQLSTATE|constraint|could not embed|foreign key|row.level security|fetch|network/i.test(message);
+    const error = presentError(message);
+    return <ActionErrorDialog isOpen onClose={onClose}
+      title={technical ? error.title : title === 'Erreur' ? 'Unable to complete this action' : title}
+      message={technical ? error.message : message} recovery={technical ? error.recovery : undefined}
+      diagnosticCode={error.code} onAction={onConfirm ? () => { onConfirm(); onClose(); } : undefined}
+      actionLabel={confirmText} />;
+  }
 
   const config = {
     success: {

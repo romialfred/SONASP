@@ -322,7 +322,7 @@ export function ProductionInSafe() {
           subtitle={mineName
             ? `Stock physique issu des productions de ${mineName}, avant expédition.`
             : 'L’or déclaré par les mines et encore détenu par la SONASP : entré au coffre, pas encore expédié.'}
-          breadcrumb={[{ label: mineName ? 'Mon espace' : 'Mines industrielles' }, { label: 'Or en coffre' }]}
+          breadcrumb={[{ label: mineName ? 'Mon espace' : 'Mine industrielle' }, { label: 'Gestion de la production' }, { label: 'Or en coffre' }]}
           info={{
             titre: 'Ce que contient le coffre',
             contenu:

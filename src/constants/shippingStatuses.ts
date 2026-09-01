@@ -39,8 +39,8 @@ export interface ShippingStatusConfig {
 export const SHIPPING_STATUSES: Record<ShippingStatus, ShippingStatusConfig> = {
   waiting_for_customs_approval: {
     value: 'waiting_for_customs_approval',
-    label: 'En Attente Douane',
-    description: 'Expédition créée, en attente d\'approbation douanière (peut durer plusieurs jours)',
+    label: "Awaiting customs approval",
+    description: 'Shipment created and awaiting customs approval.',
     color: 'yellow',
     bgColor: 'bg-yellow-100',
     textColor: 'text-yellow-800',
@@ -50,8 +50,8 @@ export const SHIPPING_STATUSES: Record<ShippingStatus, ShippingStatusConfig> = {
   },
   approved_by_customs: {
     value: 'approved_by_customs',
-    label: 'Douane Approuvée',
-    description: 'Approbation douanière obtenue, validation en cours',
+    label: "Customs approved",
+    description: 'Customs approval obtained; final preparation is in progress.',
     color: 'amber',
     bgColor: 'bg-amber-100',
     textColor: 'text-amber-700',
@@ -61,8 +61,8 @@ export const SHIPPING_STATUSES: Record<ShippingStatus, ShippingStatusConfig> = {
   },
   ready_for_expedition: {
     value: 'ready_for_expedition',
-    label: 'Prêt pour Expédition',
-    description: 'Autorisé à être expédié vers la destination finale',
+    label: "Ready for shipment",
+    description: 'Authorised for dispatch to the final destination.',
     color: 'emerald',
     bgColor: 'bg-emerald-100',
     textColor: 'text-emerald-700',

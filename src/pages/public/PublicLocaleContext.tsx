@@ -10,8 +10,8 @@ type PublicLocaleValue = {
 const PublicLocaleContext = createContext<PublicLocaleValue | null>(null);
 
 function getInitialLocale(): PublicLocale {
-  if (typeof window === 'undefined') return 'fr';
-  return window.localStorage.getItem('sonasp-public-locale') === 'en' ? 'en' : 'fr';
+  if (typeof window === 'undefined') return 'en';
+  return window.localStorage.getItem('sonasp-public-locale') === 'fr' ? 'fr' : 'en';
 }
 
 export function PublicLocaleProvider({ children }: { children: ReactNode }) {

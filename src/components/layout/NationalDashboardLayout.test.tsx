@@ -95,12 +95,13 @@ describe('NationalDashboardLayout', () => {
     expect(screen.getByRole('contentinfo')).toHaveTextContent(/Société Nationale des Substances Précieuses/i);
     expect(screen.getByText('Direction SONASP')).toBeInTheDocument();
     // Les sections métier autorisées structurent la navigation Direction.
-    ['Mines semi-mécanisées', 'Mines industrielles', 'Paramètres et configuration', 'Rapports et analyses'].forEach(
+    ['Mine semi-mécanisée', 'Mine industrielle', 'Vente & achat d’or', 'Raffinage & stocks',
+      'Réserve d’or du Burkina Faso', 'Vente internationale', 'Paramètres et configuration', 'Rapports et analyses'].forEach(
       (titre) => expect(screen.getByRole('region', { name: titre })).toBeInTheDocument()
     );
 
     // Chaque groupe porteur d'un chevron est deployable : plus aucun n'est un simple lien.
-    ["Collecte de l'or", 'Expéditions', 'Documents', 'Artisans miniers'].forEach((label) => {
+    ['Gestion de la production', 'Gestion des expéditions', 'Documents', 'Artisans miniers'].forEach((label) => {
       expect(screen.getByRole('button', { name: label })).toHaveAttribute('aria-expanded', 'false');
     });
     expect(container.querySelector('.national-shell__desktop-sidebar')).not.toHaveClass('is-collapsed');
@@ -120,7 +121,7 @@ describe('NationalDashboardLayout', () => {
     );
 
     // Ces groupes affichaient un chevron sans sous-menu : le clic naviguait au lieu d'ouvrir.
-    const collecte = screen.getByRole('button', { name: "Collecte de l'or" });
+    const collecte = screen.getByRole('button', { name: 'Gestion de la production' });
     expect(screen.queryByRole('link', { name: 'Or en coffre' })).not.toBeInTheDocument();
 
     await user.click(collecte);
@@ -128,9 +129,13 @@ describe('NationalDashboardLayout', () => {
     expect(collecte).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'Production journalière' })).toHaveAttribute('href', '/production/daily');
     expect(screen.getByRole('link', { name: 'Or en coffre' })).toHaveAttribute('href', '/production/in-safe');
-    expect(screen.getByRole('link', { name: "Licences d'exportation" })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Licences d’exportation' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Expéditions' }));
+    await user.click(screen.getByRole('button', { name: 'Prévisions & licences' }));
+    expect(collecte).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('link', { name: 'Licences d’exportation' })).toHaveAttribute('href', '/production/licenses');
+
+    await user.click(screen.getByRole('button', { name: 'Gestion des expéditions' }));
 
     // Un seul groupe déplié à la fois : ouvrir le second referme le premier.
     expect(collecte).toHaveAttribute('aria-expanded', 'false');
@@ -138,7 +143,7 @@ describe('NationalDashboardLayout', () => {
     expect(screen.getByRole('link', { name: 'Formalités douanières' })).toHaveAttribute('href', '/freight-customs');
 
     // Un second clic sur le déclencheur referme son propre groupe.
-    await user.click(screen.getByRole('button', { name: 'Expéditions' }));
+    await user.click(screen.getByRole('button', { name: 'Gestion des expéditions' }));
     expect(screen.queryByRole('link', { name: 'Formalités douanières' })).not.toBeInTheDocument();
   });
 
@@ -151,7 +156,7 @@ describe('NationalDashboardLayout', () => {
     );
 
     const sites = screen.getByRole('button', { name: 'Sites miniers' });
-    const conciliation = screen.getByRole('button', { name: 'Conciliation' });
+    const conciliation = screen.getByRole('button', { name: 'Ventes d’or internationales' });
     expect(sites).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Productions' })).toBeInTheDocument();
@@ -161,7 +166,7 @@ describe('NationalDashboardLayout', () => {
 
     expect(sites).toHaveAttribute('aria-expanded', 'false');
     expect(conciliation).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('link', { name: 'Dossiers' })).toHaveAttribute('href', '/conciliation');
+    expect(screen.getByRole('link', { name: 'Dossiers de conciliation' })).toHaveAttribute('href', '/conciliation');
     expect(screen.getByRole('link', { name: 'Règles fiscales' })).toHaveAttribute('href', '/conciliation/regles-fiscales');
   });
 
@@ -182,11 +187,12 @@ describe('NationalDashboardLayout', () => {
     );
 
     expect(screen.getByRole('link', { name: 'Tableau de bord' })).toBeInTheDocument();
-    ['Mines semi-mécanisées', 'Mines industrielles', 'Paramètres et configuration', 'Rapports et analyses'].forEach(
+    ['Mine semi-mécanisée', 'Mine industrielle', 'Vente & achat d’or', 'Raffinage & stocks',
+      'Réserve d’or du Burkina Faso', 'Vente internationale', 'Paramètres et configuration', 'Rapports et analyses'].forEach(
       (titre) => expect(screen.getByRole('region', { name: titre })).toBeInTheDocument()
     );
     expect(screen.getByRole('button', { name: 'Sites miniers' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Conciliation' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ventes d’or internationales' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Administration' })).toBeInTheDocument();
   });
 
@@ -206,7 +212,7 @@ describe('NationalDashboardLayout', () => {
     });
 
     const assertReserveLinks = () => {
-      expect(screen.getByRole('button', { name: 'Réserve nationale' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'Réserve nationale d’or' })).toHaveAttribute('aria-expanded', 'true');
       const routes = ['/national-reserve', '/national-reserve/allocations', '/national-reserve/physical',
         '/national-reserve/controls', '/national-reserve/valuation', '/national-reserve/audit'];
       const links = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
@@ -257,7 +263,7 @@ describe('NationalDashboardLayout', () => {
     await user.click(screen.getByRole('button', { name: 'Documents' }));
 
     const sousMenu = container.querySelector('.national-sidebar__subnav') as HTMLElement;
-    expect(sousMenu.querySelectorAll('.national-sidebar__puce')).toHaveLength(2);
+    expect(sousMenu.querySelectorAll('.national-sidebar__puce')).toHaveLength(1);
     // Dix icônes de dix couleurs à ce niveau se lisaient comme dix alertes.
     expect(sousMenu.querySelectorAll('svg')).toHaveLength(0);
   });
@@ -297,7 +303,7 @@ describe('NationalDashboardLayout', () => {
 
     // Le groupe correspond à la route dès le premier rendu : pas de repli suivi
     // d'un dépliage, donc rien qui saute.
-    expect(screen.getByRole('button', { name: "Collecte de l'or" })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Gestion de la production' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'Or en coffre' })).toBeInTheDocument();
   });
 

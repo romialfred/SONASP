@@ -96,6 +96,6 @@ describe('shippingStatusService.changeStatus', () => {
       'shipping-1',
       'approved_by_customs',
       'ready_for_expedition',
-    )).rejects.toThrow('n’a pas confirmé le nouveau statut');
+    )).rejects.toThrow('did not confirm the new shipment status');
   });
 });

@@ -43,7 +43,7 @@ La plateforme accompagne la collecte, le contrôle, l'achat et la vente des subs
 - **Achats et ventes** : décisions, pièces justificatives et suivi des règlements.
 - **Administration** : comptes, rôles et habilitations, réservés aux responsables autorisés.
 
-Les chiffres affichés proviennent des enregistrements accessibles à votre compte. Une absence de données n'est pas remplacée par une valeur de démonstration.`,
+Les chiffres affichés proviennent des enregistrements accessibles à votre compte. Les données indisponibles sont signalées comme telles.`,
         lastUpdated,
       },
       {

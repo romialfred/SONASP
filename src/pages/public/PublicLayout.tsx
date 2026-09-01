@@ -1,8 +1,9 @@
-import { ArrowRight, ChevronDown, Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useCoursOr } from '@/hooks/useCoursOr';
 import { PublicLocaleProvider, usePublicLocale } from './PublicLocaleContext';
+import { PortalAccessButton } from './PortalAccessButton';
 import type { PublicLocale } from './publicContent';
 import './public-site.css';
 
@@ -200,10 +201,7 @@ function PublicLayoutInner() {
           </nav>
 
           <div className="public-header__actions">
-            <Link className="public-button public-button--compact" to="/portail-mine" aria-label={content.navigation.portal}>
-              <span>{content.navigation.portal}</span>
-              <ArrowRight aria-hidden="true" />
-            </Link>
+            <PortalAccessButton label={content.navigation.portal} compact />
             <button
               ref={menuButtonRef}
               className="public-menu-button"
@@ -247,9 +245,7 @@ function PublicLayoutInner() {
                   {content.navigation[key]}
                 </a>
               ))}
-              <Link className="public-button public-button--primary" to="/portail-mine">
-                {content.navigation.portal}
-              </Link>
+              <PortalAccessButton label={content.navigation.portal} />
             </nav>
           </>
         )}

@@ -12,9 +12,9 @@ interface ShippingStatusWorkflowEnhancedProps {
 }
 
 const WORKFLOW_STEPS = [
-  { key: 'waiting_for_customs_approval', label: 'En Attente Douane', phase: 'Shipping Preparation' },
-  { key: 'approved_by_customs', label: 'Douane Approuvée', phase: 'Shipping Preparation' },
-  { key: 'ready_for_expedition', label: 'Prêt pour Expédition', phase: 'Shipping Preparation' },
+  { key: 'waiting_for_customs_approval', label: 'Awaiting customs', phase: 'Shipment preparation' },
+  { key: 'approved_by_customs', label: 'Customs approved', phase: 'Shipment preparation' },
+  { key: 'ready_for_expedition', label: 'Ready for shipment', phase: 'Shipment preparation' },
 ];
 
 export function ShippingStatusWorkflowEnhanced({
@@ -33,7 +33,7 @@ export function ShippingStatusWorkflowEnhanced({
     const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (days > 0) return `${days}j ${hours}h`;
+    if (days > 0) return `${days}d ${hours}h`;
     if (hours > 0) return `${hours}h ${minutes}min`;
     return `${minutes}min`;
   };
@@ -57,9 +57,9 @@ export function ShippingStatusWorkflowEnhanced({
     <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       <div className="px-6 pt-5 pb-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-semibold text-gray-900 tracking-tight">Workflow Complet</h2>
+          <h2 className="text-base font-semibold text-gray-900 tracking-tight">Shipment workflow</h2>
           <div className="text-sm text-gray-500 font-medium">
-            Étape {currentIndex + 1} / {WORKFLOW_STEPS.length}
+            Step {Math.max(currentIndex + 1, 1)} / {WORKFLOW_STEPS.length}
           </div>
         </div>
 

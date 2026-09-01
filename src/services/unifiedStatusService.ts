@@ -1,10 +1,11 @@
 import { supabase } from '@/lib/supabase';
 import type { ProductionStatus as CanonicalProductionStatus } from '@/constants/productionStatuses';
+import type { ShippingStatus as CanonicalShippingStatus } from '@/constants/shippingStatuses';
 import { productionStatusService } from '@/services/productionStatusService';
+import { shippingStatusService } from '@/services/shippingStatusService';
 import type { Database, Json } from '@/types/database';
 
 type StatusChangeContextRpc = Database['public']['Functions']['can_change_status']['Args']['p_context'];
-type ShippingPreparationDbUpdate = Database['public']['Tables']['shipping_preparations']['Update'];
 
 // =====================================================
 // TYPES
@@ -12,11 +13,7 @@ type ShippingPreparationDbUpdate = Database['public']['Tables']['shipping_prepar
 
 export type ProductionStatus = 'prepared' | 'ready_for_customs' | 'shipped' | 'cancelled';
 
-export type ShippingStatus =
-  | 'waiting_customs_approval'
-  | 'approved_by_customs'
-  | 'ready_for_expedition'
-  | 'cancelled';
+export type ShippingStatus = CanonicalShippingStatus;
 
 export type FreightCustomsStatus =
   | 'ready_for_expedition'
@@ -85,10 +82,9 @@ export const PRODUCTION_STATUS_LABELS: Record<ProductionStatus, string> = {
 };
 
 export const SHIPPING_STATUS_LABELS: Record<ShippingStatus, string> = {
-  waiting_customs_approval: 'Waiting for Custom approval',
+  waiting_for_customs_approval: 'Awaiting customs approval',
   approved_by_customs: 'Approved by customs',
   ready_for_expedition: 'Ready for expedition',
-  cancelled: 'Annulé',
 };
 
 export const FREIGHT_CUSTOMS_STATUS_LABELS: Record<FreightCustomsStatus, string> = {
@@ -128,10 +124,9 @@ export const PRODUCTION_STATUS_COLORS: Record<ProductionStatus, string> = {
 };
 
 export const SHIPPING_STATUS_COLORS: Record<ShippingStatus, string> = {
-  waiting_customs_approval: 'bg-slate-100 text-slate-800 border-slate-300',
+  waiting_for_customs_approval: 'bg-slate-100 text-slate-800 border-slate-300',
   approved_by_customs: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   ready_for_expedition: 'bg-blue-100 text-blue-800 border-blue-300',
-  cancelled: 'bg-red-100 text-red-800 border-red-300',
 };
 
 export const FREIGHT_CUSTOMS_STATUS_COLORS: Record<FreightCustomsStatus, string> = {
@@ -171,10 +166,9 @@ export const PRODUCTION_STATUS_FLOW: Record<ProductionStatus, ProductionStatus[]
 };
 
 export const SHIPPING_STATUS_FLOW: Record<ShippingStatus, ShippingStatus[]> = {
-  waiting_customs_approval: ['approved_by_customs', 'cancelled'],
-  approved_by_customs: ['ready_for_expedition', 'cancelled'],
+  waiting_for_customs_approval: ['approved_by_customs'],
+  approved_by_customs: ['ready_for_expedition'],
   ready_for_expedition: [],
-  cancelled: [],
 };
 
 export const FREIGHT_CUSTOMS_STATUS_FLOW: Record<FreightCustomsStatus, FreightCustomsStatus[]> = {
@@ -350,17 +344,13 @@ export async function changeShippingStatus(
       };
     }
 
-    // Update status with timestamp fields
-    const updateData = { status: newStatus } as ShippingPreparationDbUpdate;
-
-    const { error: updateError } = await supabase
-      .from('shipping_preparations')
-      .update(updateData)
-      .eq('id', shippingId);
-
-    if (updateError) {
-      return { success: false, error: updateError.message };
-    }
+    // La mutation doit rester atomique et passer par la RPC autoritaire :
+    // validation du workflow, contrôle des droits et verrou optimiste.
+    await shippingStatusService.changeStatus(
+      shippingId,
+      shipping.status as ShippingStatus,
+      newStatus,
+    );
 
     // Add notes if provided
     if (notes) {

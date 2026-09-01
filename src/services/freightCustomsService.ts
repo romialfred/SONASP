@@ -295,18 +295,19 @@ export const freightCustomsService = {
       .from('freight_customs_operations')
       .select(`
         *,
-        shipping_preparation:shipping_preparations!inner(
-          id, reference_number, status, shipment_date, total_weight_grams,
-          total_weight_oz, destination, transport_company_id,
+        shipping_preparation:shipping_preparations!fk_shipping_preparation!inner(
+          id, expedition_lot_number, total_boxes, reference_number:expedition_lot_number,
+          status, shipment_date:prepared_at, total_weight_grams:total_net_weight_grams,
+          total_weight_oz, destination:shipped_to_country, transport_company_id:freight_company_id,
           mining_company_id, mining_companies(id, name)
         ),
         transport_company:transport_companies(
           id, name, contact_person, phone, email
         ),
-        documents:freight_customs_documents(
+        documents:freight_customs_documents!fk_freight_operation(
           id, document_type, title, file_name, uploaded_at
         ),
-        invoice_data:freight_customs_invoice_data(*)
+        invoice_data:freight_customs_invoice_data!fk_freight_operation_invoice(*)
       `)
       .order('created_at', { ascending: false });
 
@@ -319,12 +320,14 @@ export const freightCustomsService = {
       .from('freight_customs_operations')
       .select(`
         *,
-        shipping_preparation:shipping_preparations(
-          *,
+        shipping_preparation:shipping_preparations!fk_shipping_preparation(
+          *, reference_number:expedition_lot_number, shipment_date:prepared_at,
+          total_weight_grams:total_net_weight_grams, destination:shipped_to_country,
+          transport_company_id:freight_company_id,
           mining_companies(id, name, address, city, localite, country, tax_id),
-          items:shipping_preparation_items(
+          items:shipping_production_items(
             *,
-            daily_productions(
+            daily_productions:daily_production!shipping_production_items_daily_production_id_fkey(
               id, production_date, bar_reference, bullion_grams,
               estimated_fineness_pct, estimated_silver_pct, pure_gold_grams,
               silver_content_grams, estimated_oz
@@ -332,8 +335,8 @@ export const freightCustomsService = {
           )
         ),
         transport_company:transport_companies(*),
-        documents:freight_customs_documents(*),
-        invoice_data:freight_customs_invoice_data(*)
+        documents:freight_customs_documents!fk_freight_operation(*),
+        invoice_data:freight_customs_invoice_data!fk_freight_operation_invoice(*)
       `)
       .eq('id', id)
       .maybeSingle();
@@ -459,14 +462,15 @@ export const freightCustomsService = {
     const { data, error } = await supabase
       .from('shipping_preparations')
       .select(`
-        id, reference_number, shipment_date, status, total_weight_grams,
-        total_weight_oz, destination, mining_company_id,
+        id, reference_number:expedition_lot_number, shipment_date:prepared_at,
+        status, total_weight_grams:total_net_weight_grams,
+        total_weight_oz, destination:shipped_to_country, mining_company_id,
         mining_companies(id, name, address, city, localite, country, tax_id),
-        freight_customs_operations(id)
+        freight_customs_operations!fk_shipping_preparation(id)
       `)
       .eq('status', 'ready_for_expedition')
       .is('freight_customs_operations.id', null)
-      .order('shipment_date', { ascending: false });
+      .order('prepared_at', { ascending: false });
     if (error) throw error;
     return (data ?? []) as unknown as AvailableFreightShipment[];
   },

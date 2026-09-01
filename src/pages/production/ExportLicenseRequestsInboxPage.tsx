@@ -204,7 +204,7 @@ export default function ExportLicenseRequestsInboxPage() {
             icon={ClipboardCheck}
             title="Demandes de licences d’export"
             subtitle="Instruction nationale des demandes transmises par les sociétés minières."
-            breadcrumb={[{ label: 'Production' }, { label: 'Demandes de licences' }]}
+            breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Prévisions & licences' }, { label: 'Demandes de licence' }]}
           />
           <Note tone="danger" icon={AlertTriangle}>
             Une session AAL2 et la capability explicite sonasp.approve sont requises. Aucun dossier n’a été chargé.
@@ -221,7 +221,7 @@ export default function ExportLicenseRequestsInboxPage() {
           icon={ClipboardCheck}
           title="Demandes de licences d’export"
           subtitle="Examinez chaque dossier avant d’accorder ou de refuser l’autorisation."
-          breadcrumb={[{ label: 'Production' }, { label: 'Demandes de licences' }]}
+          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Prévisions & licences' }, { label: 'Demandes de licence' }]}
           actions={(
             <button type="button" className="sn-btn" onClick={() => void load()} disabled={loading}>
               <RefreshCw className={loading ? 'sn-spin' : undefined} aria-hidden="true" /> Actualiser

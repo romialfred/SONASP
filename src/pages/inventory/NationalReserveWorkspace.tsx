@@ -230,7 +230,7 @@ export function NationalReserveOverview() {
           icon={Landmark}
           title="Réserve nationale"
           subtitle="Patrimoine aurifère souverain, affectations, conservation et contrôle."
-          breadcrumb={[{ label: 'Réserve nationale' }, { label: 'Vue d’ensemble' }]}
+          breadcrumb={[{ label: 'Réserve d’or du Burkina Faso' }, { label: 'Réserve nationale d’or' }, { label: 'Vue d’ensemble' }]}
           info={{ titre: 'Périmètre patrimonial', contenu: 'Seules les affectations arrivées à l’état actif sont comptées dans la réserve physique.' }}
           actions={<><RefreshAction refreshing={refreshing} onClick={refresh} />{canCreate && <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate('/national-reserve/allocations/new')}><Plus aria-hidden="true" /> Nouvelle affectation</button>}</>}
         />
@@ -292,7 +292,7 @@ export function ReservePhysicalPage() {
   ];
   return (
     <NationalDashboardLayout><main className="sn-page reserve-workspace">
-      <PageHeader icon={Vault} title="Réserve physique" subtitle="Actifs effectivement rapprochés et activés dans le patrimoine national." breadcrumb={[{ label: 'Réserve nationale', to: '/national-reserve' }, { label: 'Réserve physique' }]} actions={<RefreshAction refreshing={refreshing} onClick={refresh} />} />
+      <PageHeader icon={Vault} title="Réserve physique" subtitle="Actifs effectivement rapprochés et activés dans le patrimoine national." breadcrumb={[{ label: 'Réserve d’or du Burkina Faso' }, { label: 'Réserve nationale d’or', to: '/national-reserve' }, { label: 'Réserve physique' }]} actions={<RefreshAction refreshing={refreshing} onClick={refresh} />} />
       <ReservePageState loading={loading} failure={failure}>
         <StatGrid ariaLabel="Position physique de la réserve" items={[
           { label: 'Quantité d’or fin', value: formatTonnes(snapshot.totalFineWeightGrams), hint: formatKg(snapshot.totalFineWeightGrams), icon: Coins, tone: 'gold' },
@@ -317,7 +317,7 @@ export function ReserveControlsPage() {
   const { snapshot, loading, refreshing, failure, refresh } = useReserveSnapshot();
   return (
     <NationalDashboardLayout><main className="sn-page reserve-workspace">
-      <PageHeader icon={ClipboardCheck} title="Contrôles et rapprochements" subtitle="Réceptions, écarts et rapprochements nécessitant une décision indépendante." breadcrumb={[{ label: 'Réserve nationale', to: '/national-reserve' }, { label: 'Contrôles et rapprochements' }]} actions={<RefreshAction refreshing={refreshing} onClick={refresh} />} />
+      <PageHeader icon={ClipboardCheck} title="Contrôles et rapprochements" subtitle="Réceptions, écarts et rapprochements nécessitant une décision indépendante." breadcrumb={[{ label: 'Réserve d’or du Burkina Faso' }, { label: 'Réserve nationale d’or', to: '/national-reserve' }, { label: 'Contrôles et rapprochements' }]} actions={<RefreshAction refreshing={refreshing} onClick={refresh} />} />
       <ReservePageState loading={loading} failure={failure}>
         <StatGrid ariaLabel="État des contrôles" sober items={[
           { label: 'Réceptions à confirmer', value: snapshot.allocations.filter((item) => item.status === 'RECEIVED').length, icon: PackageCheck, tone: 'gold' },
@@ -350,7 +350,7 @@ export function ReserveValuationPage() {
   const { snapshot, loading, refreshing, failure, refresh } = useReserveSnapshot();
   return (
     <NationalDashboardLayout><main className="sn-page reserve-workspace">
-      <PageHeader icon={TrendingUp} title="Valorisation et analyse" subtitle="Valeurs de référence enregistrées lors de chaque affectation active." breadcrumb={[{ label: 'Réserve nationale', to: '/national-reserve' }, { label: 'Valorisation et analyse' }]} actions={<RefreshAction refreshing={refreshing} onClick={refresh} />} info={{ titre: 'Méthode', contenu: 'Cette page agrège les valorisations horodatées et leurs sources. Elle ne remplace pas une réévaluation comptable au cours courant.' }} />
+      <PageHeader icon={TrendingUp} title="Valorisation et analyse" subtitle="Valeurs de référence enregistrées lors de chaque affectation active." breadcrumb={[{ label: 'Réserve d’or du Burkina Faso' }, { label: 'Réserve nationale d’or', to: '/national-reserve' }, { label: 'Valorisation et analyse' }]} actions={<RefreshAction refreshing={refreshing} onClick={refresh} />} info={{ titre: 'Méthode', contenu: 'Cette page agrège les valorisations horodatées et leurs sources. Elle ne remplace pas une réévaluation comptable au cours courant.' }} />
       <ReservePageState loading={loading} failure={failure}>
         <Note tone="info" icon={ShieldCheck}>Les valeurs sont calculées à partir des cours et taux de change horodatés dans chaque affectation, sans réécriture rétroactive.</Note>
         <StatGrid ariaLabel="Valorisation enregistrée de la réserve" items={[
@@ -400,7 +400,7 @@ export function ReserveAuditPage() {
   ];
   return (
     <NationalDashboardLayout><main className="sn-page reserve-workspace">
-      <PageHeader icon={FileClock} title="Rapports et audit" subtitle="Journal métier des affectations et de leurs transitions d’état." breadcrumb={[{ label: 'Réserve nationale', to: '/national-reserve' }, { label: 'Rapports et audit' }]} actions={<RefreshAction refreshing={refreshing} onClick={refresh} />} />
+      <PageHeader icon={FileClock} title="Rapports et audit" subtitle="Journal métier des affectations et de leurs transitions d’état." breadcrumb={[{ label: 'Réserve d’or du Burkina Faso' }, { label: 'Réserve nationale d’or', to: '/national-reserve' }, { label: 'Rapports et audit' }]} actions={<RefreshAction refreshing={refreshing} onClick={refresh} />} />
       <ReservePageState loading={loading} failure={failure}>
         <StatGrid ariaLabel="Indicateurs du journal" sober items={[
           { label: 'Événements', value: snapshot.auditEntries.length, icon: FileClock, tone: 'neutral' },

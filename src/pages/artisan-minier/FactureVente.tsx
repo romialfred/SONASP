@@ -384,10 +384,8 @@ export function FactureVente() {
             </section>
 
             <footer className="facture__pied">
-              Document produit par la plateforme SONASP à des fins de démonstration. Une facture
-              électronique certifiée est émise conformément à l’article 564 du CGI et à l’arrêté
-              n°2025-0047/MEF/SG/DGI du 05 février 2025 — ce qui n’est pas le cas de la présente
-              pièce.
+              Document non certifié produit par la plateforme SONASP. Cette pièce ne remplace
+              pas une facture électronique certifiée par la DGI.
             </footer>
           </article>
         )}

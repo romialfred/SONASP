@@ -222,7 +222,7 @@ export default function AchatsMines() {
           icon={ShoppingCart}
           title="Achats aux mines industrielles"
           subtitle="La SONASP achète tout ou partie du stock de production déclaré par chaque société."
-          breadcrumb={[{ label: 'Mines industrielles' }, { label: 'Achats aux mines' }]}
+          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Achat aux mines industrielles' }, { label: 'Achat aux mines' }]}
           actions={
             <>
               <button type="button" className="sn-btn" onClick={() => void charger()} disabled={chargement}>

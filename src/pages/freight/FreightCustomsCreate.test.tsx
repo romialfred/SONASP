@@ -17,9 +17,9 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('react-router-dom', () => ({ useNavigate: () => mocks.navigate }));
-vi.mock('@/components/layout/MainLayout', () => ({
-  MainLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock('react-router-dom', () => ({ useNavigate: () => mocks.navigate, Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a> }));
+vi.mock('@/components/layout/NationalDashboardLayout', () => ({
+  NationalDashboardLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock('@/contexts/NotificationContext', () => ({
   useNotification: () => ({ showNotification: mocks.notify }),
@@ -42,9 +42,9 @@ describe('FreightCustomsCreate', () => {
   it('reste fail-closed sans capacité freight.prepare autoritative', async () => {
     render(<FreightCustomsCreate />);
 
-    expect(await screen.findByText('Création non autorisée')).toBeInTheDocument();
+    expect(await screen.findByText('Creation not authorised')).toBeInTheDocument();
     expect(mocks.getAvailableShipments).not.toHaveBeenCalled();
-    expect(screen.queryByRole('button', { name: /Créer l’opération/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Create operation/i })).not.toBeInTheDocument();
   });
 
   it('crée par RPC puis enregistre la note avec la version composite reçue', async () => {
@@ -70,10 +70,10 @@ describe('FreightCustomsCreate', () => {
     render(<FreightCustomsCreate />);
     await screen.findByText(/SHIP-42/);
     fireEvent.change(screen.getByRole('combobox'), { target: { value: created.shipping_preparation_id } });
-    fireEvent.change(screen.getByPlaceholderText('Notes ou observations pour cette opération douanière...'), {
+    fireEvent.change(screen.getByPlaceholderText('Instructions or observations for this customs operation…'), {
       target: { value: ' Dossier complet ' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Créer l'opération/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create operation/i }));
 
     await waitFor(() => expect(mocks.createOperation).toHaveBeenCalledWith(created.shipping_preparation_id));
     expect(mocks.updateOperation).toHaveBeenCalledWith(

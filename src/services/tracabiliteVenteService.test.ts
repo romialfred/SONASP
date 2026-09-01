@@ -1,12 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GRAMMES_PAR_ONCE } from './achatMineService';
 import {
   composer,
   construireLots,
+  lireLotsEligibles,
+  messageIndisponibiliteLots,
   nomArtisan,
+  tracabiliteVenteService,
   validerComposition,
   type Lot,
 } from './tracabiliteVenteService';
+
+const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }));
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: { rpc: rpcMock },
+}));
 
 const lot = (partiel: Partial<Lot> & { source_id: string; date: string; disponibleOz: number }): Lot => ({
   source_type: 'achat_mine',
@@ -200,5 +209,123 @@ describe('nomArtisan', () => {
   it('tolère un nom partiel', () => {
     expect(nomArtisan({ nom: 'SAWADOGO', prenoms: null })).toBe('SAWADOGO');
     expect(nomArtisan(null)).toBe('');
+  });
+});
+
+describe('lots de vente physiquement éligibles', () => {
+  const payload = {
+    lots: [{
+      source_type: 'achat_mine',
+      source_id: '73000000-0000-4000-8000-000000000301',
+      reference: 'AC-MI-2026-00001',
+      origine: 'Mine de test',
+      date: '2026-08-20',
+      quantite_oz: '100',
+      affectee_oz: '20',
+      disponible_oz: '55.25',
+    }],
+    diagnostic: {
+      blocked: false,
+      code: null,
+      historical_gap_count: 0,
+      excluded_untraceable_source_count: 2,
+      excluded_untraceable_quantity_oz: '12.5',
+    },
+  };
+
+  beforeEach(() => rpcMock.mockReset());
+
+  it('lit uniquement la RPC autoritative et normalise les quantités', async () => {
+    rpcMock.mockResolvedValue({ data: payload, error: null });
+
+    const result = await tracabiliteVenteService.lotsDisponibles();
+
+    expect(rpcMock).toHaveBeenCalledOnce();
+    expect(rpcMock).toHaveBeenCalledWith('snp_lots_vente_export_eligibles');
+    expect(result.lots).toEqual([expect.objectContaining({
+      source_type: 'achat_mine',
+      source_id: '73000000-0000-4000-8000-000000000301',
+      disponibleOz: 55.25,
+    })]);
+    expect(result.diagnostic.excludedUntraceableSourceCount).toBe(2);
+  });
+
+  it('reste fermé si la RPC échoue, sans repli sur les tables historiques', async () => {
+    const rpcError = { code: '42501', message: 'forbidden' };
+    rpcMock.mockResolvedValue({ data: null, error: rpcError });
+
+    await expect(tracabiliteVenteService.lotsDisponibles()).rejects.toBe(rpcError);
+    expect(rpcMock).toHaveBeenCalledOnce();
+  });
+
+  it.each(['achat_artisan', 'cession_comptoir'])(
+    'refuse côté client une source %s même si une réponse altérée la contient',
+    (sourceType) => {
+      expect(() => lireLotsEligibles({
+        ...payload,
+        lots: [{ ...payload.lots[0], source_type: sourceType }],
+      })).toThrow(/contrat de stock physique/);
+    },
+  );
+
+  it('refuse des quantités supérieures au reliquat de la source', () => {
+    expect(() => lireLotsEligibles({
+      ...payload,
+      lots: [{ ...payload.lots[0], disponible_oz: 81 }],
+    })).toThrow(/contrat de stock physique/);
+  });
+
+  it('ne tolère aucun lot lorsqu’un écart historique bloque les ventes', () => {
+    expect(() => lireLotsEligibles({
+      ...payload,
+      diagnostic: {
+        ...payload.diagnostic,
+        blocked: true,
+        code: 'historical_physical_backing_gaps',
+        historical_gap_count: 1,
+      },
+    })).toThrow(/blocage physique historique/);
+  });
+
+  it('refuse un code de blocage lorsque blocked est faux', () => {
+    expect(() => lireLotsEligibles({
+      ...payload,
+      diagnostic: {
+        ...payload.diagnostic,
+        blocked: false,
+        code: 'historical_physical_backing_gaps',
+      },
+    })).toThrow(/diagnostic de disponibilité physique/);
+  });
+
+  it.each([
+    { blocked: false, code: null, historical_gap_count: 1 },
+    { blocked: true, code: 'historical_physical_backing_gaps', historical_gap_count: 0 },
+  ])('refuse un compteur historique incohérent avec le blocage %#', (diagnostic) => {
+    expect(() => lireLotsEligibles({
+      ...payload,
+      lots: [],
+      diagnostic: { ...payload.diagnostic, ...diagnostic },
+    })).toThrow(/diagnostic de disponibilité physique/);
+  });
+
+  it('fournit un message métier sans révéler les références des écarts historiques', () => {
+    const result = lireLotsEligibles({
+      lots: [],
+      diagnostic: {
+        ...payload.diagnostic,
+        blocked: true,
+        code: 'historical_physical_backing_gaps',
+        historical_gap_count: 3,
+      },
+    });
+    const message = messageIndisponibiliteLots(result);
+    expect(message).toMatch(/ventes historiques.*stock physique/i);
+    expect(message).not.toContain('3');
+  });
+
+  it('explique l’exclusion des filières sans provenance quand elles seules subsistent', () => {
+    const result = lireLotsEligibles({ ...payload, lots: [] });
+    expect(messageIndisponibiliteLots(result)).toMatch(/artisanales.*comptoir/i);
   });
 });

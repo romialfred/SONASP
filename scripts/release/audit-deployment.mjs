@@ -11,14 +11,20 @@ const project = readFileSync('supabase/.temp/project-ref','utf8').trim();
 if (project !== 'yyverzuhkdonjjuficor') throw new Error('Unexpected project');
 const folder = mkdtempSync(path.join(tmpdir(),'sonasp-full-release-'));
 const hash = (s) => createHash('sha256').update(s.replace(/\r\n?/g,'\n').trim()).digest('hex');
+const cliCommand = process.platform === 'win32' && /\.cmd$/i.test(cli)
+  ? process.execPath
+  : cli;
+const cliPrefix = process.platform === 'win32' && /\.cmd$/i.test(cli)
+  ? [path.resolve(path.dirname(cli),'..','supabase','dist','supabase.js')]
+  : [];
 const run = (args) => {
-  try { return execFileSync(cli,args,{cwd:root,encoding:'utf8',timeout:60000,maxBuffer:20*1024*1024,stdio:['ignore','pipe','pipe']}); }
+  try { return execFileSync(cliCommand,[...cliPrefix,...args],{cwd:root,encoding:'utf8',timeout:60000,maxBuffer:20*1024*1024,stdio:['ignore','pipe','pipe']}); }
   catch { throw new Error(`Read-only command failed: ${args.slice(0,2).join(' ')}`); }
 };
 const parse = (s) => JSON.parse(s.slice(s.search(/[\[{]/)));
 const migrations = parse(run(['db','query','--linked','SELECT version,name FROM supabase_migrations.schema_migrations ORDER BY version','-o','json'])).rows;
 const functions = parse(run(['functions','list','--project-ref',project,'-o','json']));
-const localFiles = readdirSync('supabase/migrations').filter((f)=>/^202608\d{8}_.*\.sql$/.test(f));
+const localFiles = readdirSync('supabase/migrations').filter((f)=>/^\d{14}_[a-z0-9_]+\.sql$/.test(f));
 const missing = localFiles.filter((f)=>!migrations.some((m)=>m.version===f.slice(0,14)));
 writeFileSync(path.join(folder,'baseline.json'),JSON.stringify({project,migrations,functions,missing},null,2));
 console.log(JSON.stringify({folder,missing,functions:functions.map(({slug,version})=>({slug,version}))}));

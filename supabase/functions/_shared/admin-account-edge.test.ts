@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   appelerRpcIdempotent,
+  clesJsonValides,
   creerHandlerAdministration,
   extraireJetonBearer,
   lireJsonLimite,
@@ -33,15 +34,21 @@ describe('garde Edge d’administration des comptes', () => {
     }))).toBe(JWT);
   });
 
-  it('vérifie la session active avant la capability', async () => {
+  it('vérifie la session active, la capability et l’habilitation effective', async () => {
     const rpc = vi.fn()
       .mockResolvedValueOnce({ data: { is_active: true, is_current: true }, error: null })
+      .mockResolvedValueOnce({ data: true, error: null })
       .mockResolvedValueOnce({ data: true, error: null });
-    await expect(verifierSessionAdministration({ rpc })).resolves.toEqual({ ok: true });
+    await expect(verifierSessionAdministration({ rpc }, 'edit')).resolves.toEqual({ ok: true });
     expect(rpc.mock.calls.map(([name]) => name)).toEqual([
       'snp_session_signaler_activite',
       'snp_actor_has_capability',
+      'snp_actor_can_module_action',
     ]);
+    expect(rpc).toHaveBeenLastCalledWith('snp_actor_can_module_action', {
+      p_module_code: 'administration',
+      p_action: 'edit',
+    });
   });
 
   it.each([
@@ -50,7 +57,7 @@ describe('garde Edge d’administration des comptes', () => {
     [{ data: { is_active: false, is_current: true }, error: null }, 403],
   ] as const)('refuse une session absente ou révoquée', async (resultat, status) => {
     const rpc = vi.fn().mockResolvedValue(resultat);
-    await expect(verifierSessionAdministration({ rpc })).resolves.toEqual({ ok: false, status });
+    await expect(verifierSessionAdministration({ rpc }, 'view')).resolves.toEqual({ ok: false, status });
     expect(rpc).toHaveBeenCalledTimes(1);
   });
 
@@ -58,7 +65,16 @@ describe('garde Edge d’administration des comptes', () => {
     const rpc = vi.fn()
       .mockResolvedValueOnce({ data: { is_active: true, is_current: true }, error: null })
       .mockResolvedValueOnce({ data: null, error: { code: 'XX000' } });
-    await expect(verifierSessionAdministration({ rpc })).resolves.toEqual({ ok: false, status: 503 });
+    await expect(verifierSessionAdministration({ rpc }, 'view')).resolves.toEqual({ ok: false, status: 503 });
+  });
+
+  it('refuse un Admin dont le droit du module a été retiré', async () => {
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: { is_active: true, is_current: true }, error: null })
+      .mockResolvedValueOnce({ data: true, error: null })
+      .mockResolvedValueOnce({ data: false, error: null });
+    await expect(verifierSessionAdministration({ rpc }, 'delete'))
+      .resolves.toEqual({ ok: false, status: 403 });
   });
 });
 
@@ -102,5 +118,39 @@ describe('enveloppe HTTP administrative', () => {
       body: JSON.stringify({ value: 'x'.repeat(80) }),
     });
     await expect(lireJsonLimite(tropGrand, 32)).resolves.toBeNull();
+  });
+
+  it.each([
+    ['type absent', {}, JSON.stringify({ ok: true }), 64],
+    ['type incorrect', { 'Content-Type': 'text/plain' }, JSON.stringify({ ok: true }), 64],
+    ['JSON malformé', { 'Content-Type': 'application/json' }, '{"ok":', 64],
+    ['tableau JSON', { 'Content-Type': 'application/json' }, '[]', 64],
+    ['limite invalide', { 'Content-Type': 'application/json' }, '{}', 0],
+  ])('refuse un corps administratif invalide : %s', async (_, headers, body, limite) => {
+    const requete = new Request('https://edge.test', { method: 'POST', headers, body });
+    await expect(lireJsonLimite(requete, limite)).resolves.toBeNull();
+  });
+
+  it('refuse une longueur annoncée ou réelle supérieure à la limite', async () => {
+    const longueurAnnoncee = new Request('https://edge.test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': '4096' },
+      body: '{}',
+    });
+    await expect(lireJsonLimite(longueurAnnoncee, 64)).resolves.toBeNull();
+
+    const longueurReelle = new Request('https://edge.test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valeur: 'x'.repeat(4096) }),
+    });
+    await expect(lireJsonLimite(longueurReelle, 64)).resolves.toBeNull();
+  });
+
+  it('valide les clés autorisées et obligatoires sans accepter les extensions', () => {
+    expect(clesJsonValides({ user_id: 'id' }, ['user_id'], ['user_id'])).toBe(true);
+    expect(clesJsonValides({}, ['user_id'], ['user_id'])).toBe(false);
+    expect(clesJsonValides({ user_id: 'id', role: 'owner' }, ['user_id'], ['user_id'])).toBe(false);
+    expect(clesJsonValides([], ['user_id'])).toBe(false);
   });
 });

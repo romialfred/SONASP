@@ -35,12 +35,21 @@ export function ProductionDashboardModern() {
   const navigate = useNavigate();
   const [data, setData] = useState<ProductionDashboardData>(EMPTY_PRODUCTION_DASHBOARD);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selection, setSelection] = useState('all');
 
   const charger = useCallback(async () => {
     setLoading(true);
-    setData(await loadProductionDashboard());
-    setLoading(false);
+    setLoadError(false);
+    try {
+      setData(await loadProductionDashboard());
+    } catch (error) {
+      console.error('Production dashboard loading failed:', error);
+      setData(EMPTY_PRODUCTION_DASHBOARD);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -83,6 +92,17 @@ export function ProductionDashboardModern() {
           <Note tone="warning" icon={AlertTriangle}>
             Données partielles : {data.unavailable.join(', ')} n’ont pas pu être chargées.
           </Note>
+        )}
+
+        {loadError && (
+          <div>
+            <Note tone="danger" icon={AlertTriangle}>
+              Les indicateurs de production sont temporairement indisponibles.
+              <button type="button" className="sn-btn sn-btn--secondary" onClick={() => void charger()}>
+                Réessayer
+              </button>
+            </Note>
+          </div>
         )}
 
         {loading ? (

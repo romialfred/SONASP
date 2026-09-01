@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -35,15 +35,17 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
     notes: operation.notes || '',
   });
   const [saving, setSaving] = useState(false);
+  const transitionLock = useRef(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (transitionLock.current) return;
     if (!transitionAccess.allowed || !newStatus) {
-      showError('Erreur', transitionAccess.reason || 'Cette transition n’est pas autorisée.');
+      showError("Error", transitionAccess.reason || "This transition is not authorised.");
       return;
     }
     if (newStatus === 'shipped_to_refinery' && !formData.awb_number.trim()) {
-      showError('Erreur', 'Le numéro AWB est requis pour constater l’expédition.');
+      showError("Error", "An air waybill number is required to confirm dispatch.");
       return;
     }
 
@@ -60,6 +62,7 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
     }
 
     try {
+      transitionLock.current = true;
       setSaving(true);
       await freightCustomsService.transitionStatus(
         operation.id,
@@ -73,9 +76,10 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
         ? error.message
         : error instanceof Error
           ? error.message
-          : 'La transition fret a été refusée.';
-      showError('Erreur', message);
+          : "The freight transition was declined.";
+      showError("Error", message);
     } finally {
+      transitionLock.current = false;
       setSaving(false);
     }
   };
@@ -85,8 +89,8 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Faire avancer le dossier</h2>
-            <p className="text-sm text-gray-600 mt-1">Référence : {operation.reference_number}</p>
+            <h2 className="text-xl font-bold text-gray-900">Confirm the next workflow step</h2>
+            <p className="text-sm text-gray-600 mt-1">Reference: {operation.reference_number}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-5 h-5" />
@@ -97,13 +101,13 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs text-gray-600 mb-2">Statut actuel</p>
+                <p className="text-xs text-gray-600 mb-2">Current status</p>
                 <FreightStatusBadge status={operation.status} />
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
               <div>
-                <p className="text-xs text-gray-600 mb-2">Étape suivante autorisée</p>
-                {newStatus ? <FreightStatusBadge status={newStatus} /> : <span className="text-sm">État final</span>}
+                <p className="text-xs text-gray-600 mb-2">Authorised next step</p>
+                {newStatus ? <FreightStatusBadge status={newStatus} /> : <span className="text-sm">Final state</span>}
               </div>
             </div>
           </div>
@@ -116,10 +120,10 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
 
           {newStatus === 'customs_approved' && (
             <div className="space-y-4 bg-emerald-50 p-4 rounded-lg border border-emerald-200">
-              <h3 className="text-sm font-semibold text-emerald-900">Décision douanière</h3>
+              <h3 className="text-sm font-semibold text-emerald-900">Customs decision</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="freight-customs-reference" className="block text-sm font-medium text-gray-700 mb-1">Référence Douane</label>
+                  <label htmlFor="freight-customs-reference" className="block text-sm font-medium text-gray-700 mb-1">Customs reference</label>
                   <Input
                     id="freight-customs-reference"
                     value={formData.customs_reference_number}
@@ -127,7 +131,7 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
                   />
                 </div>
                 <div>
-                  <label htmlFor="freight-customs-office" className="block text-sm font-medium text-gray-700 mb-1">Bureau de Douane</label>
+                  <label htmlFor="freight-customs-office" className="block text-sm font-medium text-gray-700 mb-1">Customs office</label>
                   <Input
                     id="freight-customs-office"
                     value={formData.customs_office}
@@ -135,7 +139,7 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
                   />
                 </div>
                 <div className="col-span-2">
-                  <label htmlFor="freight-customs-officer" className="block text-sm font-medium text-gray-700 mb-1">Officier de Douane</label>
+                  <label htmlFor="freight-customs-officer" className="block text-sm font-medium text-gray-700 mb-1">Customs officer</label>
                   <Input
                     id="freight-customs-officer"
                     value={formData.customs_officer_name}
@@ -144,16 +148,16 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
                 </div>
               </div>
               <p className="text-xs text-emerald-800">
-                La date et l’acteur d’approbation sont déterminés exclusivement par le serveur.
+                The server records the approval date and authorised actor.
               </p>
             </div>
           )}
 
           {newStatus === 'ready_for_transport' && (
             <div className="space-y-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h3 className="text-sm font-semibold text-blue-900">Préparation du transport</h3>
+              <h3 className="text-sm font-semibold text-blue-900">Transport preparation</h3>
               <div>
-                <label htmlFor="freight-forwarder-contact" className="block text-sm font-medium text-gray-700 mb-1">Contact Transitaire</label>
+                <label htmlFor="freight-forwarder-contact" className="block text-sm font-medium text-gray-700 mb-1">Freight forwarder contact</label>
                 <Input
                   id="freight-forwarder-contact"
                   value={formData.freight_forwarder_contact}
@@ -165,7 +169,7 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
 
           {newStatus === 'shipped_to_refinery' && (
             <div className="space-y-4 bg-purple-50 p-4 rounded-lg border border-purple-200">
-              <h3 className="text-sm font-semibold text-purple-900">Constat d’expédition</h3>
+              <h3 className="text-sm font-semibold text-purple-900">Dispatch confirmation</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="freight-awb-number" className="block text-sm font-medium text-gray-700 mb-1">
@@ -188,7 +192,7 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
                 </div>
               </div>
               <p className="text-xs text-purple-800">
-                La date réelle et l’acteur du départ sont déterminés exclusivement par le serveur.
+                The server records the actual departure date and authorised actor.
               </p>
             </div>
           )}
@@ -205,9 +209,9 @@ export function ChangeStatusModal({ operation, onClose, onSuccess }: ChangeStatu
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={saving}>Annuler</Button>
+            <Button type="button" variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
             <Button type="submit" disabled={saving || !transitionAccess.allowed || !newStatus}>
-              {saving ? 'Transition en cours…' : 'Confirmer l’étape suivante'}
+              {saving ? "Confirming transition…" : "Confirm next step"}
             </Button>
           </div>
         </form>

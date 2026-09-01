@@ -18,7 +18,7 @@ export interface ShippingStatusHistoryEntry {
 
 export class ShippingStatusConflictError extends Error {
   constructor() {
-    super('Le statut de cette expédition a changé entre-temps. Actualisez la page avant de réessayer.');
+    super('This shipment status changed in the meantime. Refresh the record before trying again.');
     this.name = 'ShippingStatusConflictError';
   }
 }
@@ -81,7 +81,7 @@ class ShippingStatusService {
     }
 
     if (!data?.status) {
-      throw new Error('Le serveur n’a pas confirmé le nouveau statut de l’expédition.');
+      throw new Error('The server did not confirm the new shipment status.');
     }
 
     return data.status;

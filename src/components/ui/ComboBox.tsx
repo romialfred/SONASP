@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 
 interface Option {
   value: string;
@@ -20,6 +21,13 @@ interface ComboBoxProps {
   customPlaceholder?: string;
 }
 
+function getInitialActiveIndex(availableOptions: Option[], value: string, preferLast = false) {
+  if (availableOptions.length === 0) return -1;
+  const selectedIndex = availableOptions.findIndex((option) => option.value === value);
+  if (selectedIndex >= 0) return selectedIndex;
+  return preferLast ? availableOptions.length - 1 : 0;
+}
+
 export function ComboBox({
   label,
   value,
@@ -29,31 +37,66 @@ export function ComboBox({
   required = false,
   disabled = false,
   allowCustom = true,
-  customPlaceholder = 'Saisir manuellement...'
+  customPlaceholder = 'Saisir manuellement...',
 }: ComboBoxProps) {
+  const generatedId = useId();
+  const triggerId = `combobox-trigger-${generatedId}`;
+  const searchId = `combobox-search-${generatedId}`;
+  const customInputId = `combobox-custom-${generatedId}`;
+  const listboxId = `combobox-listbox-${generatedId}`;
+
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCustomMode, setIsCustomMode] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  // Filtrer les options selon la recherche
-  const filteredOptions = options.filter(option =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    option.value.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase('fr');
+    if (!normalizedSearch) return options;
 
-  // Vérifier si la valeur actuelle est dans les options
-  const currentOption = options.find(opt => opt.value === value);
+    return options.filter(
+      (option) =>
+        option.label.toLocaleLowerCase('fr').includes(normalizedSearch) ||
+        option.value.toLocaleLowerCase('fr').includes(normalizedSearch),
+    );
+  }, [options, searchTerm]);
+
+  const currentOption = options.find((option) => option.value === value);
   const displayValue = currentOption ? currentOption.label : value;
+  const activeOptionId =
+    isOpen && activeIndex >= 0 && activeIndex < filteredOptions.length
+      ? `${listboxId}-option-${activeIndex}`
+      : undefined;
 
-  // Fermer le dropdown quand on clique dehors
+  const focusTrigger = () => {
+    window.setTimeout(() => triggerRef.current?.focus(), 0);
+  };
+
+  const closeDropdown = (restoreFocus = false) => {
+    setIsOpen(false);
+    setSearchTerm('');
+    setActiveIndex(-1);
+    if (restoreFocus) focusTrigger();
+  };
+
+  const openDropdown = (preferLast = false) => {
+    if (disabled) return;
+    setSearchTerm('');
+    setActiveIndex(getInitialActiveIndex(options, value, preferLast));
+    setIsOpen(true);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setSearchTerm('');
-        setIsCustomMode(false);
+        setActiveIndex(-1);
       }
     };
 
@@ -61,53 +104,151 @@ export function ComboBox({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (isOpen) searchRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isCustomMode) inputRef.current?.focus();
+  }, [isCustomMode]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveIndex((previousIndex) => {
+      if (filteredOptions.length === 0) return -1;
+      if (previousIndex >= 0 && previousIndex < filteredOptions.length) return previousIndex;
+      return getInitialActiveIndex(filteredOptions, value);
+    });
+  }, [filteredOptions, isOpen, value]);
+
+  useEffect(() => {
+    optionRefs.current[activeIndex]?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeIndex]);
+
+  useEffect(() => {
+    if (!disabled) return;
+    setIsOpen(false);
+    setIsCustomMode(false);
+    setSearchTerm('');
+    setActiveIndex(-1);
+  }, [disabled]);
+
   const handleSelect = (optionValue: string) => {
     onChange(optionValue);
-    setIsOpen(false);
-    setSearchTerm('');
     setIsCustomMode(false);
+    closeDropdown(true);
   };
 
-  const handleCustomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
+  const handleCustomInput = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange(event.target.value);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-      setSearchTerm('');
-      setIsCustomMode(false);
+  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      openDropdown(event.key === 'ArrowUp');
+      return;
     }
+
+    if (event.key === 'Escape' && isOpen) {
+      event.preventDefault();
+      closeDropdown(true);
+    }
+  };
+
+  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeDropdown(true);
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      closeDropdown();
+      return;
+    }
+
+    if (filteredOptions.length === 0) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveIndex((previousIndex) =>
+        previousIndex < 0 || previousIndex === filteredOptions.length - 1 ? 0 : previousIndex + 1,
+      );
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveIndex((previousIndex) =>
+        previousIndex <= 0 ? filteredOptions.length - 1 : previousIndex - 1,
+      );
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      setActiveIndex(0);
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      setActiveIndex(filteredOptions.length - 1);
+      return;
+    }
+
+    if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      handleSelect(filteredOptions[activeIndex].value);
+    }
+  };
+
+  const handleCustomKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    setIsCustomMode(false);
+    closeDropdown(true);
   };
 
   return (
     <div className="relative" ref={containerRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label
+          className="block text-sm font-medium text-gray-700 mb-1"
+          htmlFor={isCustomMode ? customInputId : triggerId}
+        >
+          {label}{' '}
+          {required && (
+            <span className="text-red-500" aria-hidden="true">
+              *
+            </span>
+          )}
         </label>
       )}
 
-      {/* Mode saisie personnalisée */}
       {isCustomMode ? (
         <div className="relative">
           <input
             ref={inputRef}
+            id={customInputId}
             type="text"
             value={value}
             onChange={handleCustomInput}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleCustomKeyDown}
             placeholder={customPlaceholder}
             disabled={disabled}
+            required={required}
+            aria-required={required || undefined}
             className="w-full px-3 py-2 border border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            autoFocus
           />
           <button
             type="button"
             onClick={() => {
               setIsCustomMode(false);
-              setIsOpen(true);
+              openDropdown();
             }}
+            disabled={disabled}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-blue-600 hover:text-blue-800"
           >
             Choisir dans la liste
@@ -115,10 +256,18 @@ export function ComboBox({
         </div>
       ) : (
         <>
-          {/* Bouton principal */}
           <button
+            ref={triggerRef}
+            id={triggerId}
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-expanded={isOpen}
+            aria-controls={listboxId}
+            aria-activedescendant={activeOptionId}
+            aria-required={required || undefined}
+            onClick={() => (isOpen ? closeDropdown() : openDropdown())}
+            onKeyDown={handleTriggerKeyDown}
             disabled={disabled}
             className={`w-full px-3 py-2 text-left bg-white border rounded-lg flex items-center justify-between ${
               disabled
@@ -127,75 +276,101 @@ export function ComboBox({
             } ${isOpen ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-300'}`}
           >
             <span className={`flex items-center gap-2 ${value ? 'text-gray-900' : 'text-gray-400'}`}>
-              {currentOption?.icon && <span className="text-xl">{currentOption.icon}</span>}
+              {currentOption?.icon && (
+                <span className="text-xl" aria-hidden="true">
+                  {currentOption.icon}
+                </span>
+              )}
               {displayValue || placeholder}
             </span>
-            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
+            <ChevronDown
+              aria-hidden="true"
+              className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
+            />
           </button>
 
-          {/* Dropdown */}
           {isOpen && (
             <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
-              {/* Champ de recherche */}
               <div className="p-2 border-b border-gray-200">
                 <input
-                  type="text"
+                  ref={searchRef}
+                  id={searchId}
+                  type="search"
+                  role="searchbox"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(event) => {
+                    setSearchTerm(event.target.value);
+                    setActiveIndex(0);
+                  }}
+                  onKeyDown={handleSearchKeyDown}
                   placeholder="Rechercher..."
+                  aria-label={label ? `Rechercher dans ${label}` : 'Rechercher une option'}
+                  aria-controls={listboxId}
+                  aria-activedescendant={activeOptionId}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autoFocus
                 />
               </div>
 
-              {/* Liste des options */}
-              <div className="overflow-y-auto max-h-60">
-                {filteredOptions.length > 0 ? (
-                  filteredOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => handleSelect(option.value)}
-                      className={`w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center justify-between ${
-                        value === option.value ? 'bg-blue-100' : ''
-                      }`}
-                    >
-                      <div className="flex-1 flex items-start gap-2">
-                        {option.icon && (
-                          <span className="text-xl mt-0.5">{option.icon}</span>
-                        )}
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900">{option.label}</div>
-                          {option.subtitle && (
-                            <div className="text-xs text-gray-500">{option.subtitle}</div>
-                          )}
-                        </div>
-                      </div>
-                      {value === option.value && (
-                        <Check className="w-4 h-4 text-blue-600" />
+              <div
+                id={listboxId}
+                role="listbox"
+                aria-label={label ? `Options pour ${label}` : 'Options disponibles'}
+                className="overflow-y-auto max-h-60"
+              >
+                {filteredOptions.map((option, index) => (
+                  <button
+                    ref={(element) => {
+                      optionRefs.current[index] = element;
+                    }}
+                    id={`${listboxId}-option-${index}`}
+                    key={option.value}
+                    type="button"
+                    role="option"
+                    aria-selected={value === option.value}
+                    tabIndex={-1}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onClick={() => handleSelect(option.value)}
+                    className={`w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center justify-between ${
+                      activeIndex === index ? 'bg-blue-50' : ''
+                    } ${value === option.value ? 'bg-blue-100' : ''}`}
+                  >
+                    <span className="flex-1 flex items-start gap-2">
+                      {option.icon && (
+                        <span className="text-xl mt-0.5" aria-hidden="true">
+                          {option.icon}
+                        </span>
                       )}
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                    Aucun résultat trouvé
-                  </div>
-                )}
+                      <span className="flex-1">
+                        <span className="block text-sm font-medium text-gray-900">{option.label}</span>
+                        {option.subtitle && (
+                          <span className="block text-xs text-gray-500">{option.subtitle}</span>
+                        )}
+                      </span>
+                    </span>
+                    {value === option.value && (
+                      <Check className="w-4 h-4 text-blue-600" aria-hidden="true" />
+                    )}
+                  </button>
+                ))}
               </div>
 
-              {/* Option de saisie manuelle */}
+              {filteredOptions.length === 0 && (
+                <div className="px-3 py-4 text-sm text-gray-500 text-center" role="status">
+                  Aucun résultat trouvé
+                </div>
+              )}
+
               {allowCustom && (
                 <div className="p-2 border-t border-gray-200 bg-gray-50">
                   <button
                     type="button"
                     onClick={() => {
                       setIsCustomMode(true);
-                      setIsOpen(false);
-                      setTimeout(() => inputRef.current?.focus(), 0);
+                      closeDropdown();
                     }}
                     className="w-full px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded text-left"
                   >
-                    ✏️ Saisir manuellement si non trouvé
+                    <span aria-hidden="true">✏️</span> Saisir manuellement si non trouvé
                   </button>
                 </div>
               )}

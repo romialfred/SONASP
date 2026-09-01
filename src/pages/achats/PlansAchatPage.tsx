@@ -154,7 +154,7 @@ export function PlansAchatPage() {
           icon={CalendarRange}
           title="Plans d’achat mensuels"
           subtitle="Quantité d’or que la SONASP entend acquérir auprès des mines industrielles, mois par mois."
-          breadcrumb={[{ label: 'Achats industriels' }, { label: 'Plans mensuels' }]}
+          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Achat aux mines industrielles' }, { label: 'Plans mensuels' }]}
           info={{
             titre: 'À quoi sert un plan',
             contenu:

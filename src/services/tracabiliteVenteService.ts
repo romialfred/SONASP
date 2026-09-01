@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 import { GRAMMES_PAR_ONCE, type StatutAchat } from './achatMineService';
 import {
   STATUTS_ACHAT_MINE_ACQUIS,
@@ -52,7 +53,129 @@ export interface Composition {
   couverte: boolean;
 }
 
+export interface DiagnosticLotsVente {
+  blocked: boolean;
+  code: 'historical_physical_backing_gaps' | null;
+  historicalGapCount: number;
+  excludedUntraceableSourceCount: number;
+  excludedUntraceableQuantityOz: number;
+}
+
+export interface LotsVenteDisponibles {
+  lots: Lot[];
+  diagnostic: DiagnosticLotsVente;
+}
+
 const arrondi = (valeur: number) => Math.round(valeur * 10000) / 10000;
+
+const nombreFiniNonNegatif = (value: unknown): number | null => {
+  const parsed = typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+};
+
+/**
+ * Convertit la réponse serveur sans jamais élargir l'éligibilité côté client.
+ * Une ligne inconnue, une quantité incohérente ou un diagnostic absent ferme
+ * la vente au lieu de retomber sur l'ancien calcul agrégé.
+ */
+export function lireLotsEligibles(payload: unknown): LotsVenteDisponibles {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('La disponibilité physique des lots est indisponible.');
+  }
+  const response = payload as { lots?: unknown; diagnostic?: unknown };
+  if (!Array.isArray(response.lots) || !response.diagnostic || typeof response.diagnostic !== 'object') {
+    throw new Error('La disponibilité physique des lots est invalide.');
+  }
+
+  const diagnosticRow = response.diagnostic as Record<string, unknown>;
+  const historicalGapCount = nombreFiniNonNegatif(diagnosticRow.historical_gap_count);
+  const excludedCount = nombreFiniNonNegatif(diagnosticRow.excluded_untraceable_source_count);
+  const excludedQuantity = nombreFiniNonNegatif(diagnosticRow.excluded_untraceable_quantity_oz);
+  const blocked = diagnosticRow.blocked;
+  const code = diagnosticRow.code;
+  if (
+    typeof blocked !== 'boolean'
+    || historicalGapCount === null
+    || excludedCount === null
+    || excludedQuantity === null
+    || (code !== null && code !== 'historical_physical_backing_gaps')
+    || (blocked && code !== 'historical_physical_backing_gaps')
+    || (!blocked && code !== null)
+    || (blocked && historicalGapCount <= 0)
+    || (!blocked && historicalGapCount !== 0)
+    || !Number.isInteger(historicalGapCount)
+    || !Number.isInteger(excludedCount)
+  ) {
+    throw new Error('Le diagnostic de disponibilité physique est invalide.');
+  }
+
+  const lots = response.lots.map((value): Lot => {
+    if (!value || typeof value !== 'object') {
+      throw new Error('Un lot physique retourné est invalide.');
+    }
+    const row = value as Record<string, unknown>;
+    const quantiteOz = nombreFiniNonNegatif(row.quantite_oz);
+    const affecteeOz = nombreFiniNonNegatif(row.affectee_oz);
+    const disponibleOz = nombreFiniNonNegatif(row.disponible_oz);
+    if (
+      row.source_type !== 'achat_mine'
+      || typeof row.source_id !== 'string'
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(row.source_id)
+      || typeof row.reference !== 'string'
+      || row.reference.trim().length === 0
+      || typeof row.origine !== 'string'
+      || row.origine.trim().length === 0
+      || typeof row.date !== 'string'
+      || !/^\d{4}-\d{2}-\d{2}$/.test(row.date)
+      || quantiteOz === null
+      || affecteeOz === null
+      || disponibleOz === null
+      || disponibleOz <= 0
+      || affecteeOz > quantiteOz + 0.000001
+      || disponibleOz > quantiteOz - affecteeOz + 0.000001
+    ) {
+      throw new Error('Un lot ne respecte pas le contrat de stock physique.');
+    }
+    return {
+      source_type: 'achat_mine',
+      source_id: row.source_id,
+      reference: row.reference,
+      origine: row.origine,
+      date: row.date,
+      quantiteOz: arrondi(quantiteOz),
+      affecteeOz: arrondi(affecteeOz),
+      disponibleOz: arrondi(disponibleOz),
+    };
+  });
+
+  if (blocked && lots.length > 0) {
+    throw new Error('Des lots ne peuvent pas être proposés pendant un blocage physique historique.');
+  }
+
+  return {
+    lots,
+    diagnostic: {
+      blocked,
+      code: code as DiagnosticLotsVente['code'],
+      historicalGapCount,
+      excludedUntraceableSourceCount: excludedCount,
+      excludedUntraceableQuantityOz: excludedQuantity,
+    },
+  };
+}
+
+export function messageIndisponibiliteLots(result: LotsVenteDisponibles): string | null {
+  if (result.diagnostic.blocked) {
+    return 'Des ventes historiques doivent être rapprochées du stock physique avant toute nouvelle vente export.';
+  }
+  if (result.lots.length === 0 && result.diagnostic.excludedUntraceableSourceCount > 0) {
+    return 'Les acquisitions artisanales et les cessions de comptoir ne sont pas encore reliées à une provenance production–fret–inventaire vérifiable. Elles restent exclues des ventes export.';
+  }
+  if (result.lots.length === 0) {
+    return 'Aucun achat minier ne dispose actuellement d’une chaîne physique complète jusqu’au stock raffiné.';
+  }
+  return null;
+}
 
 /** `snp_artisans_miniers` porte le nom et les prénoms séparément. */
 export const nomArtisan = (artisan?: { nom?: string | null; prenoms?: string | null } | null): string =>
@@ -209,43 +332,16 @@ export function construireLots(
     });
 }
 
+const invokeEligibleLotsRpc = supabase.rpc as unknown as (
+  functionName: 'snp_lots_vente_export_eligibles',
+) => PromiseLike<PostgrestSingleResponse<unknown>>;
+
 export const tracabiliteVenteService = {
-  /** Lots d'achat encore mobilisables. */
-  async lotsDisponibles(): Promise<Lot[]> {
-    const [mines, artisans, cessions, affectations, reserve] = await Promise.all([
-      supabase
-        .from('snp_achats_mines')
-        .select('id, numero_achat, date_achat, quantite_oz, statut, mining_company:mining_companies(name)'),
-      supabase
-        .from('snp_artisan_ventes_or')
-        .select('id, numero_recu, date_vente, quantite_grammes, statut, artisan:snp_artisans_miniers(nom, prenoms)')
-        .is('comptoir_organization_id', null),
-      supabase
-        .from('snp_comptoir_ventes_sonasp')
-        .select('id, reference_vente, date_vente, quantity_grams, status, comptoir:snp_organizations!snp_comptoir_ventes_sonasp_comptoir_organization_id_fkey(name)'),
-      supabase
-        .from(TABLE)
-        .select('source_type, achat_mine_id, artisan_vente_id, comptoir_cession_id, quantite_oz')
-        .is('released_at', null),
-      supabase.from('gold_inventory').select('quantity_national_reserve_oz'),
-    ]);
-
-    if (mines.error) throw mines.error;
-    if (artisans.error) throw artisans.error;
-    if (cessions.error) throw cessions.error;
-    if (affectations.error) throw affectations.error;
-    if (reserve.error) throw reserve.error;
-
-    return construireLots(
-      (mines.data || []) as never,
-      (artisans.data || []) as never,
-      (affectations.data || []) as never,
-      (reserve.data || []).reduce(
-        (total, item) => total + Number(item.quantity_national_reserve_oz || 0),
-        0,
-      ),
-      (cessions.data || []) as never,
-    );
+  /** Lots mobilisables selon la chaîne physique autoritative du garde SQL. */
+  async lotsDisponibles(): Promise<LotsVenteDisponibles> {
+    const { data, error } = await invokeEligibleLotsRpc('snp_lots_vente_export_eligibles');
+    if (error) throw error;
+    return lireLotsEligibles(data);
   },
 
   /** Composition d'une vente déjà enregistrée. */

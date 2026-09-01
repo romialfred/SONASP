@@ -186,7 +186,7 @@ export function InventoryManagement() {
             : "Position opérationnelle : disponibilités, raffinage, transit, ventes et alimentation de la réserve."}
           breadcrumb={isMine
             ? [{ label: 'Stocks de la mine' }, { label: 'Position consolidée' }]
-            : [{ label: 'Suivi des stocks' }, { label: 'Position opérationnelle' }]}
+            : [{ label: 'Raffinage & stocks' }, { label: 'Suivi du stock d’or' }, { label: 'Position opérationnelle' }]}
           actions={
             <>
               <button type="button" className="sn-btn" onClick={() => void charger(true)} disabled={actualisation}>

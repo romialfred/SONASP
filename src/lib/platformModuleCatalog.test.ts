@@ -40,7 +40,7 @@ const administrator: UserProfile = {
 };
 
 describe('catalogue fonctionnel des modules', () => {
-  it('déclare chaque module racine de la sidebar avec le même code et la même route', () => {
+  it('rattache chaque groupe visuel à un module canonique sans dupliquer les permissions', () => {
     const groupes = NAVIGATION_SECTIONS.flatMap((section) => section.groups);
 
     expect(groupes).not.toHaveLength(0);
@@ -48,9 +48,17 @@ describe('catalogue fonctionnel des modules', () => {
       expect(groupe.moduleCode, groupe.id).toBeTruthy();
       const module = PLATFORM_MODULE_BY_CODE.get(groupe.moduleCode!);
       expect(module, groupe.id).toBeDefined();
-      expect(module?.navigationGroupId).toBe(groupe.id);
-      expect(module?.route).toBe(groupe.path);
       expect(module?.accessDomain).not.toBe('unknown');
+      expect(platformModuleCodeForPath(groupe.path)).toBe(groupe.moduleCode);
+    });
+
+    // Un même module peut être présenté en plusieurs groupes métier (production,
+    // puis prévisions/licences), mais garde une seule racine de catalogue.
+    PLATFORM_MODULE_CATALOG.forEach((module) => {
+      const canonical = groupes.find((groupe) => groupe.id === module.navigationGroupId);
+      if (!canonical) return;
+      expect(canonical.moduleCode).toBe(module.code);
+      expect(canonical.path).toBe(module.route);
     });
   });
 
@@ -115,13 +123,13 @@ describe('catalogue fonctionnel des modules', () => {
     expect(groupes).toContainEqual(expect.objectContaining({
       id: 'inventory',
       moduleCode: 'gold_inventory',
-      label: 'Suivi des stocks',
+      label: 'Suivi du stock d’or',
       path: '/inventory',
     }));
     expect(groupes).toContainEqual(expect.objectContaining({
       id: 'national-reserve',
       moduleCode: 'national_reserve',
-      label: 'Réserve nationale',
+      label: 'Réserve nationale d’or',
       path: '/national-reserve',
     }));
   });

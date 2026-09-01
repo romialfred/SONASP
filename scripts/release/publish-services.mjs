@@ -6,7 +6,13 @@ import path from 'node:path';
 const [cli, folder] = process.argv.slice(2);
 const project = readFileSync('supabase/.temp/project-ref','utf8').trim();
 if (!cli || !folder || project!=='yyverzuhkdonjjuficor') throw new Error('Unexpected deployment target');
-const run = args => execFileSync(cli,args,{encoding:'utf8',timeout:180000,maxBuffer:12*1024*1024,stdio:['ignore','pipe','pipe']});
+const cliCommand = process.platform === 'win32' && /\.cmd$/i.test(cli)
+  ? process.execPath
+  : cli;
+const cliPrefix = process.platform === 'win32' && /\.cmd$/i.test(cli)
+  ? [path.resolve(path.dirname(cli),'..','supabase','dist','supabase.js')]
+  : [];
+const run = args => execFileSync(cliCommand,[...cliPrefix,...args],{encoding:'utf8',timeout:180000,maxBuffer:12*1024*1024,stdio:['ignore','pipe','pipe']});
 const parse = raw => JSON.parse(raw.slice(raw.search(/[\[{]/)));
 const baseline = parse(run(['functions','list','--project-ref',project,'-o','json']));
 const secrets = parse(run(['secrets','list','--project-ref',project,'-o','json']));

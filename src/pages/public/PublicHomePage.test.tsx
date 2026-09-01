@@ -28,6 +28,7 @@ function LocaleProbe() {
 describe('vitrine publique SONASP', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.localStorage.setItem('sonasp-public-locale', 'fr');
     document.documentElement.lang = 'fr';
   });
 
@@ -56,7 +57,13 @@ describe('vitrine publique SONASP', () => {
     expect(screen.getByRole('heading', { name: 'La SONASP, pivot national vers les marchés internationaux' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Production nationale' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Porte de sortie Marchés internationaux/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /portail sonasp/i })[0]).toHaveAttribute('href', '/portail-mine');
+    screen.getAllByRole('link', { name: /portail sonasp/i }).forEach((link) => {
+      expect(link).toHaveAttribute('href', '/login');
+      expect(link).toHaveClass('public-portal-button');
+      expect(link.querySelector('.public-portal-button__label')).toHaveTextContent('Portail SONASP');
+      expect(link.querySelector('.public-portal-button__icon')).toHaveAttribute('aria-hidden', 'true');
+    });
+    expect(screen.getByRole('link', { name: 'Découvrir le Portail Mine' })).toHaveAttribute('href', '/portail-mine');
 
     const heroFlow = container.querySelector('.public-hero-flow');
     expect(heroFlow).toBeInTheDocument();

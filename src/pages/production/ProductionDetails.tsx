@@ -196,7 +196,7 @@ export function ProductionDetails() {
           <PageHeader
             icon={Package}
             title="Déclaration de production"
-            breadcrumb={[{ label: 'Mines industrielles' }, { label: 'Production journalière' }]}
+            breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Gestion de la production' }, { label: 'Production journalière' }]}
             actions={
               <button type="button" className="sn-btn" onClick={() => navigate('/production/daily')}>
                 <ArrowLeft aria-hidden="true" /> Retour aux déclarations
@@ -228,7 +228,8 @@ export function ProductionDetails() {
           title={production.bar_reference || 'Barre sans référence'}
           subtitle={`Déclarée le ${formatDateLongue(production.production_date)}`}
           breadcrumb={[
-            { label: 'Mines industrielles' },
+            { label: 'Mine industrielle' },
+            { label: 'Gestion de la production' },
             { label: 'Production journalière' },
             { label: production.bar_reference || 'Déclaration' },
           ]}

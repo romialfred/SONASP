@@ -1,16 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Package, ArrowLeft, Save, Building2, Truck, FileText, AlertCircle
+  Package, ArrowLeft, Save, Building2, Truck, FileText
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/Card';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { PageHeader, Section, Field, FormActions, Note } from '@/components/ui/sn';
+import '@/components/shipping/logistics-workspace.css';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { TextArea } from '@/components/ui/TextArea';
-import { Loading } from '@/components/ui/Loading';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
-import { SuccessDialog } from '@/components/ui/SuccessDialog';
 import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
 import { shippingPreparationService, type ShippingPreparation } from '@/services/shippingPreparationService';
 import { supabase } from '@/lib/supabase';
@@ -39,6 +36,8 @@ export default function ShippingPreparationEdit() {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const saveLock = useRef(false);
 
   // Form fields
   const [expeditionLotNumber, setExpeditionLotNumber] = useState('');
@@ -55,11 +54,12 @@ export default function ShippingPreparationEdit() {
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadFailed(false);
 
       // Load preparation
       const prep = await shippingPreparationService.getPreparationById(id!);
       if (!prep) {
-        setErrorMessage('Préparation non trouvée.');
+        setErrorMessage('Preparation not found.');
         setShowError(true);
         return;
       }
@@ -67,28 +67,31 @@ export default function ShippingPreparationEdit() {
       setPreparation(prep);
       setExpeditionLotNumber(prep.expedition_lot_number || '');
       setSealNumber(prep.seal_number || '');
-      setSelectedRefineryId(prep.shipped_to_address || '');
-      setSelectedFreightCompanyId(prep.shipped_to_company || '');
+      setSelectedRefineryId(prep.refinery_id || '');
+      setSelectedFreightCompanyId(prep.freight_company_id || '');
       setShippedToCountry(prep.shipped_to_country || '');
       setNotes(prep.notes || '');
 
       // Load refineries
-      const { data: refineriesData } = await supabase
+      const { data: refineriesData, error: refineryError } = await supabase
         .from('refineries')
         .select('id, name')
         .order('name');
+      if (refineryError) throw refineryError;
       if (refineriesData) setRefineries(refineriesData);
 
       // Load freight companies
-      const { data: freightData } = await supabase
+      const { data: freightData, error: freightError } = await supabase
         .from('transport_companies')
         .select('id, name')
         .order('name');
+      if (freightError) throw freightError;
       if (freightData) setFreightCompanies(freightData);
 
     } catch (error) {
+      setLoadFailed(true);
       console.error('Error loading data:', error);
-      setErrorMessage('Erreur lors du chargement des données.');
+      setErrorMessage('Reference data could not be loaded. Reload before saving.');
       setShowError(true);
     } finally {
       setLoading(false);
@@ -97,22 +100,23 @@ export default function ShippingPreparationEdit() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saveLock.current || loading || loadFailed || !preparation) return;
 
     // Validation
     if (!expeditionLotNumber.trim()) {
-      setErrorMessage('Le numéro de lot d\'expédition est requis.');
+      setErrorMessage('A valid shipment reference is required.');
       setShowError(true);
       return;
     }
 
     try {
+      saveLock.current = true;
       setSaving(true);
 
       const updates = {
-        expedition_lot_number: expeditionLotNumber.trim(),
         seal_number: sealNumber.trim() || null,
-        shipped_to_address: selectedRefineryId || null,
-        shipped_to_company: selectedFreightCompanyId || null,
+        refinery_id: selectedRefineryId || null,
+        freight_company_id: selectedFreightCompanyId || null,
         shipped_to_country: shippedToCountry.trim() || null,
         notes: notes.trim() || null,
       };
@@ -120,252 +124,41 @@ export default function ShippingPreparationEdit() {
       await shippingPreparationService.updatePreparation(id!, updates);
 
       setShowSuccess(true);
-      setTimeout(() => {
-        navigate(shippingPreparationDetailsPath(id!));
-      }, 1500);
+
 
     } catch (error: any) {
       console.error('Error updating preparation:', error);
-      setErrorMessage('Erreur lors de la mise à jour: ' + (error.message || 'Erreur inconnue'));
+      setErrorMessage('Unable to save the changes: ' + (error.message || 'No confirmation received'));
       setShowError(true);
     } finally {
+      saveLock.current = false;
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-screen">
-          <Loading size="lg" />
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (!preparation) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600">Préparation non trouvée</p>
-            <Button onClick={() => navigate('/shipping/preparation')} className="mt-4">
-              Retour
-            </Button>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  return (
-    <MainLayout>
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto p-6 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={() => navigate(shippingPreparationDetailsPath(id!))}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Retour
-              </Button>
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
-                <Package className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Modifier l'Expédition</h1>
-                <p className="text-sm text-gray-600 font-mono">{preparation.expedition_lot_number || 'N/A'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Main Information Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Package className="w-5 h-5 text-blue-600" />
-                Informations Principales
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Numéro de Lot d'Expédition <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    value={expeditionLotNumber}
-                    onChange={(e) => setExpeditionLotNumber(e.target.value)}
-                    placeholder="Ex: SHIP-2025-001"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Numéro de Scellé
-                  </label>
-                  <Input
-                    value={sealNumber}
-                    onChange={(e) => setSealNumber(e.target.value)}
-                    placeholder="Ex: SEAL-12345"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Statut
-                  </label>
-                  <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                    <ShippingStatusBadge status={preparation.status} />
-                    <span className="text-sm text-gray-600">
-                      Le statut se modifie uniquement depuis le workflow de la page de détails.
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Destination Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-amber-600" />
-                Destination
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Raffinerie de Destination
-                  </label>
-                  <select
-                    value={selectedRefineryId}
-                    onChange={(e) => setSelectedRefineryId(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Sélectionner une raffinerie</option>
-                    {refineries.map((refinery) => (
-                      <option key={refinery.id} value={refinery.id}>
-                        {refinery.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pays de Destination
-                  </label>
-                  <Input
-                    value={shippedToCountry}
-                    onChange={(e) => setShippedToCountry(e.target.value)}
-                    placeholder="Ex: United Arab Emirates"
-                  />
-                </div>
-              </div>
-            </Card>
-
-            {/* Transport Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Truck className="w-5 h-5 text-blue-600" />
-                Transport
-              </h2>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Compagnie de Fret
-                </label>
-                <select
-                  value={selectedFreightCompanyId}
-                  onChange={(e) => setSelectedFreightCompanyId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Sélectionner une compagnie</option>
-                  {freightCompanies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </Card>
-
-            {/* Notes Card */}
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-green-600" />
-                Notes
-              </h2>
-              <TextArea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ajoutez des notes ou commentaires..."
-                rows={4}
-              />
-            </Card>
-
-            {/* Info Notice */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-blue-900">
-                <p className="font-medium mb-1">Note Importante</p>
-                <p>
-                  Les modifications des productions, signataires et documents se font directement depuis la page de détails.
-                  Seules les informations générales peuvent être modifiées ici.
-                </p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate(shippingPreparationDetailsPath(id!))}
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                disabled={saving}
-                className="gap-2 bg-blue-600 hover:bg-blue-700"
-              >
-                {saving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Enregistrer
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* Error Dialog */}
-      <ErrorDialog
-        isOpen={showError}
-        onClose={() => setShowError(false)}
-        title="Erreur"
-        message={errorMessage}
-      />
-
-      <SuccessDialog
-        isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
-        title="Expédition mise à jour"
-        message="La préparation a été enregistrée avec succès."
-      />
-
-    </MainLayout>
-  );
+  return <NationalDashboardLayout><div className="sn-page logistics-workspace">
+    <PageHeader title="Edit shipment preparation" subtitle="Update the destination, carrier and general information. The original reference is preserved." icon={Package}
+      breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Gestion des expéditions', to: '/shipping/preparation' }, { label: expeditionLotNumber || 'Preparation', to: id ? shippingPreparationDetailsPath(id) : '/shipping/preparation' }, { label: 'Edit' }]}
+      actions={<Button type="button" variant="outline" disabled={saving} onClick={() => navigate(id ? shippingPreparationDetailsPath(id) : '/shipping/preparation')}><ArrowLeft size={16} />Back</Button>} />
+    {loading ? <Note tone="info">Loading preparation…</Note> : !preparation ? <Note tone="danger">This preparation could not be opened.</Note> :
+      <form onSubmit={handleSubmit} className="logistics-form-main">
+        {loadFailed && <Note tone="danger">Reference data is unavailable. <Button type="button" variant="outline" onClick={() => void loadData()}>Reload</Button></Note>}
+        <fieldset disabled={saving || loadFailed || showSuccess} className="logistics-form-main">
+          <Section id="edit-shipment-identity" title="Preparation identity" icon={Package}><div className="logistics-field-grid">
+            <Field label="Shipment reference" hint="Assigned by the numbering service; cannot be edited here."><input value={expeditionLotNumber} readOnly /></Field>
+            <Field label="Seal number"><input value={sealNumber} onChange={e => setSealNumber(e.target.value)} /></Field>
+          </div><div className="mt-4 flex flex-wrap items-center gap-3"><ShippingStatusBadge status={preparation.status || 'waiting_for_customs_approval'} /><span className="text-sm text-slate-500">Status changes are only available through the shipment workflow.</span></div></Section>
+          <Section id="edit-shipment-destination" title="Destination" icon={Building2}><div className="logistics-field-grid">
+            <Field label="Destination refinery"><select value={selectedRefineryId} onChange={e => setSelectedRefineryId(e.target.value)}><option value="">Select a refinery</option>{refineries.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
+            <Field label="Destination country"><input value={shippedToCountry} onChange={e => setShippedToCountry(e.target.value)} placeholder="e.g. South Africa" /></Field>
+          </div></Section>
+          <Section id="edit-shipment-carrier" title="Carrier" icon={Truck}><Field label="Freight company"><select value={selectedFreightCompanyId} onChange={e => setSelectedFreightCompanyId(e.target.value)}><option value="">Select a carrier</option>{freightCompanies.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field></Section>
+          <Section id="edit-shipment-notes" title="Notes" icon={FileText}><Field label="Instructions & observations"><textarea rows={4} value={notes} onChange={e => setNotes(e.target.value)} maxLength={5000} /></Field></Section>
+        </fieldset>
+        <Note tone="info">Production lots, signatories and supporting documents are managed from the preparation detail page.</Note>
+        {showSuccess ? <Note tone="success">Changes saved. <Button type="button" variant="outline" onClick={() => navigate(shippingPreparationDetailsPath(id!))}>Open preparation</Button></Note> :
+          <FormActions><Button type="button" variant="outline" disabled={saving} onClick={() => navigate(shippingPreparationDetailsPath(id!))}>Cancel</Button><Button type="submit" disabled={saving || loadFailed}><Save size={16} />{saving ? 'Saving…' : 'Save changes'}</Button></FormActions>}
+      </form>}
+    <ErrorDialog isOpen={showError} onClose={() => setShowError(false)} title="Preparation unavailable" message={errorMessage} />
+  </div></NationalDashboardLayout>;
 }

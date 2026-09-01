@@ -4,6 +4,7 @@ import { canManageAccountTarget } from '../_shared/account-role-policy.ts';
 import { reponseJson } from '../_shared/cors.ts';
 import {
   appelerRpcIdempotent,
+  clesJsonValides,
   creerHandlerAdministration,
   lireJsonLimite,
   verifierSessionAdministration,
@@ -51,7 +52,7 @@ Deno.serve(creerHandlerAdministration({
       const acteur = donneesAuth.user;
       if (erreurAuth || !acteur) throw new ErreurPublique(401, 'Votre session n’est plus valide.');
 
-      const garde = await verifierSessionAdministration(acteurDb);
+      const garde = await verifierSessionAdministration(acteurDb, 'edit');
       if (!garde.ok) {
         throw new ErreurPublique(
           garde.status,
@@ -79,6 +80,9 @@ Deno.serve(creerHandlerAdministration({
       }
 
       const corps = await lireJsonLimite(req, 4_096);
+      if (!clesJsonValides(corps, ['user_id', 'is_active', 'reason'], ['user_id', 'is_active', 'reason'])) {
+        throw new ErreurPublique(400, 'La demande de changement de statut est invalide.');
+      }
       const utilisateurId = texte(corps?.user_id, 64);
       const motif = texte(corps?.reason, 500);
       const actif = corps?.is_active;

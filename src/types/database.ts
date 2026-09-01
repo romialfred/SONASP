@@ -14589,6 +14589,21 @@ export type Database = {
       }
       generate_freight_reference: { Args: never; Returns: string }
       generate_freight_shipment_reference: { Args: never; Returns: string }
+      snp_create_freight_shipment_atomic: {
+        Args: {
+          p_idempotency_key: string
+          p_shipping_preparation_ids: string[]
+          p_shipment_date: string
+          p_destination_refinery_id: string
+          p_number_of_boxes: number
+          p_box_type: string
+          p_gold_price_usd_per_oz: number
+          p_exchange_rate: number
+          p_local_currency: string
+          p_notes?: string | null
+        }
+        Returns: Json
+      }
       generate_numero_recu_vente_or: { Args: never; Returns: string }
       generate_pre_sale_number: { Args: never; Returns: string }
       generate_sale_number: { Args: never; Returns: string }
@@ -17507,6 +17522,16 @@ export type Database = {
           p_request_id: string
         }
         Returns: Json
+      }
+      snp_transition_freight_shipment: {
+        Args: {
+          p_expected_status: Database["public"]["Enums"]["freight_shipment_status"]
+          p_new_status: Database["public"]["Enums"]["freight_shipment_status"]
+          p_notes?: string | null
+          p_request_id: string
+          p_shipment_id: string
+        }
+        Returns: Database["public"]["Tables"]["freight_shipments"]["Row"]
       }
       snp_transition_shipping_preparation: {
         Args: {

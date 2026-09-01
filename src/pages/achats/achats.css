@@ -177,8 +177,107 @@
 .achats-releve td.est-credit { color: var(--sn-navy); }
 .achats-releve tr.est-solde td { font-weight: 700; }
 
+/* ---------------------------------------------------------------------------
+   Vue de pilotage comptes & paiements
+   --------------------------------------------------------------------------- */
+.achats-overview__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.8fr);
+  gap: 12px;
+}
+
+.achats-overview__grid--equal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.achats-overview__grid > .sn-section { min-width: 0; }
+.achats-overview__positive { color: var(--sn-success, #0c8a5f); font-weight: 700; }
+
+.achats-overview__section-link {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
+  margin-top: 10px;
+  border-top: 1px solid var(--sn-line-soft);
+}
+
+.achats-overview__section-link a {
+  color: var(--sn-green, #0c8a5f);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.achats-overview__alerts { display: grid; gap: 8px; }
+.achats-overview__alerts a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 8px 11px;
+  gap: 12px;
+  border: 1px solid var(--sn-line-soft);
+  border-radius: 9px;
+  color: var(--sn-navy);
+  background: var(--sn-surface-alt, #f7f9fb);
+  font-size: 12px;
+}
+.achats-overview__alerts a.is-warning {
+  border-color: #efd69d;
+  background: #fffaf0;
+}
+.achats-overview__alerts strong {
+  display: grid;
+  min-width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 999px;
+  background: #e7edf3;
+}
+.achats-overview__alerts .is-warning strong { color: #9a6700; background: #ffedc2; }
+
+.achats-overview__trend {
+  display: grid;
+  min-height: 230px;
+  grid-template-columns: repeat(12, minmax(42px, 1fr));
+  align-items: end;
+  gap: 10px;
+  overflow-x: auto;
+}
+.achats-overview__trend-point {
+  display: grid;
+  min-width: 42px;
+  height: 210px;
+  grid-template-rows: 28px 150px 22px;
+  align-items: end;
+  justify-items: center;
+  gap: 5px;
+}
+.achats-overview__trend-point > strong {
+  max-width: 72px;
+  overflow: hidden;
+  color: var(--sn-muted);
+  font-size: 9px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.achats-overview__bar {
+  display: flex;
+  width: 22px;
+  height: 150px;
+  align-items: flex-end;
+  overflow: hidden;
+  border-radius: 7px 7px 3px 3px;
+  background: #edf3f8;
+}
+.achats-overview__bar i {
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #21a979, #087956);
+}
+.achats-overview__trend-point small { color: var(--sn-muted); font-size: 10px; text-transform: capitalize; }
+
 @media (max-width: 780px) {
   .achats-synthese { gap: 8px 16px; }
+  .achats-overview__grid,
+  .achats-overview__grid--equal { grid-template-columns: 1fr; }
 }
 
 /* ---------------------------------------------------------------------------

@@ -172,6 +172,7 @@ const DemandesAchatPage = lazy(() => import('./pages/achats/DemandesAchatPage'))
 const ReglementsAchatPage = lazy(() => import('./pages/achats/ReglementsAchatPage'));
 const ReglementForm = lazy(() => import('./pages/achats/ReglementForm'));
 const ComptesMinesPage = lazy(() => import('./pages/achats/ComptesMinesPage'));
+const ComptesPaiementsOverviewPage = lazy(() => import('./pages/achats/ComptesPaiementsOverviewPage'));
 const ContratsPage = lazy(() => import('./pages/contrats/ContratsPage'));
 const PilotageContrats = lazy(() => import('./pages/contrats/PilotageContrats'));
 const ContratForm = lazy(() => import('./pages/contrats/ContratForm'));
@@ -796,6 +797,10 @@ function AppRoutes() {
                   <ReglementForm />
                 </ProtectedRoute>
               )}
+            />
+            <Route
+              path="/achats/comptes-paiements"
+              element={<ProtectedRoute><ComptesPaiementsOverviewPage /></ProtectedRoute>}
             />
             <Route
               path="/achats/comptes"

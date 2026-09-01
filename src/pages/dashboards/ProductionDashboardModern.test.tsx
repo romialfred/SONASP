@@ -157,4 +157,13 @@ describe('ProductionDashboardModern', () => {
     await waitFor(() => expect(screen.getByText(/les compagnies minières/)).toBeInTheDocument());
     expect(screen.getByText('Aucune compagnie minière enregistrée')).toBeInTheDocument();
   });
+
+  it('quitte le chargement et propose une reprise après un échec inattendu', async () => {
+    mocks.from.mockImplementation(() => { throw new Error('network unavailable'); });
+    render(<ProductionDashboardModern />);
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('temporairement indisponibles'));
+    expect(screen.queryByText('Chargement de la production…')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument();
+  });
 });

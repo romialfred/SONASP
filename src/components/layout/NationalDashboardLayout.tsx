@@ -1,4 +1,5 @@
 import {
+  Fragment,
   ReactNode,
   Suspense,
   createContext,
@@ -18,6 +19,7 @@ import {
   type Notification,
   type ResumeNotifications,
 } from '@/services/notificationsService';
+import { navigationLabel } from '@/i18n/navigationLabels';
 import { useTranslation } from 'react-i18next';
 import {
   Bell,
@@ -118,6 +120,7 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
  */
 export function NationalDashboardChrome({ children }: NationalDashboardLayoutProps) {
   const { i18n } = useTranslation();
+  const label = (value: string) => navigationLabel(value, i18n.language || 'en');
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -156,6 +159,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     if (!isMine) return sections;
 
     const order = [
+      'previsions-licences',
       'production',
       'inventory',
       'shipping',
@@ -165,6 +169,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       'stakeholders',
       'achats-industriels',
       'documents',
+      'rapports-institutionnels',
     ];
     const labels: Record<string, string> = {
       production: 'Gestion de la production',
@@ -176,15 +181,16 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       stakeholders: 'Parties prenantes',
       'achats-industriels': 'Relations avec la SONASP',
       documents: 'Documents et rapports',
+      'rapports-institutionnels': 'Rapports institutionnels',
     };
 
-    return sections.map((section): NavigationSection => ({
-      ...section,
+    return [{
+      id: 'mine-workspace',
       title: 'Mon espace',
-      groups: [...section.groups]
+      groups: sections.flatMap((section) => section.groups)
         .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
         .map((group) => ({ ...group, label: labels[group.id] || group.label })),
-    }));
+    } satisfies NavigationSection];
   }, [isMine, moduleAvailability, user]);
   const navigationGroups = useMemo(
     () => navigationSections.flatMap((section) => section.groups),
@@ -415,7 +421,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       isComptoir && 'is-comptoir',
       isCollector && 'is-collector',
       sidebarCollapsed && 'is-collapsed',
-    )} aria-label="Navigation principale">
+    )} aria-label={label('Navigation principale')}>
       <div className="national-sidebar__brand">
         <img src="/sonasp_logo.png" alt="SONASP" />
         {(isMine || isComptoir || isCollector) && !sidebarCollapsed && (
@@ -434,8 +440,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           type="button"
           className="national-sidebar__collapse"
           onClick={toggleSidebar}
-          aria-label={sidebarCollapsed ? 'Déployer le menu' : 'Réduire le menu'}
-          title={sidebarCollapsed ? 'Déployer le menu' : 'Réduire le menu'}
+          aria-label={label(sidebarCollapsed ? 'Déployer le menu' : 'Réduire le menu')}
+          title={label(sidebarCollapsed ? 'Déployer le menu' : 'Réduire le menu')}
         >
           {sidebarCollapsed ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}
         </button>
@@ -451,7 +457,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
             <span className="national-sidebar__icon" style={{ color: '#0f8b62' }}>
               <Home aria-hidden="true" />
             </span>
-            <span>Accueil</span>
+            <span>{label('Accueil')}</span>
           </Link>
         )}
         <Link
@@ -465,12 +471,12 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           <span className="national-sidebar__icon" style={{ color: '#e2a100' }}>
             <LayoutDashboard aria-hidden="true" />
           </span>
-          <span>Tableau de bord</span>
+          <span>{label('Tableau de bord')}</span>
         </Link>
 
         {navigationSections.map((section) => (
-          <section className="national-sidebar__section" key={section.id} aria-label={section.title}>
-            <h2 className="national-sidebar__section-heading">{section.title}</h2>
+          <section className="national-sidebar__section" key={section.id} aria-label={label(section.title)}>
+            <h2 className="national-sidebar__section-heading">{label(section.title)}</h2>
 
             {section.groups.map((group) => {
               const Icon = group.icon;
@@ -495,7 +501,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                   <span className="national-sidebar__icon" style={{ color: group.color }}>
                     <Icon aria-hidden="true" />
                   </span>
-                  <span title={group.label}>{group.label}</span>
+                  <span title={label(group.label)}>{label(group.label)}</span>
                   {/* Plus quand le groupe est replie, moins quand il est deplie :
                       le signe decrit l'action offerte, pas l'etat courant. */}
                   {isOpen ? <Minus aria-hidden="true" /> : <Plus aria-hidden="true" />}
@@ -504,17 +510,29 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                   <div className="national-sidebar__subnav">
                     {/* Une puce claire remplace l'icone de module : a ce niveau, dix
                         icones de dix couleurs se lisaient comme dix alertes. */}
-                    {group.children?.map((item) => (
-                      <Link
-                        to={item.path}
-                        key={item.path}
-                        className={cn(isActive(item.path) && 'is-current')}
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        <i className="national-sidebar__puce" aria-hidden="true" />
-                        <span>{item.label}</span>
-                      </Link>
-                    ))}
+                    {group.children?.map((item, index) => {
+                      const showCategory = Boolean(
+                        item.category && group.children?.[index - 1]?.category !== item.category
+                      );
+                      return (
+                        <Fragment key={item.path}>
+                          {showCategory && (
+                            <p className="national-sidebar__subnav-category">
+                              {label(item.category as string)}
+                            </p>
+                          )}
+                          <Link
+                            to={item.path}
+                            className={cn(isActive(item.path) && 'is-current')}
+                            onClick={() => setMobileOpen(false)}
+                            title={label(item.label)}
+                          >
+                            <i className="national-sidebar__puce" aria-hidden="true" />
+                            <span>{label(item.label)}</span>
+                          </Link>
+                        </Fragment>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -534,7 +552,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                   {/* Ni plus ni chevron : cette entree n'a pas de sous-menu a deplier, et le
                       signe promettait un repli qui n'existait pas. La place gagnee revient
                       a l'intitule, qui doit tenir sur une seule ligne. */}
-                  <span>{group.label}</span>
+                  <span>{label(group.label)}</span>
                 </Link>
               );
             })}
@@ -559,7 +577,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           <button
             className="national-shell__sidebar-backdrop"
             type="button"
-            aria-label="Fermer la navigation"
+            aria-label={label('Fermer la navigation')}
             onClick={() => setMobileOpen(false)}
           />
           {sidebar}
@@ -572,7 +590,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
             type="button"
             className="national-header__mobile-menu"
             onClick={() => setMobileOpen(true)}
-            aria-label="Ouvrir la navigation"
+            aria-label={label('Ouvrir la navigation')}
           >
             <Menu aria-hidden="true" />
           </button>
@@ -581,23 +599,23 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
             <div>
               {isCollector ? (
                 <>
-                  <p className="national-header__eyebrow">Espace collecteur d’or</p>
+                  <p className="national-header__eyebrow">{label('Espace collecteur d’or')}</p>
                   <h1 title={collectorWorkspace?.collectorName}>{collectorDisplayName}</h1>
                 </>
               ) : isComptoir ? (
                 <>
-                  <p className="national-header__eyebrow">Espace comptoir d’or</p>
+                  <p className="national-header__eyebrow">{label('Espace comptoir d’or')}</p>
                   <h1 title={comptoirWorkspace?.name}>{comptoirDisplayName}</h1>
                 </>
               ) : isMine ? (
                 <>
-                  <p className="national-header__eyebrow">Espace société minière</p>
+                  <p className="national-header__eyebrow">{label('Espace société minière')}</p>
                   <h1 title={companyName || undefined}>{mineDisplayName}</h1>
                 </>
               ) : (
                 <>
-                  <h1>Plateforme SONASP</h1>
-                  <p>Collecte, traçabilité et valorisation de l’or</p>
+                  <h1>{label('Plateforme SONASP')}</h1>
+                  <p>{label('Collecte, traçabilité et valorisation de l’or')}</p>
                 </>
               )}
             </div>
@@ -629,7 +647,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
               <button
                 type="button"
                 className="national-header__icon-button"
-                aria-label="Afficher les notifications"
+                aria-label={label('Afficher les notifications')}
                 onClick={toggleNotificationsMenu}
                 aria-expanded={notificationsOpen}
                 aria-haspopup="menu"
@@ -658,14 +676,14 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                           await chargerNotifications();
                         }}
                       >
-                        Tout marquer comme lu
+                        {label('Tout marquer comme lu')}
                       </button>
                     )}
                   </header>
 
                   {notifications.length === 0 ? (
                     <p className="national-header__vide">
-                      Rien à signaler pour le moment.
+                      {label('Rien à signaler pour le moment.')}
                     </p>
                   ) : (
                     notifications.map((notification) => (
@@ -703,7 +721,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 type="button"
                 className="national-header__profile"
                 onClick={toggleProfileMenu}
-                aria-label="Ouvrir le menu utilisateur"
+                aria-label={label('Ouvrir le menu utilisateur')}
                 aria-expanded={profileOpen}
                 aria-haspopup="menu"
                 aria-controls="profile-menu"
@@ -711,13 +729,13 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 <span className="national-header__avatar"><UserRound aria-hidden="true" /></span>
                 <span className="national-header__profile-copy">
                   <strong>{displayName}</strong>
-                  <small>{isCollector ? 'Collecteur d’or' : isComptoir ? 'Comptoir d’or' : getRoleLabel(user?.role)}</small>
+                  <small>{label(isCollector ? 'Collecteur d’or' : isComptoir ? 'Comptoir d’or' : getRoleLabel(user?.role))}</small>
                 </span>
                 <ChevronDown aria-hidden="true" />
               </button>
               {profileOpen && (
                 <div id="profile-menu" role="menu" className="national-header__menu national-header__profile-menu">
-                  <Link role="menuitem" to="/profile" onClick={() => setProfileOpen(false)}><Settings aria-hidden="true" /> Mon profil</Link>
+                  <Link role="menuitem" to="/profile" onClick={() => setProfileOpen(false)}><Settings aria-hidden="true" /> {label('Mon profil')}</Link>
                   <Link role="menuitem" to="/help" onClick={() => setProfileOpen(false)}><HelpCircle aria-hidden="true" /> Documentation</Link>
                   <button
                     role="menuitem"
@@ -727,7 +745,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                       navigate('/login');
                     }}
                   >
-                    <LogOut aria-hidden="true" /> Déconnexion
+                    <LogOut aria-hidden="true" /> {label('Déconnexion')}
                   </button>
                 </div>
               )}
@@ -737,7 +755,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           <button
             type="button"
             className="national-header__mobile-close"
-            aria-label="Fermer les menus"
+            aria-label={label('Fermer les menus')}
             onClick={closeMenus}
           >
             <X aria-hidden="true" />
@@ -754,7 +772,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
 
         <footer className="national-shell__footer" data-testid="app-footer">
           <span>© {new Date().getFullYear()} SONASP — Société Nationale des Substances Précieuses</span>
-          <span className="national-shell__footer-motto">Confidentialité · Intégrité · Transparence</span>
+          <span className="national-shell__footer-motto">{label('Confidentialité · Intégrité · Transparence')}</span>
         </footer>
       </div>
     </div>

@@ -16,16 +16,23 @@ i18n
         translation: frCommon,
       },
     },
-    fallbackLng: 'fr',
-    lng: 'fr',
+    fallbackLng: 'en',
     supportedLngs: ['fr', 'en'],
     interpolation: {
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage'],
+      lookupLocalStorage: 'sonasp-language',
       caches: ['localStorage'],
     },
   });
+
+// An explicit language choice persists; the platform defaults to English.
+const updateDocumentLanguage = (language: string) => {
+  if (typeof document !== 'undefined') document.documentElement.lang = language.startsWith('fr') ? 'fr' : 'en';
+};
+i18n.on('languageChanged', updateDocumentLanguage);
+updateDocumentLanguage(i18n.resolvedLanguage || 'en');
 
 export default i18n;

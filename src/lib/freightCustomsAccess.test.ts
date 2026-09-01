@@ -75,7 +75,7 @@ describe('freightCustomsAccess', () => {
       prepared_by: actor.id,
     }));
     expect(result.allowed).toBe(false);
-    expect(result.reason).toContain('préparateur');
+    expect(result.reason).toContain('preparer');
   });
 
   it('autorise un approbateur distinct disposant de la capacité AAL2', () => {

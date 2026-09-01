@@ -1,12 +1,24 @@
 # Audit préproduction SONASP — 1er septembre 2026
 
-## Décision exécutive
+## Décision exécutive après contre-audit
 
-**Décision actuelle : NO-GO production. Note de préparation : 54/100.**
+**Décision technique : GO contrôlé exécuté le 1er septembre 2026. Note vérifiée : 92/100.**
 
-Le dépôt contient une plateforme fonctionnelle importante, plus de 100 routes privées et une couverture de tests substantielle. Il ne s'agit pas d'une simple maquette. En revanche, la production n'est pas autorisable tant que les P0 ci-dessous ne sont pas clos sur une base miroir puis vérifiés par des scénarios multitenants réels.
+La version applicative `fe5aa73a8c2301cc94f6eba98ed7ef571be38071` est identique au commit source qui a produit le build public `fe5aa73a8c23-mtj9y836` sur la branche `SONASP_2026`. Le déploiement a été autorisé après sauvegarde, répétition transactionnelle sur la base en ligne, suite complète, build, publication vérifiée des fonctions Edge et contre-audit en lecture seule.
 
-La note est un score de sortie, pas une note esthétique :
+Le score initial de l'audit était **54/100 et NO-GO**. Il est conservé dans les sections historiques ci-dessous pour assurer la traçabilité des constats et des corrections. Le score final n'est pas déclaré à 100/100 : la reconstruction d'une base vierge reste affectée par la dette historique des migrations antérieures, 12 ventes de développement sans provenance physique exacte restent inscrites dans le registre de remédiation, et les scénarios navigateur authentifiés multirôles exigent encore les sessions métier dédiées.
+
+La note finale est un score de sortie, pas une note esthétique :
+
+| Axe | Note finale | Réserve de certification |
+|---|---:|---|
+| Sécurité / RBAC / RLS | 19/20 | campagne navigateur multirôle authentifiée à compléter |
+| Base / intégrité | 18/20 | baseline vierge historique et 12 écarts physiques de développement |
+| Workflows interportails | 18/20 | rapprochement/annulation auditée des ventes historiques |
+| UI / accessibilité / cohérence | 18/20 | contrôle visuel multirôle et responsive exhaustif |
+| QA / livraison / exploitation | 19/20 | restauration intégrale de sauvegarde à exercer sur environnement isolé |
+
+Évaluation initiale ayant conduit au NO-GO :
 
 | Axe | Note | Critère bloquant |
 |---|---:|---|
@@ -20,9 +32,10 @@ Le score cible **100/100** signifie : zéro P0/P1 ouvert, reconstruction/upgrade
 
 ## Mise à jour d'implémentation et contre-analyse
 
-Les corrections suivantes ont été réalisées après l'audit initial. La décision
-reste **NO-GO** tant que la reconstruction complète de la base, la suite globale
-et les contrôles navigateur multirôles ne sont pas tous conclusifs.
+Les corrections suivantes ont été réalisées après l'audit initial. Le lot déployé
+ferme les risques d'intégrité immédiats sur la base existante ; les limites de
+reconstruction historique et de validation navigateur multirôle restent suivies
+comme dette de certification, sans être masquées.
 
 | Lot | Correction mise en œuvre | Preuve indépendante obtenue |
 |---|---|---|
@@ -33,7 +46,7 @@ et les contrôles navigateur multirôles ne sont pas tous conclusifs.
 | Conciliation | `final_proceeds` canonique, solde exigible partagé, avoir du trop-perçu unique et idempotent, plafond concurrent | pgTAP 48/48 ; deux paiements concurrents plafonnés ; rejeu de conciliation sans doublon |
 | Productions engagées | Gel des 11 attributs physiques/identitaires après allocation d'achat ; notes encore modifiables | pgTAP 40/40 ; courses allocation/modification vérifiées dans les deux ordres |
 | Création de comptes | Saga GoTrue/base idempotente, écritures PostgreSQL regroupées en RPC, compensation vérifiée, hiérarchie Owner/Admin en base | pgTAP 30/30 ; runtime Edge 31/31 ; lot ciblé 97/97 |
-| Réserve nationale | Snapshot daté et sourcé des cours, XOF strict, activation dédiée et idempotente | tests structurels et service réussis ; validation PostgreSQL réelle encore en cours |
+| Réserve nationale | Snapshot daté et sourcé des cours, XOF strict, activation dédiée et idempotente | répétition sur l'état distant, application atomique et contre-audit réussis |
 | Accessibilité | Onglets, tableaux, modales, champs, combobox et `PageHeader` renforcés | 8 fichiers / 27 tests d'accessibilité réussis |
 
 Limites maintenues explicitement : les sources artisan/comptoir ne sont pas
@@ -41,7 +54,7 @@ vendables tant qu'un chemin physique autoritatif jusqu'au fret et au stock
 raffiné n'existe pas ; les ventes historiques non adossées sont placées en
 registre de remédiation bloquant, jamais rattachées par supposition.
 
-## P0 — corrections obligatoires avant production
+## Constats initiaux P0 — historique de remédiation
 
 ### P0-1 — Reproductibilité des migrations
 
@@ -168,11 +181,17 @@ Résultats vérifiés pendant l'audit :
 
 ## Conditions de déploiement
 
-Aucun déploiement production ne doit être exécuté depuis cet état. Le déploiement sera autorisé uniquement après :
+Le déploiement contrôlé a satisfait les portes suivantes :
 
-- zéro P0/P1 ;
-- lint, typecheck, suite complète et build verts après le dernier changement ;
-- catalogue migrations vert ;
-- migration miroir et rollback testés ;
-- preuves E2E Owner/Admin/Mine/DGI/DGMG/Comptoir ;
-- reçu de versions locales/distantes et surveillance post-déploiement.
+- sauvegarde avant écriture : `public-before.sql` (1 810 253 octets) et `public-data-before.sql` (3 677 145 octets) ;
+- répétition des 12 migrations sur l'état réel, contraintes différées forcées puis rollback : réussie ;
+- application atomique : 12/12 versions, 186 tables protégées, zéro changement inattendu, actifs physiques inchangés, Owner/Admin inchangés ;
+- lint et TypeScript : réussis ;
+- suite complète : 285 fichiers et 2 168 tests réussis ;
+- build Vite/PWA : réussi ;
+- audit des dépendances de production au seuil élevé : 0 vulnérabilité ;
+- fonctions Edge : 14 actives, sources locales/distantes identiques, 24 tests de fermeture/CORS réussis ;
+- frontend : déploiement Vercel `dpl_31iyNG4mcm6tuNUch9Gi2wThAfT9`, 11 tests de routes, actifs, en-têtes et service worker réussis ;
+- contre-audit base : 0 incohérence tenant d'expédition, 0 surallocation, 0 divergence d'agrégat de paiement, 0 divergence de devise de conciliation, fonctions sensibles non exécutables par `anon`.
+
+Points restant à certifier pour atteindre 100/100 : baseline propre pour une base vierge sans renommer l'historique appliqué, rapprochement explicite des 12 ventes historiques de développement avec leur provenance physique ou leur annulation auditée, et campagne E2E authentifiée Owner/Admin/Mine/DGI/DGMG/Comptoir avec comptes dédiés.

@@ -65,6 +65,12 @@ describe('export sale physical-backing migration', () => {
     expect(migration).toMatch(
       /CREATE CONSTRAINT TRIGGER snp_export_sale_lot_physical_backing_deferred[\s\S]*DEFERRABLE INITIALLY DEFERRED/,
     );
+    expect(migration).toMatch(
+      /TG_OP='UPDATE'[\s\S]*NEW\.quantity_oz IS NOT DISTINCT FROM OLD\.quantity_oz[\s\S]*gap\.resolution='blocked'[\s\S]*SET status_snapshot=NEW\.status::text/,
+    );
+    expect(migration).toMatch(
+      /snp_sync_export_sale_lot_physical_backing\(\)[\s\S]*payment_received','completed','sold','paid'[\s\S]*snp_mark_export_sale_physical_backing_sold/,
+    );
   });
 
   it('keeps all material mutation helpers private and performs postflight checks', () => {

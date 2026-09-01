@@ -2206,8 +2206,8 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 25323,
-      "sha256": "50d37eebe1e33b1d25002adde98de38cf7dc20f22abda235d538f92358e6dcae"
+      "normalizedBytes": 26488,
+      "sha256": "7b51431531de94bbf9c4f4956c21a0de3e7b0e2335d61ed636e043c63d947b96"
     },
     {
       "path": "supabase/migrations/20260901210000_figer_productions_engagees.sql",
@@ -3248,5 +3248,5 @@
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "87597a0a2de83ac109a27950dd707c39d775e59e4f319a6da2ef3e1eaa18dab2"
+  "catalogueSha256": "1443f177a31d05be8f744f6cafc27f0044389270e0edc7488a89c386fed1dae9"
 }

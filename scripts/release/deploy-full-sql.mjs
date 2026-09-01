@@ -92,7 +92,7 @@ const sql = ["BEGIN ISOLATION LEVEL REPEATABLE READ; SET LOCAL lock_timeout='3s'
  'CREATE TEMP TABLE release_before ON COMMIT DROP AS SELECT * FROM pg_temp.release_fingerprints();',
  'CREATE TEMP TABLE release_mutable_before ON COMMIT DROP AS SELECT * FROM pg_temp.release_mutable_counts();',
  'CREATE TEMP TABLE release_stock_before ON COMMIT DROP AS SELECT * FROM public.gold_inventory;',
- ...migrations.map(m=>m.body),checks,guard,
+ ...migrations.map(m=>m.body),'SET CONSTRAINTS ALL IMMEDIATE;',checks,guard,
  ...(mode==='apply'?migrations.map(m=>`INSERT INTO supabase_migrations.schema_migrations(version,name,statements) VALUES(${quote(m.version)},${quote(m.name.slice(15,-4))},ARRAY[${quote(m.sql)}]);`):[]),
  `SELECT jsonb_build_object('mode',${quote(mode)},'protected_tables',(SELECT count(*) FROM release_before),'physical_assets_unchanged',true,'owner_admin_unchanged',true,'unexpected_changes',(SELECT coalesce(jsonb_agg(jsonb_build_object('relation',before.relation,'before_count',before.row_count,'after_count',after.row_count,'before_checksum',before.checksum,'after_checksum',after.checksum) ORDER BY before.relation),'[]'::jsonb) FROM release_before before JOIN pg_temp.release_fingerprints() after USING(relation) WHERE (before.row_count,before.checksum) IS DISTINCT FROM (after.row_count,after.checksum))) validation;`,
  mode==='apply'?'COMMIT;':'ROLLBACK;'].join('\n');

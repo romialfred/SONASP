@@ -454,6 +454,27 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- Les ventes historiques ont été enregistrées avant que la provenance
+  -- achat-production-fret-stock soit obligatoire. Leur anomalie reste
+  -- explicitement bloquée dans le registre dédié, mais une synchronisation
+  -- financière ne doit pas rendre impossible le déploiement ni la tenue des
+  -- paiements. Toute modification de quantité ou de nature de vente continue
+  -- en revanche à exiger le rapprochement physique exact.
+  IF TG_OP='UPDATE'
+     AND NEW.seller_type IS NOT DISTINCT FROM OLD.seller_type
+     AND NEW.is_internal_sale IS NOT DISTINCT FROM OLD.is_internal_sale
+     AND NEW.quantity_oz IS NOT DISTINCT FROM OLD.quantity_oz
+     AND EXISTS(
+       SELECT 1
+       FROM public.snp_export_sale_physical_backing_gaps gap
+       WHERE gap.sale_id=v_sale_id AND gap.resolution='blocked'
+     ) THEN
+    UPDATE public.snp_export_sale_physical_backing_gaps
+    SET status_snapshot=NEW.status::text
+    WHERE sale_id=v_sale_id AND resolution='blocked';
+    RETURN NEW;
+  END IF;
+
   IF NEW.status::text IN ('management_rejected','customer_rejected','cancelled') THEN
     PERFORM public.snp_release_export_sale_physical_backing(
       v_sale_id,'sale status changed to '||NEW.status::text
@@ -499,6 +520,8 @@ BEGIN
     PERFORM public.snp_release_export_sale_physical_backing(
       v_sale.id,'acquisition lots released with sale status '||v_sale.status::text
     );
+  ELSIF v_sale.status::text IN ('payment_received','completed','sold','paid') THEN
+    PERFORM public.snp_mark_export_sale_physical_backing_sold(v_sale.id);
   ELSE
     PERFORM public.snp_ensure_export_sale_physical_backing(v_sale.id);
   END IF;

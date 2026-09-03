@@ -281,8 +281,58 @@ describe('ConciliationDetails', () => {
     mocks.contexte.mockResolvedValue({ ...contexte, expedition: null, certificat: null, donneesCertificat: null });
     render(<ConciliationDetails />);
     fireEvent.click(await screen.findByRole('button', { name: /Lancer la conciliation/ }));
-    expect(screen.getByText(/Aucune expédition n’est rattachée/)).toBeInTheDocument();
+    expect(screen.getByText(/Flux export incomplet/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Enregistrer le résultat' })).not.toBeInTheDocument();
+  });
+
+  it('présente les expéditions et résultats physiques multiples sans faux blocage', async () => {
+    const expeditionDeux = {
+      ...contexte.expedition!,
+      id: 'ship-2',
+      expedition_lot_number: 'LOT-2026-39',
+      freight_reference: 'FRET-2026-39',
+      allocated_quantity_oz: 7.925,
+      source_lien: 'physical_backing' as const,
+    };
+    const expeditionUn = {
+      ...contexte.expedition!,
+      freight_reference: 'FRET-2026-38',
+      allocated_quantity_oz: 10,
+      source_lien: 'physical_backing' as const,
+    };
+    mocks.contexte.mockResolvedValue({
+      ...contexte,
+      expedition: expeditionUn,
+      expeditions: [expeditionUn, expeditionDeux],
+      modeFlux: 'adossement_physique',
+      resultatsRaffinage: [
+        {
+          shipping_preparation_id: 'ship-1', freight_shipment_id: 'freight-1', inventory_id: 'inventory-1',
+          certificate_number: 'OP-202608-CERT', refining_record_id: 'refining-1', allocated_quantity_oz: 10,
+          pre_melting_weight_grams: 320, post_melting_weight_grams: 311, fineness_percentage: 99.9,
+          metal_retained_percentage: 97.2, final_fine_grams: 310.69, final_fine_ounces: 9.989,
+          processed_at: '2026-08-29T09:00:00Z', approved_at: '2026-08-29T11:00:00Z',
+        },
+        {
+          shipping_preparation_id: 'ship-2', freight_shipment_id: 'freight-2', inventory_id: 'inventory-2',
+          certificate_number: 'OP-202609-CERT', refining_record_id: 'refining-2', allocated_quantity_oz: 7.925,
+          pre_melting_weight_grams: 255, post_melting_weight_grams: 247, fineness_percentage: 99.8,
+          metal_retained_percentage: 96.8, final_fine_grams: 246.51, final_fine_ounces: 7.925,
+          processed_at: '2026-08-30T09:00:00Z', approved_at: '2026-08-30T11:00:00Z',
+        },
+      ],
+    });
+
+    render(<ConciliationDetails />);
+    fireEvent.click(await screen.findByRole('button', { name: /Lancer la conciliation/ }));
+
+    expect(screen.getByText('2 expéditions physiques')).toBeInTheDocument();
+    expect(screen.getAllByText('LOT-2026-38').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('LOT-2026-39').length).toBeGreaterThan(0);
+    expect(screen.getByText('OP-202608-CERT')).toBeInTheDocument();
+    expect(screen.getByText('OP-202609-CERT')).toBeInTheDocument();
+    expect(screen.queryByText(/Aucune expédition n’est rattachée/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Flux export incomplet/)).not.toBeInTheDocument();
   });
 
   it('montre les écarts et conserve la distinction entre estimation, dette et versement', async () => {

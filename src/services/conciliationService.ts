@@ -205,6 +205,12 @@ export interface ExpeditionConciliation {
   prepared_at: string | null;
   shipped_at: string | null;
   status: string;
+  source_lien?: 'direct' | 'physical_backing';
+  freight_shipment_id?: string | null;
+  freight_reference?: string | null;
+  freight_status?: string | null;
+  received_at?: string | null;
+  allocated_quantity_oz?: number | null;
 }
 
 export interface RaffinerieConciliation {
@@ -227,13 +233,43 @@ export interface ReceptionConciliation {
   received_at: string | null;
 }
 
+export interface ResultatRaffinageConciliation {
+  shipping_preparation_id: string;
+  freight_shipment_id: string | null;
+  inventory_id: string;
+  certificate_number: string | null;
+  refining_record_id: string | null;
+  allocated_quantity_oz: number | null;
+  pre_melting_weight_grams: number | null;
+  post_melting_weight_grams: number | null;
+  fineness_percentage: number | null;
+  metal_retained_percentage: number | null;
+  final_fine_grams: number | null;
+  final_fine_ounces: number | null;
+  processed_at: string | null;
+  approved_at: string | null;
+}
+
+export type ModeFluxConciliation =
+  | 'expedition_directe'
+  | 'adossement_physique'
+  | 'vente_locale_directe'
+  | 'non_rattachee';
+
 export interface ContexteConciliation {
   lignes: LigneVenteConciliation[];
   certificat: CertificatConciliation | null;
   donneesCertificat?: DonneesCertificatConciliation | null;
   analyseTeneur: AnalyseTeneurConciliation | null;
   expedition: ExpeditionConciliation | null;
+  /** Toutes les expéditions réelles lorsque la vente agrège plusieurs lots. */
+  expeditions?: ExpeditionConciliation[];
   raffinerie: RaffinerieConciliation | null;
+  /** Résultats de raffinage matérialisés dans le stock reçu. */
+  resultatsRaffinage?: ResultatRaffinageConciliation[];
+  modeFlux?: ModeFluxConciliation;
+  poidsExpedieG?: number | null;
+  orFinRaffineAlloueG?: number | null;
   paiement: PaiementConciliation | null;
   /** Lots d'achat réellement affectés à la vente (mine ou artisan). */
   origines?: Affectation[];

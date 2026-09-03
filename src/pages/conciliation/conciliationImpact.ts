@@ -48,8 +48,18 @@ export function calculerImpacts(dossier: Conciliation, contexte: ContexteConcili
 }
 
 export function blocageExpedition(contexte: ContexteConciliation): string | null {
-  if (!contexte.expedition) return 'Aucune expédition n’est rattachée à cette vente. Reliez la vente à son expédition réelle avant de concilier ; aucun certificat ne peut être déduit du seul numéro de vente.';
-  if (!contexte.expedition.refinery_id) return 'La destination raffinerie doit être renseignée sur l’expédition.';
-  if (!contexte.expedition.shipped_at) return 'Le lot est encore en préparation. La conciliation s’ouvre après son expédition à la raffinerie.';
+  if (contexte.modeFlux === 'vente_locale_directe') return null;
+  const expeditions = contexte.expeditions?.length
+    ? contexte.expeditions
+    : contexte.expedition ? [contexte.expedition] : [];
+  if (expeditions.length === 0) {
+    return 'Flux export incomplet : aucune expédition physique vérifiable n’est rattachée à cette vente.';
+  }
+  if (expeditions.some((expedition) => !expedition.refinery_id)) {
+    return 'La destination raffinerie doit être renseignée sur chaque expédition rattachée.';
+  }
+  if (expeditions.some((expedition) => !expedition.shipped_at)) {
+    return 'Au moins un lot est encore en préparation. La conciliation s’ouvre lorsque toutes les expéditions sont parties vers la raffinerie.';
+  }
   return null;
 }

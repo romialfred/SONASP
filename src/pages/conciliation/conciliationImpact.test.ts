@@ -28,4 +28,14 @@ describe('impacts de conciliation', () => {
   it('refuse une préparation non expédiée même pour Owner', () => {
     expect(blocageExpedition({ ...contexte, expedition: { refinery_id: 'ref', shipped_at: null } as never })).toMatch(/encore en préparation/);
   });
+  it('accepte plusieurs expéditions physiques complètes', () => {
+    expect(blocageExpedition({ ...contexte, expeditions: [
+      { refinery_id: 'ref', shipped_at: '2026-08-01' },
+      { refinery_id: 'ref', shipped_at: '2026-08-02' },
+    ] as never })).toBeNull();
+  });
+  it('réserve l’absence d’expédition à la vente locale directe', () => {
+    expect(blocageExpedition({ ...contexte, modeFlux: 'vente_locale_directe' })).toBeNull();
+    expect(blocageExpedition({ ...contexte, modeFlux: 'non_rattachee' })).toMatch(/Flux export incomplet/);
+  });
 });

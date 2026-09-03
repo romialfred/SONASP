@@ -149,6 +149,7 @@ function referenceVente(dossier: Conciliation): string {
 }
 
 function poidsBrut(dossier: Conciliation, contexte: ContexteConciliation): number | null {
+  if (contexte.poidsExpedieG !== null && contexte.poidsExpedieG !== undefined) return contexte.poidsExpedieG;
   const expedition = contexte.expedition?.total_gross_weight_grams;
   if (expedition !== null && expedition !== undefined) return expedition;
   if (contexte.lignes.length > 0) return contexte.lignes.reduce((somme, ligne) => somme + ligne.quantity_grams, 0);
@@ -449,21 +450,62 @@ function ResultatsRaffinage({ dossier, contexte, ecarts, peutSaisir, enCours, po
   const blocage = blocageExpedition(contexte);
   const impacts = calculerImpacts(dossier, contexte, { poids, teneur, prix });
   const mesuresCompletes = mesureRaffinerie(contexte).poids !== null && mesureRaffinerie(contexte).teneur !== null;
+  const expeditions = contexte.expeditions?.length ? contexte.expeditions : contexte.expedition ? [contexte.expedition] : [];
+  const resultatsPhysiques = contexte.resultatsRaffinage ?? [];
+  const venteLocale = contexte.modeFlux === 'vente_locale_directe';
+  const referencesExpeditions = expeditions.map((expedition) => expedition.expedition_lot_number || expedition.freight_reference || 'Expédition sans référence');
+  const nomsRaffineries = [...new Set([
+    contexte.raffinerie?.name,
+    ...expeditions.map((expedition) => expedition.shipped_to_company),
+  ].filter((nom): nom is string => Boolean(nom)))];
   return (
     <div className="conciliation-tab-grid conciliation-refining-workspace">
       <section className="conciliation-detail-card conciliation-proof-chain is-wide" aria-label="Traçabilité des analyses">
-        <div><span className="conciliation-eyebrow">01 · ORIGINE</span><strong>{nomOrigine(dossier, contexte)}</strong><span>{contexte.analysesMine?.length ?? 0} analyse(s) Mine rattachée(s)</span></div>
+        <div className="conciliation-proof-chain__step"><span className="conciliation-proof-chain__icon"><Building2 aria-hidden="true" /></span><span className="conciliation-eyebrow">01 · ORIGINE</span><strong>{nomOrigine(dossier, contexte)}</strong><span>{contexte.analysesMine?.length ?? 0} rapport(s) Mine rattaché(s)</span></div>
         <ArrowRight aria-hidden="true" />
-        <div><span className="conciliation-eyebrow">02 · LOT EXPÉDIÉ</span><strong>{contexte.expedition?.expedition_lot_number || 'Expédition non rattachée'}</strong><span>{contexte.expedition?.shipped_at ? `Expédié le ${formatDate(contexte.expedition.shipped_at)}` : 'Expédition à vérifier'}</span></div>
+        <div className="conciliation-proof-chain__step"><span className="conciliation-proof-chain__icon"><Archive aria-hidden="true" /></span><span className="conciliation-eyebrow">02 · {venteLocale ? 'VENTE LOCALE' : 'EXPÉDITION'}</span><strong>{venteLocale ? 'Vente directe à la SONASP' : expeditions.length > 1 ? `${expeditions.length} expéditions physiques` : referencesExpeditions[0] || 'Expédition à rattacher'}</strong><span>{venteLocale ? 'Aucune expédition export requise' : referencesExpeditions.join(' · ') || 'Chaîne physique à vérifier'}</span></div>
         <ArrowRight aria-hidden="true" />
-        <div><span className="conciliation-eyebrow">03 · RAFFINERIE</span><strong>{contexte.raffinerie?.name || 'Destination non renseignée'}</strong><span>{contexte.certificats?.length ?? (certificat ? 1 : 0)} certificat(s) rattaché(s)</span></div>
+        <div className="conciliation-proof-chain__step"><span className="conciliation-proof-chain__icon"><FlaskConical aria-hidden="true" /></span><span className="conciliation-eyebrow">03 · ANALYSE</span><strong>{venteLocale ? 'Analyse locale du lot' : nomsRaffineries.join(', ') || 'Raffinerie à renseigner'}</strong><span>{resultatsPhysiques.length} résultat(s) de raffinage · {contexte.certificats?.length ?? (certificat ? 1 : 0)} certificat(s)</span></div>
       </section>
       {blocage && <div className="is-wide"><Note tone="warning" icon={AlertTriangle}>{blocage}</Note></div>}
+      {!blocage && !venteLocale && expeditions.length > 0 && <section className="conciliation-detail-card conciliation-tab-card is-wide conciliation-shipment-register" aria-label="Expéditions rattachées à la vente">
+        <CardTitle icon={Archive}>Expéditions rattachées à la vente</CardTitle>
+        <div className="conciliation-shipment-register__grid">
+          {expeditions.map((expedition) => <article key={expedition.id}>
+            <header><span className="conciliation-shipment-register__status"><CheckCircle2 aria-hidden="true" /> Expédiée</span><strong>{expedition.expedition_lot_number || expedition.freight_reference || 'Référence non renseignée'}</strong></header>
+            <dl>
+              <div><dt>Départ</dt><dd>{formatDate(expedition.shipped_at)}</dd></div>
+              <div><dt>Réception</dt><dd>{formatDate(expedition.received_at)}</dd></div>
+              <div><dt>Raffinerie</dt><dd>{expedition.shipped_to_company || contexte.raffinerie?.name || '—'}</dd></div>
+              <div><dt>Or fin affecté</dt><dd>{formatNombre(expedition.allocated_quantity_oz, 'oz', 4)}</dd></div>
+            </dl>
+          </article>)}
+        </div>
+      </section>}
+      {!venteLocale && <section className="conciliation-detail-card conciliation-tab-card is-wide conciliation-refinery-results">
+        <CardTitle icon={FlaskConical}>Résultats de raffinage par expédition</CardTitle>
+        {resultatsPhysiques.length > 0 ? <div className="conciliation-refinery-results__grid">
+          {resultatsPhysiques.map((resultat) => {
+            const expedition = expeditions.find((item) => item.id === resultat.shipping_preparation_id);
+            return <article key={`${resultat.shipping_preparation_id}-${resultat.inventory_id}`}>
+              <header><div><span>{expedition?.expedition_lot_number || expedition?.freight_reference || 'Expédition'}</span><strong>{resultat.certificate_number || 'Résultat de stock raffiné'}</strong></div><span className={resultat.approved_at ? 'is-approved' : 'is-pending'}>{resultat.approved_at ? 'Approuvé' : 'À approuver'}</span></header>
+              <dl>
+                <div><dt>Poids avant fusion</dt><dd>{formatNombre(resultat.pre_melting_weight_grams, 'g')}</dd></div>
+                <div><dt>Poids après fusion</dt><dd>{formatNombre(resultat.post_melting_weight_grams, 'g')}</dd></div>
+                <div><dt>Pureté mesurée</dt><dd>{formatNombre(resultat.fineness_percentage, '%')}</dd></div>
+                <div><dt>Or fin du lot</dt><dd>{formatNombre(resultat.final_fine_grams, 'g', 4)}</dd></div>
+                <div className="is-highlight"><dt>Part affectée à la vente</dt><dd>{formatNombre(resultat.allocated_quantity_oz, 'oz', 4)}</dd></div>
+                <div><dt>Analyse traitée le</dt><dd>{formatDate(resultat.processed_at)}</dd></div>
+              </dl>
+            </article>;
+          })}
+        </div> : <EmptyPanel icon={FlaskConical} title="Résultat de raffinage en attente" description="Les expéditions sont bien rattachées, mais aucun résultat matérialisé dans le stock raffiné n’est encore disponible." />}
+      </section>}
       <section className="conciliation-detail-card conciliation-tab-card is-wide">
         <CardTitle icon={ClipboardList}>Rapports Mine et preuves de la raffinerie</CardTitle>
         <div className="conciliation-evidence-grid">
           <div><h3>Déclaration Mine / expédition</h3>{contexte.analysesMine?.length ? contexte.analysesMine.map(a => <dl className="conciliation-evidence" key={a.id}><div><dt>Rapport</dt><dd>{a.reference}</dd></div><div><dt>Teneur déclarée</dt><dd>{formatNombre(a.teneur_declaree_pct, '%')}</dd></div><div><dt>Date de prélèvement</dt><dd>{formatDate(a.date_prelevement)}</dd></div><div><dt>Décision</dt><dd>{libelleTechnique(a.statut)}</dd></div></dl>) : <p>Aucun rapport Mine rattaché. Les valeurs commerciales d’origine sont conservées ; elles ne constituent pas un rapport de laboratoire.</p>}</div>
-          <div><h3>Certificat de la même expédition</h3>{(contexte.certificats?.length ?? 0) > 0 && <label className="conciliation-proof-select"><span>Rapport de raffinage</span><select value={certificat?.id || ''} disabled={!saisiePossible || enCours} onChange={e => onCertificat(e.target.value)}><option value="">Sélectionner un certificat</option>{contexte.certificats?.map(c => <option key={c.id} value={c.id}>{c.certificate_number || c.file_name} · {libelleTechnique(c.approval_status)}</option>)}</select></label>}<p>Seules les preuves de cette expédition sont proposées. Un rapport en attente d’approbation reste consultable, mais ne peut pas arrêter les valeurs définitives.</p></div>
+          <div><h3>Certificats des expéditions rattachées</h3>{(contexte.certificats?.length ?? 0) > 0 && <label className="conciliation-proof-select"><span>Rapport de raffinage</span><select value={certificat?.id || ''} disabled={!saisiePossible || enCours} onChange={e => onCertificat(e.target.value)}><option value="">Sélectionner un certificat</option>{contexte.certificats?.map(c => <option key={c.id} value={c.id}>{c.certificate_number || c.file_name} · {libelleTechnique(c.approval_status)}</option>)}</select></label>}<p>Seules les preuves des expéditions physiquement affectées à cette vente sont proposées. Un rapport en attente d’approbation reste consultable, mais ne peut pas arrêter les valeurs définitives.</p></div>
         </div>
       </section>
       <section className="conciliation-detail-card conciliation-tab-card">

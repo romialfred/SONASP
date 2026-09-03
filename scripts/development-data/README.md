@@ -1,91 +1,84 @@
-# Peuplement historique de développement — TEST3Y-20260830
+# Peuplement historique de développement — HIST-2024-2026
 
-## État au 30 août 2026
+## Périmètre et sécurité
 
-**Préparation en cours, aucun peuplement distant effectué.** Le propriétaire a
-confirmé que toutes les données actuelles sont des données de développement.
-Cette confirmation autorise le peuplement, mais les déploiements des correctifs
-serveur ci-dessous restent en attente d'autorisation. `run.mjs` refuse actuellement
-tout `--commit`, même avec une confirmation de développement.
+Ce lot est réservé au projet Supabase SONASP de développement
+`yyverzuhkdonjjuficor`. Il couvre janvier 2024 à décembre 2026 ; septembre à
+décembre 2026 restent des prévisions afin de ne pas antidater des réalisations.
+Les dates métier sont historiques, tandis que les journaux techniques conservent
+la date réelle d'exécution.
 
-## Scénarios préparés
+- Aucun utilisateur existant, rôle ou droit n'est modifié.
+- Les sept acteurs techniques ont des adresses `example.invalid`, aucun mot de
+  passe, aucune invitation et restent bannis puis désactivés.
+- Aucun courriel, SMS, paiement bancaire, certification DGI ou document officiel
+  externe n'est envoyé ou fabriqué.
+- Les références visibles suivent les nomenclatures métier (`SL-YYYY-…`,
+  `RN-YYYY-…`, `OP-YYYYMM-…`, `PA-YYYY-MM-…`) et ne contiennent ni « test » ni
+  « demo ».
+- Le rejeu est idempotent : les UUID déterministes `d8302026-*` empêchent les
+  doublons.
 
-Période métier : septembre 2023 à août 2026, 36 mois. Les dates d'import et d'audit
-restent les dates véritables d'exécution, sans falsification des journaux.
+## Données et scénarios couverts
 
-- Trois mines / sites, 108 productions, 108 achats liés à leur production,
-  36 plans, 108 demandes et factures d'achat brouillon, 36 règlements brouillon.
-- 72 expéditions, analyses initiales et certificats de raffinerie rattachés.
-- 36 ventes export / conciliations : attente, analyse reçue, validation distincte.
-- 36 lots raffinés, 34 affectations dont 27 actives et 7 en étapes intermédiaires.
-  Les lots vendus et ceux affectés en réserve viennent de productions distinctes.
-- 24 artisans, trois sites, 216 ventes nationales et 180 factures non certifiées
-  DGI, 12 réquisitions et 12 contrats brouillon.
-- Cours et changes synthétiques ajoutés uniquement aux dates absentes.
-- Références `TEST3Y-*`, UUID déterministes `d8302026-*`, adresses `example.invalid`.
-  Sept acteurs historiques nouveaux sans mot de passe, sans invitation et bannis
-  dans Auth ; leurs profils doivent être désactivés à la fin de l'import.
+- 96 productions mensuelles réalisées (trois flux), 108 prévisions, 9 budgets
+  annuels, 108 ventilations mensuelles et 108 trimestrielles.
+- 96 plans, demandes, achats et factures d'achat reliés à leurs productions.
+- 96 chaînes physiques complètes : préparation, douane/fret, raffinerie et stock.
+- 32 ventes internationales, 64 analyses/certificats, 32 conciliations dont 10
+  validées et 26 paiements internationaux répartis entre les statuts non
+  irréversibles disponibles.
+- 32 affectations à la Réserve nationale couvrant les 14 statuts du workflow,
+  dont 19 actives.
+- 24 artisans sur trois sites, 192 ventes d'or locales, 160 factures non certifiées,
+  11 réquisitions et 9 contrats brouillon.
+- Cours de l'or et changes ajoutés uniquement aux dates absentes.
 
-Les achats de Comptoir ne sont pas inclus dans ce premier lot : la contrainte de
-rôle publiée ne permet pas encore de créer cet acteur. Aucun droit existant n'est
-modifié pour contourner cette incompatibilité. Aucun paiement exécuté, certification
-DGI officielle ou communication externe n'est fabriqué.
+Les brouillons, demandes en attente, contrats, réquisitions, conciliations et
+affectations intermédiaires constituent les cas modifiables destinés aux essais de
+formulaires. Les statuts finaux restent volontairement immuables conformément aux
+règles métier.
 
-## Blocages constatés sur le schéma publié
+## Réparation de cohérence incluse
 
-1. Absence de `snp_conciliation_impacts_fiscaux(...)` : correction locale
-   `20260830120000_fiabiliser_conciliation_expeditions_et_impacts.sql` non publiée.
-2. Deux triggers d'entrée sur `gold_inventory`, avec écritures en double : correction
-   locale `20260829204000_durcir_grand_livre_stock_reserve.sql` non publiée.
-   Cette migration consolide des écritures techniques existantes : elle exige
-   sauvegarde ciblée et examen des lignes concernées avant déploiement.
-3. `log_account_status_change()` référence `audit_trail.user_id`, colonne absente.
-   Le défaut bloque la désactivation finale des profils synthétiques ; la correction
-   existe dans le lot IAM local `20260830103000_securiser_administration_owner_et_profils.sql`.
-   Ne pas déployer tout le lot IAM sans examiner et autoriser son périmètre.
+La base de développement contient 12 ventes historiques `SL-2026-001` à
+`SL-2026-012` sans chaîne physique. Elles bloquent le contrôle global de la Réserve.
+Le lot ne désactive pas ce contrôle : il construit pour chacune une production, un
+achat, une expédition, un raffinage et un stock traçables, puis rattache la vente à
+ce stock. L'instantané pré-commit conserve leur statut initial pour une reprise.
 
-## Vérifications réellement exécutées
+## Contrôles exécutés par `postflight.sql`
 
-- Export en lecture seule du schéma lié et des capacités nécessaires ; aucun secret
-  SMTP, jeton utilisateur ou clé privée exporté par ces scripts.
-- Copie dédiée `sonasp_seed_validation_live_20260830` dans
-  `supabase_db_SONASP-local-mirror`, sans modification de la base métier du miroir.
-- Les deux correctifs Stock/Conciliation ont été appliqués **uniquement à cette copie**.
-- Le dernier essai a exécuté les trois chapitres de données avec succès, puis échoué
-  dans le trigger d'audit lors de la désactivation des profils. La fermeture de la
-  connexion a annulé l'intégralité de la transaction. Aucun jeu n'a été conservé.
-- Les assertions de `postflight.sql` sont préparées mais **pas encore validées** :
-  l'erreur d'audit survient avant leur exécution.
-- Aucun test complet des portails ou des droits navigateur n'est revendiqué.
+Le peuplement est annulé au moindre écart de volume, de période, de conservation
+des poids, de provenance d'une vente, de séparation des acteurs, de couverture des
+statuts, de notification externe ou de préservation des profils existants. La
+répétition liée du 3 septembre 2026 a franchi tous ces contrôles puis exécuté
+`ROLLBACK`.
 
-## Avant tout peuplement définitif
+Le manifeste de 96 pièces (64 analyses et 32 décisions) est exporté dans
+`output/development-data/documents.json`. Il décrit les pièces attendues sans les
+présenter comme des documents officiels ni déclencher de stockage externe.
 
-1. Obtenir l'autorisation de déploiement ciblé ; sauvegarder et comparer le schéma
-   réellement publié, puis traiter les trois prérequis sans `db reset`, `db push`
-   aveugle ni réparation de l'historique des migrations.
-2. Rejouer sur un miroir représentatif, passer les assertions de quantité, devise,
-   relations, séparation des acteurs et préservation des profils/droits existants.
-3. Générer, inspecter et charger les 106 PDF TEST : 72 analyses et 34 décisions.
-   Le manifeste est prévu ; les fichiers ne sont **pas encore créés**. Remplacer
-   les tailles provisoires des pièces par les tailles réelles avant publication.
-4. Vérifier l'annulation des courriels/SMS et de toutes les notifications externes
-   du lot, sans toucher aux notifications des données préexistantes.
-5. Exécuter une répétition distante annulée, puis seulement lever le verrou COMMIT
-   et importer en transaction. Contrôler le rejeu sans doublons et les données
-   réellement affichées. Conserver le reçu et les contrôles après import.
+## Commandes
 
-## Commandes de diagnostic / validation locale
+Répétition distante, toujours annulée :
 
 ```powershell
-node scripts/development-data/read-references.mjs
-node scripts/development-data/run.mjs
+node scripts/development-data/run.mjs --linked
 ```
 
-La première commande lit les référentiels distants ; la seconde utilise la copie
-locale et annule la transaction par défaut. `--foundation-only` limite les chapitres,
-mais n'est pas un mode de publication partielle.
+Insertion transactionnelle contrôlée :
 
-`prepare-local.mjs <schema-public-observe.sql>` crée un miroir dédié sans écraser
-une base existante. Les options de reprise concernent exclusivement cette base
-de validation. Les fichiers sous `output/development-data` sont des sorties de
-diagnostic, pas une preuve d'import réussi.
+```powershell
+node scripts/development-data/run.mjs --linked --commit `
+  --development-confirmed --dry-run-reviewed --rollback-snapshot
+```
+
+Avant le `COMMIT`, le programme exécute `snapshot-before.sql` et conserve le reçu
+dans `output/development-data/pre-commit-snapshot.json`. Le reçu de transaction est
+écrit dans `linked-commit.json`. Le mode commit est refusé sans projet lié et sans
+les trois confirmations explicites.
+
+Les scripts `schema-audit.sql`, `coverage-audit.sql` et les audits spécialisés sont
+des diagnostics en lecture seule. `prepare-local.mjs` reste destiné au miroir local
+isolé et ne doit jamais écraser une base existante.

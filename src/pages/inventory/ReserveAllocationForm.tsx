@@ -113,6 +113,7 @@ export function ReserveAllocationForm() {
   const [documentType, setDocumentType] = useState('decision_allocation');
   const [confirmed, setConfirmed] = useState(false);
   const [sectionOpen, setSectionOpen] = useState(true);
+  const [summaryOpen, setSummaryOpen] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -359,7 +360,73 @@ export function ReserveAllocationForm() {
             <footer className="reserve-form-nav"><button type="button" className="sn-btn" disabled={step === 1} onClick={() => setStep((value) => Math.max(1, value - 1))}><ArrowLeft /> Étape précédente</button>{step < 4 && <button type="button" className="sn-btn sn-btn--primary" onClick={() => void goNext()}>Étape suivante <ArrowRight /></button>}</footer>
           </div>
 
-          <aside className="reserve-summary" aria-label="Résumé de l’affectation"><header><h3>Résumé de l’affectation</h3><ChevronUp /></header><section><h4>Statut</h4><div className="reserve-summary__status"><Badge tone={allocation ? RESERVE_STATUS_TONES[allocation.status] : 'warning'}>{allocation ? RESERVE_STATUS_LABELS[allocation.status] : 'Brouillon'}</Badge><span>Étape actuelle <b>{step} / 4</b></span><progress max="4" value={step} /></div></section><SummarySection title="Détails de la sélection" rows={[["Lots sélectionnés", String(summary.lots)], ["Nombre total de lingots", String(summary.ingots)], ["Poids brut total", formatGrams(summary.gross)], ["Pureté moyenne", formatPercent(summary.purity)], ["Poids d’or fin total", formatGrams(summary.fine)], ["Valeur indicative (FCFA)", allocation ? formatFcfa(allocation.indicative_value_fcfa) : 'Calculée à l’enregistrement'], ["Valeur indicative (USD)", allocation ? formatUsd(allocation.indicative_value_usd) : '—'], ["Valeur indicative (EUR)", allocation ? formatEur(allocation.indicative_value_eur) : '—'], ["Source des cours", allocation?.valuation_source || 'À figer depuis les référentiels or et XOF'], ["Cours horodaté", allocation?.valuation_at ? formatDateTime(allocation.valuation_at) : 'À l’enregistrement']]} /><SummarySection title="Destination prévue" rows={[["Dépositaire", depository?.short_name || depository?.name || 'À définir'], ["Type de dépôt", formatDepositType(payload.deposit_type)], ["Localisation", depository?.address || depository?.administrative_region || 'À définir'], ["Référence dépôt", payload.planned_deposit_reference || 'À renseigner'], ["Date prévue de transfert", formatDate(payload.planned_transfer_date)]]} /><SummarySection title="Créé par" rows={[[user?.full_name || 'Utilisateur SONASP', allocation ? formatDate(allocation.created_at) : 'À l’enregistrement']]} /></aside>
+          <aside className={`reserve-summary${summaryOpen ? '' : ' is-collapsed'}`} aria-label="Résumé de l’affectation">
+            <header>
+              <div className="reserve-summary__heading">
+                <span aria-hidden="true"><ClipboardCheck /></span>
+                <div><h3>Résumé de l’affectation</h3><p>Synthèse mise à jour en temps réel</p></div>
+              </div>
+              <button
+                type="button"
+                aria-expanded={summaryOpen}
+                aria-label={summaryOpen ? 'Replier le résumé' : 'Déplier le résumé'}
+                onClick={() => setSummaryOpen((value) => !value)}
+              >
+                {summaryOpen ? <ChevronUp /> : <ChevronDown />}
+              </button>
+            </header>
+
+            {summaryOpen && <div className="reserve-summary__body" aria-live="polite">
+              <section className="reserve-summary__status-section">
+                <div className="reserve-summary__status-head">
+                  <span>Statut actuel</span>
+                  <Badge tone={allocation ? RESERVE_STATUS_TONES[allocation.status] : 'warning'}>
+                    {allocation ? RESERVE_STATUS_LABELS[allocation.status] : 'Brouillon'}
+                  </Badge>
+                </div>
+                <div className="reserve-summary__progress-label"><span>Progression du dossier</span><b>{step} / 4</b></div>
+                <progress max="4" value={step} aria-label={`Étape ${step} sur 4`} />
+              </section>
+
+              <SummaryMetrics
+                lots={summary.lots}
+                gross={formatGrams(summary.gross)}
+                fine={formatGrams(summary.fine)}
+                purity={formatPercent(summary.purity)}
+              />
+
+              {summary.lots === 0 && <p className="reserve-summary__empty">
+                Sélectionnez un lot éligible pour afficher sa valorisation.
+              </p>}
+
+              {(summary.lots > 0 || allocation) && <>
+                <SummarySection title="Valorisation indicative" rows={[
+                  ['Valeur FCFA', allocation ? formatFcfa(allocation.indicative_value_fcfa) : 'Calculée à l’enregistrement'],
+                  ['Valeur USD', allocation ? formatUsd(allocation.indicative_value_usd) : '—'],
+                  ['Valeur EUR', allocation ? formatEur(allocation.indicative_value_eur) : '—'],
+                ]} />
+                <div className="reserve-summary__provenance">
+                  <span>Référentiel de valorisation</span>
+                  <strong>{allocation?.valuation_source || 'Cours de l’or et taux XOF officiels'}</strong>
+                  <small>{allocation?.valuation_at ? formatDateTime(allocation.valuation_at) : 'Cours figés lors de l’enregistrement'}</small>
+                </div>
+              </>}
+
+              {step >= 2 && <SummarySection title="Destination prévue" rows={[
+                ['Dépositaire', depository?.short_name || depository?.name || 'À définir'],
+                ['Type de dépôt', formatDepositType(payload.deposit_type)],
+                ['Localisation', depository?.address || depository?.administrative_region || 'À définir'],
+                ['Référence dépôt', payload.planned_deposit_reference || 'À renseigner'],
+                ['Transfert prévu', formatDate(payload.planned_transfer_date)],
+              ]} />}
+
+              <footer className="reserve-summary__author">
+                <span>Préparée par</span>
+                <strong>{user?.full_name || 'Utilisateur SONASP'}</strong>
+                <small>{allocation ? formatDate(allocation.created_at) : 'Enregistrement à venir'}</small>
+              </footer>
+            </div>}
+          </aside>
         </div>
       </main>
     </NationalDashboardLayout>
@@ -372,6 +439,17 @@ function FormSection({ icon: Icon, title, description, children }: { icon: typeo
 
 function Field({ label, required, wide, children }: { label: string; required?: boolean; wide?: boolean; children: React.ReactNode }) {
   return <label className={`reserve-field${wide ? ' is-wide' : ''}`}><span>{label}{required && <i>*</i>}</span>{children}</label>;
+}
+
+function SummaryMetrics({ lots, gross, fine, purity }: { lots: number; gross: string; fine: string; purity: string }) {
+  return <section className="reserve-summary__metrics">
+    <h4>Sélection</h4>
+    <div>
+      <article><span>Lots</span><strong>{lots}</strong></article>
+      <article><span>Poids brut</span><strong>{gross}</strong></article>
+      <article><span>Or fin</span><strong>{fine}</strong><small>{purity} de pureté</small></article>
+    </div>
+  </section>;
 }
 
 function SummarySection({ title, rows }: { title: string; rows: Array<[string, string]> }) {

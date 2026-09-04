@@ -20,7 +20,7 @@ BEGIN
      OR to_regclass('public.artisanal_site_productions') IS NULL
      OR to_regclass('public.daily_production') IS NULL
      OR to_regclass('public.export_licenses') IS NULL
-     OR to_regclass('public.snp_reserve_allocations') IS NULL
+     OR to_regclass('public.reserve_allocations') IS NULL
      OR to_regclass('public.snp_rpc_execution_allowlist') IS NULL THEN
     RAISE EXCEPTION 'Préflight portail DGMG : dépendance réglementaire ou IAM absente.';
   END IF;
@@ -281,7 +281,7 @@ BEGIN
   ),
   controls AS (
     SELECT CASE WHEN v_can_reserve THEN (
-      SELECT count(*)::bigint FROM public.snp_reserve_allocations allocation
+      SELECT count(*)::bigint FROM public.reserve_allocations allocation
       WHERE allocation.status IN ('SUBMITTED', 'UNDER_REVIEW')
     ) ELSE NULL END AS pending
   ),

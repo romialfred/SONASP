@@ -2316,8 +2316,8 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 18939,
-      "sha256": "802f048fe25f9c44420d0762c5818b70916bea765357951337c219d363b71488"
+      "normalizedBytes": 18931,
+      "sha256": "f0c3a8240f6bd901ac15297ed95eafec75f2f5f6230ff17fa010812734fe0084"
     },
     {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
@@ -3318,5 +3318,5 @@
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "517943f35b435697b542769fb990692be1646b7778116f68aadf35e1f55ecf80"
+  "catalogueSha256": "848a5e565facd0c0713be710dae5a9de91571f16fc6ef5c3b0cd223419bd8dd5"
 }

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   dgmgRegulatoryDashboardService,
@@ -78,5 +79,15 @@ describe('service du tableau réglementaire DGMG', () => {
   it('propage une erreur réseau sans fabriquer de contrat vide', async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: { message: 'refus' } });
     await expect(dgmgRegulatoryDashboardService.load(filters)).rejects.toMatchObject({ message: 'refus' });
+  });
+
+  it('s’appuie sur le référentiel autoritatif des affectations de réserve', () => {
+    const migration = readFileSync(
+      'supabase/migrations/20260904203000_portail_dgmg_tableau_reglementaire.sql',
+      'utf8',
+    );
+    expect(migration).toContain("to_regclass('public.reserve_allocations')");
+    expect(migration).toContain('FROM public.reserve_allocations allocation');
+    expect(migration).not.toContain('public.snp_reserve_allocations');
   });
 });

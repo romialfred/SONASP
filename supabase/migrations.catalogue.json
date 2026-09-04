@@ -2266,8 +2266,8 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 3976,
-      "sha256": "8bfee5012a9762ee48955c16b713748e08b0e8c41cc08c006c8976d71d1f7ccd"
+      "normalizedBytes": 3975,
+      "sha256": "634320014afee355ea64ed16030f1df9427d0f5d96d806ea970271f954c7e4d3"
     },
     {
       "path": "supabase/migrations/20260904143000_refonte_creation_vente_internationale.sql",
@@ -3278,5 +3278,5 @@
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "636f3f05499482a07ba553f301eb803fa39d6529db80935c7feae78b25e1ba19"
+  "catalogueSha256": "dfeb14b6b7f755bfa862e156649943a632f77208fe669667c0187ad5a3ae9135"
 }

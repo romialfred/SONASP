@@ -2286,8 +2286,8 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 7307,
-      "sha256": "8a0f15d61a7ec4d272ddb720b7f934390b3dfa96bd81ee8ff9c2ced5b63cfa39"
+      "normalizedBytes": 7073,
+      "sha256": "6d3d9fd8e8513268a3e57af73f50056752da7b09a71960f3abb7a64239b2f6a3"
     },
     {
       "path": "supabase/migrations/20260904193000_refonte_gouvernance_acces_portails.sql",
@@ -3318,5 +3318,5 @@
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "83950d260f4e673e08e4a61bde39c51c4de3de9337c7f5b7b58cde7e99f46d2c"
+  "catalogueSha256": "607722ffb340be43490ef52ddef54c52e3bf5e4b67756c9636d478fc68f70904"
 }

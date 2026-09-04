@@ -33,5 +33,7 @@ describe('contrat de suppression totale et de recréation', () => {
       'GRANT EXECUTE ON FUNCTION public.snp_admin_compte_finaliser_suppression(uuid,text)',
     );
     expect(migration).toContain('TO service_role;');
+    expect(migration).toContain('DELETE FROM public.snp_rpc_execution_allowlist');
+    expect(migration).not.toContain("procedure.proname,'service_role'");
   });
 });

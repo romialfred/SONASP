@@ -147,17 +147,12 @@ FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.snp_admin_compte_finaliser_suppression(uuid,text)
 TO service_role;
 
-INSERT INTO public.snp_rpc_execution_allowlist(
-  function_signature,function_name,grantee,purpose,migration_version
-)
-SELECT procedure.oid::regprocedure::text,procedure.proname,'service_role',
-  'account-deletion-finalization','20260904170000'
-FROM pg_catalog.pg_proc procedure
-WHERE procedure.oid='public.snp_admin_compte_finaliser_suppression(uuid,text)'::regprocedure
-ON CONFLICT(function_signature,grantee) DO UPDATE SET
-  function_name=excluded.function_name,
-  purpose=excluded.purpose,
-  migration_version=excluded.migration_version;
+-- Cette fonction est appelée exclusivement par l'Edge Function avec la clé de
+-- service. Elle ne doit pas intégrer l'allowlist des RPC exposées au navigateur,
+-- dont la contrainte n'autorise volontairement que le rôle authenticated.
+DELETE FROM public.snp_rpc_execution_allowlist
+WHERE function_signature=
+  'public.snp_admin_compte_finaliser_suppression(uuid,text)'::regprocedure::text;
 
 DO $postflight$
 DECLARE v_definition text;
@@ -173,12 +168,10 @@ BEGIN
        'public.snp_admin_compte_finaliser_suppression(uuid,text)','EXECUTE')
      OR position('from auth.users' IN v_definition)=0
      OR position('email_reusable' IN v_definition)=0
-     OR NOT EXISTS(
+     OR EXISTS(
        SELECT 1 FROM public.snp_rpc_execution_allowlist
        WHERE function_signature=
          'public.snp_admin_compte_finaliser_suppression(uuid,text)'::regprocedure::text
-         AND grantee='service_role'
-         AND migration_version='20260904170000'
      ) THEN
     RAISE EXCEPTION 'Postflight finalisation suppression incomplet.';
   END IF;

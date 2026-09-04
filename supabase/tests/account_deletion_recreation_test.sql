@@ -13,7 +13,21 @@ END $$;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path=public,extensions;
-SELECT plan(8);
+SELECT plan(10);
+
+SELECT ok(
+  NOT has_function_privilege('anon',
+    'public.snp_admin_compte_finaliser_suppression(uuid,text)','EXECUTE')
+  AND NOT has_function_privilege('authenticated',
+    'public.snp_admin_compte_finaliser_suppression(uuid,text)','EXECUTE')
+  AND has_function_privilege('service_role',
+    'public.snp_admin_compte_finaliser_suppression(uuid,text)','EXECUTE'),
+  'la finalisation est strictement réservée au service Edge'
+);
+SELECT is((SELECT count(*) FROM public.snp_rpc_execution_allowlist
+  WHERE function_signature=
+    'public.snp_admin_compte_finaliser_suppression(uuid,text)'::regprocedure::text),
+  0::bigint,'la RPC interne ne figure pas dans l’allowlist navigateur');
 
 INSERT INTO auth.users(id,email) VALUES
   ('4def0000-0000-4000-8000-000000000001','recreation-compte@example.invalid');

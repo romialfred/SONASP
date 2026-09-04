@@ -11,6 +11,13 @@ on:
 permissions:
   contents: read
 
+env:
+  # Valeurs non sensibles utilisées uniquement pour initialiser le client
+  # Supabase pendant les contrôles statiques et les tests. Aucun appel métier
+  # distant ne doit dépendre de ces valeurs.
+  VITE_SUPABASE_URL: https://sonasp-ci.invalid
+  VITE_SUPABASE_ANON_KEY: sonasp-ci-anon-key
+
 concurrency:
   group: quality-gates-${{ github.ref }}
   cancel-in-progress: true
@@ -24,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
       - run: npm ci
       - run: node scripts/check-migration-integrity.mjs verify
@@ -39,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
       - run: npm ci
       - run: npx vitest run --maxWorkers=4
@@ -52,7 +59,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
       - run: npm ci
       - run: npm audit --omit=dev --audit-level=high

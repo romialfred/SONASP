@@ -198,7 +198,7 @@ export const PLATFORM_MODULE_CATALOG = [
     description: 'Utilisateurs, modules et messagerie administrative.',
     category: 'administration',
     accessDomain: 'users',
-    route: '/users',
+    route: '/admin/modules',
     sortOrder: 41,
   },
   {
@@ -254,28 +254,12 @@ export type PlatformModuleCode = (typeof PLATFORM_MODULE_CATALOG)[number]['code'
  */
 export const ADMINISTRATION_SUBMODULE_CATALOG = [
   {
-    code: 'admin-users',
-    parentCode: 'administration',
-    label: 'Utilisateurs',
-    description: 'Gestion des comptes, rôles et habilitations individuelles.',
-    route: '/users',
-    sortOrder: 1,
-  },
-  {
     code: 'admin-modules',
     parentCode: 'administration',
     label: 'Modules',
     description: 'Gestion du catalogue fonctionnel et de sa visibilité.',
     route: '/admin/modules',
-    sortOrder: 2,
-  },
-  {
-    code: 'admin-roles',
-    parentCode: 'administration',
-    label: 'Rôles & permissions',
-    description: 'Matrice des rôles et gestion des habilitations par compte.',
-    route: '/admin/permissions',
-    sortOrder: 3,
+    sortOrder: 1,
   },
   {
     code: 'admin-messaging',
@@ -283,7 +267,7 @@ export const ADMINISTRATION_SUBMODULE_CATALOG = [
     label: 'Messagerie',
     description: 'Paramètres de la messagerie transactionnelle.',
     route: '/admin/messagerie',
-    sortOrder: 4,
+    sortOrder: 2,
   },
   {
     code: 'admin-settings',
@@ -291,19 +275,20 @@ export const ADMINISTRATION_SUBMODULE_CATALOG = [
     label: 'Paramètres système',
     description: 'Configuration générale et référentiels de la plateforme.',
     route: '/admin/settings',
-    sortOrder: 5,
-  },
-  {
-    code: 'admin-audit',
-    parentCode: 'administration',
-    label: "Journal d’audit",
-    description: 'Historique des actions sensibles et administratives.',
-    route: '/admin/audit',
-    sortOrder: 6,
+    sortOrder: 3,
   },
 ] as const satisfies readonly PlatformSubmoduleDefinition[];
 
 export type AdministrationSubmoduleCode = (typeof ADMINISTRATION_SUBMODULE_CATALOG)[number]['code'];
+
+export const ACCESS_GOVERNANCE_SUBMODULE_CATALOG = [
+  { code: 'admin-portals', parentCode: 'administration', label: 'Portails', description: 'Configuration des portails et de leurs menus.', route: '/access/portals', sortOrder: 1 },
+  { code: 'admin-roles', parentCode: 'administration', label: 'Rôles & Permissions', description: 'Rôles précis et matrice des autorisations.', route: '/access/roles', sortOrder: 2 },
+  { code: 'admin-users', parentCode: 'administration', label: 'Utilisateurs', description: 'Comptes, rattachements et restrictions individuelles.', route: '/users', sortOrder: 3 },
+  { code: 'admin-audit', parentCode: 'administration', label: 'Audit des accès', description: 'Journal immuable des changements et décisions d’accès.', route: '/access/audit', sortOrder: 4 },
+] as const satisfies readonly PlatformSubmoduleDefinition[];
+
+export type AccessGovernanceSubmoduleCode = (typeof ACCESS_GOVERNANCE_SUBMODULE_CATALOG)[number]['code'];
 
 export const PLATFORM_MODULE_BY_CODE = new Map(
   PLATFORM_MODULE_CATALOG.map((module) => [module.code, module]),
@@ -361,6 +346,7 @@ const ROUTE_MODULE_PREFIXES: readonly [string, PlatformModuleCode][] = [
   ['/admin/workflow', 'settings'],
   ['/parameters', 'settings'],
   ['/users', 'administration'],
+  ['/access', 'administration'],
   ['/admin/modules', 'administration'],
   ['/admin/permissions', 'administration'],
   ['/admin/messagerie', 'administration'],

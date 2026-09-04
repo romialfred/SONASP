@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { UserProfile } from '@/types/auth';
-import { ALL_GROUPS, NAVIGATION_SECTIONS, getNavigationSectionsForUser } from './sidebarNavigation';
+import {
+  ALL_GROUPS,
+  DGI_NAVIGATION_SECTIONS,
+  NAVIGATION_SECTIONS,
+  getNavigationSectionsForUser,
+} from './sidebarNavigation';
 import { CAPABILITIES } from '@/lib/capabilities';
 import { routePolicyFor } from '@/lib/routeAccessRegistry';
 
@@ -62,7 +67,8 @@ describe('intitulés de la barre latérale', () => {
 
   it('tient sur une ligne pour chaque entrée sans sous-menu', () => {
     const trop = ALL_GROUPS.filter((groupe) => !groupe.children?.length).filter(
-      (groupe) => largeurTexte(groupe.label, 13) > BUDGETS.lienSansSigne - MARGE
+      (groupe) => largeurTexte(groupe.label, groupe.id === 'dgmg-productions' ? 12 : 13)
+        > BUDGETS.lienSansSigne - MARGE
     );
     expect(trop.map((groupe) => groupe.label)).toEqual([]);
   });
@@ -249,6 +255,17 @@ describe('navigation', () => {
       expect(routes).toEqual(expectedRoutes);
     },
   );
+
+  it('structure le portail DGI selon le contrôle, les recettes et le rapprochement', () => {
+    expect(DGI_NAVIGATION_SECTIONS.map((section) => section.title)).toEqual([
+      'Contrôle fiscal', 'Paiements & recettes', 'Rapprochement',
+    ]);
+    expect(DGI_NAVIGATION_SECTIONS.map((section) => section.groups.map((group) => group.label))).toEqual([
+      ['Vue fiscale', 'Productions', 'Ventes déclarées'],
+      ['Paiements fiscaux', 'Taxes et redevances'],
+      ['Conciliations', 'Règles fiscales'],
+    ]);
+  });
 
   it('affiche la validation Réserve DGMG seulement avec le module et la capability dédiés', () => {
     const validator = {

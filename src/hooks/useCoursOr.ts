@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { clearPriceCache, fetchLiveGoldPrice, type LiveGoldPrice } from '@/services/liveGoldPriceService';
 import { supabase } from '@/lib/supabase';
+import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
 
-export const GRAMMES_PAR_ONCE = 31.1034768;
+export const GRAMMES_PAR_ONCE = TROY_OZ_GRAMS;
 const INTERVALLE_COURS = 60_000;
 const INTERVALLE_TAUX = 300_000;
 

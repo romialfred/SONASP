@@ -1,0 +1,24 @@
+Conciliation entre les elements des ventes à l'expeditions et les ventes reelle . En effect Lors de l'expedition , La Mine fournis des informations pour l'acheteur ces informations sont :
+  - le poids du minerai (en grammes ou Oz)
+  - la purete ou teneur en %
+  - le prix de vente  en $/ Oz converti en Xof /gramm
+  - Les Chiffre d'affaire (calculé automatiquement)
+  - les taxes sont calculés automatiquement :
+Il ya 3 taxes obligatoire
+  - la TVA (18%) configurable par Achateur/ Raffineur ,
+  - les Royalities ( un modules Gestion des royalities doit permettre de configurer selon la lois les Royalidite ) La lois Burkinabé adosse les royalities au prix de vente de l'or ( entre 2000 - 2500 , Rotalitie est a 5%...entre 2501 - 3000 : 6% ..)
+ - le FNDL ( le Fond National de Development Local) : 1% de
+Les parametre de Royalities des FNDL et de la TVA doivent etre configurables dans les parametres et sappliquer selon la lois
+
+Pour chaque Ventes , La plateforme doit offrir dans le modules soit des ventes internes ( Ventes avec la SONASP ) une interface de visualisation des factures de ventes (par la Mine)
+Cette page qui permet de generer la factures doit permetre de voir clairement la qualtité vendu, la teneur , le prix, le Ciffre d'Affaire et les different taxe , S'appuyer sur la factures specipen pour implementer une fenetre qui permet de generer la facture.
+
+
+Lorsque l'acheteur ( SONASP ou une Raffinerie/Comptoir international ) a qui la Mine vend accepte le paiement , un contrat les lies et doit etre mise en oeuvre, le contrat doit definer les delais de paiement du montant de la vente, Le system doit etre capable de recuperer ces informations directements du modules Gestion des contrats puis la Mine doit etre en mesure de confirmer le paiement en indiquant le montant recus pour la vente realise.
+
+Ensuite le Module de Conciliation prend tout son sens apres le retour d'analyse de l'achateur,  La Conciliation consiste a confronter les resultats d'analyse de même que les prix de vente de l'acheter (Le prix de vente de l'or le jour que les resultats d'analyse sortent peut etre different du prix de vente le jour de l'achat) Lorsque les resultat d'analyse du laborateur de l'acheteur sont disponible la plateforme doit offrir dans le module de conciliation une fenetre permettant de choisir un achat effectué non reconcilié , puis de saisi les informaitons et de charger l'analyse labor comme preuve,
+Le system calcule autmatiquement les nouveaux parametres basé sur les imput (Poids,  Purété, Prix de vente, ) La difference du Chiffre d'Affaire (CA) va impacter la TVA , les Royalities ainsi que la FNDL,  La Gestion de cette differences est tres capitales, Si la Mine a payer plsu de royalities de TVA et de FNDL son compte Taxe doit refleter ces montants. Le systeme doit lui permettre si c'est possible lors des future vente de compenser .
+
+Aussi l'acheteur ayant devant fait un Account, la facture definer de va vente doit etre generer en utilisants les nouveaux parameter de l'acheteur, et le systeme doit permetre à la Mine de Concilier également ce montant et indiquant sur la facture definitve le montant Total, le montant deja recu puis le reliquat qui peut etre + ou negatives en cas de de trop percu, dans ce cas la Mine doit à son client et lors de la prochaine vente la plateforme doit permettre de composant en utilisant cet avoir.
+
+Le module de conciliation doit permettre de gerer le suivi des TVA, de Royalities, des FNDL entre l'etat et les Mines ainsi que les comptes d'exploitations des Mines avec leur Client finaux ( SONASP, ou client internationaux)

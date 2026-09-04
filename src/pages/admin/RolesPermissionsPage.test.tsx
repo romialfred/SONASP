@@ -2,68 +2,31 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RolesPermissionsPage } from './RolesPermissionsPage';
 
-const mocks = vi.hoisted(() => ({
-  navigate: vi.fn(),
-  from: vi.fn(),
-  listModules: vi.fn(),
-}));
+const mocks = vi.hoisted(() => ({ listPortals: vi.fn(), listRoles: vi.fn(), listCategories: vi.fn(), getRoleMatrix: vi.fn(), saveRole: vi.fn(), addToast: vi.fn() }));
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-  return { ...actual, useNavigate: () => mocks.navigate };
-});
-
-vi.mock('@/components/layout/NationalDashboardLayout', () => ({
-  NationalDashboardLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'owner-1', role: 'owner', is_active: true } }),
-}));
-
-vi.mock('@/lib/supabase', () => ({ supabase: { from: mocks.from } }));
-vi.mock('@/services/userPermissionsService', () => ({
-  userPermissionsService: { listModules: mocks.listModules },
-}));
-
-function orderedResult(data: unknown[]) {
-  const result = { data, error: null };
-  const builder: Record<string, unknown> = {};
-  builder.order = vi.fn(() => builder);
-  builder.then = (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve);
-  return builder;
-}
+vi.mock('@/components/layout/NationalDashboardLayout', () => ({ NationalDashboardLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
+vi.mock('@/components/ui/Toast', () => ({ useToast: () => ({ addToast: mocks.addToast }) }));
+vi.mock('@/services/accessGovernanceService', () => ({ accessGovernanceService: {
+  listPortals: mocks.listPortals, listRoles: mocks.listRoles, listActorCategories: mocks.listCategories,
+  getRoleMatrix: mocks.getRoleMatrix, saveRole: mocks.saveRole,
+} }));
 
 describe('RolesPermissionsPage', () => {
-  it('compte uniquement les modules canoniques et ouvre leur édition', async () => {
-    mocks.from.mockImplementation((table: string) => ({
-      select: vi.fn(() => table === 'user_profiles'
-        ? orderedResult([{
-          id: 'admin-1', email: 'otingueri@gmail.com', full_name: 'TINGUERI Ousseni',
-          role: 'admin', is_active: true,
-        }])
-        : Promise.resolve({
-          data: [
-            { user_id: 'admin-1', module_id: 'module-1', can_view: true, can_create: false, can_edit: false, can_delete: false, can_approve: false },
-            { user_id: 'admin-1', module_id: 'legacy-module', can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: true },
-          ],
-          error: null,
-        })),
-    }));
-    mocks.listModules.mockResolvedValue({
-      modules: [
-        { id: 'module-1', name: 'dashboard', display_name: 'Tableau de bord' },
-        { id: 'module-2', name: 'administration', display_name: 'Administration' },
-      ],
+  it('affiche les rôles du portail et la matrice des seules permissions applicables', async () => {
+    mocks.listPortals.mockResolvedValue([{ id: 'portal-1', code: 'dgi', name: 'Portail DGI', is_active: true }]);
+    mocks.listRoles.mockResolvedValue([{ id: 'role-1', portal_id: 'portal-1', portal_code: 'dgi', portal_name: 'Portail DGI', code: 'dgi-royalties', name: 'DGI – Royalties', description: 'Contrôle fiscal', legacy_role: 'dgi', is_active: true, is_system: true, user_count: 2, category_codes: ['administrateur'] }]);
+    mocks.listCategories.mockResolvedValue([{ code: 'administrateur', name: 'Administrateur', description: null, resource_kind: 'identity', legacy_role: 'admin', is_active: true, sort_order: 1 }]);
+    mocks.getRoleMatrix.mockResolvedValue({
+      role: { id: 'role-1', portal_id: 'portal-1', code: 'dgi-royalties', name: 'DGI – Royalties', description: 'Contrôle fiscal', legacy_role: 'dgi', is_active: true, is_system: true, category_codes: ['administrateur'] },
+      modules: [{ id: 'module-1', code: 'reports', name: 'Rapports institutionnels', group_name: 'Rapports', is_portal_active: true }],
+      permissions: [{ module_id: 'module-1', permission_code: 'view', allowed: true }],
     });
 
     render(<RolesPermissionsPage />);
-
-    await waitFor(() => expect(screen.getByText('TINGUERI Ousseni')).toBeInTheDocument());
-    expect(screen.getByText('1 / 2')).toBeInTheDocument();
-    expect(screen.getByText('otingueri@gmail.com')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /Modifier/ }));
-    expect(mocks.navigate).toHaveBeenCalledWith('/users/edit?userId=admin-1&step=permissions');
+    await waitFor(() => expect(screen.getByText('DGI – Royalties')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /DGI – Royalties/ }));
+    await waitFor(() => expect(screen.getByText('Rapports institutionnels')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Voir — Rapports institutionnels : autorisé' })).toBeInTheDocument();
+    expect(screen.getAllByText('—', { selector: '.access-na' })).toHaveLength(10);
   });
 });

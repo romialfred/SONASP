@@ -15277,6 +15277,10 @@ export type Database = {
         }
         Returns: Json
       }
+      snp_admin_compte_finaliser_suppression: {
+        Args: { p_idempotency_key: string; p_target_email: string }
+        Returns: Json
+      }
       snp_admin_compte_preparer_suppression: {
         Args: {
           p_expected_version: number
@@ -16287,6 +16291,25 @@ export type Database = {
         Returns: undefined
       }
       snp_dgi_has_active_fiscal_scope: { Args: never; Returns: boolean }
+      snp_dgi_charger_tableau_collecte: {
+        Args: { p_date_debut: string; p_date_fin: string }
+        Returns: Json
+      }
+      snp_dgmg_charger_tableau_reglementaire: {
+        Args: {
+          p_date_debut: string
+          p_date_fin: string
+          p_region?: string | null
+          p_societe_id?: string | null
+          p_statut_declaration?: string | null
+          p_type_site?: string
+        }
+        Returns: Json
+      }
+      snp_dgmg_has_active_supervision_scope: {
+        Args: never
+        Returns: boolean
+      }
       snp_dgi_lister_paiements_fiscaux: {
         Args: {
           p_comptoir_organization_id?: string | null

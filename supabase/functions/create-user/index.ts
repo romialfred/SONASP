@@ -16,6 +16,8 @@ const CLES_REQUETE_CREATION = [
   'email',
   'full_name',
   'phone',
+  'job_title',
+  'department',
   'role',
   'is_active',
   'mining_company_id',
@@ -27,6 +29,12 @@ const CLES_REQUETE_CREATION = [
   'capabilities',
   'responsibilities',
   'collector_id',
+  'access_portal_id',
+  'access_role_id',
+  'actor_category_code',
+  'resource_type',
+  'resource_id',
+  'access_restrictions',
 ] as const;
 const CLES_PERMISSION_MODULE = [
   'module_id',
@@ -54,6 +62,8 @@ interface RequeteCreation {
   email?: unknown;
   full_name?: unknown;
   phone?: unknown;
+  job_title?: unknown;
+  department?: unknown;
   role?: unknown;
   is_active?: unknown;
   mining_company_id?: unknown;
@@ -65,6 +75,12 @@ interface RequeteCreation {
   capabilities?: unknown;
   responsibilities?: unknown;
   collector_id?: unknown;
+  access_portal_id?: unknown;
+  access_role_id?: unknown;
+  actor_category_code?: unknown;
+  resource_type?: unknown;
+  resource_id?: unknown;
+  access_restrictions?: unknown;
 }
 
 interface ResultatCreationPostgresql {
@@ -190,17 +206,25 @@ function typesRequeteCreationValides(corps: Record<string, unknown>): boolean {
   if (chainesObligatoires.some((cle) => typeof corps[cle] !== 'string')) return false;
   const chainesOptionnelles = [
     'phone',
+    'job_title',
+    'department',
     'mining_company_id',
     'account_type',
     'organization_id',
     'organization_code',
     'organization_name',
     'collector_id',
+    'access_portal_id',
+    'access_role_id',
+    'actor_category_code',
+    'resource_type',
+    'resource_id',
   ] as const;
   if (chainesOptionnelles.some((cle) =>
     corps[cle] !== undefined && corps[cle] !== null && typeof corps[cle] !== 'string'
   )) return false;
   if (corps.is_active !== undefined && typeof corps.is_active !== 'boolean') return false;
+  if (corps.access_restrictions !== undefined && !Array.isArray(corps.access_restrictions)) return false;
   if (!permissionsValides(corps.permissions)) return false;
   return [corps.capabilities, corps.responsibilities].every((valeur) =>
     valeur === undefined || valeur === null || estObjetJson(valeur)
@@ -403,6 +427,8 @@ Deno.serve(async (req: Request) => {
     const email = texte(requete.email, 254).toLowerCase();
     const nomComplet = texte(requete.full_name, 160);
     const telephone = texte(requete.phone, 40) || null;
+    const fonction = texte(requete.job_title, 120) || null;
+    const direction = texte(requete.department, 120) || null;
     const role = texte(requete.role, 40).toLowerCase();
     const societeMiniere = texte(requete.mining_company_id, 64) || null;
     const typeCompte = texte(requete.account_type, 40).toLowerCase() || null;
@@ -411,6 +437,21 @@ Deno.serve(async (req: Request) => {
     const nomOrganisation = texte(requete.organization_name, 160) || null;
     const actif = requete.is_active !== false;
     const collecteurId = texte(requete.collector_id, 64) || null;
+    const accessPortalId = texte(requete.access_portal_id, 64) || null;
+    const accessRoleId = texte(requete.access_role_id, 64) || null;
+    const actorCategoryCode = texte(requete.actor_category_code, 40).toLowerCase() || null;
+    const resourceType = texte(requete.resource_type, 40).toLowerCase() || null;
+    const resourceId = texte(requete.resource_id, 64) || null;
+    const accessRestrictions = requete.access_restrictions ?? [];
+
+    const accessFields = [accessPortalId, accessRoleId, actorCategoryCode];
+    if (accessFields.some(Boolean) && !accessFields.every(Boolean)) {
+      throw new ErreurPublique(400, 'La catégorie, le portail et le rôle d’accès doivent être renseignés ensemble.');
+    }
+    if ((accessPortalId && !UUID.test(accessPortalId)) || (accessRoleId && !UUID.test(accessRoleId))
+      || (resourceId && !UUID.test(resourceId))) {
+      throw new ErreurPublique(400, 'L’affectation d’accès contient un identifiant invalide.');
+    }
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new ErreurPublique(400, 'Renseignez une adresse e-mail valide.');
@@ -451,7 +492,8 @@ Deno.serve(async (req: Request) => {
     } else if (codeOrganisation || nomOrganisation) {
       throw new ErreurPublique(400, 'Seul un Comptoir peut créer une organisation depuis cet écran.');
     }
-    if (['dgmg','dgi','collector'].includes(role) && (!organisationDemandee || !UUID.test(organisationDemandee))) {
+    if (['dgmg','dgi','collector'].includes(role) && !accessPortalId
+      && (!organisationDemandee || !UUID.test(organisationDemandee))) {
       throw new ErreurPublique(400, 'Une organisation compatible est obligatoire pour ce rôle.');
     }
     if (role === 'collector' && (!collecteurId || !UUID.test(collecteurId))) {
@@ -618,6 +660,36 @@ Deno.serve(async (req: Request) => {
       throw new Error('La création transactionnelle n’a pas retourné un compte valide.');
     }
     const utilisateurIdFinal = resultatCreation.user_id;
+
+    if (fonction || direction) {
+      const { error: erreurProfilFonctionnel } = await admin.from('user_profiles').update({
+        job_title: fonction,
+        department: direction,
+      }).eq('id', utilisateurIdFinal);
+      if (erreurProfilFonctionnel) throw new Error(`profil fonctionnel: ${erreurProfilFonctionnel.message}`);
+    }
+
+    if (accessPortalId && accessRoleId && actorCategoryCode) {
+      const { error: erreurAffectation } = await clientActeur.rpc('snp_access_user_assignment_save', {
+        p_user_id: utilisateurIdFinal,
+        p_portal_id: accessPortalId,
+        p_role_id: accessRoleId,
+        p_actor_category_code: actorCategoryCode,
+        p_resource_type: resourceType,
+        p_resource_id: resourceId,
+        p_restrictions: accessRestrictions,
+        p_reason: 'Création du compte et affectation initiale depuis l’administration.',
+      });
+      if (erreurAffectation) {
+        if (erreurAffectation.code === '42501') {
+          throw new ErreurPublique(403, 'L’affectation demandée dépasse vos autorisations.');
+        }
+        if (erreurAffectation.code === '23503' || erreurAffectation.code === '22023') {
+          throw new ErreurPublique(400, 'La catégorie, le portail, le rôle ou la ressource sélectionnée est incompatible.');
+        }
+        throw new Error(`affectation d’accès: ${erreurAffectation.message}`);
+      }
+    }
 
     if (!resultatCreation.email_sent) {
       const { data: lien, error: erreurLien } = await admin.auth.admin.generateLink({

@@ -27,6 +27,26 @@ function resultatRpc(data: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function erreurAuthUtilisateurAbsent(
+  erreur: { status?: number; code?: string; message?: string } | null,
+): boolean {
+  return Boolean(erreur && (
+    erreur.status === 404
+    || erreur.code === 'user_not_found'
+    || /not found|does not exist/i.test(erreur.message ?? '')
+  ));
+}
+
+async function verifierIdentiteAuthAbsente(
+  admin: ReturnType<typeof createClient>,
+  utilisateurId: string,
+): Promise<'absente' | 'presente' | 'indeterminee'> {
+  const { data, error } = await admin.auth.admin.getUserById(utilisateurId);
+  if (!data?.user && erreurAuthUtilisateurAbsent(error)) return 'absente';
+  if (data?.user) return 'presente';
+  return 'indeterminee';
+}
+
 Deno.serve(creerHandlerAdministration({
   methods: ['POST'],
   unexpectedError: 'La suppression du compte a échoué.',
@@ -93,7 +113,7 @@ Deno.serve(creerHandlerAdministration({
 
       const { data: cible, error: erreurCible } = await admin
         .from('user_profiles')
-        .select('id,role,is_active,version')
+        .select('id,email,role,is_active,version')
         .eq('id', utilisateurId)
         .maybeSingle();
       if (erreurCible) throw new ErreurPublique(503, 'La vérification du compte est indisponible.');
@@ -140,55 +160,80 @@ Deno.serve(creerHandlerAdministration({
         throw new ErreurPublique(503, 'La préparation sécurisée de la suppression est invalide.');
       }
 
-      const { error: erreurSuppressionInitiale } = await admin.auth.admin.deleteUser(utilisateurId);
-      let suppressionConfirmee = !erreurSuppressionInitiale;
-      let echecSuppressionCertain = false;
-      if (erreurSuppressionInitiale) {
-        const verification = await admin.from('user_profiles').select('id').eq('id', utilisateurId).maybeSingle();
-        if (verification.error) {
-          return reponseJson(req, {
-            success: false,
-            operation_state: 'inactive_delete_outcome_unknown',
-            error: 'Le résultat Auth est ambigu ; le compte reste bloqué en attendant une reprise.',
-          }, 503);
-        }
-        suppressionConfirmee = verification.data === null;
-        echecSuppressionCertain = verification.data !== null;
+      // `false` exige la suppression dure GoTrue. Une réponse 2xx ne suffit
+      // pas : l'identité puis le profil en cascade sont relus avant d'annoncer
+      // que l'adresse peut être réutilisée.
+      const { error: erreurSuppressionInitiale } = await admin.auth.admin.deleteUser(utilisateurId, false);
+      const etatAuth = await verifierIdentiteAuthAbsente(admin, utilisateurId);
+      const verificationProfil = await admin
+        .from('user_profiles')
+        .select('id')
+        .eq('id', utilisateurId)
+        .maybeSingle();
+      if (etatAuth === 'indeterminee' || verificationProfil.error) {
+        return reponseJson(req, {
+          success: false,
+          operation_state: 'inactive_delete_outcome_unknown',
+          error: 'Le résultat Auth est ambigu ; le compte reste bloqué en attendant une reprise.',
+        }, 503);
       }
+      if (etatAuth === 'absente' && verificationProfil.data !== null) {
+        return reponseJson(req, {
+          success: false,
+          operation_state: 'identity_deleted_cleanup_pending',
+          error: 'L’identité Auth a été retirée, mais un profil résiduel doit être purgé avant toute recréation.',
+        }, 503);
+      }
+      const suppressionConfirmee = etatAuth === 'absente' && verificationProfil.data === null;
+      const echecSuppressionCertain = etatAuth === 'presente';
 
       const codeFinal = echecSuppressionCertain
         ? texte(erreurSuppressionInitiale?.code, 80) || 'AUTH_DELETE_FAILED'
         : null;
-      const parametresFinalisation = {
-          p_idempotency_key: idempotence,
-          p_success: suppressionConfirmee,
-          p_error_code: codeFinal,
-      };
+      const parametresFinalisation = suppressionConfirmee
+        ? {
+            p_idempotency_key: idempotence,
+            p_target_email: cible.email,
+          }
+        : {
+            p_idempotency_key: idempotence,
+            p_success: false,
+            p_error_code: codeFinal || 'AUTH_DELETE_INCOMPLETE',
+          };
       const appelFinalisation = await appelerRpcIdempotent(
-        admin, 'snp_admin_compte_finaliser_action', parametresFinalisation,
+        admin,
+        suppressionConfirmee
+          ? 'snp_admin_compte_finaliser_suppression'
+          : 'snp_admin_compte_finaliser_action',
+        parametresFinalisation,
       );
       const { data: finalisation, error: erreurFinalisation } = appelFinalisation;
       const final = resultatRpc(finalisation);
       const auditConfirme = !erreurFinalisation
         && final?.target_id === utilisateurId
-        && final?.status === (suppressionConfirmee ? 'completed' : 'failed');
+        && final?.status === (suppressionConfirmee ? 'completed' : 'failed')
+        && (!suppressionConfirmee || final?.email_reusable === true);
 
-      if (echecSuppressionCertain) {
-        throw new ErreurPublique(409, 'Le compte reste conservé car une dépendance le protège.');
-      }
       if (!auditConfirme) {
         return reponseJson(req, {
           success: false,
-          operation_state: 'deleted_audit_pending',
-          error: 'La suppression est effective mais sa finalisation d’audit doit être reprise.',
+          operation_state: suppressionConfirmee
+            ? 'deleted_audit_pending'
+            : 'inactive_delete_incomplete',
+          error: suppressionConfirmee
+            ? 'La suppression est effective mais sa finalisation d’audit doit être reprise.'
+            : 'Le compte n’a pas été entièrement supprimé et reste bloqué.',
         }, 503);
       }
-
+      if (echecSuppressionCertain) {
+        throw new ErreurPublique(409, 'Le compte reste conservé car une dépendance le protège.');
+      }
       return reponseJson(req, {
         success: true,
         deleted_user_id: utilisateurId,
+        email_reusable: true,
         audit_action_id: contrat.action_id,
-        message: 'Le compte sans activité a été désactivé puis supprimé définitivement.',
+        message: 'Le compte a été supprimé définitivement. Son adresse e-mail peut être utilisée pour un nouveau compte.',
       });
     } catch (erreur) {
       if (erreur instanceof ErreurPublique) {

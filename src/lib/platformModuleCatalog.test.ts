@@ -5,6 +5,7 @@ import {
   getNavigationSectionsForUser,
 } from '@/components/layout/sidebarNavigation';
 import {
+  ACCESS_GOVERNANCE_SUBMODULE_CATALOG,
   ADMINISTRATION_SUBMODULE_CATALOG,
   PLATFORM_MODULE_BY_CODE,
   PLATFORM_MODULE_CATALOG,
@@ -70,7 +71,7 @@ describe('catalogue fonctionnel des modules', () => {
     expect(new Set(groupes).size).toBe(groupes.length);
   });
 
-  it('expose les six sous-modules Administration avec des routes uniques', () => {
+  it('sépare la gouvernance des accès de l’administration technique', () => {
     const administration = NAVIGATION_SECTIONS
       .flatMap((section) => section.groups)
       .find((group) => group.id === 'administration');
@@ -86,6 +87,10 @@ describe('catalogue fonctionnel des modules', () => {
     })));
     expect(new Set(ADMINISTRATION_SUBMODULE_CATALOG.map(({ route }) => route)).size)
       .toBe(ADMINISTRATION_SUBMODULE_CATALOG.length);
+    const governance = NAVIGATION_SECTIONS.flatMap((section) => section.groups)
+      .find((group) => group.id === 'access-governance');
+    expect(governance?.children?.map((item) => ({ code: item.catalogCode, label: item.label, route: item.path })))
+      .toEqual(ACCESS_GOVERNANCE_SUBMODULE_CATALOG.map((module) => ({ code: module.code, label: module.label, route: module.route })));
   });
 
   it('masque un sous-module Administration pour les autres rôles, mais jamais pour le Owner', () => {
@@ -96,18 +101,22 @@ describe('catalogue fonctionnel des modules', () => {
       ] as const),
       ...ADMINISTRATION_SUBMODULE_CATALOG.map((module) => [
         module.code,
+        { isActive: true, isVisibleInMenu: true },
+      ] as const),
+      ...ACCESS_GOVERNANCE_SUBMODULE_CATALOG.map((module) => [
+        module.code,
         { isActive: true, isVisibleInMenu: module.code !== 'admin-audit' },
       ] as const),
     ]);
     const administration = getNavigationSectionsForUser(administrator, availability)
       .flatMap((section) => section.groups)
-      .find((group) => group.id === 'administration');
+      .find((group) => group.id === 'access-governance');
 
     expect(administration).toBeDefined();
     expect(administration?.children?.map(({ catalogCode }) => catalogCode)).not.toContain('admin-audit');
     expect(administration?.children?.map(({ catalogCode }) => catalogCode)).toContain('admin-roles');
     const ownerAdministration = getNavigationSectionsForUser(owner, availability)
-      .flatMap((section) => section.groups).find((group) => group.id === 'administration');
+      .flatMap((section) => section.groups).find((group) => group.id === 'access-governance');
     expect(ownerAdministration?.children?.map(({ catalogCode }) => catalogCode)).toContain('admin-audit');
   });
 

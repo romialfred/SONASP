@@ -58,7 +58,7 @@ const ActivateAccount = lazy(() => import('./pages/auth/ActivateAccount'));
 const AuthCallback = lazyNamed(() => import('./pages/auth/AuthCallback'), 'AuthCallback');
 const GoldPricesPage = lazyNamed(() => import('./pages/prices/GoldPricesPage'), 'GoldPricesPage');
 const FxRatesPage = lazyNamed(() => import('./pages/prices/FxRatesPage'), 'FxRatesPage');
-const AuditTrailPage = lazyNamed(() => import('./pages/AuditTrailPage'), 'AuditTrailPage');
+const AccessAuditPage = lazyNamed(() => import('./pages/admin/AccessAuditPage'), 'AccessAuditPage');
 const ManagementDashboard = lazyNamed(() => import('./pages/dashboards/ManagementDashboard'), 'ManagementDashboard');
 const FactoryDashboard = lazyNamed(() => import('./pages/dashboards/FactoryDashboard'), 'FactoryDashboard');
 const AirportDashboard = lazyNamed(() => import('./pages/dashboards/AirportDashboard'), 'AirportDashboard');
@@ -89,9 +89,10 @@ const BusinessIntelligenceWorkspace = lazy(async () => {
   return { default: module.BusinessIntelligenceWorkspace };
 });
 const UsersListPage = lazyNamed(() => import('./pages/admin/UsersListPage'), 'UsersListPage');
-const UserManagementModern = lazyNamed(() => import('./pages/admin/UserManagementModern'), 'UserManagementModern');
+const AccessUserWizardPage = lazyNamed(() => import('./pages/admin/AccessUserWizardPage'), 'AccessUserWizardPage');
 const UserDetailsPage = lazy(() => import('./pages/admin/UserDetailsPage'));
 const RolesPermissionsPage = lazyNamed(() => import('./pages/admin/RolesPermissionsPage'), 'RolesPermissionsPage');
+const AccessPortalsPage = lazyNamed(() => import('./pages/admin/AccessPortalsPage'), 'AccessPortalsPage');
 const ApprovalsDashboard = lazyNamed(() => import('./pages/admin/ApprovalsDashboard'), 'ApprovalsDashboard');
 const TransportCompaniesPage = lazyNamed(() => import('./pages/admin/TransportCompaniesPage'), 'TransportCompaniesPage');
 const TransportCompanyForm = lazyNamed(() => import('./pages/admin/TransportCompanyForm'), 'TransportCompanyForm');
@@ -999,7 +1000,7 @@ function AppRoutes() {
               path="/users/new"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
-                  <UserManagementModern />
+                  <AccessUserWizardPage />
                 </ProtectedRoute>
               }
             />
@@ -1008,7 +1009,7 @@ function AppRoutes() {
               path="/users/edit"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
-                  <UserManagementModern />
+                  <AccessUserWizardPage />
                 </ProtectedRoute>
               }
             />
@@ -1044,10 +1045,14 @@ function AppRoutes() {
               path="/admin/permissions"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}>
-                  <RolesPermissionsPage />
+                  <Navigate to="/access/roles" replace />
                 </ProtectedRoute>
               }
             />
+
+            <Route path="/access/portals" element={<ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}><AccessPortalsPage /></ProtectedRoute>} />
+            <Route path="/access/roles" element={<ProtectedRoute requiredPermission={PERMISSIONS.USERS_MANAGE} requiredSensitiveCapability={CAPABILITIES.ACCOUNTS_MANAGE}><RolesPermissionsPage /></ProtectedRoute>} />
+            <Route path="/access/audit" element={<ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}><AccessAuditPage /></ProtectedRoute>} />
 
             <Route
               path="/admin/status-manager"
@@ -1203,7 +1208,7 @@ function AppRoutes() {
               path="/admin/audit"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}>
-                  <AuditTrailPage />
+                  <Navigate to="/access/audit" replace />
                 </ProtectedRoute>
               }
             />
@@ -1761,7 +1766,7 @@ function AppRoutes() {
               path="/audit"
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.AUDIT_VIEW}>
-                  <AuditTrailPage />
+                  <Navigate to="/access/audit" replace />
                 </ProtectedRoute>
               }
             />

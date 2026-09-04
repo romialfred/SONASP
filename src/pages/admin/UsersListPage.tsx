@@ -6,6 +6,7 @@ import {
   Eye,
   Loader2,
   Lock,
+  MailPlus,
   PencilLine,
   Trash2,
   Unlock,
@@ -20,8 +21,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/errorMessage';
 import { safeFetch } from '@/lib/apiClient';
-import { ALL_ROLES, roleLabel, roleTone } from '@/lib/roleLabels';
+import { ALL_ROLES, roleLabel } from '@/lib/roleLabels';
 import type { UserRole } from '@/types/auth';
+import { resendWelcomeEmail, requiresWelcomeRecovery } from '@/services/userManagementService';
 import './admin.css';
 
 export interface AdminUser {
@@ -31,8 +33,16 @@ export interface AdminUser {
   role: UserRole;
   account_type?: 'comptoir' | null;
   phone?: string | null;
+  actor_category_code?: string | null;
+  portal_code?: string | null;
+  portal_name?: string | null;
+  access_role_code?: string | null;
+  access_role_name?: string | null;
   mining_company_names: string[];
   is_active: boolean;
+  mfa_enrolled_at?: string | null;
+  must_change_password?: boolean;
+  password_changed_at?: string | null;
   last_login_at: string | null;
   created_at: string;
 }
@@ -51,9 +61,6 @@ const displayRole = (user: Pick<AdminUser, 'role' | 'account_type'>): UserRole |
 const displayRoleLabel = (role: UserRole | 'comptoir'): string =>
   role === 'comptoir' ? 'Comptoir d’achat' : roleLabel(role);
 
-const displayRoleTone = (role: UserRole | 'comptoir') =>
-  role === 'comptoir' ? 'warning' as const : roleTone(role);
-
 const STATUS_TABS: Array<{ value: UserFilters['statut']; label: string }> = [
   { value: 'all', label: 'Tous' },
   { value: 'actif', label: 'Actifs' },
@@ -68,6 +75,8 @@ export function filterUsers(users: AdminUser[], filters: UserFilters): AdminUser
       !recherche ||
       user.full_name?.toLowerCase().includes(recherche) ||
       user.email.toLowerCase().includes(recherche) ||
+      user.portal_name?.toLowerCase().includes(recherche) ||
+      user.access_role_name?.toLowerCase().includes(recherche) ||
       user.mining_company_names.some((nom) => nom.toLowerCase().includes(recherche));
     const roleOk = filters.role === 'all' || displayRole(user) === filters.role;
     const statutOk =
@@ -101,6 +110,7 @@ interface StatusMutationResponse {
 interface DeleteMutationResponse {
   success?: boolean;
   deleted_user_id?: string;
+  email_reusable?: boolean;
   message?: string;
 }
 
@@ -188,6 +198,11 @@ export function UsersListPage() {
             role: compte.role as UserRole,
             account_type: compte.account_type === 'comptoir' ? 'comptoir' : null,
             phone: (compte.phone as string) || null,
+            actor_category_code: (compte.actor_category_code as string) || null,
+            portal_code: (compte.portal_code as string) || null,
+            portal_name: (compte.portal_name as string) || null,
+            access_role_code: (compte.access_role_code as string) || null,
+            access_role_name: (compte.access_role_name as string) || null,
             mining_company_names: Array.from(new Set([
               ...(typeof compte.mining_company_id === 'string'
                 ? [compagnieParId.get(compte.mining_company_id)]
@@ -203,6 +218,9 @@ export function UsersListPage() {
               ),
             ].filter((nom): nom is string => Boolean(nom)))),
             is_active: compte.is_active !== false,
+            mfa_enrolled_at: (compte.mfa_enrolled_at as string) || null,
+            must_change_password: compte.must_change_password === true,
+            password_changed_at: (compte.password_changed_at as string) || null,
             last_login_at: (compte.last_login_at as string) || null,
             created_at: (compte.created_at as string) || '',
           }))
@@ -340,7 +358,11 @@ export function UsersListPage() {
         },
       );
       if (!resultat.ok) throw new Error(resultat.error.message);
-      if (resultat.data.success !== true || resultat.data.deleted_user_id !== user.id) {
+      if (
+        resultat.data.success !== true
+        || resultat.data.deleted_user_id !== user.id
+        || resultat.data.email_reusable !== true
+      ) {
         throw new Error('Le serveur n’a pas confirmé la suppression du compte demandé.');
       }
 
@@ -354,6 +376,36 @@ export function UsersListPage() {
     }
   };
 
+  const renvoyerBienvenue = async (user: AdminUser) => {
+    const confirme = await demanderConfirmation({
+      title: 'Renvoyer le courriel de bienvenue ?',
+      message:
+        `Un nouveau lien sécurisé sera envoyé à ${user.email}. `
+        + 'Le lien précédent sera remplacé et ne pourra plus être utilisé.',
+      confirmText: 'Renvoyer le courriel',
+      cancelText: 'Annuler',
+      severity: 'info',
+    });
+    if (confirme !== true) return;
+
+    setEnCours(user.id);
+    try {
+      const resultat = await resendWelcomeEmail(user.id);
+      if (!resultat.success) {
+        throw new Error(resultat.error || 'Le courriel de bienvenue n’a pas pu être renvoyé.');
+      }
+      addToast(
+        resultat.message || 'Un nouveau courriel de bienvenue a été envoyé.',
+        'success',
+      );
+      await charger();
+    } catch (reason) {
+      addToast(errorMessage(reason, 'Renvoi impossible'), 'error');
+    } finally {
+      setEnCours(null);
+    }
+  };
+
   return (
     <NationalDashboardLayout>
       <div className="sn-page admin-page">
@@ -362,8 +414,8 @@ export function UsersListPage() {
         <PageHeader
           icon={Users}
           title="Comptes utilisateurs"
-          subtitle="Accès à la plateforme, rôles attribués et rattachement aux compagnies."
-          breadcrumb={[{ label: 'Administration' }, { label: 'Utilisateurs' }]}
+          subtitle="Comptes, ressources de rattachement, portails et rôles effectifs."
+          breadcrumb={[{ label: 'Utilisateurs & Portails' }, { label: 'Utilisateurs' }]}
           actions={
             <button type="button" className="sn-btn sn-btn--primary" onClick={() => navigate('/users/new')}>
               <UserPlus aria-hidden="true" /> Créer un compte
@@ -469,7 +521,7 @@ export function UsersListPage() {
                   <tr>
                     <th scope="col">Utilisateur</th>
                     <th scope="col">Téléphone</th>
-                    <th scope="col">Rôle</th>
+                    <th scope="col">Portail & rôle</th>
                     <th scope="col">Compagnies</th>
                     <th scope="col">État</th>
                     <th scope="col">Dernière connexion</th>
@@ -485,9 +537,8 @@ export function UsersListPage() {
                       </td>
                       <td>{user.phone || '—'}</td>
                       <td>
-                        <Badge tone={displayRoleTone(displayRole(user))}>
-                          {displayRoleLabel(displayRole(user))}
-                        </Badge>
+                        <strong>{user.portal_name || 'Portail non affecté'}</strong>
+                        <small>{user.access_role_name || displayRoleLabel(displayRole(user))}</small>
                       </td>
                       <td>
                         {user.mining_company_names.length === 0 ? (
@@ -503,9 +554,14 @@ export function UsersListPage() {
                         )}
                       </td>
                       <td>
-                        <Badge tone={user.is_active ? 'success' : 'danger'}>
-                          {user.is_active ? 'Actif' : 'Désactivé'}
-                        </Badge>
+                        <span className="admin-page__status-stack">
+                          <Badge tone={user.is_active ? 'success' : 'danger'}>
+                            {user.is_active ? 'Actif' : 'Désactivé'}
+                          </Badge>
+                          {user.is_active && requiresWelcomeRecovery(user) && (
+                            <Badge tone="warning">Enrôlement à finaliser</Badge>
+                          )}
+                        </span>
                       </td>
                       <td>{formatConnexion(user.last_login_at)}</td>
                       <td>
@@ -518,6 +574,22 @@ export function UsersListPage() {
                           >
                             <Eye aria-hidden="true" />
                           </button>
+                          {user.role !== 'owner' && user.is_active && requiresWelcomeRecovery(user) && (
+                            <button
+                              type="button"
+                              className="sn-btn sn-btn--icon"
+                              aria-label={`Renvoyer le courriel de bienvenue à ${user.full_name || user.email}`}
+                              title="Générer un nouveau lien et renvoyer le courriel de bienvenue"
+                              disabled={enCours === user.id || utilisateurCourant?.id === user.id}
+                              onClick={() => void renvoyerBienvenue(user)}
+                            >
+                              {enCours === user.id ? (
+                                <Loader2 className="sn-spin" aria-hidden="true" />
+                              ) : (
+                                <MailPlus aria-hidden="true" />
+                              )}
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="sn-btn sn-btn--icon"

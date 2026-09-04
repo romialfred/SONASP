@@ -44,6 +44,10 @@ vi.mock('@/components/ui/ProfileErrorBanner', () => ({
   ProfileErrorBanner: () => null,
 }));
 
+vi.mock('./DgiGoldSidebarCard', () => ({
+  DgiGoldSidebarCard: () => <section aria-label="Cours de l’or">Cours DGI sécurisé</section>,
+}));
+
 vi.mock('@/services/modulesService', () => ({
   MODULE_CATALOG_UPDATED_EVENT: 'sonasp:module-catalog-updated',
   modulesService: { getNavigationAvailability: vi.fn().mockResolvedValue(null) },
@@ -71,6 +75,10 @@ describe('NationalDashboardLayout', () => {
       email: 'direction@sonasp.bf',
       full_name: 'Direction SONASP',
       role: 'management',
+      organization_id: undefined,
+      organization_type: undefined,
+      access_role_name: undefined,
+      module_codes: undefined,
       module_domains: undefined,
       capabilities: [
         'reports.read',
@@ -181,6 +189,74 @@ describe('NationalDashboardLayout', () => {
     expect(conciliation).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'Dossiers de conciliation' })).toHaveAttribute('href', '/conciliation');
     expect(screen.getByRole('link', { name: 'Règles fiscales' })).toHaveAttribute('href', '/conciliation/regles-fiscales');
+  });
+
+  it('borne le chrome bleu, l’identité et la navigation au compte DGI', () => {
+    Object.assign(authState.user, {
+      id: 'dgi-user',
+      email: 'controle@dgi.bf',
+      full_name: 'KABORE Aïssata',
+      role: 'dgi',
+      organization_id: 'dgi-organization',
+      organization_type: 'dgi',
+      access_role_name: 'Contrôleur fiscal DGI',
+      module_codes: ['dashboard', 'production', 'artisan_gold_market', 'conciliation'],
+      capabilities: ['dgi.fiscal.control'],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/portail-dgi']}>
+        <NationalDashboardLayout><div>Collecte fiscale</div></NationalDashboardLayout>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('app-shell')).toHaveClass('is-dgi');
+    expect(screen.getAllByTestId('app-sidebar')[0]).toHaveClass('is-dgi');
+    expect(screen.getAllByRole('img', { name: 'SONASP' })[0]).toHaveAttribute('src', '/sonasp-logo-clair.png');
+    expect(screen.getByText('PORTAIL DGI')).toBeInTheDocument();
+    expect(screen.getByText('Direction Générale des Impôts')).toBeInTheDocument();
+    expect(screen.getByText(/MINISTÈRE DE L’ÉCONOMIE/)).toBeInTheDocument();
+    expect(screen.getByText('Contrôleur fiscal DGI')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Contrôle fiscal' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Paiements & recettes' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Rapprochement' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Cours de l’or' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Tableau de bord' })).toHaveClass('is-active');
+    expect(screen.getByRole('link', { name: 'Vue fiscale' })).not.toHaveClass('is-current');
+  });
+
+  it('borne la charte minérale, le header et la navigation au compte DGMG réel', () => {
+    Object.assign(authState.user, {
+      id: 'dgmg-user',
+      email: 'supervision@dgmg.bf',
+      full_name: 'Agent DGMG de test',
+      role: 'dgmg',
+      organization_id: 'dgmg-organization',
+      organization_type: 'dgmg',
+      access_role_name: 'Superviseur réglementaire',
+      module_codes: ['dashboard', 'mining_sites', 'artisan-minier', 'production'],
+      capabilities: ['dgmg.supervise'],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/portail-dgmg']}>
+        <NationalDashboardLayout><div>Vue réglementaire</div></NationalDashboardLayout>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('app-shell')).toHaveClass('is-dgmg');
+    expect(screen.getAllByTestId('app-sidebar')[0]).toHaveClass('is-dgmg');
+    expect(screen.getAllByRole('img', { name: 'SONASP' })[0]).toHaveAttribute('src', '/sonasp_logo.png');
+    expect(screen.getByText('PORTAIL DGMG')).toBeInTheDocument();
+    expect(screen.getByText('Direction Générale des Mines et de la Géologie')).toBeInTheDocument();
+    expect(screen.getByText('MINISTÈRE DES MINES')).toBeInTheDocument();
+    expect(screen.getByText('Agent DGMG de test')).toBeInTheDocument();
+    expect(screen.getByText('Superviseur réglementaire')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Supervision & régulation' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Vue d’ensemble' })).toHaveClass('is-current');
+    expect(screen.queryByRole('link', { name: 'Tableau de bord' })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Cours de l’or' })).toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toHaveTextContent('Plateforme nationale de traçabilité de l’or');
   });
 
   it('rend tous les modules au Owner même sans périmètre explicite', () => {

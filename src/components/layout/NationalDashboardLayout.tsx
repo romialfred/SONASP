@@ -32,6 +32,7 @@ import {
   HelpCircle,
   ChevronDown,
   Languages,
+  Landmark,
   Home,
   LayoutDashboard,
   LogOut,
@@ -58,6 +59,7 @@ import {
   modulesService,
 } from '@/services/modulesService';
 import type { ModuleAvailabilityMap } from '@/lib/platformModuleCatalog';
+import { DgiGoldSidebarCard } from './DgiGoldSidebarCard';
 import './national-dashboard-layout.css';
 
 interface NationalDashboardLayoutProps {
@@ -108,6 +110,8 @@ function getRoleLabel(role?: string) {
     refinery: 'Raffinerie',
     customer: 'Utilisateur',
     mine: 'Société minière',
+    dgi: 'Agent fiscal DGI',
+    dgmg: 'Agent de supervision DGMG',
   };
 
   return labels[role || ''] || 'Utilisateur';
@@ -137,6 +141,9 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     displayName: comptoirDisplayName,
   } = useComptoirWorkspace();
   const { isCollector, workspace: collectorWorkspace } = useCollectorWorkspace();
+  const accountType = accountTypeFor(user);
+  const isDgi = accountType === 'dgi';
+  const isDgmg = accountType === 'dgmg';
   const [moduleAvailability, setModuleAvailability] = useState<ModuleAvailabilityMap | null>(null);
 
   const chargerDisponibiliteModules = useCallback(async () => {
@@ -204,7 +211,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
   const mineHomePath = '/portail-mine';
   const mineDashboardPath = '/portail-mine?vue=tableau-de-bord';
-  const accountHomePath = homePathForAccountType(accountTypeFor(user));
+  const accountHomePath = homePathForAccountType(accountType);
   const dashboardPath = isMine ? mineDashboardPath : (accountHomePath || '/login');
   const mineDashboardActive = isMine
     && location.pathname === mineHomePath
@@ -427,10 +434,12 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       isMine && 'is-mine',
       isComptoir && 'is-comptoir',
       isCollector && 'is-collector',
+      isDgi && 'is-dgi',
+      isDgmg && 'is-dgmg',
       sidebarCollapsed && 'is-collapsed',
     )} aria-label={label('Navigation principale')}>
       <div className="national-sidebar__brand">
-        <img src="/sonasp_logo.png" alt="SONASP" />
+        <img src={isDgi ? '/sonasp-logo-clair.png' : '/sonasp_logo.png'} alt="SONASP" />
         {(isMine || isComptoir || isCollector) && !sidebarCollapsed && (
           <span
             className="national-sidebar__mine-name"
@@ -467,19 +476,21 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
             <span>{label('Accueil')}</span>
           </Link>
         )}
-        <Link
-          to={dashboardPath}
-          className={cn(
-            'national-sidebar__dashboard-link',
-            isMine ? mineDashboardActive && 'is-active' : isActive(dashboardPath) && 'is-active'
-          )}
-          onClick={() => setMobileOpen(false)}
-        >
-          <span className="national-sidebar__icon" style={{ color: '#e2a100' }}>
-            <LayoutDashboard aria-hidden="true" />
-          </span>
-          <span>{label('Tableau de bord')}</span>
-        </Link>
+        {!isDgmg && (
+          <Link
+            to={dashboardPath}
+            className={cn(
+              'national-sidebar__dashboard-link',
+              isMine ? mineDashboardActive && 'is-active' : isActive(dashboardPath) && 'is-active'
+            )}
+            onClick={() => setMobileOpen(false)}
+          >
+            <span className="national-sidebar__icon" style={{ color: '#e2a100' }}>
+              <LayoutDashboard aria-hidden="true" />
+            </span>
+            <span>{label('Tableau de bord')}</span>
+          </Link>
+        )}
 
         {navigationSections.map((section) => (
           <section className="national-sidebar__section" key={section.id} aria-label={label(section.title)}>
@@ -488,7 +499,9 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
             {section.groups.map((group) => {
               const Icon = group.icon;
               const hasChildren = Boolean(group.children?.length);
-              const groupActive = isActive(group.path) || Boolean(group.children?.some((item) => isActive(item.path)));
+              const groupActive = isDgi && group.id === 'dgi-overview'
+                ? false
+                : isActive(group.path) || Boolean(group.children?.some((item) => isActive(item.path)));
               const isOpen = openGroup === group.id;
 
           if (hasChildren) {
@@ -498,7 +511,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                   type="button"
                   className={cn(
                     'national-sidebar__group-trigger',
-                    !isMine && !isComptoir && ['market', 'sales'].includes(group.id)
+                    !isMine && !isComptoir && ['market', 'sales', 'dgmg-productions'].includes(group.id)
                       && 'national-sidebar__group-trigger--compact',
                     groupActive && 'is-current'
                   )}
@@ -567,6 +580,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
         ))}
       </nav>
 
+      {(isDgi || isDgmg) && <DgiGoldSidebarCard />}
+
     </aside>
   );
 
@@ -576,6 +591,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       isMine && 'is-mine',
       isComptoir && 'is-comptoir',
       isCollector && 'is-collector',
+      isDgi && 'is-dgi',
+      isDgmg && 'is-dgmg',
     )}>
       <ProfileErrorBanner />
       <div className={cn('national-shell__desktop-sidebar', sidebarCollapsed && 'is-collapsed')}>{sidebar}</div>
@@ -604,7 +621,17 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
 
           <div className="national-header__identity">
             <div>
-              {isCollector ? (
+              {isDgi ? (
+                <>
+                  <h1>{label('Plateforme SONASP')}</h1>
+                  <p>{label('Traçabilité, fiscalité et valorisation du secteur aurifère')}</p>
+                </>
+              ) : isDgmg ? (
+                <>
+                  <h1>{label('Plateforme SONASP')}</h1>
+                  <p>{label('Traçabilité, supervision et régulation du secteur aurifère')}</p>
+                </>
+              ) : isCollector ? (
                 <>
                   <p className="national-header__eyebrow">{label('Espace collecteur d’or')}</p>
                   <h1 title={collectorWorkspace?.collectorName}>{collectorDisplayName}</h1>
@@ -627,6 +654,29 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
               )}
             </div>
           </div>
+
+          {isDgi && (
+            <>
+              <div className="national-header__dgi-portal" aria-label="Portail DGI">
+                <span><Landmark aria-hidden="true" /></span>
+                <div><strong>PORTAIL DGI</strong><small>Direction Générale des Impôts</small></div>
+              </div>
+              <div className="national-header__dgi-ministry">
+                <Landmark aria-hidden="true" />
+                <span>MINISTÈRE DE L’ÉCONOMIE<br />ET DES FINANCES</span>
+              </div>
+            </>
+          )}
+
+          {isDgmg && (
+            <>
+              <div className="national-header__dgmg-portal" aria-label="Portail DGMG">
+                <span><Landmark aria-hidden="true" /></span>
+                <div><strong>PORTAIL DGMG</strong><small>Direction Générale des Mines et de la Géologie</small></div>
+              </div>
+              <div className="national-header__dgmg-ministry">MINISTÈRE DES MINES</div>
+            </>
+          )}
 
           <div className="national-header__actions" ref={headerActionsRef}>
             <div className="national-header__popover">
@@ -749,7 +799,15 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 <span className="national-header__avatar"><UserRound aria-hidden="true" /></span>
                 <span className="national-header__profile-copy">
                   <strong>{displayName}</strong>
-                  <small>{label(isCollector ? 'Collecteur d’or' : isComptoir ? 'Comptoir d’or' : getRoleLabel(user?.role))}</small>
+                  <small>{label(
+                    isDgi || isDgmg
+                      ? (user?.access_role_name?.trim() || getRoleLabel(user?.role))
+                      : isCollector
+                        ? 'Collecteur d’or'
+                        : isComptoir
+                          ? 'Comptoir d’or'
+                          : getRoleLabel(user?.role)
+                  )}</small>
                 </span>
                 <ChevronDown aria-hidden="true" />
               </button>
@@ -791,7 +849,9 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
         </main>
 
         <footer className="national-shell__footer" data-testid="app-footer">
-          <span>© {new Date().getFullYear()} SONASP — Société Nationale des Substances Précieuses</span>
+          <span>{isDgmg
+            ? `© ${new Date().getFullYear()} SONASP — Plateforme nationale de traçabilité de l’or`
+            : `© ${new Date().getFullYear()} SONASP — Société Nationale des Substances Précieuses`}</span>
           <span className="national-shell__footer-motto">{label('Confidentialité · Intégrité · Transparence')}</span>
         </footer>
       </div>

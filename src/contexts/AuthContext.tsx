@@ -203,6 +203,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const responsibilities = capabilities.filter((code) => responsibilityCodes.has(code));
         let moduleDomains: string[] = [];
         let moduleCodes: string[] = [];
+        let accessPortalId: string | null = null;
+        let accessPortalCode: string | null = null;
+        let accessPortalName: string | null = null;
+        let accessRoleId: string | null = null;
+        let accessRoleCode: string | null = null;
+        let accessRoleName: string | null = null;
+        let actorCategoryCode: string | null = null;
         try {
           const [membershipResult, permissionsResult] = await Promise.all([
             withTimeout<{ data: any; error: any }>(
@@ -248,6 +255,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('[Profile] Access perimeter unavailable; scoped profile remains closed:', error);
         }
 
+        // La gouvernance par portail est la dernière frontière d’autorisation.
+        // Sur une base migrée, sa matrice effective remplace la projection CRUD
+        // historique. Le repli n’est admis que si la RPC n’existe pas encore.
+        try {
+          const { data: accessContext, error: accessError } = await withTimeout<{ data: any; error: any }>(
+            (supabase as any).rpc('snp_current_access_context') as PromiseLike<{ data: any; error: any }>,
+            2500,
+            'Access-Governance-Context',
+          );
+          if (accessError) {
+            if (!['PGRST202', '42883'].includes(accessError.code)) throw accessError;
+          } else if (accessContext) {
+            accessPortalId = accessContext.portal_id ?? null;
+            accessPortalCode = accessContext.portal_code ?? null;
+            accessPortalName = accessContext.portal_name ?? null;
+            accessRoleId = accessContext.role_id ?? null;
+            accessRoleCode = accessContext.role_code ?? null;
+            accessRoleName = accessContext.role_name ?? null;
+            actorCategoryCode = accessContext.actor_category_code ?? null;
+            const effectiveCodes = (Array.isArray(accessContext.module_codes) ? accessContext.module_codes : [])
+              .filter((code: unknown): code is string => typeof code === 'string' && isPlatformModuleCode(code));
+            moduleCodes = [...new Set<string>(effectiveCodes)];
+            moduleDomains = [...new Set(moduleCodes.map((code) => moduleDomain({ name: code })).filter((domain) => domain !== 'unknown'))];
+          } else {
+            moduleCodes = [];
+            moduleDomains = [];
+          }
+        } catch (error) {
+          console.warn('[Profile] Access governance unavailable; effective perimeter closed:', error);
+          moduleCodes = [];
+          moduleDomains = [];
+        }
+
         return {
           id: profile.id,
           email: profile.email,
@@ -260,6 +300,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           responsibilities,
           module_domains: moduleDomains,
           module_codes: moduleCodes,
+          access_portal_id: accessPortalId,
+          access_portal_code: accessPortalCode,
+          access_portal_name: accessPortalName,
+          access_role_id: accessRoleId,
+          access_role_code: accessRoleCode,
+          access_role_name: accessRoleName,
+          actor_category_code: actorCategoryCode,
           site_ids: siteIds,
           is_active: profile.is_active === true,
           capabilities,

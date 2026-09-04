@@ -32,6 +32,13 @@ export interface UserProfile {
   module_domains?: string[];
   /** Codes canoniques des modules actifs effectivement attribués au compte. */
   module_codes?: string[];
+  access_portal_id?: string | null;
+  access_portal_code?: string | null;
+  access_portal_name?: string | null;
+  access_role_id?: string | null;
+  access_role_code?: string | null;
+  access_role_name?: string | null;
+  actor_category_code?: string | null;
   site_ids: string[];
   is_active: boolean;
   /** Capacités effectives calculées côté serveur pour cette session et son AAL. */

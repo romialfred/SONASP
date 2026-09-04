@@ -2280,6 +2280,46 @@
       "sha256": "996236ede8df83f628a021a65a31b607dbcef7c077205127615e6e690e2d56af"
     },
     {
+      "path": "supabase/migrations/20260904170000_finaliser_suppression_et_reutilisation_email.sql",
+      "version": "20260904170000",
+      "description": "finaliser_suppression_et_reutilisation_email",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 7307,
+      "sha256": "8a0f15d61a7ec4d272ddb720b7f934390b3dfa96bd81ee8ff9c2ced5b63cfa39"
+    },
+    {
+      "path": "supabase/migrations/20260904193000_refonte_gouvernance_acces_portails.sql",
+      "version": "20260904193000",
+      "description": "refonte_gouvernance_acces_portails",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 103885,
+      "sha256": "be5aaa76a4ea68ef4a92f9fc142f1ab45dfe201e073c7c28cb4e789be3e7bc38"
+    },
+    {
+      "path": "supabase/migrations/20260904200000_portail_dgi_collecte_fiscale.sql",
+      "version": "20260904200000",
+      "description": "portail_dgi_collecte_fiscale",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 15216,
+      "sha256": "8e00051ee3773f5ff3d56241975cdd6624cdf1a8b6ebc82d20c1276ccaac41a8"
+    },
+    {
+      "path": "supabase/migrations/20260904203000_portail_dgmg_tableau_reglementaire.sql",
+      "version": "20260904203000",
+      "description": "portail_dgmg_tableau_reglementaire",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 18939,
+      "sha256": "802f048fe25f9c44420d0762c5818b70916bea765357951337c219d363b71488"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3273,10 +3313,10 @@
       },
       {
         "digits": 14,
-        "count": 131
+        "count": 135
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "dfeb14b6b7f755bfa862e156649943a632f77208fe669667c0187ad5a3ae9135"
+  "catalogueSha256": "83950d260f4e673e08e4a61bde39c51c4de3de9337c7f5b7b58cde7e99f46d2c"
 }

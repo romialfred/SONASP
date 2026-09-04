@@ -107,6 +107,7 @@
 
 .admin-page__chips svg { width: 11px; height: 11px; }
 
+.admin-page__status-stack { display: inline-flex; align-items: flex-start; gap: 5px; flex-direction: column; }
 .admin-page__actions { display: flex; gap: 6px; }
 .admin-page__actions .sn-btn { width: 30px; height: 30px; padding: 0; }
 .admin-page__actions .sn-btn svg { width: 15px; height: 15px; }
@@ -575,4 +576,92 @@
 .parametres__duree span {
   color: var(--sn-ink-soft);
   font-size: 0.9rem;
+}
+
+/* Gouvernance des accès : portails, rôles, utilisateurs et audit. */
+.access-governance { --access-green: #087f5b; }
+.access-layout { display: grid; grid-template-columns: minmax(280px, .72fr) minmax(0, 2fr); gap: 16px; align-items: start; }
+.access-layout > .sn-section { margin: 0; min-width: 0; }
+.access-card-list { display: grid; gap: 8px; }
+.access-card { display: flex; width: 100%; min-height: 72px; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--sn-line); border-radius: 10px; background: var(--sn-surface); color: var(--sn-ink); text-align: left; transition: border-color .15s, box-shadow .15s, background .15s; }
+.access-card:hover { border-color: #91cbb8; background: #f7fcfa; }
+.access-card.is-selected { border-color: var(--access-green); background: #effaf6; box-shadow: 0 0 0 2px rgb(8 127 91 / 12%); }
+.access-card > span { display: grid; gap: 4px; min-width: 0; }
+.access-card > span:last-child { justify-items: end; flex: 0 0 auto; }
+.access-card strong { overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.access-card small { color: var(--sn-muted); font-size: 11px; line-height: 1.35; }
+.access-subtitle { margin: 22px 0 10px; color: var(--sn-ink); font-size: 13px; }
+.access-toggle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.access-toggle { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--sn-line); border-radius: 9px; font-size: 12px; }
+.access-toggle label, .access-switch { display: inline-flex; min-height: 36px; align-items: center; gap: 7px; color: var(--sn-ink-soft); font-size: 12px; }
+.access-toggle input, .access-switch input, .access-choice-row input, .access-badges input { width: 17px; height: 17px; accent-color: var(--access-green); }
+.access-module-list { max-height: 410px; overflow: auto; border: 1px solid var(--sn-line); border-radius: 10px; }
+.access-module-list > div { display: grid; grid-template-columns: minmax(0, 1fr) 72px 72px; align-items: center; gap: 10px; min-height: 54px; padding: 8px 12px; border-bottom: 1px solid var(--sn-line); }
+.access-module-list > div:last-child { border-bottom: 0; }
+.access-module-list span { display: grid; gap: 3px; }
+.access-module-list strong { font-size: 12.5px; }
+.access-module-list small { color: var(--sn-muted); font-size: 10.5px; }
+.access-module-list label { display: inline-flex; align-items: center; gap: 6px; color: var(--sn-ink-soft); font-size: 11px; }
+.access-choice-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.access-choice-row label { display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--sn-line); border-radius: 8px; font-size: 12px; }
+.access-choice-row label.is-selected { border-color: #73bca5; background: #effaf6; color: #066b4c; }
+.access-matrix-wrap { width: 100%; margin: 14px 0; overflow: auto; border: 1px solid var(--sn-line); border-radius: 10px; }
+.access-matrix { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 11.5px; }
+.access-matrix th, .access-matrix td { padding: 9px 8px; border-right: 1px solid var(--sn-line); border-bottom: 1px solid var(--sn-line); text-align: center; }
+.access-matrix thead th { position: sticky; top: 0; z-index: 2; background: var(--sn-surface-alt); color: var(--sn-ink-soft); font-weight: 700; white-space: nowrap; }
+.access-matrix th:first-child { position: sticky; left: 0; z-index: 1; min-width: 210px; background: var(--sn-surface); text-align: left; }
+.access-matrix thead th:first-child { z-index: 3; background: var(--sn-surface-alt); }
+.access-matrix th strong, .access-matrix th small { display: block; }
+.access-matrix th small { margin-top: 3px; color: var(--sn-muted); font-weight: 400; }
+.access-permission { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center; border: 0; border-radius: 50%; }
+.access-permission svg { width: 15px; height: 15px; }
+.access-permission.is-allowed { background: #dcf8ec; color: #087f5b; }
+.access-permission.is-denied { background: #fee8e7; color: #b3261e; }
+.access-na { color: #a0aab8; }
+.access-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.access-drawer-backdrop { position: fixed; z-index: 1000; inset: 0; display: flex; justify-content: flex-end; background: rgb(15 35 55 / 32%); }
+.access-drawer { width: min(560px, 94vw); height: 100%; overflow: auto; padding: 24px; background: var(--sn-surface); box-shadow: -12px 0 38px rgb(15 35 55 / 18%); }
+.access-drawer > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--sn-line); }
+.access-drawer h2, .access-drawer h3 { margin: 0; color: var(--sn-ink); }
+.access-drawer h3 { margin-top: 22px; font-size: 13px; }
+.access-drawer header p { margin: 4px 0 0; color: var(--sn-muted); font-size: 12px; }
+.access-drawer dl { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px 14px; margin: 20px 0; font-size: 12px; }
+.access-drawer dt { color: var(--sn-muted); }
+.access-drawer dd { margin: 0; overflow-wrap: anywhere; color: var(--sn-ink); font-weight: 600; }
+.access-drawer pre { overflow: auto; max-height: 260px; padding: 12px; border-radius: 8px; background: #0c2032; color: #dce9f2; font-size: 11px; white-space: pre-wrap; }
+.access-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 0 16px; padding: 0; list-style: none; border: 1px solid var(--sn-line); border-radius: 10px; background: var(--sn-surface); }
+.access-steps li { position: relative; display: flex; min-height: 58px; align-items: center; justify-content: center; gap: 8px; color: var(--sn-muted); font-size: 12px; }
+.access-steps li:not(:last-child)::after { position: absolute; right: 0; width: 1px; height: 28px; background: var(--sn-line); content: ''; }
+.access-steps li > span { display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; border: 1px solid #b8c4ce; border-radius: 50%; font-weight: 800; }
+.access-steps svg { width: 14px; }
+.access-steps .is-current { color: var(--access-green); background: #effaf6; }
+.access-steps .is-current > span, .access-steps .is-complete > span { border-color: var(--access-green); background: var(--access-green); color: white; }
+.access-steps .is-complete { color: #087f5b; }
+.access-choice-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+.access-choice-grid > button { display: flex; min-height: 82px; align-items: flex-start; gap: 11px; padding: 14px; border: 1px solid var(--sn-line); border-radius: 10px; background: var(--sn-surface); color: var(--sn-ink); text-align: left; }
+.access-choice-grid > button:hover, .access-choice-grid > button.is-selected { border-color: #73bca5; background: #effaf6; box-shadow: 0 0 0 2px rgb(8 127 91 / 9%); }
+.access-choice-grid > button > svg { flex: 0 0 auto; width: 20px; color: var(--access-green); }
+.access-choice-grid > button span { display: grid; gap: 5px; }
+.access-choice-grid > button strong { font-size: 13px; }
+.access-choice-grid > button small { color: var(--sn-muted); font-size: 11px; line-height: 1.4; }
+.access-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 14px; }
+.access-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.access-summary > div { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--sn-line); border-radius: 9px; background: var(--sn-surface-alt); }
+.access-summary small { color: var(--sn-muted); }
+.access-summary strong { font-size: 12.5px; }
+.access-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.access-badges label { display: inline-flex; align-items: center; gap: 5px; padding: 5px 7px; border: 1px solid var(--sn-line); border-radius: 7px; white-space: nowrap; }
+.access-badges label.is-restricted { border-color: #e49b96; background: #fff1f0; color: #9f261f; }
+.access-wizard__actions { position: sticky; z-index: 10; bottom: 0; justify-content: space-between; margin-top: 16px; padding: 12px 0; background: rgb(247 249 251 / 94%); backdrop-filter: blur(8px); }
+
+@media (max-width: 1180px) {
+  .access-layout { grid-template-columns: 1fr; }
+  .access-choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .access-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .access-toggle-grid, .access-choice-grid, .access-summary, .access-filters { grid-template-columns: 1fr; }
+  .access-steps { grid-template-columns: 1fr; }
+  .access-steps li { justify-content: flex-start; padding: 8px 14px; }
+  .access-steps li:not(:last-child)::after { right: auto; bottom: 0; left: 14px; width: calc(100% - 28px); height: 1px; }
 }

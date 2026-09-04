@@ -286,7 +286,7 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     readOnly: false, national: true,
   }),
 
-  ...policies(['/users', '/users/new', '/users/edit', '/users/:userId', '/admin/users', '/admin/users/:userId/permissions', '/admin/permissions'], {
+  ...policies(['/users', '/users/new', '/users/edit', '/users/:userId', '/admin/users', '/admin/users/:userId/permissions', '/admin/permissions', '/access/portals', '/access/roles'], {
     roles: ['owner', 'admin'], accountTypes: ['owner', 'admin'], capabilities: [CAPABILITIES.ACCOUNTS_MANAGE],
     readOnly: false, national: true,
   }),
@@ -319,7 +319,7 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     roles: ['admin'], accountTypes: ['admin'], capabilities: [CAPABILITIES.EMAIL_SETTINGS_MANAGE],
     readOnly: false, national: true,
   }),
-  ...policies(['/admin/audit'], {
+  ...policies(['/admin/audit', '/access/audit'], {
     roles: ['owner', 'admin'], accountTypes: ['owner', 'admin'], capabilities: [CAPABILITIES.REPORTS_READ],
     readOnly: true, national: true,
   }),

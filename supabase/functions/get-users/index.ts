@@ -63,7 +63,7 @@ Deno.serve(creerHandlerAdministration({
     // Fetch all users using service role (bypasses RLS)
     const { data: users, error: usersError } = await supabaseAdmin
       .from('user_profiles')
-      .select('id,email,full_name,phone,role,mining_company_id,is_active,mfa_enrolled_at,last_login_at,created_at,updated_at')
+      .select('id,email,full_name,phone,role,mining_company_id,is_active,mfa_enrolled_at,must_change_password,password_changed_at,last_login_at,created_at,updated_at')
       .order('created_at', { ascending: false });
 
     if (usersError) {
@@ -86,7 +86,38 @@ Deno.serve(creerHandlerAdministration({
     );
     const identifiants = comptesAdministrables.map((compte) => compte.id);
     const rattachementParUtilisateur = new Map<string, { id: string; code: string; name: string }>();
+    const accesParUtilisateur = new Map<string, {
+      actor_category_code: string;
+      portal_code: string | null;
+      portal_name: string | null;
+      access_role_code: string | null;
+      access_role_name: string | null;
+    }>();
     if (identifiants.length > 0) {
+      const { data: affectationsAcces, error: erreurAffectationsAcces } = await supabaseAdmin
+        .from('snp_user_access_assignments')
+        .select('user_id, actor_category_code, portal_id, role_id')
+        .in('user_id', identifiants);
+      if (erreurAffectationsAcces) {
+        console.warn('[get-users] Gouvernance des accès indisponible.');
+      } else if ((affectationsAcces || []).length > 0) {
+        const portalIds = [...new Set((affectationsAcces || []).map((item) => item.portal_id))];
+        const roleIds = [...new Set((affectationsAcces || []).map((item) => item.role_id))];
+        const [{ data: portails }, { data: roles }] = await Promise.all([
+          supabaseAdmin.from('snp_access_portals').select('id, code, name').in('id', portalIds),
+          supabaseAdmin.from('snp_access_roles').select('id, code, name').in('id', roleIds),
+        ]);
+        const portailParId = new Map((portails || []).map((item) => [item.id, item] as const));
+        const roleParId = new Map((roles || []).map((item) => [item.id, item] as const));
+        (affectationsAcces || []).forEach((item) => {
+          const portail = portailParId.get(item.portal_id); const role = roleParId.get(item.role_id);
+          accesParUtilisateur.set(item.user_id, {
+            actor_category_code: item.actor_category_code,
+            portal_code: portail?.code ?? null, portal_name: portail?.name ?? null,
+            access_role_code: role?.code ?? null, access_role_name: role?.name ?? null,
+          });
+        });
+      }
       const { data: rattachements, error: erreurRattachements } = await supabaseAdmin
         .from('snp_user_organization_memberships')
         .select('user_id, organization_id')
@@ -123,6 +154,7 @@ Deno.serve(creerHandlerAdministration({
     // Ensure we return valid user data
     const validUsers = comptesAdministrables.map(user => {
       const comptoir = rattachementParUtilisateur.get(user.id) ?? null;
+      const acces = accesParUtilisateur.get(user.id) ?? null;
       return {
         id: user.id,
         email: user.email,
@@ -130,10 +162,18 @@ Deno.serve(creerHandlerAdministration({
         phone: user.phone,
         role: user.role,
         account_type: comptoir ? 'comptoir' : null,
+        actor_category_code: acces?.actor_category_code ?? null,
+        portal_code: acces?.portal_code ?? null,
+        portal_name: acces?.portal_name ?? null,
+        access_role_code: acces?.access_role_code ?? null,
+        access_role_name: acces?.access_role_name ?? null,
         organization: comptoir,
         mining_company_id: user.mining_company_id ?? null,
         is_active: user.is_active === true,
         two_factor_enabled: Boolean(user.mfa_enrolled_at),
+        mfa_enrolled_at: user.mfa_enrolled_at,
+        must_change_password: user.must_change_password === true,
+        password_changed_at: user.password_changed_at,
         last_login_at: user.last_login_at,
         created_at: user.created_at,
         updated_at: user.updated_at,

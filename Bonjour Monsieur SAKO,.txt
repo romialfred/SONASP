@@ -1,0 +1,28 @@
+Bonjour Monsieur SAKO,
+J'espère que vous allez bien.
+
+Je fais suite à notre échange à propos de vos demandes d'implémentation de nouvelles pages sur le tableau de bord de la CNAM
+
+DEMANDE DU MINISTERE
+
+La première demande concerne une tableau de bord d'analyse du nombre d'assurés devant avoir la Majorité projétés à l'horizon 2030 avec les angles d'analyse et de visualisation suivante
+ - Zone Géographique ( Region/Département/Localité)
+ - Genre
+ - Période (Année/Mois)
+
+Apres analyse cette première requete est réalisable avec les données déjà présentes dans l'entrepôt de données
+
+
+La deuxième demande concerne la distribution du nombre d'assurer par type de document utilisée pour lenrollemen
+Cette distribution doit être visualiser sous les dimensions
+ - Zone Géographique ( Region/Département/Localité)
+ - Genre
+ - Période (Année/Mois)
+ - Status de l'enrollemen
+
+Après analyse de l'intégralité es données déjà chargée , le type de document utilisé pour l'enrollement ne semble pas présent dans les tables de l'entrepô
+Afin de mieux comprendre comment cette information est collecter lors de l'enrolement nous souhaitons une reunion des équipes DBA / Dev ou une indications des Objets de la BD MIRKA permettant de collecter cette information.
+
+La prmière requête sera disponible le mardi après midi pour test.
+
+Merci d'avance.

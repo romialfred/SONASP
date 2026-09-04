@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   safeFetch: vi.fn(),
   getUserDetails: vi.fn(),
+  resendWelcomeEmail: vi.fn(),
   rpc: vi.fn(),
   addToast: vi.fn(),
   confirmer: vi.fn(),
@@ -50,6 +51,11 @@ vi.mock('@/lib/apiClient', () => ({ safeFetch: mocks.safeFetch }));
 
 vi.mock('@/services/userAdministrationDetailsService', () => ({
   getAdministrationUserDetails: mocks.getUserDetails,
+}));
+
+vi.mock('@/services/userManagementService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/userManagementService')>()),
+  resendWelcomeEmail: mocks.resendWelcomeEmail,
 }));
 
 vi.mock('@/lib/supabase', () => ({
@@ -197,11 +203,17 @@ describe('UsersListPage', () => {
     mocks.selects = [];
     mocks.currentUser = { id: 'moi' };
     mocks.confirmer.mockResolvedValue('Compte de test clôturé');
+    mocks.resendWelcomeEmail.mockResolvedValue({
+      success: true,
+      email_sent: true,
+      previous_link_replaced: true,
+      message: 'Nouveau courriel envoyé',
+    });
     mocks.rpc.mockResolvedValue({ data: null, error: null });
     mocks.getSession.mockResolvedValue({ data: { session: { access_token: 'jwt-aal2' } } });
     mocks.reponses = {
       user_profiles: [
-        { id: 'u1', full_name: 'Awa KABORE', email: 'awa@sonasp.bf', role: 'admin', phone: '+226 70 00 00 01', mining_company_id: 'c1', is_active: true, last_login_at: '2026-08-10T09:00:00Z', created_at: '2026-01-01' },
+        { id: 'u1', full_name: 'Awa KABORE', email: 'awa@sonasp.bf', role: 'admin', phone: '+226 70 00 00 01', mining_company_id: 'c1', is_active: true, mfa_enrolled_at: '2026-01-02T09:00:00Z', must_change_password: false, password_changed_at: '2026-01-02T08:00:00Z', last_login_at: '2026-08-10T09:00:00Z', created_at: '2026-01-01' },
         { id: 'u2', full_name: 'Moussa OUEDRAOGO', email: 'moussa@sonasp.bf', role: 'factory', phone: null, is_active: false, last_login_at: null, created_at: '2026-02-01' },
       ],
       mining_companies: [{ id: 'c1', name: 'Essakane SA', abbreviation: 'ESK' }],
@@ -212,7 +224,7 @@ describe('UsersListPage', () => {
         ? {
             ok: true,
             status: 200,
-            data: { success: true, deleted_user_id: 'u2', message: 'Compte supprimé définitivement' },
+            data: { success: true, deleted_user_id: 'u2', email_reusable: true, message: 'Compte supprimé définitivement' },
           }
         : String(input).includes('/manage-user-status')
           ? {
@@ -326,6 +338,39 @@ describe('UsersListPage', () => {
     expect(screen.getByRole('button', { name: 'Désactiver Awa KABORE' })).toBeDisabled();
   });
 
+  it('renvoie un nouveau courriel uniquement pour un enrôlement incomplet', async () => {
+    mocks.reponses.user_profiles = [
+      {
+        id: 'u1',
+        full_name: 'Awa KABORE',
+        email: 'awa@sonasp.bf',
+        role: 'admin',
+        phone: '+226 70 00 00 01',
+        is_active: true,
+        mfa_enrolled_at: null,
+        must_change_password: true,
+        password_changed_at: null,
+        last_login_at: null,
+        created_at: '2026-01-01',
+      },
+    ];
+    mocks.confirmer.mockResolvedValue(true);
+    render(<UsersListPage />);
+    await screen.findByText('Awa KABORE');
+
+    expect(screen.getByText('Enrôlement à finaliser')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {
+      name: 'Renvoyer le courriel de bienvenue à Awa KABORE',
+    }));
+
+    await waitFor(() => expect(mocks.resendWelcomeEmail).toHaveBeenCalledWith('u1'));
+    expect(mocks.confirmer).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Renvoyer le courriel de bienvenue ?',
+      severity: 'info',
+    }));
+    expect(mocks.addToast).toHaveBeenCalledWith('Nouveau courriel envoyé', 'success');
+  });
+
   it('supprime un compte seulement après confirmation motivée', async () => {
     render(<UsersListPage />);
     await waitFor(() => expect(screen.getByText('Moussa OUEDRAOGO')).toBeInTheDocument());
@@ -350,7 +395,7 @@ describe('UsersListPage', () => {
   it('permet de demander la suppression sécurisée d’un compte actif sans étape manuelle', async () => {
     mocks.safeFetch.mockImplementation(async (input: RequestInfo | URL) =>
       String(input).includes('/delete-user')
-        ? { ok: true, status: 200, data: { success: true, deleted_user_id: 'u1' } }
+        ? { ok: true, status: 200, data: { success: true, deleted_user_id: 'u1', email_reusable: true } }
         : { ok: true, status: 200, data: { users: mocks.reponses.user_profiles || [] } },
     );
     render(<UsersListPage />);

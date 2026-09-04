@@ -83,6 +83,11 @@ async function fetchFromSonaspReferential(): Promise<LiveGoldPrice | null> {
   }
 }
 
+export interface GoldPriceHistoryPoint {
+  date: string;
+  price: number;
+}
+
 /**
  * Lit le dernier cours publié par le référentiel autoritatif SONASP.
  * Les fournisseurs externes sont interrogés exclusivement côté serveur par la
@@ -278,4 +283,28 @@ export function clearPriceCache(): void {
     data: null,
     timestamp: 0,
   };
+}
+
+/**
+ * Historique de consultation du référentiel SONASP. Cette projection ne lance
+ * aucune mise à jour et n'appelle aucun fournisseur externe depuis le navigateur.
+ */
+export async function fetchGoldPriceHistory(limit = 14): Promise<GoldPriceHistoryPoint[]> {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 2), 31);
+  try {
+    const { data, error } = await supabase
+      .from('gold_prices_daily')
+      .select('price_date, spot_price, london_pm_rate, london_am_rate, average_price')
+      .order('price_date', { ascending: false })
+      .limit(safeLimit);
+    if (error || !data) return [];
+    return data.flatMap((row) => {
+      const price = Number(row.spot_price ?? row.london_pm_rate ?? row.london_am_rate ?? row.average_price);
+      return Number.isFinite(price) && price > 0 && row.price_date
+        ? [{ date: row.price_date, price }]
+        : [];
+    }).reverse();
+  } catch {
+    return [];
+  }
 }

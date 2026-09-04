@@ -21,6 +21,7 @@ import {
   Mail,
   Mountain,
   PackageCheck,
+  PanelsTopLeft,
   Settings,
   SlidersHorizontal,
   TrendingUp,
@@ -45,7 +46,7 @@ import type {
   ModuleAvailabilityMap,
   PlatformModuleCode,
 } from '@/lib/platformModuleCatalog';
-import { ADMINISTRATION_SUBMODULE_CATALOG } from '@/lib/platformModuleCatalog';
+import { ACCESS_GOVERNANCE_SUBMODULE_CATALOG, ADMINISTRATION_SUBMODULE_CATALOG } from '@/lib/platformModuleCatalog';
 
 export type NavigationItem = {
   label: string;
@@ -74,6 +75,7 @@ export type NavigationSection = {
 };
 
 const ADMINISTRATION_ICONS: Record<string, LucideIcon> = {
+  'admin-portals': PanelsTopLeft,
   'admin-users': Users,
   'admin-modules': Layers,
   'admin-roles': KeyRound,
@@ -97,6 +99,15 @@ export const ADMINISTRATION_NAVIGATION_ITEMS: NavigationItem[] =
     path: module.route,
     icon: ADMINISTRATION_ICONS[module.code] || Settings,
     color: ADMINISTRATION_COLORS[module.code] || '#64748b',
+    catalogCode: module.code,
+  }));
+
+export const ACCESS_GOVERNANCE_NAVIGATION_ITEMS: NavigationItem[] =
+  ACCESS_GOVERNANCE_SUBMODULE_CATALOG.map((module) => ({
+    label: module.label,
+    path: module.route,
+    icon: ADMINISTRATION_ICONS[module.code] || ShieldCheck,
+    color: ADMINISTRATION_COLORS[module.code] || '#0f7a56',
     catalogCode: module.code,
   }));
 
@@ -339,6 +350,21 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
     ],
   },
   {
+    id: 'utilisateurs-portails',
+    title: 'Utilisateurs & Portails',
+    groups: [
+      {
+        id: 'access-governance',
+        moduleCode: 'administration',
+        label: 'Accès & portails',
+        path: '/access/portals',
+        icon: ShieldCheck,
+        color: '#0f7a56',
+        children: ACCESS_GOVERNANCE_NAVIGATION_ITEMS,
+      },
+    ],
+  },
+  {
     id: 'parametres',
     title: 'Paramètres et configuration',
     groups: [
@@ -360,7 +386,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         id: 'administration',
         moduleCode: 'administration',
         label: 'Administration',
-        path: '/users',
+        path: '/admin/modules',
         icon: Settings,
         color: '#f97316',
         children: ADMINISTRATION_NAVIGATION_ITEMS,
@@ -579,29 +605,43 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
 
 export const DGMG_NAVIGATION_SECTIONS: NavigationSection[] = [{
   id: 'dgmg-supervision',
-  title: 'Supervision DGMG',
+  title: 'Supervision & régulation',
   groups: [
-    { id: 'dgmg-overview', moduleCode: 'dashboard', label: 'Vue réglementaire', path: '/portail-dgmg', icon: Building2, color: '#0f7a56' },
-    { id: 'dgmg-sites', moduleCode: 'mining_sites', label: 'Registre des sites', path: '/artisan-sites', icon: Mountain, color: '#0f7a56' },
-    { id: 'dgmg-artisans', moduleCode: 'artisan-minier', label: 'Artisans et opérateurs', path: '/artisan-minier/liste', icon: Users, color: '#10976b' },
-    { id: 'dgmg-productions', moduleCode: 'production', label: 'Productions déclarées', path: '/production/daily', icon: TrendingUp, color: '#2f6fec' },
-    { id: 'dgmg-reserve-validations', moduleCode: 'national_reserve', label: 'Validations Réserve', path: '/portail-dgmg/reserve-validations', icon: ShieldCheck, color: '#8b5cf6' },
+    { id: 'dgmg-overview', moduleCode: 'dashboard', label: 'Vue d’ensemble', path: '/portail-dgmg', icon: Grid2X2, color: '#e5fbfa' },
+    { id: 'dgmg-sites', moduleCode: 'mining_sites', label: 'Registre des sites', path: '/artisan-sites', icon: Mountain, color: '#e5fbfa' },
+    { id: 'dgmg-artisans', moduleCode: 'artisan-minier', label: 'Artisans et opérateurs', path: '/artisan-minier/liste', icon: Users, color: '#e5fbfa' },
+    { id: 'dgmg-productions', moduleCode: 'production', label: 'Déclarations de production', path: '/production/daily', icon: TrendingUp, color: '#e5fbfa' },
+    { id: 'dgmg-reserve-validations', moduleCode: 'national_reserve', label: 'Validations Réserve', path: '/portail-dgmg/reserve-validations', icon: ShieldCheck, color: '#e5fbfa' },
   ],
 }];
 
-export const DGI_NAVIGATION_SECTIONS: NavigationSection[] = [{
-  id: 'dgi-fiscalite',
-  title: 'Contrôle fiscal',
-  groups: [
-    { id: 'dgi-overview', moduleCode: 'dashboard', label: 'Vue fiscale', path: '/portail-dgi', icon: Scale, color: '#d99a00' },
-    { id: 'dgi-productions', moduleCode: 'production', label: 'Productions', path: '/production/daily', icon: TrendingUp, color: '#2f6fec' },
-    { id: 'dgi-ventes', moduleCode: 'artisan_gold_market', label: 'Ventes déclarées', path: '/artisan-minier/ventes-or', icon: CircleDollarSign, color: '#0f7a56' },
-    { id: 'dgi-paiements', moduleCode: 'artisan_gold_market', label: 'Paiements fiscaux', path: '/portail-dgi/paiements', icon: FileSignature, color: '#7b3f61' },
-    { id: 'dgi-taxes', moduleCode: 'artisan_gold_market', label: 'Taxes et redevances', path: '/artisan-minier/rapports/taxes', icon: BarChart3, color: '#c47a3b' },
-    { id: 'dgi-conciliations', moduleCode: 'conciliation', label: 'Conciliations', path: '/conciliation', icon: ClipboardCheck, color: '#635bff' },
-    { id: 'dgi-regles', moduleCode: 'conciliation', label: 'Règles fiscales', path: '/conciliation/regles-fiscales', icon: Gavel, color: '#b97f00' },
-  ],
-}];
+export const DGI_NAVIGATION_SECTIONS: NavigationSection[] = [
+  {
+    id: 'dgi-controle-fiscal',
+    title: 'Contrôle fiscal',
+    groups: [
+      { id: 'dgi-overview', moduleCode: 'dashboard', label: 'Vue fiscale', path: '/portail-dgi', icon: Scale, color: '#b9d6ff' },
+      { id: 'dgi-productions', moduleCode: 'production', label: 'Productions', path: '/production/daily', icon: TrendingUp, color: '#b9d6ff' },
+      { id: 'dgi-ventes', moduleCode: 'artisan_gold_market', label: 'Ventes déclarées', path: '/artisan-minier/ventes-or', icon: CircleDollarSign, color: '#b9d6ff' },
+    ],
+  },
+  {
+    id: 'dgi-paiements-recettes',
+    title: 'Paiements & recettes',
+    groups: [
+      { id: 'dgi-paiements', moduleCode: 'artisan_gold_market', label: 'Paiements fiscaux', path: '/portail-dgi/paiements', icon: FileSignature, color: '#b9d6ff' },
+      { id: 'dgi-taxes', moduleCode: 'artisan_gold_market', label: 'Taxes et redevances', path: '/artisan-minier/rapports/taxes', icon: BarChart3, color: '#b9d6ff' },
+    ],
+  },
+  {
+    id: 'dgi-rapprochement',
+    title: 'Rapprochement',
+    groups: [
+      { id: 'dgi-conciliations', moduleCode: 'conciliation', label: 'Conciliations', path: '/conciliation', icon: ClipboardCheck, color: '#b9d6ff' },
+      { id: 'dgi-regles', moduleCode: 'conciliation', label: 'Règles fiscales', path: '/conciliation/regles-fiscales', icon: Gavel, color: '#b9d6ff' },
+    ],
+  },
+];
 
 export const SONASP_COMPTOIR_NAVIGATION_SECTION: NavigationSection = {
   id: 'relations-comptoirs',

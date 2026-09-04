@@ -8,6 +8,7 @@ const ADMIN_FUNCTIONS = [
   'get-users',
   'get-user-details',
   'manage-user-status',
+  'resend-welcome-email',
 ] as const;
 
 describe('contrat statique des Edge d’administration', () => {
@@ -29,10 +30,13 @@ describe('contrat statique des Edge d’administration', () => {
 
   it('prépare la suppression en DB et délègue la désactivation atomique au RPC', () => {
     const source = lire('supabase/functions/delete-user/index.ts');
-    expect(source).toContain(".select('id,role,is_active,version')");
+    expect(source).toContain(".select('id,email,role,is_active,version')");
     expect(source).not.toContain('cible.is_active !== false');
     expect(source).toContain("'snp_admin_compte_preparer_suppression'");
-    expect(source).toContain('auth.admin.deleteUser');
+    expect(source).toContain('auth.admin.deleteUser(utilisateurId, false)');
+    expect(source).toContain('auth.admin.getUserById(utilisateurId)');
+    expect(source).toContain("'snp_admin_compte_finaliser_suppression'");
+    expect(source).toContain('final?.email_reusable === true');
     expect(source).not.toContain('application/openapi+json');
   });
 
@@ -46,6 +50,7 @@ describe('contrat statique des Edge d’administration', () => {
   it.each([
     'create-user',
     'reset-user-password',
+    'resend-welcome-email',
     'envoyer-courriel',
     'manage-user-status',
     'delete-user',

@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createUser, resetUserPassword } from './userManagementService';
+import {
+  createUser,
+  resendWelcomeEmail,
+  requiresWelcomeRecovery,
+  resetUserPassword,
+} from './userManagementService';
 import { defaultResponsibilitiesForRole } from '@/lib/accessControl';
 
 const mocks = vi.hoisted(() => ({ getSession: vi.fn() }));
@@ -140,5 +145,62 @@ describe('resetUserPassword', () => {
       success: false,
       error: 'Le service de récupération est momentanément inaccessible.',
     });
+  });
+});
+
+describe('renvoi du courriel de bienvenue', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mocks.getSession.mockResolvedValue({
+      data: { session: { access_token: 'jwt-aal2-administrateur' } },
+    });
+  });
+
+  it('distingue un enrôlement incomplet d’un compte déjà opérationnel', () => {
+    expect(requiresWelcomeRecovery({})).toBe(false);
+    expect(requiresWelcomeRecovery({
+      last_login_at: null,
+      password_changed_at: null,
+      mfa_enrolled_at: null,
+      must_change_password: true,
+    })).toBe(true);
+    expect(requiresWelcomeRecovery({
+      last_login_at: '2026-09-01T08:00:00Z',
+      password_changed_at: '2026-08-01T08:00:00Z',
+      mfa_enrolled_at: '2026-08-01T08:05:00Z',
+      must_change_password: false,
+    })).toBe(false);
+  });
+
+  it('ne transmet que la cible et exige la confirmation du remplacement', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      email_sent: true,
+      previous_link_replaced: true,
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+
+    const resultat = await resendWelcomeEmail('9b3fcaaa-9367-4c91-a82d-788f043f33f1');
+
+    expect(resultat).toMatchObject({
+      success: true,
+      email_sent: true,
+      previous_link_replaced: true,
+    });
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain('/functions/v1/resend-welcome-email');
+    expect(JSON.parse(String(options?.body))).toEqual({
+      user_id: '9b3fcaaa-9367-4c91-a82d-788f043f33f1',
+    });
+    expect(String(options?.body)).not.toMatch(/email|token|password/i);
+  });
+
+  it('refuse une réponse qui ne certifie pas le nouveau lien', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      email_sent: true,
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+
+    await expect(resendWelcomeEmail('9b3fcaaa-9367-4c91-a82d-788f043f33f1'))
+      .resolves.toMatchObject({ success: false, error: expect.stringMatching(/remplacement/) });
   });
 });

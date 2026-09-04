@@ -6,7 +6,7 @@ import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { modulesService, type Module } from '@/services/modulesService';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import './admin.css';
 
 /** Aplatit la hiérarchie pour les décomptes et la recherche. */
@@ -54,7 +54,7 @@ export default function ModulesManagement() {
     try {
       setModules(await modulesService.getHierarchy());
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de charger les modules.'));
+      setErreur(messageErreurUtilisateur(reason, 'Impossible de charger les modules.'));
       setModules([]);
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ export default function ModulesManagement() {
       showSuccess(module.est_actif ? 'Module désactivé' : 'Module réactivé');
       await charger();
     } catch (reason) {
-      showError(errorMessage(reason, 'Impossible de modifier l’activation du module'));
+      showError(messageErreurUtilisateur(reason, 'Impossible de modifier l’activation du module'));
     } finally {
       setEnCours(null);
     }
@@ -108,7 +108,7 @@ export default function ModulesManagement() {
       showSuccess(module.est_visible_menu ? 'Module masqué du menu' : 'Module affiché dans le menu');
       await charger();
     } catch (reason) {
-      showError(errorMessage(reason, 'Impossible de modifier la visibilité du module'));
+      showError(messageErreurUtilisateur(reason, 'Impossible de modifier la visibilité du module'));
     } finally {
       setEnCours(null);
     }
@@ -134,7 +134,7 @@ export default function ModulesManagement() {
       setEnEdition(null);
       await charger();
     } catch (reason) {
-      showError(errorMessage(reason, 'Impossible de mettre à jour le module'));
+      showError(messageErreurUtilisateur(reason, 'Impossible de mettre à jour le module'));
     } finally {
       setSaving(false);
     }

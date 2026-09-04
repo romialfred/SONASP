@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/Toast';
 import { Table, Column } from '@/components/ui/Table';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { userActivityService } from '@/services/userActivityService';
 
 interface ActivityLog {
@@ -136,7 +137,7 @@ export function Profile() {
       await refreshProfile();
       addToast(t('auth.changesSaved'), 'success');
     } catch (error: any) {
-      addToast(error.message || 'L’enregistrement des modifications a échoué.', 'error');
+      addToast(messageErreurUtilisateur(error, 'L’enregistrement des modifications a échoué.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -160,7 +161,7 @@ export function Profile() {
         setConfirmPassword('');
       }
     } catch (error: any) {
-      addToast(error.message || 'La modification du mot de passe a échoué.', 'error');
+      addToast(messageErreurUtilisateur(error, 'La modification du mot de passe a échoué.'), 'error');
     } finally {
       setLoading(false);
     }

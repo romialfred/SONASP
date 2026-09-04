@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   OPERATIONAL_CAPABILITY_OPTIONS,
   type OperationalCapabilityCode,
@@ -19,7 +20,7 @@ export const userCapabilitiesService = {
       .eq('user_id', userId)
       .in('capability_code', codes);
 
-    if (error) return { overrides, error: error.message };
+    if (error) return { overrides, error: messageErreurUtilisateur(error, 'Impossible de charger les capacités.') };
     (data ?? []).forEach((row: any) => {
       const code = row.capability_code as OperationalCapabilityCode;
       if (codes.includes(code)) overrides[code] = row.allowed === true;
@@ -41,7 +42,7 @@ export const userCapabilitiesService = {
         p_reason: `${next[code] ? 'Attribution' : 'Retrait'} depuis l’administration : ${label}`,
         p_valid_until: null,
       });
-      if (error) return { success: false, error: error.message };
+      if (error) return { success: false, error: messageErreurUtilisateur(error, 'La mise à jour d’une capacité a échoué.') };
     }
     return { success: true };
   },

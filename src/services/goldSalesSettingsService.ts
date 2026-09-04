@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 
 export type SaleMethod = 'standard' | 'consignment' | 'forward_sale' | 'spot_sale';
 
@@ -102,7 +103,7 @@ export async function getAllGoldSalesSettings() {
       data: [],
       error: {
         message: 'Erreur lors de la récupération des paramètres de vente.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }
@@ -127,7 +128,7 @@ export async function getGoldSalesSettingById(id: string) {
       data: null,
       error: {
         message: 'Erreur lors de la récupération du paramètre de vente.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }
@@ -152,7 +153,7 @@ export async function getGoldSalesSettingsByMiningCompany(miningCompanyId: strin
       data: [],
       error: {
         message: 'Erreur lors de la récupération des paramètres pour cette mine.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }
@@ -192,7 +193,7 @@ export async function checkDuplicateGoldSalesSetting(
       exists: false,
       error: {
         message: 'Erreur lors de la vérification des doublons.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }
@@ -253,7 +254,7 @@ export async function createGoldSalesSetting(data: CreateGoldSalesSettingData) {
         success: false,
         error: {
           message: userMessage,
-          technicalDetails: `Code: ${error.code}\nMessage: ${error.message}\nDétails: ${error.details || 'N/A'}`
+          technicalDetails: messageErreurUtilisateur(error)
         }
       };
     }
@@ -265,7 +266,7 @@ export async function createGoldSalesSetting(data: CreateGoldSalesSettingData) {
       success: false,
       error: {
         message: 'Une erreur inattendue est survenue lors de la création.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }
@@ -306,7 +307,7 @@ export async function updateGoldSalesSetting(id: string, data: UpdateGoldSalesSe
         success: false,
         error: {
           message: userMessage,
-          technicalDetails: `Code: ${error.code}\nMessage: ${error.message}\nDétails: ${error.details || 'N/A'}`
+          technicalDetails: messageErreurUtilisateur(error)
         }
       };
     }
@@ -318,7 +319,7 @@ export async function updateGoldSalesSetting(id: string, data: UpdateGoldSalesSe
       success: false,
       error: {
         message: 'Une erreur inattendue est survenue lors de la mise à jour.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }
@@ -337,7 +338,7 @@ export async function deleteGoldSalesSetting(id: string) {
         success: false,
         error: {
           message: 'Erreur lors de la suppression du paramètre de vente.',
-          technicalDetails: `Code: ${error.code}\nMessage: ${error.message}`
+          technicalDetails: messageErreurUtilisateur(error)
         }
       };
     }
@@ -349,7 +350,7 @@ export async function deleteGoldSalesSetting(id: string) {
       success: false,
       error: {
         message: 'Une erreur inattendue est survenue lors de la suppression.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }
@@ -377,7 +378,7 @@ export async function getAuthorizedCustomersForMine(miningCompanyId: string): Pr
       data: [],
       error: {
         message: 'Erreur lors de la récupération des clients autorisés.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }
@@ -435,7 +436,7 @@ export async function checkSaleAuthorization(
       success: false,
       error: {
         message: 'Erreur lors de la vérification de l\'autorisation de vente.',
-        technicalDetails: error?.message || JSON.stringify(error, null, 2)
+        technicalDetails: messageErreurUtilisateur(error)
       }
     };
   }

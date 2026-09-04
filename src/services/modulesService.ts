@@ -175,7 +175,7 @@ export const modulesService = {
       return normaliserModule(data as Record<string, unknown>);
     } catch (error: any) {
       console.error('Error creating module:', error);
-      throw new Error(error.message || 'Impossible de créer le module');
+      throw error;
     }
   },
 
@@ -199,7 +199,7 @@ export const modulesService = {
       return data as Module;
     } catch (error: any) {
       console.error('Error updating module:', error);
-      throw new Error(error.message || 'Impossible de mettre à jour le module');
+      throw error;
     }
   },
 
@@ -242,7 +242,7 @@ export const modulesService = {
       notifierMiseAJourCatalogue();
     } catch (error: any) {
       console.error('Error deleting module:', error);
-      throw new Error(error.message || 'Impossible de supprimer le module');
+      throw error;
     }
   },
 

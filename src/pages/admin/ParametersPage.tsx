@@ -17,7 +17,7 @@ import { Toggle } from '@/components/ui/Toggle';
 import { NotificationDialog, useNotification } from '@/components/ui/NotificationDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { roleLabel, roleTone } from '@/lib/roleLabels';
 import { hasCapability, CAPABILITIES } from '@/lib/capabilities';
 import {
@@ -163,7 +163,7 @@ export function ParametersPage() {
         approval_notifications: prefApprobations,
       });
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de charger vos préférences.'));
+      setErreur(messageErreurUtilisateur(reason, 'Impossible de charger vos préférences.'));
     } finally {
       setLoading(false);
     }
@@ -180,7 +180,7 @@ export function ParametersPage() {
       if (error) throw error;
       setComptes(data || []);
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de charger les comptes.'));
+      setErreur(messageErreurUtilisateur(reason, 'Impossible de charger les comptes.'));
       setComptes([]);
     } finally {
       setLoading(false);
@@ -200,7 +200,7 @@ export function ParametersPage() {
       setRegles(data || []);
       setReglesEditees({});
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de charger les règles métier.'));
+      setErreur(messageErreurUtilisateur(reason, 'Impossible de charger les règles métier.'));
       setRegles([]);
     } finally {
       setLoading(false);
@@ -211,7 +211,7 @@ export function ParametersPage() {
     try {
       setParametresSession(await parametresPlateformeService.lireParametresSession());
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de lire la durée de session.'));
+      setErreur(messageErreurUtilisateur(reason, 'Impossible de lire la durée de session.'));
       setParametresSession(null);
     }
   }, []);
@@ -251,7 +251,7 @@ export function ParametersPage() {
         `Durée d'inactivité fixée à ${misAJour.inactiviteMinutes} minutes. Elle s'applique dès la prochaine mesure d'activité.`,
       );
     } catch (reason) {
-      showError('Enregistrement impossible', errorMessage(reason, 'La durée de session n’a pas pu être enregistrée.'));
+      showError('Enregistrement impossible', messageErreurUtilisateur(reason, 'La durée de session n’a pas pu être enregistrée.'));
     } finally {
       setSaving(false);
     }
@@ -271,7 +271,7 @@ export function ParametersPage() {
       await refreshProfile();
       showSuccess('Préférences enregistrées', 'Vos préférences d’affichage ont été mises à jour.');
     } catch (reason) {
-      showError('Enregistrement impossible', errorMessage(reason, 'Vos préférences n’ont pas été modifiées.'));
+      showError('Enregistrement impossible', messageErreurUtilisateur(reason, 'Vos préférences n’ont pas été modifiées.'));
     } finally {
       setSaving(false);
     }
@@ -290,7 +290,7 @@ export function ParametersPage() {
       showSuccess('Notifications enregistrées', 'Vos préférences de notification ont été mises à jour.');
     } catch (reason) {
       setNotifications(precedent);
-      showError('Enregistrement impossible', errorMessage(reason, 'Vos préférences n’ont pas été modifiées.'));
+      showError('Enregistrement impossible', messageErreurUtilisateur(reason, 'Vos préférences n’ont pas été modifiées.'));
     } finally {
       setSaving(false);
     }
@@ -309,7 +309,7 @@ export function ParametersPage() {
       await chargerRegles();
       showSuccess('Règles enregistrées', 'Les règles métier ont été mises à jour.');
     } catch (reason) {
-      showError('Enregistrement impossible', errorMessage(reason, 'Les règles n’ont pas été modifiées.'));
+      showError('Enregistrement impossible', messageErreurUtilisateur(reason, 'Les règles n’ont pas été modifiées.'));
     } finally {
       setSaving(false);
     }

@@ -167,7 +167,8 @@ describe('ModulesManagement', () => {
     mocks.getHierarchy.mockRejectedValue({ message: 'table absente' });
     render(<ModulesManagement />);
 
-    await waitFor(() => expect(screen.getByText('table absente')).toBeInTheDocument());
+    // Le message PostgREST brut n'est plus divulgué : un repli propre est affiché.
+    await waitFor(() => expect(screen.getByText('Impossible de charger les modules.')).toBeInTheDocument());
     expect(screen.getByText('Aucun module')).toBeInTheDocument();
   });
 });

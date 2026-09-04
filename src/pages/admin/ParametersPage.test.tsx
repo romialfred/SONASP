@@ -209,7 +209,8 @@ describe('ParametersPage', () => {
     render(<ParametersPage />);
     fireEvent.click(screen.getByRole('tab', { name: /Règles métier/ }));
 
-    await waitFor(() => expect(screen.getByText('accès refusé')).toBeInTheDocument());
+    // Le message PostgREST brut n'est plus divulgué : un repli propre est affiché.
+    await waitFor(() => expect(screen.getByText('Impossible de charger les règles métier.')).toBeInTheDocument());
     expect(screen.getByText('Aucune règle métier')).toBeInTheDocument();
   });
 });

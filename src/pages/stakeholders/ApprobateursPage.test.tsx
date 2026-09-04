@@ -12,6 +12,9 @@ const mocks = vi.hoisted(() => ({
     id: 'admin-current',
     role: 'admin',
     is_active: true,
+    // La gestion des approbateurs est gouvernée par la capacité (comme la route et
+    // la RPC), pas par le rôle seul : un compte habilité porte accounts.manage.
+    capabilities: ['accounts.manage'],
   },
 }));
 

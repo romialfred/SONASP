@@ -5,7 +5,7 @@ import {
   Save, Server, ShieldCheck, UserCircle2,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   MODES_CHIFFREMENT,
   modeChiffrement,
@@ -77,7 +77,7 @@ export function MessagerieForm() {
       setPort(trouve.port);
       setMode(modeChiffrement(trouve.port, trouve.securise));
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de lire ce jeu de paramètres.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de lire ce jeu de paramètres.'));
     } finally {
       setChargement(false);
     }
@@ -140,7 +140,7 @@ export function MessagerieForm() {
       }
       navigate('/admin/messagerie');
     } catch (raison) {
-      setErreur(errorMessage(raison, 'L’enregistrement a échoué.'));
+      setErreur(messageErreurUtilisateur(raison, 'L’enregistrement a échoué.'));
     } finally {
       setEnregistrement(false);
     }

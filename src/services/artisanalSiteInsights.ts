@@ -105,8 +105,9 @@ const normalizeLocality = (value?: string | null) =>
 
 /**
  * La production d'un site n'est jamais saisie : c'est la somme des ventes d'or
- * déclarées par les artisans qui y sont rattachés (commune de l'artisan = localité
- * du site, seule clé de jointure disponible aujourd'hui).
+ * déclarées par les artisans qui y sont rattachés. Le rattachement explicite
+ * (artisanal_site_id) fait foi ; à défaut, on retombe sur la jointure historique
+ * par localité (commune de l'artisan = localité du site).
  *
  * Chaque vente devient une ligne de production du site, ce qui permet de conserver
  * l'historique daté et les agrégats existants.
@@ -116,10 +117,15 @@ export function buildProductionFromArtisanSales(
   artisans: ArtisanMinier[],
   sales: ArtisanGoldSale[]
 ): SiteProduction[] {
+  const siteById = new Map(sites.map((site) => [site.id, site]));
   const siteByLocality = new Map(sites.map((site) => [normalizeLocality(site.locality), site]));
   const siteByArtisan = new Map<string, ArtisanalSite>();
   artisans.forEach((artisan) => {
-    const site = siteByLocality.get(normalizeLocality(artisan.commune));
+    // Rattachement explicite prioritaire (FK artisanal_site_id) ; a defaut, jointure
+    // historique par localite pour les artisans non encore rattaches a un site.
+    const site =
+      (artisan.artisanal_site_id ? siteById.get(artisan.artisanal_site_id) : undefined) ??
+      siteByLocality.get(normalizeLocality(artisan.commune));
     if (site) siteByArtisan.set(artisan.id, site);
   });
 

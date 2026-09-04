@@ -23,6 +23,7 @@ import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   artisanMinierService,
   type ArtisanMinier,
@@ -40,6 +41,8 @@ import {
   type TypeMoyenPaiement,
 } from '@/services/artisanMoyenPaiementService';
 import type { CarteProfessionnelle } from '@/services/carteProfessionnelleService';
+import { artisanalSiteService } from '@/services/artisanalSiteService';
+import type { ArtisanalSite } from '@/types/artisanalSite';
 import { getCitiesByRegion, getRegionsByCountry, SAHEL_COUNTRIES } from '@/data/burkinaFasoData';
 import './artisan-form.css';
 
@@ -62,6 +65,7 @@ export interface ArtisanFormValues {
   adresse: string;
   commune: string;
   region: string;
+  artisanal_site_id: string;
   type_piece_identite: 'CNI' | 'Passeport' | 'Permis' | 'Autre';
   numero_piece_identite: string;
   date_delivrance_piece: string;
@@ -88,6 +92,7 @@ export const EMPTY_ARTISAN_FORM: ArtisanFormValues = {
   adresse: '',
   commune: '',
   region: '',
+  artisanal_site_id: '',
   type_piece_identite: 'CNI',
   numero_piece_identite: '',
   date_delivrance_piece: '',
@@ -203,12 +208,28 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
   const [verifyingMoyenId, setVerifyingMoyenId] = useState<string | null>(null);
   const [reviewReasons, setReviewReasons] = useState<Record<string, string>>({});
   const [dirtyMoyenIds, setDirtyMoyenIds] = useState<Set<string>>(() => new Set());
+  const [sitesDisponibles, setSitesDisponibles] = useState<ArtisanalSite[]>([]);
   const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setValues(valuesFromArtisan(artisan));
     setPhotoPreview(artisan?.photo_url || '');
   }, [artisan]);
+
+  // Le rattachement a un site est optionnel : sans droit de lecture des sites, la
+  // liste reste vide et le champ n'entrave pas l'enregistrement.
+  useEffect(() => {
+    let actif = true;
+    artisanalSiteService
+      .listSites()
+      .then((liste) => {
+        if (actif) setSitesDisponibles(liste);
+      })
+      .catch(() => undefined);
+    return () => {
+      actif = false;
+    };
+  }, []);
 
   useEffect(
     () => () => {
@@ -382,7 +403,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
       setReviewReasons((current) => ({ ...current, [moyen.id as string]: '' }));
       showSuccess(approuve ? 'Moyen de paiement vérifié' : 'Moyen de paiement rejeté et désactivé');
     } catch (reason) {
-      showError(reason instanceof Error ? reason.message : 'La vérification du moyen de paiement a échoué.');
+      showError(messageErreurUtilisateur(reason));
     } finally {
       setVerifyingMoyenId(null);
     }
@@ -448,7 +469,7 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
 
       redirectTimer.current = setTimeout(onSuccess, echecs.length > 0 ? 2500 : 1200);
     } catch (reason) {
-      showError(reason instanceof Error ? reason.message : 'Impossible d’enregistrer la fiche artisan');
+      showError(messageErreurUtilisateur(reason));
     } finally {
       setSaving(false);
     }
@@ -606,6 +627,25 @@ export function ArtisanMinierForm({ artisan, onCancel, onSuccess }: ArtisanMinie
                   {communes.map((commune) => (
                     <option key={commune} value={commune}>
                       {commune}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field
+                label="Site artisanal de rattachement"
+                htmlFor="artisanal-site"
+                hint="Facultatif. Rattache explicitement l’artisan à un site pour l’attribution de sa production."
+              >
+                <select
+                  id="artisanal-site"
+                  value={values.artisanal_site_id}
+                  onChange={(event) => setValue('artisanal_site_id', event.target.value)}
+                >
+                  <option value="">Non rattaché</option>
+                  {sitesDisponibles.map((site) => (
+                    <option key={site.id} value={site.id}>
+                      {site.code} — {site.name}
                     </option>
                   ))}
                 </select>

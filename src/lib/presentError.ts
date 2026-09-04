@@ -32,3 +32,21 @@ export function presentError(error: unknown) {
     message: 'La demande n’a pas été confirmée par le serveur.',
     recovery: 'Vérifiez les informations saisies. Après une demande d’enregistrement, contrôlez l’enregistrement avant de réessayer.' };
 }
+
+/**
+ * Message unique à afficher à l'utilisateur pour une erreur.
+ *
+ * Règle : un message métier explicite, levé comme `Error` par un service ou une RPC
+ * (ex. « Double contrôle requis… », « Référence de vente déjà utilisée »), est relayé
+ * tel quel — il est plus utile que tout libellé générique. Les erreurs brutes de
+ * PostgREST/PostgreSQL (objets simples portant un `code`) sont, elles, classées par
+ * `presentError` afin de ne jamais exposer d'internes de base (RLS, colonnes, tokens).
+ */
+export function messageErreurUtilisateur(reason: unknown, repli?: string): string {
+  if (reason instanceof Error && reason.message.trim()) return reason.message;
+  const info = presentError(reason);
+  // Erreur non reconnue : on préfère le repli contextuel du composant (« Impossible de
+  // charger… ») au libellé générique, tout en n'exposant jamais le message PostgREST brut.
+  if (info.category === 'operation' && repli && repli.trim()) return repli;
+  return `${info.title}. ${info.message} ${info.recovery}`;
+}

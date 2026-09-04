@@ -23,6 +23,8 @@ export interface ArtisanGoldSale {
   updated_at?: string;
   created_by?: string;
   updated_by?: string;
+  /** Jeton de concurrence optimiste : incremente a chaque modification acceptee. */
+  version?: number;
 }
 
 export interface ArtisanStatistics {
@@ -73,6 +75,7 @@ function normalizeSale(row: ArtisanGoldSaleRow): ArtisanGoldSale {
     updated_at: row.updated_at,
     created_by: row.created_by ?? undefined,
     updated_by: row.updated_by ?? undefined,
+    version: typeof row.version === 'number' ? row.version : 0,
   };
 }
 
@@ -198,13 +201,20 @@ export const artisanGoldSalesService = {
 
       if (error) throw error;
       return normalizeSale(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating gold sale:', error);
-      throw new Error(error.message || 'Impossible d\'enregistrer la vente');
+      // On propage l'erreur d'origine : re-emballer en `new Error` supprimait le
+      // code PostgREST (23505, 42501, 40001...) et empechait toute classification
+      // par presentError cote formulaire.
+      throw error;
     }
   },
 
-  async update(id: string, updates: Partial<ArtisanGoldSale>): Promise<ArtisanGoldSale> {
+  async update(
+    id: string,
+    updates: Partial<ArtisanGoldSale>,
+    expectedVersion?: number,
+  ): Promise<ArtisanGoldSale> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -220,21 +230,35 @@ export const artisanGoldSalesService = {
         throw new Error('Impossible de modifier une vente validée ou payée');
       }
 
-      const { data, error } = await supabase
+      // Verrou optimiste : quand la version attendue est fournie, la mise a jour
+      // n'aboutit que si la ligne porte toujours cette version, et l'incremente.
+      // Deux modifications concurrentes ne peuvent donc pas s'ecraser en silence.
+      let requete = supabase
         .from('snp_artisan_ventes_or')
         .update({
           ...updates,
-          updated_by: user?.id
+          updated_by: user?.id,
+          ...(typeof expectedVersion === 'number' ? { version: expectedVersion + 1 } : {}),
         })
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
+      if (typeof expectedVersion === 'number') {
+        requete = requete.eq('version', expectedVersion);
+      }
 
-      if (error) throw error;
+      const { data, error } = await requete.select().single();
+
+      if (error) {
+        if (typeof expectedVersion === 'number' && error.code === 'PGRST116') {
+          throw new Error(
+            'La vente a été modifiée entre-temps par une autre opération. Rechargez-la avant d’enregistrer vos changements.',
+          );
+        }
+        throw error;
+      }
       return normalizeSale(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating gold sale:', error);
-      throw new Error(error.message || 'Impossible de mettre à jour la vente');
+      throw error;
     }
   },
 
@@ -246,9 +270,9 @@ export const artisanGoldSalesService = {
         .eq('id', id);
 
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting gold sale:', error);
-      throw new Error(error.message || 'Impossible de supprimer la vente');
+      throw error;
     }
   },
 

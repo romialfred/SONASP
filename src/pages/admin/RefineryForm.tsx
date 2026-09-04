@@ -5,7 +5,7 @@ import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLa
 import { EmptyState, Field, Note, PageHeader, Section, Segmented } from '@/components/ui/sn';
 import { COUNTRIES } from '@/constants/countries';
 import { supabase } from '@/lib/supabase';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { useAlert } from '@/hooks/useAlert';
 import './admin.css';
 
@@ -97,7 +97,7 @@ export function RefineryForm() {
         is_active: data.is_active !== false,
       });
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de charger cette raffinerie.'));
+      setErreur(messageErreurUtilisateur(reason, 'Impossible de charger cette raffinerie.'));
     } finally {
       setLoading(false);
     }
@@ -144,7 +144,7 @@ export function RefineryForm() {
       }
       redirection.current = setTimeout(() => navigate('/admin/refineries'), 1200);
     } catch (reason) {
-      const message = errorMessage(reason, 'Enregistrement impossible.');
+      const message = messageErreurUtilisateur(reason, 'Enregistrement impossible.');
       setErreur(message);
       alerte.error(message);
     } finally {

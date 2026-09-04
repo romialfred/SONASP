@@ -123,6 +123,7 @@ const loadSiteData = async (): Promise<{ sites: ArtisanalSite[]; productions: Si
 };
 
 const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
+  const { data: { user } } = await supabase.auth.getUser();
   const payload = {
       ...(input.id ? { id: input.id } : {}),
       code: input.code,
@@ -141,6 +142,10 @@ const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
       longitude: input.longitude,
       photos: input.photos || [],
       notes: input.notes || null,
+      // Tracabilite d'auteur : created_by seulement a la creation pour ne pas
+      // ecraser l'auteur d'origine lors d'une modification.
+      ...(input.id ? {} : { created_by: user?.id ?? null }),
+      updated_by: user?.id ?? null,
   };
   const { data, error } = await supabase
     .from('artisanal_sites')
@@ -150,12 +155,11 @@ const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
   if (error) throw error;
 
     const siteId = data.id as string;
-    const { error: deleteError } = await supabase
-      .from('artisanal_site_assignments')
-      .delete()
-      .eq('site_id', siteId);
-    if (deleteError) throw deleteError;
-
+    // Les deux roles (site_manager, collection_officer) sont toujours fournis et
+    // la table porte une contrainte UNIQUE(site_id, role) : un upsert sur ce
+    // conflit remplace les responsables sans jamais laisser le site sans contact.
+    // L'ancien delete-puis-insert ouvrait une fenetre ou un echec de reinsertion
+    // laissait le site sans aucun responsable.
     const assignments = [
       { ...input.manager, site_id: siteId, role: 'site_manager' },
       { ...input.collectionOfficer, site_id: siteId, role: 'collection_officer' },
@@ -167,7 +171,7 @@ const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
     }));
     const { data: savedAssignments, error: assignmentError } = await supabase
       .from('artisanal_site_assignments')
-      .insert(assignments)
+      .upsert(assignments, { onConflict: 'site_id,role' })
       .select();
     if (assignmentError) throw assignmentError;
   return mapSiteRow(data as SiteRow, (savedAssignments || []) as SiteRow[]);

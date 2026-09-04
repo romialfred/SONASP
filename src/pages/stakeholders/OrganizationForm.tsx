@@ -14,7 +14,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Field, FormActions, Note, PageHeader, Section, Segmented } from '@/components/ui/sn';
 import { BURKINA_REGIONS } from '@/data/burkinaRegions';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import type { OrganizationType } from '@/lib/accessControl';
 import {
   EMPTY_ORGANIZATION_FORM,
@@ -84,7 +84,7 @@ export function OrganizationForm() {
         });
       }
     } catch (reason) {
-      setFailure(errorMessage(reason, 'Impossible de charger le formulaire d’organisation.'));
+      setFailure(messageErreurUtilisateur(reason, 'Impossible de charger le formulaire d’organisation.'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +139,7 @@ export function OrganizationForm() {
       await organizationService.save(form, id);
       navigate('/stakeholders/organizations', { replace: true });
     } catch (reason) {
-      setFailure(errorMessage(reason, 'Impossible d’enregistrer l’organisation.'));
+      setFailure(messageErreurUtilisateur(reason, 'Impossible d’enregistrer l’organisation.'));
     } finally {
       setSaving(false);
     }

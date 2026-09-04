@@ -246,7 +246,7 @@ describe('PaiementForm', () => {
     expect(screen.getByRole('button', { name: /Enregistrer le paiement/ })).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: /Ouvrir la fiche de l’artisan/ }));
-    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/a1/modifier');
+    expect(mocks.navigate).toHaveBeenCalledWith('/artisan-minier/a1/edit');
   });
 
   it('enregistre le paiement avec le moyen retenu puis propose la facture', async () => {

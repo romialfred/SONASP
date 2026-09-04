@@ -56,6 +56,20 @@ describe('production reconstituée depuis les ventes des artisans', () => {
     expect(productions[1].taxesFcfa).toBe(10_080_000);
   });
 
+  it('privilégie le rattachement explicite (artisanal_site_id) sur la localité', () => {
+    // L'artisan a une commune « Kalsaka » (qui pointerait vers site-kalsaka par
+    // localité) mais est explicitement rattaché à site-poura : la FK doit gagner.
+    const artisanRattache = [
+      { ...artisans[0], id: 'aFK', commune: 'Kalsaka', artisanal_site_id: 'site-poura' },
+    ] as ArtisanMinier[];
+    const productions = buildProductionFromArtisanSales(DEMO_ARTISANAL_SITES, artisanRattache, [
+      sale({ id: 'sFK', artisan_id: 'aFK' }),
+    ]);
+
+    expect(productions).toHaveLength(1);
+    expect(productions[0].siteId).toBe('site-poura');
+  });
+
   it('ignore les ventes annulées et les artisans hors site', () => {
     const productions = buildProductionFromArtisanSales(DEMO_ARTISANAL_SITES, artisans, [
       sale({ id: 's3', statut: 'annulee' }),

@@ -26,6 +26,7 @@ import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { carteProfessionnelleService } from '@/services/carteProfessionnelleService';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import type { CarteProfessionnelle } from '@/services/carteProfessionnelleService';
 import type { ArtisanMinier } from '@/services/artisanMinierService';
 
@@ -100,10 +101,7 @@ export default function CarteValidation() {
       showAlert(`Carte ${carte.numero_carte} validée`, 'success');
       await loadData();
     } catch (reason) {
-      showAlert(
-        reason instanceof Error ? reason.message : 'Erreur lors de la validation',
-        'error',
-      );
+      showAlert(messageErreurUtilisateur(reason), 'error');
     } finally {
       setValidating(null);
     }

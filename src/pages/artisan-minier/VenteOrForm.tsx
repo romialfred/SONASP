@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ecartAuCours, useCoursOr } from '@/hooks/useCoursOr';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   artisanGoldSalesService,
   type ArtisanStatistics,
@@ -225,6 +226,8 @@ export default function VenteOrForm() {
   const [touches, setTouches] = useState<Partial<Record<ValidationKey, boolean>>>({});
   const savingRef = useRef(false);
   const navigationTimerRef = useRef<number | null>(null);
+  // Version chargee de la vente, pour le verrou optimiste a l'enregistrement.
+  const versionRef = useRef<number | null>(null);
 
   useEffect(() => () => {
     if (navigationTimerRef.current !== null) {
@@ -262,6 +265,7 @@ export default function VenteOrForm() {
               1500,
             );
           } else {
+            versionRef.current = vente.version ?? 0;
             setForm({
               artisan_id: vente.artisan_id,
               date_vente: (vente.date_vente || '').split('T')[0],
@@ -470,7 +474,12 @@ export default function VenteOrForm() {
 
       let venteId = id;
       if (isEditMode && id) {
-        const vente = await artisanGoldSalesService.update(id, payload);
+        const vente = await artisanGoldSalesService.update(
+          id,
+          payload,
+          versionRef.current ?? undefined,
+        );
+        versionRef.current = vente.version ?? (versionRef.current ?? 0) + 1;
         venteId = vente.id;
         showSuccess('Vente mise à jour avec succès');
       } else {
@@ -486,7 +495,7 @@ export default function VenteOrForm() {
         900,
       );
     } catch (reason) {
-      showError(reason instanceof Error ? reason.message : "Erreur lors de l’enregistrement");
+      showError(messageErreurUtilisateur(reason));
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -592,10 +601,15 @@ export default function VenteOrForm() {
                     <Segmented
                       name="statut-vente"
                       value={form.statut}
-                      options={STATUT_OPTIONS}
+                      options={isEditMode ? STATUT_OPTIONS : STATUT_OPTIONS.filter((option) => option.value === 'en_attente')}
                       onChange={(statut) => setValue('statut', statut)}
                       ariaLabel="Statut de la déclaration"
                     />
+                    {!isEditMode && (
+                      <small className="sn-field__hint">
+                        La déclaration est créée « En attente ». La validation est une étape distincte, réservée à un habilité autre que le déclarant.
+                      </small>
+                    )}
                     {erreurVisible('statut') && <small className="is-error">{erreurVisible('statut')}</small>}
                   </div>
                 </div>

@@ -28,10 +28,10 @@ import {
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
-import { isManagement } from '@/lib/permissions';
 import { canManageAccount } from '@/lib/roleHierarchy';
+import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
 import { roleLabel, roleTone } from '@/lib/roleLabels';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { salesApproverService, type SalesApproverUser } from '@/services/salesApproverService';
 import './approbateurs.css';
 
@@ -46,7 +46,10 @@ const estDirection = (u: SalesApproverUser) => u.is_active && (u.role === 'owner
 
 export default function ApprobateursPage() {
   const { user } = useAuth();
-  const canManage = isManagement(user) || user?.role === 'admin';
+  // Aligné sur la capacité autoritative (et sur la RPC snp_definir_approbateur_ventes) :
+  // l'ancien test `isManagement || admin` verrouillait l'owner, pourtant seul acteur
+  // routé le plus habilité, et ouvrait à `management` que la route n'autorise pas.
+  const canManage = hasSensitiveCapability(user, CAPABILITIES.ACCOUNTS_MANAGE);
 
   const [users, setUsers] = useState<SalesApproverUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +65,7 @@ export default function ApprobateursPage() {
       const data = await salesApproverService.list();
       setUsers(data);
     } catch (error) {
-      showError(errorMessage(error, 'Impossible de charger les utilisateurs.'));
+      showError(messageErreurUtilisateur(error, 'Impossible de charger les utilisateurs.'));
     } finally {
       setLoading(false);
     }
@@ -81,7 +84,7 @@ export default function ApprobateursPage() {
       showSuccess(valeur ? 'Droit d’approbation accordé.' : 'Droit d’approbation retiré.');
       return true;
     } catch (error) {
-      showError(errorMessage(error, 'La mise à jour a échoué.'));
+      showError(messageErreurUtilisateur(error, 'La mise à jour a échoué.'));
       return false;
     } finally {
       setSavingId(null);

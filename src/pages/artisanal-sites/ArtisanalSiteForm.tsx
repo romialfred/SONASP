@@ -28,6 +28,7 @@ import { SiteLocationPicker } from '@/components/artisanal-sites/SiteLocationPic
 import { BURKINA_FASO_REGIONS } from '@/data/burkinaFasoData';
 import { artisanalSiteService } from '@/services/artisanalSiteService';
 import { generateSiteCode } from '@/services/artisanalSiteCode';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { MAX_SITE_PHOTOS, resolvePhotoUrl, uploadSitePhoto } from '@/services/sitePhotoService';
 import type { ArtisanalSite, ArtisanalSiteInput, ArtisanalSiteStatus } from '@/types/artisanalSite';
 import './artisanal-site-form.css';
@@ -221,9 +222,9 @@ export default function ArtisanalSiteForm() {
           notes: site.notes,
         });
       })
-      .catch((reason: unknown) =>
-        setError(reason instanceof Error ? reason.message : 'Impossible de charger le site.')
-      )
+      .catch((reason: unknown) => {
+        setError(messageErreurUtilisateur(reason));
+      })
       .finally(() => mounted && setLoading(false));
     return () => {
       mounted = false;
@@ -354,7 +355,8 @@ export default function ArtisanalSiteForm() {
       await artisanalSiteService.saveSite(form);
       navigate('/artisan-sites');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "L'enregistrement du site a échoué.");
+      setError(messageErreurUtilisateur(reason));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSaving(false);
     }

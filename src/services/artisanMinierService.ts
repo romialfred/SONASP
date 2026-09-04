@@ -5,6 +5,28 @@ import { genererNumeroCarte } from './carteNumberService';
 export type TypeArtisan = 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur';
 export type TypePersonne = 'physique' | 'morale';
 
+/**
+ * Champs `date` et `uuid` nullables : une chaine vide « '' » n'est pas une valeur
+ * valide et PostgreSQL rejette l'ecriture (« invalid input syntax for type date/uuid »).
+ * Le formulaire initialise ces champs a '' ; on les ramene a `null` avant l'ecriture.
+ */
+const CHAMPS_VIDES_VERS_NULL_ARTISAN = [
+  'date_naissance',
+  'date_delivrance_piece',
+  'date_expiration_piece',
+  'artisanal_site_id',
+] as const;
+
+const normaliserChampsVidesArtisan = <T extends Record<string, unknown>>(valeurs: T): T => {
+  const copie: Record<string, unknown> = { ...valeurs };
+  for (const champ of CHAMPS_VIDES_VERS_NULL_ARTISAN) {
+    if (champ in copie && typeof copie[champ] === 'string' && (copie[champ] as string).trim() === '') {
+      copie[champ] = null;
+    }
+  }
+  return copie as T;
+};
+
 export interface ArtisanMinier {
   id: string;
   /** Nullable en base : la carte est attribuée après enregistrement. */
@@ -40,6 +62,8 @@ export interface ArtisanMinier {
   photo_url?: string | null;
 
   collecteur_id?: string | null;
+  /** Rattachement explicite au site artisanal d'exploitation (FK artisanal_sites). */
+  artisanal_site_id?: string | null;
 
   observations?: string | null;
 
@@ -148,7 +172,7 @@ export const artisanMinierService = {
     const { data, error } = await supabase
       .from('snp_artisans_miniers')
       .insert({
-          ...artisan,
+          ...normaliserChampsVidesArtisan(artisan),
           numero_carte: numeroCarte,
           created_by: user?.id,
           updated_by: user?.id
@@ -169,7 +193,7 @@ export const artisanMinierService = {
     const { data, error } = await supabase
       .from('snp_artisans_miniers')
       .update({
-        ...updates,
+        ...normaliserChampsVidesArtisan(updates),
         updated_by: user?.id
       })
       .eq('id', id)

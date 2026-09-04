@@ -30,6 +30,7 @@ import {
   type StatutTraitementInfraction,
 } from '@/services/artisanInfractionsService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { artisanFullName } from '@/utils/artisanIdentity';
 import { normaliserArtisan } from './artisanRow';
 import './infraction-form.css';
@@ -335,7 +336,7 @@ export default function InfractionForm() {
       setStoredDocuments(documents);
       redirectTimer.current = setTimeout(() => navigate(retour), 1200);
     } catch (reason) {
-      showError(reason instanceof Error ? reason.message : "Erreur lors de l'enregistrement");
+      showError(messageErreurUtilisateur(reason));
     } finally {
       setUploading(false);
       setSaving(false);

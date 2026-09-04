@@ -9,6 +9,7 @@ import Select from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Factory, ArrowLeft, Save, Plus, Trash2, FileText, Download, Upload } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 import { BURKINA_REGIONS } from '@/data/burkinaRegions';
 import { BURKINA_PROVINCES } from '@/data/burkinaProvinces';
@@ -88,6 +89,9 @@ export function MiningCompanyForm() {
   const { showError } = useNotification();
 
   const [loading, setLoading] = useState(false);
+  // Vrai si le chargement de la fiche en édition a échoué : on refuse alors la
+  // soumission pour ne pas écraser l'enregistrement existant par des valeurs vides.
+  const [chargementEchoue, setChargementEchoue] = useState(false);
   const [formData, setFormData] = useState<CompanyForm>(EMPTY_FORM);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [documents, setDocuments] = useState<MiningCompanyDocument[]>([]);
@@ -135,6 +139,8 @@ export function MiningCompanyForm() {
       }
     } catch (error) {
       console.error('Error loading company:', error);
+      setChargementEchoue(true);
+      showError('Chargement', messageErreurUtilisateur(error, 'Impossible de charger la fiche de la société.'));
     }
   };
 
@@ -184,7 +190,7 @@ export function MiningCompanyForm() {
       miningCompanyDocumentService
         .upload(id as string, file, docType)
         .then(loadDocuments)
-        .catch((err) => showError('Document', err.message || 'Échec du téléversement du document.'));
+        .catch((err) => showError('Document', messageErreurUtilisateur(err, 'Échec du téléversement du document.')));
     } else {
       setPendingDocs((prev) => [...prev, { file, docType }]);
     }
@@ -200,8 +206,8 @@ export function MiningCompanyForm() {
     try {
       await miningCompanyDocumentService.remove(doc);
       loadDocuments();
-    } catch (err: any) {
-      showError('Document', err.message || 'Échec de la suppression.');
+    } catch (err) {
+      showError('Document', messageErreurUtilisateur(err, 'Échec de la suppression.'));
     }
   };
 
@@ -210,6 +216,10 @@ export function MiningCompanyForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEdit && chargementEchoue) {
+      showError('Chargement', 'La fiche n’a pas pu être chargée. Rechargez la page avant d’enregistrer pour éviter d’écraser les données existantes.');
+      return;
+    }
     setLoading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -244,8 +254,19 @@ export function MiningCompanyForm() {
       }
       for (const account of bankAccounts) {
         if (account.bank_name && account.account_number) {
+          // On n'insère que les colonnes saisissables : un compte chargé via
+          // select('*') porte id/created_at/stakeholder_* qui, étalés après les clés
+          // ci-dessous, réinséraient l'ancien id (conflit) et écrasaient le lien.
           await supabase.from('stakeholder_bank_accounts').insert({
-            stakeholder_type: 'mining_company', stakeholder_id: companyId, ...account,
+            account_name: account.account_name,
+            bank_name: account.bank_name,
+            bank_country: account.bank_country,
+            account_number: account.account_number,
+            account_currency: account.account_currency,
+            swift_code: account.swift_code || null,
+            is_primary: account.is_primary,
+            stakeholder_type: 'mining_company',
+            stakeholder_id: companyId,
             created_by: userData.user?.id ?? null,
           });
         }
@@ -263,9 +284,9 @@ export function MiningCompanyForm() {
       }
 
       navigateWithAutoRefresh(navigate, '/stakeholders/mining-companies');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving company:', error);
-      showError('Enregistrement', error.message || 'Une erreur est survenue lors de l\'enregistrement.');
+      showError('Enregistrement', messageErreurUtilisateur(error, 'Une erreur est survenue lors de l’enregistrement.'));
     } finally {
       setLoading(false);
     }

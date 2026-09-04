@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowLeft, Contact, Loader2, MapPin, Route, Save, Truck 
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { ChoiceCards, EmptyState, Field, Note, PageHeader, Section, Segmented } from '@/components/ui/sn';
 import { supabase } from '@/lib/supabase';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { useAlert } from '@/hooks/useAlert';
 import type { TransportType } from './TransportCompaniesPage';
 import './admin.css';
@@ -94,7 +94,7 @@ export function TransportCompanyForm() {
         is_active: data.is_active !== false,
       });
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de charger ce transporteur.'));
+      setErreur(messageErreurUtilisateur(reason, 'Impossible de charger ce transporteur.'));
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export function TransportCompanyForm() {
       }
       redirection.current = setTimeout(() => navigate('/admin/transport-companies'), 1200);
     } catch (reason) {
-      const message = errorMessage(reason, 'Enregistrement impossible.');
+      const message = messageErreurUtilisateur(reason, 'Enregistrement impossible.');
       setErreur(message);
       alerte.error(message);
     } finally {

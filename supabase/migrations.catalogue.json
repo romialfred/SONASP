@@ -2330,6 +2330,26 @@
       "sha256": "744c98934a61676b0ff214e7b8ac814db127808640f587e858dc3ab42398efcb"
     },
     {
+      "path": "supabase/migrations/20260904230000_restaurer_gouvernance_sites_artisanaux.sql",
+      "version": "20260904230000",
+      "description": "restaurer_gouvernance_sites_artisanaux",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 2761,
+      "sha256": "5393471aa0e6f5477e22955a2e80d49583fbb3888708ca536f501dd163207fa5"
+    },
+    {
+      "path": "supabase/migrations/20260904233000_durcir_rls_referentiels_nationaux.sql",
+      "version": "20260904233000",
+      "description": "durcir_rls_referentiels_nationaux",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 6216,
+      "sha256": "3155e221b825a8eb54f9354b71fa63ab5921034d857f7c14ede148a5e1e71499"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3323,10 +3343,10 @@
       },
       {
         "digits": 14,
-        "count": 136
+        "count": 138
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "d33bc200ee671e9f61d8da53a82b4968eee65a260fd18d96afbfafd701695afa"
+  "catalogueSha256": "e908245189ad00dbf61ddf2a3cfaa3c8344871b708df81d7341f92a51a6cee68"
 }

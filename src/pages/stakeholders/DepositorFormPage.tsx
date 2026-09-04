@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
 import { ArrowLeft, Shield, Users, Mail, Phone } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   depositorService,
   Depositor,
@@ -175,10 +176,10 @@ export function DepositorFormPage() {
       }
 
       navigate('/stakeholders/depositors');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving depositor:', error);
       showError(
-        error.message || `Impossible de ${isEditMode ? 'modifier' : 'créer'} le dépositaire`
+        messageErreurUtilisateur(error, `Impossible de ${isEditMode ? 'modifier' : 'créer'} le dépositaire.`)
       );
     } finally {
       setIsSubmitting(false);

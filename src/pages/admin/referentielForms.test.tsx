@@ -163,8 +163,10 @@ describe('RefineryForm', () => {
     remplir();
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer la raffinerie/ }));
 
-    await waitFor(() => expect(screen.getByText('écriture refusée')).toBeInTheDocument());
-    expect(mocks.erreur).toHaveBeenCalledWith('écriture refusée');
+    // Le message PostgREST brut (objet sans code) n'est plus divulgué à l'utilisateur :
+    // on affiche un repli propre. La cause réelle reste dans la console de diagnostic.
+    await waitFor(() => expect(screen.getByText('Enregistrement impossible.')).toBeInTheDocument());
+    expect(mocks.erreur).toHaveBeenCalledWith('Enregistrement impossible.');
   });
 });
 

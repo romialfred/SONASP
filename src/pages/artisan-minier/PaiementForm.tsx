@@ -27,6 +27,7 @@ import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   BankTransferLogo,
   CashLogo,
@@ -411,9 +412,7 @@ export default function PaiementForm() {
 
       navigate('/artisan-minier/paiements');
     } catch (reason) {
-      showError(reason instanceof Error
-        ? reason.message
-        : "L'enregistrement du paiement a échoué. Aucune écriture n'a été effectuée.");
+      showError(messageErreurUtilisateur(reason));
     } finally {
       setSubmitting(false);
     }
@@ -506,7 +505,7 @@ export default function PaiementForm() {
                     <button
                       type="button"
                       className="sn-btn sn-btn--primary"
-                      onClick={() => navigate(`/artisan-minier/${vente.artisan_id}/modifier`)}
+                      onClick={() => navigate(`/artisan-minier/${vente.artisan_id}/edit`)}
                     >
                       <UserRound aria-hidden="true" /> Ouvrir la fiche de l’artisan
                     </button>
@@ -581,7 +580,7 @@ export default function PaiementForm() {
                 <button
                   type="button"
                   className="sn-btn paiement-form__modifier-moyen"
-                  onClick={() => navigate(`/artisan-minier/${vente.artisan_id}/modifier`)}
+                  onClick={() => navigate(`/artisan-minier/${vente.artisan_id}/edit`)}
                 >
                   <UserRound aria-hidden="true" /> Corriger sur la fiche de l’artisan
                 </button>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeft, ArrowRight, Building2, Check, KeyRound, Loader2, Mail, Save, ShieldCheck, UserRound } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, Building2, Check, ChevronDown, KeyRound, Loader2, Mail, Save, ShieldCheck, UserRound } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Field, Note, PageHeader, Section } from '@/components/ui/sn';
@@ -15,6 +15,31 @@ import './admin.css';
 
 const stepLabels = ['Catégorie', 'Ressource', 'Portail', 'Rôle', 'Autorisations'];
 const permissionNames: Record<string, string> = { view: 'Voir', create: 'Créer', edit: 'Modifier', delete: 'Supprimer', submit: 'Soumettre', validate: 'Valider', approve: 'Approuver', reject: 'Rejeter', export: 'Exporter', download: 'Télécharger', admin: 'Administrer' };
+const RESOURCE_PAGE_SIZE = 20;
+const resourceDetailLabels: Record<string, string> = {
+  raison_sociale: 'Raison sociale', registre: 'Registre', identifiant_fiscal: 'Identifiant fiscal',
+  pays: 'Pays', type: 'Type', forme_juridique: 'Forme juridique', region: 'Région',
+  sous_type: 'Sous-type', type_personne: 'Type de personne', type_acteur: 'Type d’acteur',
+  numero_carte: 'Numéro de carte', registre_commerce: 'Registre du commerce',
+  type_exploitation: 'Type d’exploitation', province: 'Province',
+  superficie_hectares: 'Superficie', mineurs_actifs: 'Mineurs actifs',
+};
+
+export function resourceDetailRows(resource: AccessResource): Array<[string, string]> {
+  const primary: Array<[string, unknown]> = [
+    ['Nom', resource.display_name], ['Nom complémentaire', resource.secondary_name],
+    ['Code / identifiant', resource.code], ['Adresse e-mail', resource.email],
+    ['Téléphone', resource.phone], ['Adresse', resource.address],
+    ['Responsable / représentant', resource.representative],
+    ['Organisation', resource.organization_name], ['Statut', resource.status],
+  ];
+  const details: Array<[string, unknown]> = Object.entries(resource.details ?? {})
+    .filter(([key]) => key !== 'site_id')
+    .map(([key, value]) => [resourceDetailLabels[key] ?? key.replaceAll('_', ' '), value]);
+  return [...primary, ...details]
+    .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '')
+    .map(([label, value]) => [label, typeof value === 'boolean' ? (value ? 'Oui' : 'Non') : String(value)]);
+}
 
 export function AccessUserWizardPage() {
   const navigate = useNavigate(); const [searchParams] = useSearchParams(); const { addToast } = useToast();
@@ -28,6 +53,7 @@ export function AccessUserWizardPage() {
   const [categoryCode, setCategoryCode] = useState(''); const [resourceId, setResourceId] = useState('');
   const [portalId, setPortalId] = useState(''); const [roleId, setRoleId] = useState('');
   const [query, setQuery] = useState(''); const [restricted, setRestricted] = useState<Set<string>>(new Set());
+  const [hasMoreResources, setHasMoreResources] = useState(false);
   const [identity, setIdentity] = useState({ fullName: '', email: '', phone: '', jobTitle: '', department: '', active: true });
   const [restrictionReason, setRestrictionReason] = useState('Restriction individuelle validée lors de la création du compte.');
   const [initialAssignment, setInitialAssignment] = useState<UserAccessAssignment | null>(null);
@@ -53,12 +79,12 @@ export function AccessUserWizardPage() {
     return () => { active = false; };
   }, [userId]);
   useEffect(() => {
-    setResourceId(''); setPortalId(''); setRoleId(''); setResources([]); setPortals([]); setRoles([]); setMatrix([]); setRestricted(new Set());
+    setResourceId(''); setPortalId(''); setRoleId(''); setResources([]); setPortals([]); setRoles([]); setMatrix([]); setRestricted(new Set()); setHasMoreResources(false);
     if (!categoryCode) return;
     let active = true; setLoading(true); setError(null);
     const selected = categories.find(({ code }) => code === categoryCode);
     const resourceRequest = selected?.resource_kind === 'identity' ? Promise.resolve([]) : accessGovernanceService.searchResources(categoryCode, query);
-    void Promise.all([resourceRequest, accessGovernanceService.listCompatiblePortals(categoryCode)]).then(([resourceRows, portalRows]) => { if (active) { setResources(resourceRows); setPortals(portalRows); if (initialAssignment?.actor_category_code === categoryCode) { setResourceId(initialAssignment.resource_id ?? ''); setPortalId(initialAssignment.portal_id); } } }).catch((reason) => active && setError(errorMessage(reason, 'Référentiel compatible indisponible.'))).finally(() => active && setLoading(false));
+    void Promise.all([resourceRequest, accessGovernanceService.listCompatiblePortals(categoryCode)]).then(([resourceRows, portalRows]) => { if (active) { setResources(resourceRows); setHasMoreResources(resourceRows.length === RESOURCE_PAGE_SIZE); setPortals(portalRows); if (initialAssignment?.actor_category_code === categoryCode) { setResourceId(initialAssignment.resource_id ?? ''); setPortalId(initialAssignment.portal_id); } } }).catch((reason) => active && setError(errorMessage(reason, 'Référentiel compatible indisponible.'))).finally(() => active && setLoading(false));
     return () => { active = false; };
   // La recherche est déclenchée explicitement pour éviter de réinitialiser le parcours à chaque frappe.
   }, [categoryCode, categories]);
@@ -76,9 +102,18 @@ export function AccessUserWizardPage() {
     return () => { active = false; };
   }, [roleId, userId]);
 
-  const searchResources = async () => {
+  const searchResources = async (append = false) => {
     if (!category || category.resource_kind === 'identity') return;
-    setLoading(true); try { setResources(await accessGovernanceService.searchResources(category.code, query)); } catch (reason) { setError(errorMessage(reason, 'Recherche impossible.')); } finally { setLoading(false); }
+    setLoading(true); setError(null);
+    try {
+      const offset = append ? resources.length : 0;
+      const rows = await accessGovernanceService.searchResources(category.code, query, offset, RESOURCE_PAGE_SIZE);
+      setResources((current) => append
+        ? [...current, ...rows.filter((row) => !current.some(({ id }) => id === row.id))]
+        : rows);
+      setHasMoreResources(rows.length === RESOURCE_PAGE_SIZE);
+      if (!append && resourceId && !rows.some(({ id }) => id === resourceId)) setResourceId('');
+    } catch (reason) { setError(errorMessage(reason, 'Recherche impossible.')); } finally { setLoading(false); }
   };
   const rowsByModule = useMemo(() => {
     const groups = new Map<string, EffectivePermissionRow[]>();
@@ -130,16 +165,16 @@ export function AccessUserWizardPage() {
     {error && <Note tone="danger" icon={AlertTriangle}>{error}</Note>}
     {loading && <div className="admin-page__loading"><Loader2 className="sn-spin" /> Chargement du référentiel…</div>}
     {step === 1 && <Section id="wizard-category" icon={UserRound} title="1. Catégorie d’acteur" description="Le choix de catégorie détermine les ressources, portails et rôles proposés.">
-      <div className="access-choice-grid">{categories.map((item) => <button type="button" key={item.code} className={categoryCode === item.code ? 'is-selected' : ''} onClick={() => { setInitialAssignment(null); setCategoryCode(item.code); }}><Building2 /><span><strong>{item.name}</strong><small>{item.description}</small></span></button>)}</div>
+      <div className="access-choice-grid">{categories.map((item) => <button type="button" key={item.code} aria-pressed={categoryCode === item.code} className={categoryCode === item.code ? 'is-selected' : ''} onClick={() => { setInitialAssignment(null); setQuery(''); setCategoryCode(item.code); }}><Building2 /><span><strong>{item.name}</strong><small>{item.description}</small></span></button>)}</div>
       <div className="sn-form-grid"><Field label="Nom complet" required><input className="sn-input" value={identity.fullName} onChange={(e) => setIdentity({ ...identity, fullName: e.target.value })} /></Field><Field label="Identifiant / adresse e-mail" required hint={isEdit ? 'L’identifiant de connexion ne peut pas être modifié ici.' : undefined}><input className="sn-input" type="email" disabled={isEdit} value={identity.email} onChange={(e) => setIdentity({ ...identity, email: e.target.value })} /></Field><Field label="Téléphone"><input className="sn-input" value={identity.phone} onChange={(e) => setIdentity({ ...identity, phone: e.target.value })} /></Field><Field label="Fonction"><input className="sn-input" value={identity.jobTitle} onChange={(e) => setIdentity({ ...identity, jobTitle: e.target.value })} /></Field><Field label="Direction / service"><input className="sn-input" value={identity.department} onChange={(e) => setIdentity({ ...identity, department: e.target.value })} /></Field><Field label="Sécurité"><span className="access-switch"><input type="checkbox" checked={identity.active} onChange={(e) => setIdentity({ ...identity, active: e.target.checked })} /> Compte actif · MFA obligatoire</span></Field></div>
     </Section>}
     {step === 2 && <Section id="wizard-resource" icon={Building2} tone="blue" title="2. Ressource de rattachement" description="Les données proviennent des référentiels métier réels de la plateforme.">
-      {category?.resource_kind === 'identity' ? <Note tone="info" icon={ShieldCheck}>Compte institutionnel sans ressource métier externe.</Note> : <><div className="access-search"><input className="sn-input" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nom, code, carte ou téléphone" /><button className="sn-btn" type="button" onClick={() => void searchResources()}>Rechercher</button></div>{resources.length === 0 ? <EmptyState title="Aucune ressource compatible" description="Affinez la recherche ou vérifiez que le référentiel contient une ressource active." /> : <div className="access-choice-grid">{resources.map((item) => <button type="button" key={item.id} className={resourceId === item.id ? 'is-selected' : ''} onClick={() => setResourceId(item.id)}><Building2 /><span><strong>{item.display_name}</strong><small>{[item.code,item.secondary_name,item.organization_name,item.status].filter(Boolean).join(' · ')}</small></span></button>)}</div>}</>}
+      {category?.resource_kind === 'identity' ? <Note tone="info" icon={ShieldCheck}>Compte institutionnel sans ressource métier externe.</Note> : <div className="access-resource-layout"><div><div className="access-search"><input className="sn-input" type="search" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void searchResources(); } }} placeholder="Nom, raison sociale, code, carte ou téléphone" /><button className="sn-btn" type="button" onClick={() => void searchResources()}>Rechercher</button></div>{resources.length === 0 ? <EmptyState title="Aucune ressource compatible" description="Affinez la recherche ou vérifiez que le référentiel contient une ressource active." /> : <><div className="access-choice-grid access-resource-grid">{resources.map((item) => <button type="button" key={item.id} aria-pressed={resourceId === item.id} className={resourceId === item.id ? 'is-selected' : ''} onClick={() => setResourceId(item.id)}><Building2 /><span><strong>{item.display_name}</strong><small>{[item.code,item.secondary_name,item.organization_name,item.status].filter(Boolean).join(' · ')}</small></span></button>)}</div>{hasMoreResources && <button type="button" className="sn-btn access-load-more" disabled={loading} onClick={() => void searchResources(true)}><ChevronDown /> Afficher davantage</button>}</>}</div><aside className="access-resource-detail" aria-live="polite">{resource ? <><header><div><small>Ressource sélectionnée</small><h3>{resource.display_name}</h3></div><Badge tone={resource.status.toLowerCase() === 'actif' ? 'success' : 'warning'}>{resource.status}</Badge></header><dl>{resourceDetailRows(resource).map(([label, value]) => <div key={`${label}:${value}`}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></> : <EmptyState title="Aucune ressource sélectionnée" description="Sélectionnez une personne ou une organisation pour vérifier sa fiche institutionnelle." />}</aside></div>}
     </Section>}
     {step === 3 && <Section id="wizard-portal" icon={ShieldCheck} tone="emerald" title="3. Portail d’accès" description="Seuls les portails actifs compatibles avec la catégorie sont proposés."><div className="access-choice-grid">{portals.map((item) => <button type="button" key={item.id} className={portalId === item.id ? 'is-selected' : ''} onClick={() => setPortalId(item.id)}><ShieldCheck /><span><strong>{item.name}</strong><small>{item.description}</small></span></button>)}</div></Section>}
     {step === 4 && <Section id="wizard-role" icon={KeyRound} tone="violet" title="4. Rôle précis" description="Le rôle est lié au portail choisi et filtre automatiquement les droits possibles.">{roles.length === 0 ? <EmptyState title="Aucun rôle compatible" description="Configurez un rôle actif pour cette catégorie et ce portail." /> : <div className="access-choice-grid">{roles.map((item) => <button type="button" key={item.id} className={roleId === item.id ? 'is-selected' : ''} onClick={() => setRoleId(item.id)}><KeyRound /><span><strong>{item.name}</strong><small>{item.description || item.code}</small></span></button>)}</div>}</Section>}
     {step === 5 && <Section id="wizard-effective" icon={ShieldCheck} title="5. Matrice effective et validation" description="Vous pouvez seulement retirer un droit du rôle ; aucun droit individuel ne peut être ajouté.">
-      <div className="access-summary"><div><small>Catégorie</small><strong>{category?.name}</strong></div><div><small>Ressource</small><strong>{resource?.display_name || 'Institution SONASP'}</strong></div><div><small>Portail</small><strong>{portal?.name}</strong></div><div><small>Rôle</small><strong>{role?.name}</strong></div></div>
+      <div className="access-summary"><div><small>Catégorie</small><strong>{category?.name}</strong></div><div><small>Ressource</small><strong>{category?.resource_kind === 'identity' ? 'Institution SONASP' : resource?.display_name || 'Ressource enregistrée'}</strong></div><div><small>Portail</small><strong>{portal?.name}</strong></div><div><small>Rôle</small><strong>{role?.name}</strong></div></div>
       <div className="access-matrix-wrap"><table className="access-matrix"><caption className="sr-only">Autorisations effectives du futur utilisateur</caption><thead><tr><th>Module</th><th>Autorisations du rôle</th><th>Restriction individuelle</th></tr></thead><tbody>{rowsByModule.map((rows) => <tr key={rows[0].module_id}><th><strong>{rows[0].module_name}</strong><small>{rows[0].module_code}</small></th><td><div className="access-badges">{rows.filter(({ effective }) => effective).map((row) => <Badge key={row.permission_code} tone="success">{permissionNames[row.permission_code]}</Badge>)}</div></td><td><div className="access-badges">{rows.filter(({ effective }) => effective).map((row) => { const key = `${row.module_id}:${row.permission_code}`; return <label key={key} className={restricted.has(key) ? 'is-restricted' : ''}><input type="checkbox" checked={restricted.has(key)} onChange={() => toggleRestriction(row)} /> Retirer {permissionNames[row.permission_code]}</label>; })}</div></td></tr>)}</tbody></table></div>
       {restricted.size > 0 && <Field label="Motif des restrictions" required><textarea className="sn-input" rows={2} value={restrictionReason} onChange={(e) => setRestrictionReason(e.target.value)} /></Field>}
       <Note tone="warning" icon={Mail}>À validation, le compte sera créé de manière atomique et un lien d’activation à usage unique sera envoyé. L’enrôlement MFA est obligatoire.</Note>

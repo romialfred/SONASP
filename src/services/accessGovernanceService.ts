@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type {
   AccessAuditEvent,
+  AccessAuditActor,
   AccessAuditFilters,
   AccessModuleNode,
   AccessPortal,
@@ -239,6 +240,10 @@ export const accessGovernanceService = {
     return asArray<AccessAuditEvent>(await rpc('snp_access_audit_feed', {
       p_filters: filters,
     }));
+  },
+
+  async listAuditActors(): Promise<AccessAuditActor[]> {
+    return asArray<AccessAuditActor>(await rpc('snp_access_audit_actors'));
   },
 
   async exportAuditEvents(filters: AccessAuditFilters): Promise<AccessAuditEvent[]> {

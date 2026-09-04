@@ -4,7 +4,7 @@ import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLa
 import { Badge, EmptyState, Field, Note, PageHeader, Section } from '@/components/ui/sn';
 import { errorMessage } from '@/lib/errorMessage';
 import { accessGovernanceService } from '@/services/accessGovernanceService';
-import type { AccessAuditEvent, AccessAuditFilters, AccessPortal, AccessRole } from '@/types/accessGovernance';
+import type { AccessAuditActor, AccessAuditEvent, AccessAuditFilters, AccessPortal, AccessRole } from '@/types/accessGovernance';
 import './admin.css';
 
 const escapeCsv = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
@@ -14,6 +14,7 @@ export function AccessAuditPage() {
   const [events, setEvents] = useState<AccessAuditEvent[]>([]);
   const [portals, setPortals] = useState<AccessPortal[]>([]);
   const [roles, setRoles] = useState<AccessRole[]>([]);
+  const [actors, setActors] = useState<AccessAuditActor[]>([]);
   const [filters, setFilters] = useState<AccessAuditFilters>({ query: '', from: '', to: '', portalCode: '', roleCode: '', action: '', result: '', offset: 0, limit: 100 });
   const [selected, setSelected] = useState<AccessAuditEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,10 +23,10 @@ export function AccessAuditPage() {
   const load = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const [rows, portalRows, roleRows] = await Promise.all([
-        accessGovernanceService.listAuditEvents(filters), accessGovernanceService.listPortals(true), accessGovernanceService.listRoles(undefined, true),
+      const [rows, portalRows, roleRows, actorRows] = await Promise.all([
+        accessGovernanceService.listAuditEvents(filters), accessGovernanceService.listPortals(true), accessGovernanceService.listRoles(undefined, true), accessGovernanceService.listAuditActors(),
       ]);
-      setEvents(rows); setPortals(portalRows); setRoles(roleRows);
+      setEvents(rows); setPortals(portalRows); setRoles(roleRows); setActors(actorRows);
     } catch (reason) { setError(errorMessage(reason, 'Impossible de charger l’audit des accès.')); }
     finally { setLoading(false); }
   }, [filters]);
@@ -54,6 +55,7 @@ export function AccessAuditPage() {
         <Field label="Recherche"><input className="sn-input" type="search" value={filters.query} onChange={(e) => setFilter('query', e.target.value)} placeholder="Acteur, cible, objet ou motif" /></Field>
         <Field label="Du"><input className="sn-input" type="date" value={filters.from} onChange={(e) => setFilter('from', e.target.value)} /></Field>
         <Field label="Au"><input className="sn-input" type="date" value={filters.to} onChange={(e) => setFilter('to', e.target.value)} /></Field>
+        <Field label="Utilisateur"><select className="sn-input" value={filters.actorId ?? ''} onChange={(e) => setFilter('actorId', e.target.value)}><option value="">Tous les utilisateurs</option>{actors.map((actor) => <option key={actor.id} value={actor.id}>{actor.full_name || actor.email || actor.id} · {actor.event_count} événement(s)</option>)}</select></Field>
         <Field label="Portail"><select className="sn-input" value={filters.portalCode} onChange={(e) => setFilter('portalCode', e.target.value)}><option value="">Tous</option>{portals.map((portal) => <option key={portal.id} value={portal.code}>{portal.name}</option>)}</select></Field>
         <Field label="Rôle"><select className="sn-input" value={filters.roleCode} onChange={(e) => setFilter('roleCode', e.target.value)}><option value="">Tous</option>{roles.map((role) => <option key={role.id} value={role.code}>{role.name}</option>)}</select></Field>
         <Field label="Action"><select className="sn-input" value={filters.action} onChange={(e) => setFilter('action', e.target.value)}><option value="">Toutes</option>{actions.map((action) => <option key={action}>{action}</option>)}</select></Field>

@@ -148,6 +148,13 @@ export interface AccessAuditEvent {
   new_values: Record<string, unknown>;
 }
 
+export interface AccessAuditActor {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  event_count: number;
+}
+
 export interface AccessAuditFilters {
   query?: string;
   from?: string;

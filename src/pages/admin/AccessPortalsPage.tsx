@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Archive, Loader2, PanelsTopLeft, Plus, Save, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Archive, CheckCheck, Loader2, PanelsTopLeft, Plus, Save, ShieldCheck, XCircle } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Field, Note, PageHeader, Section } from '@/components/ui/sn';
 import { useToast } from '@/components/ui/Toast';
+import { useConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { errorMessage } from '@/lib/errorMessage';
 import {
@@ -18,12 +19,28 @@ const emptyEditor = () => ({
   reason: '', configuration: null as PortalConfiguration | null,
 });
 
+export function portalConfigurationImpact(
+  initial: PortalConfiguration | null,
+  current: PortalConfiguration | null,
+) {
+  const initialGroups = new Map(initial?.groups.map((group) => [group.code, group]) ?? []);
+  const initialModules = new Map(initial?.modules.map((module) => [module.id, module]) ?? []);
+  return {
+    activeGroups: current?.groups.filter(({ is_active }) => is_active).length ?? 0,
+    activeModules: current?.modules.filter(({ is_portal_active }) => is_portal_active).length ?? 0,
+    disabledGroups: current?.groups.filter((group) => initialGroups.get(group.code)?.is_active && !group.is_active).length ?? 0,
+    disabledModules: current?.modules.filter((module) => initialModules.get(module.id)?.is_portal_active && !module.is_portal_active).length ?? 0,
+  };
+}
+
 export function AccessPortalsPage() {
   const { user } = useAuth();
   const { addToast } = useToast();
+  const { open: requestConfirmation, ConfirmationDialog } = useConfirmationDialog();
   const [portals, setPortals] = useState<AccessPortal[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editor, setEditor] = useState(emptyEditor);
+  const [initialConfiguration, setInitialConfiguration] = useState<PortalConfiguration | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +69,7 @@ export function AccessPortalsPage() {
         description: portal.description ?? '', institutionalScope: portal.institutional_scope ?? '',
         isActive: portal.is_active, reason: '', configuration,
       });
+      setInitialConfiguration(configuration);
     }).catch((reason) => active && setError(errorMessage(reason, 'Configuration du portail indisponible.')));
     return () => { active = false; };
   }, [selectedId]);
@@ -61,6 +79,7 @@ export function AccessPortalsPage() {
     try {
       const configuration = await accessGovernanceService.getPortalConfiguration();
       setEditor({ ...emptyEditor(), configuration });
+      setInitialConfiguration(configuration);
     } catch (reason) { setError(errorMessage(reason, 'Référentiel des modules indisponible.')); }
   };
   const setGroup = (code: string, field: 'is_active' | 'is_visible', value: boolean) =>
@@ -73,11 +92,50 @@ export function AccessPortalsPage() {
       ...current.configuration,
       modules: current.configuration.modules.map((module) => module.id === id ? { ...module, [field]: value } : module),
     } }) : current);
+  const setGroupAndModules = (code: string, enabled: boolean) => setEditor((current) => (
+    current.configuration ? ({ ...current, configuration: {
+      ...current.configuration,
+      groups: current.configuration.groups.map((group) => group.code === code
+        ? { ...group, is_active: enabled, is_visible: enabled }
+        : group),
+      modules: current.configuration.modules.map((module) => module.group_code === code
+        ? {
+            ...module,
+            is_portal_active: enabled && module.is_globally_active,
+            is_portal_visible: enabled && module.is_globally_active,
+          }
+        : module),
+    } }) : current
+  ));
+
+  const impact = useMemo(
+    () => portalConfigurationImpact(initialConfiguration, editor.configuration),
+    [editor.configuration, initialConfiguration],
+  );
 
   const save = async () => {
     if (!editor.configuration || saving) return;
     if (!editor.name.trim() || !editor.code.trim() || editor.reason.trim().length < 10) {
       setError('Renseignez le code, le nom et un motif détaillé d’au moins 10 caractères.'); return;
+    }
+    const existing = editor.configuration?.portal;
+    const portalDeactivated = Boolean(existing?.is_active && !editor.isActive);
+    if (portalDeactivated || impact.disabledGroups > 0 || impact.disabledModules > 0) {
+      const confirmed = await requestConfirmation({
+        title: portalDeactivated ? 'Désactiver ce portail ?' : 'Confirmer la réduction du périmètre ?',
+        message: portalDeactivated
+          ? `Le portail « ${editor.name} » deviendra immédiatement inaccessible à tous ses rôles et utilisateurs.`
+          : 'Les groupes ou modules désactivés disparaîtront de la navigation et leurs routes seront refusées.',
+        confirmText: portalDeactivated ? 'Désactiver le portail' : 'Enregistrer les restrictions',
+        cancelText: 'Revenir à la configuration',
+        severity: portalDeactivated ? 'danger' : 'warning',
+        impacts: [
+          `${impact.disabledGroups} groupe(s) nouvellement désactivé(s)`,
+          `${impact.disabledModules} module(s) nouvellement désactivé(s)`,
+          `${existing?.role_count ?? 0} rôle(s) et ${existing?.user_count ?? 0} utilisateur(s) rattaché(s)`,
+        ],
+      });
+      if (!confirmed) return;
     }
     setSaving(true); setError(null);
     try {
@@ -100,7 +158,18 @@ export function AccessPortalsPage() {
     if (!editor.id || !isOwner || editor.reason.trim().length < 10 || saving) {
       setError('Un motif détaillé est obligatoire avant l’archivage.'); return;
     }
-    if (!window.confirm(`Archiver définitivement le portail « ${editor.name} » ?`)) return;
+    const confirmed = await requestConfirmation({
+      title: 'Archiver ce portail ?',
+      message: `Le portail « ${editor.name} » ne sera plus proposé, mais ses affectations resteront traçables dans l’audit.`,
+      confirmText: 'Archiver le portail',
+      cancelText: 'Annuler',
+      severity: 'danger',
+      impacts: [
+        `${editor.configuration?.portal?.role_count ?? 0} rôle(s) rattaché(s)`,
+        `${editor.configuration?.portal?.user_count ?? 0} utilisateur(s) rattaché(s)`,
+      ],
+    });
+    if (!confirmed) return;
     setSaving(true);
     try {
       await accessGovernanceService.archivePortal(editor.id, editor.reason.trim());
@@ -140,8 +209,9 @@ export function AccessPortalsPage() {
                 <Field label="État"><label className="access-switch"><input type="checkbox" checked={editor.isActive} onChange={(e) => setEditor({ ...editor, isActive: e.target.checked })} /> Portail actif</label></Field>
                 <Field label="Description" wide><textarea className="sn-input" rows={2} value={editor.description} onChange={(e) => setEditor({ ...editor, description: e.target.value })} /></Field>
               </div>
+              <div className="access-impact-summary" aria-label="Impact de la configuration"><div><small>Groupes actifs</small><strong>{impact.activeGroups}</strong></div><div><small>Modules actifs</small><strong>{impact.activeModules}</strong></div><div><small>Rôles rattachés</small><strong>{editor.configuration.portal?.role_count ?? 0}</strong></div><div><small>Utilisateurs concernés</small><strong>{editor.configuration.portal?.user_count ?? 0}</strong></div></div>
               <h4 className="access-subtitle">Groupes de navigation</h4>
-              <div className="access-toggle-grid">{editor.configuration.groups.map((group) => <div className="access-toggle" key={group.code}><strong>{group.name}</strong><label><input type="checkbox" checked={group.is_active} onChange={(e) => setGroup(group.code, 'is_active', e.target.checked)} /> Actif</label><label><input type="checkbox" checked={group.is_visible} disabled={!group.is_active} onChange={(e) => setGroup(group.code, 'is_visible', e.target.checked)} /> Visible</label></div>)}</div>
+              <div className="access-toggle-grid">{editor.configuration.groups.map((group) => <div className="access-toggle access-toggle--group" key={group.code}><strong>{group.name}</strong><div className="access-toggle__state"><label><input type="checkbox" checked={group.is_active} onChange={(e) => setGroup(group.code, 'is_active', e.target.checked)} /> Actif</label><label><input type="checkbox" checked={group.is_visible} disabled={!group.is_active} onChange={(e) => setGroup(group.code, 'is_visible', e.target.checked)} /> Visible</label></div><div className="access-toggle__actions"><button type="button" onClick={() => setGroupAndModules(group.code, true)}><CheckCheck /> Tout activer</button><button type="button" onClick={() => setGroupAndModules(group.code, false)}><XCircle /> Tout désactiver</button></div></div>)}</div>
               <h4 className="access-subtitle">Modules du portail</h4>
               <div className="access-module-list">{editor.configuration.modules.map((module) => <div key={module.id}><span><strong>{module.name}</strong><small>{module.group_name || 'Sans groupe'} · {module.code}</small></span><label><input type="checkbox" checked={module.is_portal_active} disabled={!module.is_globally_active} onChange={(e) => setModule(module.id, 'is_portal_active', e.target.checked)} /> Actif</label><label><input type="checkbox" checked={module.is_portal_visible} disabled={!module.is_portal_active} onChange={(e) => setModule(module.id, 'is_portal_visible', e.target.checked)} /> Menu</label></div>)}</div>
               <Field label="Motif de la modification" required hint="Au moins 10 caractères ; il sera conservé dans l’audit."><textarea className="sn-input" rows={2} value={editor.reason} onChange={(e) => setEditor({ ...editor, reason: e.target.value })} /></Field>
@@ -153,6 +223,7 @@ export function AccessPortalsPage() {
           </Section>
         </div>
       </div>
+      <ConfirmationDialog />
     </NationalDashboardLayout>
   );
 }

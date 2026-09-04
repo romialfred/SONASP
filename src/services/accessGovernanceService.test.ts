@@ -48,4 +48,12 @@ describe('accessGovernanceService', () => {
       reason: 'Tentative de création du portail DGI',
     })).rejects.toThrow('Création réservée au Super Administrateur.');
   });
+
+  it('charge le référentiel serveur des acteurs de l’audit', async () => {
+    rpcMock.mockResolvedValue({ data: [{ id: 'actor-1', email: 'agent@example.test', full_name: 'Agent DGI', event_count: 12 }], error: null });
+    await expect(accessGovernanceService.listAuditActors()).resolves.toEqual([
+      { id: 'actor-1', email: 'agent@example.test', full_name: 'Agent DGI', event_count: 12 },
+    ]);
+    expect(rpcMock).toHaveBeenCalledWith('snp_access_audit_actors', {});
+  });
 });

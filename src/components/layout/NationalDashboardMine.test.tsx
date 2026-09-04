@@ -14,6 +14,7 @@ vi.mock('@/contexts/AuthContext', () => ({
       full_name: 'Responsable Mine',
       email: 'mine@example.test',
       role: 'mine',
+      access_role_name: 'Responsable des opérations',
       is_active: true,
       mining_company_id: 'mine-1',
     },
@@ -51,8 +52,24 @@ vi.mock('@/services/notificationsService', () => ({
   },
 }));
 
+vi.mock('@/hooks/useCoursOr', () => ({
+  useCoursOr: () => ({
+    cours: { price: 2848.87, timestamp: Date.now(), changePercent24h: 0.42, source: 'Référentiel SONASP' },
+    tauxUsdXof: 598.42,
+    prixGrammeFcfa: 54811,
+    chargement: false,
+    erreur: null,
+    actualiser: vi.fn(),
+  }),
+}));
+
+vi.mock('@/services/liveGoldPriceService', () => ({
+  fetchGoldPriceHistory: vi.fn().mockResolvedValue([]),
+  formatGoldPrice: (value: number) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(value),
+}));
+
 describe('NationalDashboardLayout — espace Mine', () => {
-  it('affiche la mine et réordonne les modules dans le shell ivoire dédié', () => {
+  it('affiche l’identité société dynamique et la navigation métier or/anthracite', () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/portail-mine']}>
         <NationalDashboardLayout><div>Contenu Mine</div></NationalDashboardLayout>
@@ -60,32 +77,42 @@ describe('NationalDashboardLayout — espace Mine', () => {
     );
 
     expect(container.querySelector('.national-shell')).toHaveClass('is-mine');
-    expect(screen.getByRole('heading', { name: 'BMSA' })).toHaveAttribute('title', 'Burkina Mining SA');
-    expect(screen.getByText('Espace société minière')).toBeInTheDocument();
-    expect(within(screen.getAllByRole('complementary', { name: 'Navigation principale' })[0]).getByText('BMSA')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Plateforme SONASP' })).toBeInTheDocument();
+    expect(screen.getByText('Traçabilité et opérations du secteur aurifère')).toBeInTheDocument();
+    expect(screen.getByText('PORTAIL SOCIÉTÉ MINIÈRE')).toBeInTheDocument();
+    expect(screen.getByText('MINE INDUSTRIELLE')).toBeInTheDocument();
 
     const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
-    expect(within(sidebar).getByRole('link', { name: 'Accueil' })).toHaveAttribute('href', '/portail-mine');
-    expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveAttribute('href', '/portail-mine?vue=tableau-de-bord');
-    expect(within(sidebar).getByRole('link', { name: 'Accueil' })).toHaveClass('is-active');
-    expect(within(sidebar).getByRole('region', { name: 'Mon espace' })).toBeInTheDocument();
-    expect(within(sidebar).queryByRole('region', { name: 'Mines industrielles' })).not.toBeInTheDocument();
+    expect(within(sidebar).getByText('ESPACE MINE')).toBeInTheDocument();
+    expect(within(sidebar).getByText('Burkina Mining SA')).toBeInTheDocument();
+    expect(within(sidebar).queryByText('Responsable Mine')).not.toBeInTheDocument();
+    expect(within(sidebar).queryByRole('link', { name: 'Accueil' })).not.toBeInTheDocument();
+    expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveAttribute('href', '/portail-mine');
+    expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveClass('is-active');
+    expect(within(sidebar).getByRole('region', { name: 'Production et prévisions' })).toBeInTheDocument();
+    expect(within(sidebar).getByRole('region', { name: 'Relations SONASP' })).toBeInTheDocument();
+    expect(within(sidebar).getByRole('region', { name: 'Expéditions et ventes' })).toBeInTheDocument();
+    expect(within(sidebar).getByRole('region', { name: 'Stock et raffinage' })).toBeInTheDocument();
+    expect(within(sidebar).getByRole('region', { name: 'Documents et rapports' })).toBeInTheDocument();
+    expect(within(sidebar).getByRole('region', { name: 'Cours de l’or' })).toBeInTheDocument();
+    expect(within(sidebar).getByText('Mise à jour récente')).toBeInTheDocument();
+    expect(within(sidebar).queryByText('Temps réel')).not.toBeInTheDocument();
 
     const labels = within(sidebar)
       .getAllByRole('button')
       .map((button) => button.textContent?.trim())
       .filter(Boolean);
     const production = labels.indexOf('Gestion de la production');
-    const stocks = labels.indexOf('Gestion des stocks');
+    const stocks = labels.indexOf('Position des stocks');
     const expeditions = labels.indexOf('Gestion des expéditions');
-    const ventes = labels.indexOf('Gestion des ventes');
+    const ventes = labels.indexOf('Ventes internationales');
     expect(production).toBeGreaterThan(-1);
-    expect(stocks).toBeGreaterThan(production);
-    expect(expeditions).toBeGreaterThan(stocks);
+    expect(expeditions).toBeGreaterThan(production);
     expect(ventes).toBeGreaterThan(expeditions);
+    expect(stocks).toBeGreaterThan(ventes);
   });
 
-  it('distingue visuellement le tableau de bord de l’accueil', () => {
+  it('maintient l’ancienne URL du tableau de bord sur la même entrée active', () => {
     render(
       <MemoryRouter initialEntries={['/portail-mine?vue=tableau-de-bord']}>
         <NationalDashboardLayout><div>Contenu Mine</div></NationalDashboardLayout>
@@ -94,6 +121,5 @@ describe('NationalDashboardLayout — espace Mine', () => {
 
     const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
     expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveClass('is-active');
-    expect(within(sidebar).getByRole('link', { name: 'Accueil' })).not.toHaveClass('is-active');
   });
 });

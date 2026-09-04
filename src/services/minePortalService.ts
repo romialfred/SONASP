@@ -65,6 +65,7 @@ export interface MinePortalContract {
   numero_contrat: string;
   intitule: string;
   statut: string;
+  date_debut: string;
   date_fin: string;
   quantite_totale: number | null;
   unite: string;
@@ -78,6 +79,7 @@ export interface MinePortalRequest {
   quantite_demandee_oz: number;
   montant_estime_fcfa: number;
   date_limite_reponse: string | null;
+  created_at: string;
   mining_company_id: string;
 }
 
@@ -131,7 +133,38 @@ export interface MinePortalShipment {
   expedition_lot_number: string | null;
   status: string;
   created_at: string;
+  shipped_at: string | null;
   total_weight_oz: number | null;
+  mining_company_id: string;
+}
+
+export interface MinePortalPurchase {
+  id: string;
+  numero_achat: string | null;
+  date_achat: string;
+  quantite_oz: number;
+  quantite_imputee_oz: number;
+  statut: string;
+  contrat_id: string | null;
+  mining_company_id: string;
+}
+
+export interface MinePortalInventory {
+  id: string;
+  entry_date: string;
+  final_fine_oz: number;
+  quantity_available_oz: number;
+  quantity_allocated_oz: number | null;
+  mining_company_id: string;
+}
+
+export interface MinePortalFreightShipment {
+  id: string;
+  reference_number: string;
+  status: string;
+  shipment_date: string;
+  total_bullion_grams: number | null;
+  total_pure_gold_oz: number | null;
   mining_company_id: string;
 }
 
@@ -174,9 +207,14 @@ export interface MinePortalSnapshot {
   analyses: MinePortalAnalysis[];
   requisitions: MinePortalRequisition[];
   shipments: MinePortalShipment[];
+  purchases: MinePortalPurchase[];
+  inventory: MinePortalInventory[];
+  freightShipments: MinePortalFreightShipment[];
   sales: MinePortalSale[];
   documents: MinePortalDocument[];
   situation: MinePortalSituation | null;
+  /** Sources non disponibles. Une collection vide non citée ici représente un vrai zéro. */
+  unavailableSources: string[];
 }
 
 export class MinePortalDataError extends Error {
@@ -293,8 +331,12 @@ function rowsForCompany<T extends { mining_company_id: string }>(
   result: SupabaseResult<T[]>,
   companyId: string,
   source: string,
+  unavailableSources: string[],
 ): T[] {
-  if (result.error) throw new MinePortalDataError(`Impossible de charger ${source}.`);
+  if (result.error) {
+    unavailableSources.push(source);
+    return [];
+  }
   // Filtre défensif : la RLS reste l'autorité, mais une réponse inattendue ne
   // doit jamais être rendue dans le portail d'une autre société.
   return (result.data || []).filter((row) => row.mining_company_id === companyId);
@@ -323,27 +365,43 @@ export const minePortalService = {
     return companyListRequest;
   },
 
-  async load(companyId: string, options: { force?: boolean } = {}): Promise<MinePortalSnapshot> {
+  async load(
+    companyId: string,
+    options: { force?: boolean; startDate?: string; endDate?: string } = {},
+  ): Promise<MinePortalSnapshot> {
     if (!companyId.trim()) throw new MinePortalDataError('Aucune société minière n’est rattachée à ce compte.');
 
-    const pendingRequest = snapshotRequests.get(companyId);
+    const requestKey = `${companyId}:${options.startDate || ''}:${options.endDate || ''}`;
+    const pendingRequest = snapshotRequests.get(requestKey);
     if (pendingRequest && !options.force) return pendingRequest;
 
     const request = (async () => {
 
-    const [companyResult, budgetsResult, monthlyBudgetsResult, forecastsResult, productionsResult, contractsResult, requestsResult, invoicesResult, paymentsResult, analysesResult, requisitionsResult, shipmentsResult, salesResult, documentsResult, situationResult] = await Promise.all([
+    let productionsQuery = supabase
+      .from('daily_production')
+      .select('id, production_date, bullion_grams, estimated_oz, estimated_fineness_pct, bar_reference, status, mining_company_id')
+      .eq('mining_company_id', companyId)
+      .order('production_date', { ascending: false });
+    if (options.startDate) productionsQuery = productionsQuery.gte('production_date', options.startDate);
+    if (options.endDate) productionsQuery = productionsQuery.lte('production_date', options.endDate);
+    productionsQuery = productionsQuery.limit(500);
+
+    const [companyResult, budgetsResult, monthlyBudgetsResult, forecastsResult, productionsResult, contractsResult, requestsResult, invoicesResult, paymentsResult, analysesResult, requisitionsResult, shipmentsResult, purchasesResult, inventoryResult, freightShipmentsResult, salesResult, documentsResult, situationResult] = await Promise.all([
       supabase.from('mining_companies').select('id, name, abbreviation, code, country, region, province, localite, is_active').eq('id', companyId).eq('is_active', true).maybeSingle(),
       supabase.from('annual_budgets').select('id, year, mining_company_id').eq('mining_company_id', companyId).order('year', { ascending: false }).limit(4),
       supabase.from('monthly_budgets').select('id, annual_budget_id, month, budget_oz, daily_budget_oz, mining_company_id').eq('mining_company_id', companyId).order('month', { ascending: true }),
       supabase.from('quarterly_forecasts').select('id, annual_budget_id, quarter, month, revision_date, forecast_oz, daily_forecast_oz, mining_company_id').eq('mining_company_id', companyId).order('revision_date', { ascending: false }).limit(24),
-      supabase.from('daily_production').select('id, production_date, bullion_grams, estimated_oz, estimated_fineness_pct, bar_reference, status, mining_company_id').eq('mining_company_id', companyId).order('production_date', { ascending: false }).limit(30),
-      supabase.from('snp_contrats').select('id, numero_contrat, intitule, statut, date_fin, quantite_totale, unite, mining_company_id').eq('mining_company_id', companyId).order('date_fin', { ascending: true }).limit(6),
-      supabase.from('snp_demandes_achat').select('id, numero_demande, statut, quantite_demandee_oz, montant_estime_fcfa, date_limite_reponse, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(6),
+      productionsQuery,
+      supabase.from('snp_contrats').select('id, numero_contrat, intitule, statut, date_debut, date_fin, quantite_totale, unite, mining_company_id').eq('mining_company_id', companyId).order('date_fin', { ascending: true }).limit(12),
+      supabase.from('snp_demandes_achat').select('id, numero_demande, statut, quantite_demandee_oz, montant_estime_fcfa, date_limite_reponse, created_at, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(12),
       supabase.from('snp_factures_achat').select('id, numero_facture, statut, date_emission, date_echeance, montant_ttc_fcfa, montant_paye_fcfa, devise, mining_company_id').eq('mining_company_id', companyId).order('date_emission', { ascending: false }).limit(6),
       loadPayments(companyId),
       supabase.from('snp_analyses_teneur').select('id, reference, statut, date_prelevement, teneur_declaree_pct, teneur_retenue_pct, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(6),
       supabase.from('snp_requisitions').select('id, reference, objet, statut, date_notification, quantite_oz, unite, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(6),
-      supabase.from('shipping_preparations').select('id, expedition_lot_number, status, created_at, total_weight_oz, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(8),
+      supabase.from('shipping_preparations').select('id, expedition_lot_number, status, created_at, shipped_at, total_weight_oz, mining_company_id').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(12),
+      supabase.from('snp_achats_mines').select('id, numero_achat, date_achat, quantite_oz, quantite_imputee_oz, statut, contrat_id, mining_company_id').eq('mining_company_id', companyId).order('date_achat', { ascending: false }).limit(100),
+      supabase.from('gold_inventory').select('id, entry_date, final_fine_oz, quantity_available_oz, quantity_allocated_oz, mining_company_id').eq('mining_company_id', companyId).order('entry_date', { ascending: false }).limit(100),
+      supabase.from('freight_shipments').select('id, reference_number, status, shipment_date, total_bullion_grams, total_pure_gold_oz, mining_company_id').eq('mining_company_id', companyId).is('deleted_at', null).order('shipment_date', { ascending: false }).limit(50),
       supabase.from('sales').select('id, sale_number, status, sale_date, quantity_oz, final_proceeds, currency, seller_id, seller_type').eq('seller_type', 'mining_company').eq('seller_id', companyId).order('sale_date', { ascending: false }).limit(8),
       supabase.from('mining_company_documents').select('id, mining_company_id, doc_type, file_name, file_path, file_size, mime_type, created_at').eq('mining_company_id', companyId).order('created_at', { ascending: false }).limit(20),
       supabase.rpc('snp_situation_societe', { p_mining_company_id: companyId }).maybeSingle(),
@@ -360,6 +418,9 @@ export const minePortalService = {
       SupabaseResult<MinePortalAnalysis[]>,
       SupabaseResult<MinePortalRequisition[]>,
       SupabaseResult<MinePortalShipment[]>,
+      SupabaseResult<MinePortalPurchase[]>,
+      SupabaseResult<MinePortalInventory[]>,
+      SupabaseResult<MinePortalFreightShipment[]>,
       SupabaseResult<MinePortalSale[]>,
       SupabaseResult<MinePortalDocument[]>,
       SupabaseResult<MinePortalSituation>,
@@ -368,8 +429,9 @@ export const minePortalService = {
     if (companyResult.error || !companyResult.data || companyResult.data.is_active === false) {
       throw new MinePortalDataError('La société minière rattachée est introuvable ou inactive.');
     }
-    if (situationResult.error) throw new MinePortalDataError('Impossible de charger la situation financière.');
-    if (salesResult.error) throw new MinePortalDataError('Impossible de charger les ventes.');
+    const unavailableSources: string[] = [];
+    if (situationResult.error) unavailableSources.push('situation financière');
+    if (salesResult.error) unavailableSources.push('ventes');
 
     const company: MinePortalCompany = {
       id: companyResult.data.id,
@@ -383,31 +445,35 @@ export const minePortalService = {
     };
     return {
       company,
-      budgets: rowsForCompany(budgetsResult, companyId, 'les budgets'),
-      monthlyBudgets: rowsForCompany(monthlyBudgetsResult, companyId, 'les budgets mensuels'),
-      forecasts: rowsForCompany(forecastsResult, companyId, 'les prévisions'),
-      productions: rowsForCompany(productionsResult, companyId, 'la production'),
-      contracts: rowsForCompany(contractsResult, companyId, 'les contrats'),
-      requests: rowsForCompany(requestsResult, companyId, 'les demandes'),
-      invoices: rowsForCompany(invoicesResult, companyId, 'les factures'),
-      payments: rowsForCompany(paymentsResult, companyId, 'les règlements'),
-      analyses: rowsForCompany(analysesResult, companyId, 'les analyses'),
-      requisitions: rowsForCompany(requisitionsResult, companyId, 'les réquisitions'),
-      shipments: rowsForCompany(shipmentsResult, companyId, 'les expéditions'),
+      budgets: rowsForCompany(budgetsResult, companyId, 'budgets', unavailableSources),
+      monthlyBudgets: rowsForCompany(monthlyBudgetsResult, companyId, 'budgets mensuels', unavailableSources),
+      forecasts: rowsForCompany(forecastsResult, companyId, 'prévisions', unavailableSources),
+      productions: rowsForCompany(productionsResult, companyId, 'production', unavailableSources),
+      contracts: rowsForCompany(contractsResult, companyId, 'contrats', unavailableSources),
+      requests: rowsForCompany(requestsResult, companyId, 'demandes', unavailableSources),
+      invoices: rowsForCompany(invoicesResult, companyId, 'factures', unavailableSources),
+      payments: rowsForCompany(paymentsResult, companyId, 'règlements', unavailableSources),
+      analyses: rowsForCompany(analysesResult, companyId, 'analyses', unavailableSources),
+      requisitions: rowsForCompany(requisitionsResult, companyId, 'réquisitions', unavailableSources),
+      shipments: rowsForCompany(shipmentsResult, companyId, 'expéditions', unavailableSources),
+      purchases: rowsForCompany(purchasesResult, companyId, 'achats SONASP', unavailableSources),
+      inventory: rowsForCompany(inventoryResult, companyId, 'stock d’or fin', unavailableSources),
+      freightShipments: rowsForCompany(freightShipmentsResult, companyId, 'fret et raffinage', unavailableSources),
       sales: (salesResult.data || []).filter(
         (sale) => sale.seller_type === 'mining_company' && sale.seller_id === companyId
       ),
-      documents: rowsForCompany(documentsResult, companyId, 'les documents'),
-      situation: situationResult.data || null,
+      documents: rowsForCompany(documentsResult, companyId, 'documents', unavailableSources),
+      situation: situationResult.error ? null : situationResult.data || null,
+      unavailableSources: [...new Set(unavailableSources)],
     };
 
     })();
 
-    if (!options.force) snapshotRequests.set(companyId, request);
+    if (!options.force) snapshotRequests.set(requestKey, request);
     try {
       return await request;
     } finally {
-      if (snapshotRequests.get(companyId) === request) snapshotRequests.delete(companyId);
+      if (snapshotRequests.get(requestKey) === request) snapshotRequests.delete(requestKey);
     }
   },
 

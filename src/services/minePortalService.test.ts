@@ -25,6 +25,18 @@ function builder(table: string) {
   });
   query.order = vi.fn(() => query);
   query.limit = vi.fn(() => query);
+  query.gte = vi.fn((column: string, value: unknown) => {
+    mocks.filters.push({ table, column, value });
+    return query;
+  });
+  query.lte = vi.fn((column: string, value: unknown) => {
+    mocks.filters.push({ table, column, value });
+    return query;
+  });
+  query.is = vi.fn((column: string, value: unknown) => {
+    mocks.filters.push({ table, column, value });
+    return query;
+  });
   query.maybeSingle = vi.fn(async () => response());
   query.then = (resolve: (value: unknown) => unknown) => Promise.resolve(response()).then(resolve);
   return query;
@@ -42,7 +54,7 @@ describe('minePortalService', () => {
       quarterly_forecasts: { data: [], error: null },
       daily_production: { data: [], error: null },
       mining_company_documents: { data: [], error: null },
-      snp_contrats: { data: [{ id: 'c1', numero_contrat: 'CTR-1', intitule: 'Contrat', statut: 'actif', date_fin: '2026-12-31', quantite_totale: 100, unite: 'oz', mining_company_id: 'mine-1' }], error: null },
+      snp_contrats: { data: [{ id: 'c1', numero_contrat: 'CTR-1', intitule: 'Contrat', statut: 'actif', date_debut: '2026-01-01', date_fin: '2026-12-31', quantite_totale: 100, unite: 'oz', mining_company_id: 'mine-1' }], error: null },
       snp_demandes_achat: { data: [], error: null },
       snp_factures_achat: { data: [], error: null },
       snp_reglements_achat: { data: [], error: null },
@@ -52,6 +64,9 @@ describe('minePortalService', () => {
       ], error: null },
       snp_requisitions: { data: [], error: null },
       shipping_preparations: { data: [], error: null },
+      snp_achats_mines: { data: [], error: null },
+      gold_inventory: { data: [], error: null },
+      freight_shipments: { data: [], error: null },
       sales: { data: [], error: null },
     };
     mocks.from.mockImplementation((table: string) => builder(table));
@@ -68,13 +83,14 @@ describe('minePortalService', () => {
       'annual_budgets', 'monthly_budgets', 'quarterly_forecasts', 'daily_production',
       'snp_contrats', 'snp_demandes_achat', 'snp_factures_achat', 'snp_reglements_achat',
       'snp_analyses_teneur', 'snp_requisitions', 'mining_company_documents',
-      'shipping_preparations',
+      'shipping_preparations', 'snp_achats_mines', 'gold_inventory', 'freight_shipments',
     ];
     scopedTables.forEach((table) => {
       expect(mocks.filters).toContainEqual({ table, column: 'mining_company_id', value: 'mine-1' });
     });
     expect(mocks.filters).toContainEqual({ table: 'sales', column: 'seller_type', value: 'mining_company' });
     expect(mocks.filters).toContainEqual({ table: 'sales', column: 'seller_id', value: 'mine-1' });
+    expect(mocks.filters).toContainEqual({ table: 'freight_shipments', column: 'deleted_at', value: null });
     expect(mocks.rpc).toHaveBeenCalledWith('snp_situation_societe', { p_mining_company_id: 'mine-1' });
     expect(snapshot.analyses.map((item) => item.reference)).toEqual(['ANA-1']);
     expect(snapshot.company.name).toBe('Mine A');
@@ -107,9 +123,21 @@ describe('minePortalService', () => {
     expect(companies.map((company) => company.id)).toEqual(['mine-1', 'mine-2']);
   });
 
-  it('échoue proprement si une source du périmètre est indisponible', async () => {
+  it('conserve les autres indicateurs si une source secondaire est indisponible', async () => {
     mocks.responses.snp_factures_achat = { data: null, error: { message: 'offline' } };
-    await expect(minePortalService.load('mine-1')).rejects.toThrow('Impossible de charger les factures.');
+    const snapshot = await minePortalService.load('mine-1');
+
+    expect(snapshot.invoices).toEqual([]);
+    expect(snapshot.unavailableSources).toContain('factures');
+    expect(snapshot.company.name).toBe('Mine A');
+  });
+
+  it('borne la production à la période demandée sans retirer le filtre de société', async () => {
+    await minePortalService.load('mine-1', { startDate: '2025-09-01', endDate: '2026-09-04' });
+
+    expect(mocks.filters).toContainEqual({ table: 'daily_production', column: 'mining_company_id', value: 'mine-1' });
+    expect(mocks.filters).toContainEqual({ table: 'daily_production', column: 'production_date', value: '2025-09-01' });
+    expect(mocks.filters).toContainEqual({ table: 'daily_production', column: 'production_date', value: '2026-09-04' });
   });
 
   it('reste consultable si les colonnes de réception des règlements ne sont pas encore déployées', async () => {

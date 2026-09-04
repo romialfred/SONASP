@@ -1482,35 +1482,86 @@
 .national-shell.is-mine .sn-page form input:focus,
 .national-shell.is-mine .sn-page form select:focus,
 .national-shell.is-mine .sn-page form textarea:focus {
-  border-color: #4b9b7e;
-  outline: 3px solid rgb(15 139 98 / 12%);
+  border-color: #c5901b;
+  outline: 3px solid rgb(197 144 27 / 16%);
   outline-offset: 0;
 }
 
 .national-shell.is-mine {
-  background: #f4f5f1;
+  --mine-charcoal: #26231d;
+  --mine-charcoal-deep: #1f1d18;
+  --mine-gold: #c5901b;
+  --mine-gold-dark: #9b6d0d;
+  --mine-champagne: #f4ead0;
+  --mine-ivory: #fbfaf6;
+  --mine-border: #e4ded0;
+  --mine-text: #211d16;
+  --mine-muted: #6f685e;
+  background: #f4f1ea;
 }
 
 .national-shell.is-mine .national-sidebar {
-  border-right-color: #d7d9d2;
-  color: #18372f;
-  background: #efefea;
-  box-shadow: 8px 0 24px rgb(35 50 44 / 8%);
+  border-right-color: #4c432e;
+  color: #f7f1e3;
+  background: var(--mine-charcoal);
+  box-shadow: 10px 0 30px rgb(31 29 24 / 18%);
 }
 
 .national-shell.is-mine .national-sidebar__brand {
-  height: 86px;
-  flex-basis: 86px;
+  height: 132px;
+  flex-basis: 132px;
   flex-direction: column;
-  padding: 8px 14px 7px;
-  gap: 3px;
-  border-bottom-color: #d8dbd3;
-  background: #f5f4ef;
+  padding: 9px 16px 12px;
+  gap: 8px;
+  border-bottom-color: rgb(244 234 208 / 16%);
+  background: var(--mine-charcoal-deep);
 }
 
 .national-shell.is-mine .national-sidebar__brand img {
-  height: 54px;
-  max-width: 168px;
+  height: 48px;
+  max-width: 166px;
+}
+
+.national-shell.is-mine .national-sidebar__mine-identity {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding-top: 8px;
+  gap: 10px;
+  border-top: 1px solid rgb(244 234 208 / 12%);
+}
+
+.national-shell.is-mine .national-sidebar__mine-identity > svg {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  padding: 7px;
+  color: #fff9e8;
+  background: var(--mine-gold);
+  border-radius: 50%;
+}
+
+.national-shell.is-mine .national-sidebar__mine-identity span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.national-shell.is-mine .national-sidebar__mine-identity small {
+  color: #d9c899;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .11em;
+}
+
+.national-shell.is-mine .national-sidebar__mine-identity strong {
+  overflow: hidden;
+  margin-top: 3px;
+  color: #fffdf5;
+  font-size: 13px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .national-shell.is-mine .national-sidebar.is-collapsed .national-sidebar__brand {
@@ -1520,108 +1571,251 @@
 }
 
 .national-shell.is-mine .national-sidebar__section-title {
-  color: #6c7b74;
+  color: rgb(244 234 208 / 62%);
 }
 
 .national-shell.is-mine .national-sidebar__collapse {
-  border: 1px solid #d4d8d1;
-  color: #49635a;
-  background: #fafaf7;
+  border: 1px solid rgb(244 234 208 / 16%);
+  color: #e9d9ad;
+  background: rgb(255 255 255 / 6%);
 }
 
 .national-shell.is-mine .national-sidebar__collapse:hover {
-  border-color: #aebdb5;
-  color: #0f6f50;
-  background: #fff;
+  border-color: rgb(244 234 208 / 32%);
+  color: #fff;
+  background: rgb(255 255 255 / 12%);
 }
 
 .national-shell.is-mine .national-sidebar__dashboard-link,
 .national-shell.is-mine .national-sidebar__group-trigger {
-  color: #29453c;
+  color: rgb(255 253 245 / 87%);
 }
 
 .national-shell.is-mine .national-sidebar__dashboard-link:hover,
 .national-shell.is-mine .national-sidebar__group-trigger:hover,
 .national-shell.is-mine .national-sidebar__subnav a:hover {
-  color: #0c553e;
-  background: #e4e8e2;
+  color: #fff;
+  background: rgb(244 234 208 / 9%);
 }
 
 .national-shell.is-mine .national-sidebar__dashboard-link.is-active,
 .national-shell.is-mine .national-sidebar__group-trigger.is-current {
-  color: #0b503a;
-  background: #dbe6df;
-  box-shadow: inset 0 0 0 1px rgb(15 122 86 / 10%);
+  color: #211d16;
+  background: #e5b83f;
+  box-shadow: 0 7px 18px rgb(0 0 0 / 17%);
 }
 
 .national-shell.is-mine .national-sidebar__dashboard-link.is-active::before {
-  background: #c99000;
+  background: #fff7dc;
+}
+
+.national-shell.is-mine .national-sidebar__dashboard-link .national-sidebar__icon,
+.national-shell.is-mine .national-sidebar__group-trigger .national-sidebar__icon {
+  color: #e3c56f !important;
+  border-color: rgb(227 197 111 / 28%);
+  background: rgb(227 197 111 / 9%);
+}
+
+.national-shell.is-mine .national-sidebar__dashboard-link.is-active .national-sidebar__icon,
+.national-shell.is-mine .national-sidebar__group-trigger.is-current .national-sidebar__icon {
+  color: #332811 !important;
+  border-color: rgb(51 40 17 / 18%);
+  background: rgb(255 255 255 / 28%);
 }
 
 .national-shell.is-mine .national-sidebar__group-trigger > svg:last-child {
-  color: #71827a;
+  color: rgb(244 234 208 / 54%);
 }
 
 .national-shell.is-mine .national-sidebar__group-trigger:hover > svg:last-child,
 .national-shell.is-mine .national-sidebar__group-trigger.is-current > svg:last-child {
-  color: #0f6f50;
+  color: currentColor;
 }
 
 .national-shell.is-mine .national-sidebar__subnav::before {
-  background: #aab7b0;
+  background: rgb(229 184 63 / 45%);
 }
 
 .national-shell.is-mine .national-sidebar__subnav a {
-  color: #5d6f67;
+  color: rgb(255 253 245 / 65%);
 }
 
 .national-shell.is-mine .national-sidebar__subnav a.is-current {
-  color: #0b503a;
-  background: #fff;
-  box-shadow: 0 1px 4px rgb(28 52 44 / 8%);
+  color: #fff6dc;
+  background: rgb(197 144 27 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(229 184 63 / 10%);
 }
 
 .national-shell.is-mine .national-sidebar__puce {
-  background: #9aa9a1;
+  background: rgb(244 234 208 / 42%);
 }
 
 .national-shell.is-mine .national-sidebar__subnav a.is-current .national-sidebar__puce {
-  background: #0f7a56;
+  background: #e5b83f;
 }
 
 .national-shell.is-mine .national-sidebar__section-heading {
-  color: #9a6b00;
+  color: #d8b24d;
+  margin-top: 13px;
 }
 
 .national-shell.is-mine .national-sidebar__section-heading::before {
-  background: #c99000;
+  background: #d8b24d;
 }
 
 .national-shell.is-mine .national-sidebar__section-heading::after {
-  background: #d3d6cf;
+  background: rgb(244 234 208 / 16%);
 }
 
 .national-shell.is-mine .national-header {
-  height: 76px;
-  flex-basis: 76px;
-  border-bottom-color: #dfe1da;
-  background: rgb(248 248 244 / 98%);
+  height: 82px;
+  flex-basis: 82px;
+  padding-left: 26px;
+  border-top: 3px solid var(--mine-gold);
+  border-bottom-color: var(--mine-border);
+  background: rgb(255 254 251 / 98%);
+}
+
+.national-shell.is-mine .national-header__identity {
+  flex: 0 0 300px;
 }
 
 .national-shell.is-mine .national-header__identity h1 {
-  max-width: min(48vw, 720px);
-  color: #173a30;
-  font-size: 18px;
+  color: var(--mine-text);
+  font-size: 19px;
+}
+
+.national-shell.is-mine .national-header__identity p {
+  color: var(--mine-muted);
+  font-size: 11px;
+}
+
+.national-header__mine-portal {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  margin-left: 26px;
+  gap: 12px;
+}
+
+.national-header__mine-portal > span {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  place-items: center;
+  color: #fff8e4;
+  background: var(--mine-gold);
+  border-radius: 3px;
+}
+
+.national-header__mine-portal > span svg {
+  width: 38px;
+  height: 38px;
+}
+
+.national-header__mine-portal > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.national-header__mine-portal small {
+  color: var(--mine-gold-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .025em;
+}
+
+.national-header__mine-portal strong {
+  max-width: 270px;
+  overflow: hidden;
+  color: var(--mine-text);
+  font-size: 20px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.national-header__mine-portal em {
+  margin-left: 8px;
+  padding: 5px 10px;
+  border: 1px solid #d2ad54;
+  color: #8a6110;
+  background: #fffdf7;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  border-radius: 4px;
+}
+
+.national-shell.is-mine .national-header__actions {
+  gap: 11px;
+}
+
+.national-shell.is-mine .national-header__avatar {
+  background: var(--mine-charcoal);
+}
+
+.national-shell.is-mine .national-header__icon-button:hover,
+.national-shell.is-mine .national-header__language:hover,
+.national-shell.is-mine .national-header__profile:hover {
+  background: #f7f1e2;
 }
 
 .national-shell.is-mine .national-shell__content {
-  background: #f5f6f3;
+  background: #f5f2eb;
 }
 
 .national-shell.is-mine .national-shell__footer {
-  border-top-color: #dfe1da;
-  background: #f8f8f4;
+  border-top-color: var(--mine-border);
+  color: #81796d;
+  background: var(--mine-ivory);
 }
+
+.mine-gold-card {
+  flex: 0 0 auto;
+  margin: 8px 14px 12px;
+  padding: 11px 12px 10px;
+  border: 1px solid #a77a14;
+  color: #fffaf0;
+  background: #201e19;
+  border-radius: 9px;
+  box-shadow: 0 10px 22px rgb(0 0 0 / 18%);
+}
+
+.mine-gold-card > header,
+.mine-gold-card > header span,
+.mine-gold-card > footer,
+.mine-gold-card__variation {
+  display: flex;
+  align-items: center;
+}
+
+.mine-gold-card > header { justify-content: space-between; }
+.mine-gold-card > header span { gap: 7px; color: #f0d57f; font-size: 9px; font-weight: 850; letter-spacing: .08em; }
+.mine-gold-card > header span svg { width: 16px; }
+.mine-gold-card > header button { display: grid; width: 27px; height: 27px; padding: 0; place-items: center; border: 1px solid rgb(255 255 255 / 16%); color: #f7edce; background: transparent; border-radius: 6px; cursor: pointer; }
+.mine-gold-card > header button:hover { background: rgb(255 255 255 / 8%); }
+.mine-gold-card > header button svg { width: 13px; }
+.mine-gold-card > strong { display: block; margin-top: 7px; font-size: 17px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.mine-gold-card > strong small { font-size: 9px; font-weight: 600; }
+.mine-gold-card > p { margin: 3px 0 0; color: #d7ccb0; font-size: 9px; }
+.mine-gold-card__variation { width: max-content; margin-top: 6px; padding: 3px 6px; gap: 4px; color: #b9e7ca; background: rgb(18 128 75 / 16%); border-radius: 999px; font-size: 9px; font-weight: 750; }
+.mine-gold-card__variation.is-negative { color: #ffd2c8; background: rgb(180 61 48 / 18%); }
+.mine-gold-card__variation svg { width: 11px; height: 11px; }
+.mine-gold-card__curve { width: 100%; height: 31px; margin: 4px 0 0; color: #e0b43a; }
+.mine-gold-card > footer { justify-content: space-between; gap: 7px; color: #aa9f83; font-size: 7.5px; }
+.mine-gold-card__notice { color: #efd990 !important; }
+.mine-gold-card__loading { display: grid; margin-top: 8px; gap: 6px; }
+.mine-gold-card__loading i { display: block; height: 10px; background: rgb(255 255 255 / 11%); border-radius: 4px; }
+.mine-gold-card__loading i:nth-child(2) { width: 70%; }
+.mine-gold-card__error p { margin: 7px 0; color: #f7d8d1; font-size: 9px; line-height: 1.35; }
+.mine-gold-card__error button { display: flex; align-items: center; padding: 5px 7px; gap: 5px; border: 1px solid rgb(255 255 255 / 24%); color: #fff; background: transparent; border-radius: 5px; font-size: 9px; cursor: pointer; }
+.mine-gold-card__error button svg { width: 11px; }
+.national-sidebar.is-mine.is-collapsed .mine-gold-card { display: none; }
 
 /* Identité Comptoir : aubergine profonde, cuivre et ivoire. Elle distingue
    immédiatement l'espace sans concurrencer le vert institutionnel SONASP. */
@@ -1751,8 +1945,8 @@
 
 @media (max-width: 1023px) {
   .national-shell.is-mine .national-shell__mobile-sidebar .national-sidebar__brand {
-    height: 86px;
-    flex-basis: 86px;
+    height: 132px;
+    flex-basis: 132px;
   }
 }
 
@@ -1762,14 +1956,32 @@
     flex-basis: 66px;
   }
 
-  .national-shell.is-mine .national-header__eyebrow {
-    display: none;
-  }
-
   .national-shell.is-mine .national-header__identity h1 {
     max-width: 40vw;
     font-size: 14px;
   }
+
+  .national-shell.is-mine .national-header__identity p,
+  .national-header__mine-portal {
+    display: none;
+  }
+}
+
+@media (max-width: 1380px) {
+  .national-shell.is-mine .national-header__identity {
+    flex-basis: 230px;
+  }
+
+  .national-header__mine-portal {
+    margin-left: 16px;
+  }
+
+  .national-header__mine-portal strong { max-width: 180px; font-size: 17px; }
+  .national-header__mine-portal em { display: none; }
+}
+
+@media (max-width: 1120px) {
+  .national-header__mine-portal { display: none; }
 }
 
 @media (max-width: 1180px) {

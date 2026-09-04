@@ -33,7 +33,6 @@ import {
   ChevronDown,
   Languages,
   Landmark,
-  Home,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -43,6 +42,7 @@ import {
   Plus,
   Settings,
   UserRound,
+  Mountain,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -60,6 +60,7 @@ import {
 } from '@/services/modulesService';
 import type { ModuleAvailabilityMap } from '@/lib/platformModuleCatalog';
 import { DgiGoldSidebarCard } from './DgiGoldSidebarCard';
+import { MineGoldSidebarCard } from './MineGoldSidebarCard';
 import './national-dashboard-layout.css';
 
 interface NationalDashboardLayoutProps {
@@ -165,57 +166,50 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     return () => window.removeEventListener(MODULE_CATALOG_UPDATED_EVENT, actualiser);
   }, [chargerDisponibiliteModules]);
 
-  const mineDisplayName = companyCode || companyName;
+  const mineDisplayName = companyName || companyCode || 'Société non identifiée';
   const collectorDisplayName = collectorWorkspace?.collectorName || 'Collecteur d’or';
   const navigationSections = useMemo(() => {
     const sections = getNavigationSectionsForUser(user, moduleAvailability);
     if (!isMine) return sections;
 
-    const order = [
-      'previsions-licences',
-      'production',
-      'inventory',
-      'shipping',
-      'sales',
-      'refining',
-      'market',
-      'stakeholders',
-      'achats-industriels',
-      'documents',
-      'rapports-institutionnels',
-    ];
+    const groupes = sections.flatMap((section) => section.groups);
+    const parIdentifiant = new Map(groupes.map((group) => [group.id, group]));
     const labels: Record<string, string> = {
       production: 'Gestion de la production',
-      inventory: 'Gestion des stocks',
+      inventory: 'Position des stocks',
       shipping: 'Gestion des expéditions',
-      sales: 'Gestion des ventes',
-      refining: 'Raffinerie',
-      market: 'Marché de l’or',
-      stakeholders: 'Parties prenantes',
-      'achats-industriels': 'Relations avec la SONASP',
-      documents: 'Documents et rapports',
-      'rapports-institutionnels': 'Rapports institutionnels',
+      sales: 'Ventes internationales',
+      refining: 'Suivi du raffinage',
+      'achats-industriels': 'Achats et demandes',
+      documents: 'Documents',
+      'rapports-institutionnels': 'Rapports',
     };
+    const construireSection = (id: string, title: string, ids: string[]): NavigationSection => ({
+      id,
+      title,
+      groups: ids.flatMap((groupId) => {
+        const group = parIdentifiant.get(groupId);
+        return group ? [{ ...group, label: labels[group.id] || group.label }] : [];
+      }),
+    });
 
-    return [{
-      id: 'mine-workspace',
-      title: 'Mon espace',
-      groups: sections.flatMap((section) => section.groups)
-        .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
-        .map((group) => ({ ...group, label: labels[group.id] || group.label })),
-    } satisfies NavigationSection];
+    return [
+      construireSection('mine-production', 'Production et prévisions', ['production', 'previsions-licences']),
+      construireSection('mine-relations', 'Relations SONASP', ['achats-industriels']),
+      construireSection('mine-expeditions', 'Expéditions et ventes', ['shipping', 'sales']),
+      construireSection('mine-stock', 'Stock et raffinage', ['inventory', 'refining']),
+      construireSection('mine-documents', 'Documents et rapports', ['documents', 'rapports-institutionnels']),
+    ].filter((section) => section.groups.length > 0);
   }, [isMine, moduleAvailability, user]);
   const navigationGroups = useMemo(
     () => navigationSections.flatMap((section) => section.groups),
     [navigationSections]
   );
   const mineHomePath = '/portail-mine';
-  const mineDashboardPath = '/portail-mine?vue=tableau-de-bord';
   const accountHomePath = homePathForAccountType(accountType);
-  const dashboardPath = isMine ? mineDashboardPath : (accountHomePath || '/login');
+  const dashboardPath = isMine ? mineHomePath : (accountHomePath || '/login');
   const mineDashboardActive = isMine
-    && location.pathname === mineHomePath
-    && new URLSearchParams(location.search).get('vue') === 'tableau-de-bord';
+    && location.pathname === mineHomePath;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
     localStorage.getItem('sidebar:collapsed') === 'true'
@@ -439,8 +433,14 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       sidebarCollapsed && 'is-collapsed',
     )} aria-label={label('Navigation principale')}>
       <div className="national-sidebar__brand">
-        <img src={isDgi ? '/sonasp-logo-clair.png' : '/sonasp_logo.png'} alt="SONASP" />
-        {(isMine || isComptoir || isCollector) && !sidebarCollapsed && (
+        <img src={isDgi || isMine ? '/sonasp-logo-clair.png' : '/sonasp_logo.png'} alt="SONASP" />
+        {isMine && !sidebarCollapsed && (
+          <span className="national-sidebar__mine-identity" title={companyName || undefined}>
+            <Mountain aria-hidden="true" />
+            <span><small>ESPACE MINE</small><strong>{mineDisplayName}</strong></span>
+          </span>
+        )}
+        {(isComptoir || isCollector) && !sidebarCollapsed && (
           <span
             className="national-sidebar__mine-name"
             title={(isCollector ? collectorWorkspace?.collectorName : isComptoir ? comptoirWorkspace?.name : companyName) || undefined}
@@ -464,18 +464,6 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       </div>
 
       <nav className="national-sidebar__navigation" ref={rattacherNavigation} onScroll={memoriserDefilement}>
-        {isMine && (
-          <Link
-            to={mineHomePath}
-            className={cn('national-sidebar__dashboard-link', !mineDashboardActive && 'is-active')}
-            onClick={() => setMobileOpen(false)}
-          >
-            <span className="national-sidebar__icon" style={{ color: '#0f8b62' }}>
-              <Home aria-hidden="true" />
-            </span>
-            <span>{label('Accueil')}</span>
-          </Link>
-        )}
         {!isDgmg && (
           <Link
             to={dashboardPath}
@@ -581,6 +569,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       </nav>
 
       {(isDgi || isDgmg) && <DgiGoldSidebarCard />}
+      {isMine && <MineGoldSidebarCard />}
 
     </aside>
   );
@@ -643,8 +632,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 </>
               ) : isMine ? (
                 <>
-                  <p className="national-header__eyebrow">{label('Espace société minière')}</p>
-                  <h1 title={companyName || undefined}>{mineDisplayName}</h1>
+                  <h1>{label('Plateforme SONASP')}</h1>
+                  <p>{label('Traçabilité et opérations du secteur aurifère')}</p>
                 </>
               ) : (
                 <>
@@ -676,6 +665,17 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
               </div>
               <div className="national-header__dgmg-ministry">MINISTÈRE DES MINES</div>
             </>
+          )}
+
+          {isMine && (
+            <div className="national-header__mine-portal" aria-label="Portail Société Minière">
+              <span><Mountain aria-hidden="true" /></span>
+              <div>
+                <small>PORTAIL SOCIÉTÉ MINIÈRE</small>
+                <strong title={companyName || undefined}>{mineDisplayName}</strong>
+              </div>
+              <em>MINE INDUSTRIELLE</em>
+            </div>
           )}
 
           <div className="national-header__actions" ref={headerActionsRef}>
@@ -800,7 +800,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 <span className="national-header__profile-copy">
                   <strong>{displayName}</strong>
                   <small>{label(
-                    isDgi || isDgmg
+                    isDgi || isDgmg || isMine
                       ? (user?.access_role_name?.trim() || getRoleLabel(user?.role))
                       : isCollector
                         ? 'Collecteur d’or'

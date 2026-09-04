@@ -54,6 +54,37 @@ const ONGLETS: Array<{ id: OngletConciliation; label: string; icon: LucideIcon }
   { id: 'historique', label: 'Historique', icon: History },
 ];
 
+const PRESENTATION_ONGLETS: Record<OngletConciliation, { titre: string; description: string }> = {
+  apercu: {
+    titre: 'Vue d’ensemble du dossier',
+    description: 'Repères de décision, données déclarées et avancement du rapprochement.',
+  },
+  vente: {
+    titre: 'Vente de référence et expédition',
+    description: 'Données commerciales d’origine, contreparties et composition physique du lot.',
+  },
+  raffinage: {
+    titre: 'Analyse de raffinage et preuves',
+    description: 'Confrontation des déclarations de la Mine aux mesures vérifiées de la raffinerie.',
+  },
+  ecarts: {
+    titre: 'Écarts, contrôles et validation',
+    description: 'Contrôle des écarts et de leurs impacts avant toute validation transactionnelle.',
+  },
+  commentaires: {
+    titre: 'Notes et éléments de décision',
+    description: 'Observations consignées sur la vente et sur le traitement du dossier.',
+  },
+  documents: {
+    titre: 'Pièces justificatives',
+    description: 'Documents rattachés à la chaîne de traçabilité et à la décision.',
+  },
+  historique: {
+    titre: 'Traçabilité du dossier',
+    description: 'Chronologie des opérations, des contrôles et des décisions enregistrées.',
+  },
+};
+
 const CONTEXTE_VIDE: ContexteConciliation = {
   lignes: [], certificat: null, analyseTeneur: null,
   expedition: null, raffinerie: null, paiement: null, origines: [], reception: null, donneesCertificat: null,
@@ -218,7 +249,7 @@ function EmptyPanel({ icon: Icon = FileQuestion, title, description }: {
 }) {
   return (
     <div className="conciliation-detail-empty">
-      <Icon aria-hidden="true" /><strong>{title}</strong><p>{description}</p>
+      <Icon aria-hidden="true" /><h3>{title}</h3><p>{description}</p>
     </div>
   );
 }
@@ -301,7 +332,7 @@ function Apercu({ dossier, contexte, dossierComplet, documentEnCours, onDocument
       <div className="conciliation-detail-main">
         <section className="conciliation-detail-card conciliation-general">
           <CardTitle action={<button type="button" className="conciliation-detail-card__edit" onClick={() => onTab('vente')} aria-label="Voir les détails complets"><Pencil aria-hidden="true" /></button>}>
-            Informations générales
+            Vente et contreparties
           </CardTitle>
           <div className="conciliation-general__body">
             <dl>
@@ -310,27 +341,27 @@ function Apercu({ dossier, contexte, dossierComplet, documentEnCours, onDocument
               <div><dt>Statut actuel</dt><dd><StatusBadge dossier={dossier} /></dd></div>
               <div><dt>Période de vente</dt><dd className="is-capitalized">{periode}</dd></div>
               <div><dt>Type de vente</dt><dd>{dossier.sale?.is_internal_sale ? 'Vente interne' : libelleTechnique(dossier.sale?.order_type, 'Vente d’or')}</dd></div>
-              <div><dt>Destination d’expédition</dt><dd>{contexte.expedition?.shipped_to_company || '—'}</dd></div>
+              <div><dt>Destination</dt><dd>{contexte.expedition?.shipped_to_company || '—'}</dd></div>
             </dl>
             <dl>
               <div><dt>Vendeur</dt><dd>{nomOrigine(dossier, contexte)}</dd></div>
               <div><dt>Contact</dt><dd>{dossier.mining_company?.contact_person_phone || '—'}</dd></div>
               <div><dt>Acheteur</dt><dd>{nomAcheteur(dossier)}</dd></div>
               <div><dt>Devise</dt><dd>{deviseLisible(devise) || '—'}</dd></div>
-              <div><dt>Taux de change appliqué</dt><dd>{formatNombre(dossier.taux_change_final ?? dossier.taux_change_initial, '', 4)}</dd></div>
-              <div><dt>Référence facture</dt><dd>{contexte.paiement?.invoice_number || contexte.paiement?.reference_number || '—'}</dd></div>
+              <div><dt>Taux appliqué</dt><dd>{formatNombre(dossier.taux_change_final ?? dossier.taux_change_initial, '', 4)}</dd></div>
+              <div><dt>Réf. facture</dt><dd>{contexte.paiement?.invoice_number || contexte.paiement?.reference_number || '—'}</dd></div>
             </dl>
           </div>
         </section>
 
         <section className="conciliation-detail-card conciliation-sale-summary">
-          <CardTitle icon={Gem}>Résumé de la vente</CardTitle>
+          <CardTitle icon={Gem}>Base financière déclarée</CardTitle>
           <div className="conciliation-sale-summary__body">
             <dl>
               <div><dt>Type d’or</dt><dd>{typeOr(dossier, contexte)}</dd></div>
               <div><dt>Qualité de l’or</dt><dd>{purete === null ? '—' : <span className="conciliation-quality">{formatNombre(purete / 100 * 24, 'K', 0)} ({formatNombre(purete, '%', 2)})</span>}</dd></div>
               <div><dt>Poids brut</dt><dd>{formatNombre(poids, 'g')}</dd></div>
-              <div><dt>Poids fin (théorique)</dt><dd>{formatNombre(dossier.or_fin_initial_g, 'g')}</dd></div>
+              <div><dt>Or fin théorique</dt><dd>{formatNombre(dossier.or_fin_initial_g, 'g')}</dd></div>
               <div><dt>Prix au gramme</dt><dd>{formatMontantDetail(prixGramme, devise)}</dd></div>
               <div><dt>Montant brut</dt><dd>{formatMontantDetail(montantBrut, devise)}</dd></div>
               <div><dt>Redevance / taxes</dt><dd>{formatMontantDetail(redevance, devise)}</dd></div>
@@ -341,20 +372,20 @@ function Apercu({ dossier, contexte, dossierComplet, documentEnCours, onDocument
         </section>
 
         <section className="conciliation-detail-card conciliation-progress">
-          <CardTitle icon={Clock3}>Statut de conciliation</CardTitle>
+          <CardTitle icon={Clock3}>Avancement du dossier</CardTitle>
           <TimelineStatut dossier={dossier} />
         </section>
       </div>
 
       <aside className="conciliation-detail-aside" aria-label="Informations contextuelles">
         <section className={`conciliation-detail-card conciliation-gap-card${(ecart ?? 0) < 0 ? ' is-negative' : ''}`}>
-          <h2>Écart cumulé</h2><strong>{formatMontantDetail(ecart, devise)}</strong>
+          <h2>Écart commercial</h2><strong>{formatMontantDetail(ecart, devise)}</strong>
           <span>{ecart === null ? 'en attente de l’analyse' : ecart < 0 ? 'en faveur des acheteurs' : 'en faveur des vendeurs'}</span>
           {serie.length > 1 && <svg viewBox="0 0 260 38" role="img" aria-label="Évolution des valeurs commerciales" preserveAspectRatio="none"><path d={cheminSparkline(serie)} /></svg>}
         </section>
 
         <section className="conciliation-detail-card conciliation-finance-card">
-          <h2>Informations financières</h2>
+          <h2>Synthèse financière</h2>
           <dl>
             <div><dt>Montant brut</dt><dd>{formatMontantDetail(montantBrut, devise)}</dd></div>
             <div><dt>Redevance / taxes</dt><dd>{formatMontantDetail(redevance, devise)}</dd></div>
@@ -364,7 +395,7 @@ function Apercu({ dossier, contexte, dossierComplet, documentEnCours, onDocument
         </section>
 
         <section className="conciliation-detail-card conciliation-refining-card">
-          <h2>Résultats de raffinage</h2>
+          <h2>Analyse de raffinage</h2>
           {contexte.certificat || contexte.analyseTeneur || dossier.poids_final_g !== null ? (
             <><dl>
               <div><dt>Poids après raffinage</dt><dd>{formatNombre(finalMesure, 'g')}</dd></div>
@@ -376,7 +407,7 @@ function Apercu({ dossier, contexte, dossierComplet, documentEnCours, onDocument
         </section>
 
         <section className="conciliation-detail-card conciliation-recent-docs">
-          <h2>Documents récents</h2>
+          <h2>Pièces récentes</h2>
           {recents.length > 0 ? <ul>{recents.map((document) => (
             <DocumentRow compact key={`${document.source}-${document.id}`} document={document} loading={documentEnCours === document.id} onOpen={() => onDocument(document)} />
           ))}</ul> : <div className="conciliation-aside-empty"><FileText aria-hidden="true" /><span>Aucun document visible</span></div>}
@@ -541,12 +572,12 @@ function ResultatsRaffinage({ dossier, contexte, ecarts, peutSaisir, enCours, po
               </form>}
       </section>
       <section className="conciliation-detail-card conciliation-tab-card is-wide">
-        <CardTitle icon={Scale}>Impact du résultat de raffinage</CardTitle>
+        <CardTitle icon={Scale}>Comparaison avant et après raffinage</CardTitle>
         <p className="conciliation-section-intro">Comparaison indicative avant validation. Les quantités de stock, paiements et déclarations fiscales existants ne sont pas réécrits.</p>
         <div className="conciliation-table-scroll"><table className="conciliation-detail-table"><thead><tr><th>Paramètre</th><th>Vente / déclaration initiale</th><th>Résultat sélectionné</th><th>Écart</th></tr></thead><tbody>{impacts.map(l => <tr key={l.code}><th scope="row">{l.label}</th><td>{formatNombre(l.initial, l.unite)}</td><td>{formatNombre(l.final, l.unite)}</td><td className={l.ecart && l.ecart < 0 ? 'is-negative' : ''}>{formatNombre(l.ecart, l.code === 'teneur' ? 'points' : l.unite)}</td></tr>)}</tbody></table></div>
       </section>
       <section className="conciliation-detail-card conciliation-tab-card is-wide">
-        <CardTitle icon={ReceiptText}>Conséquences fiscales et régularisations</CardTitle>
+        <CardTitle icon={ReceiptText}>Impacts fiscaux et régularisations</CardTitle>
         <p className="conciliation-section-intro">Un écart de poids, de teneur ou de fixing peut modifier l’assiette des taxes. Les ajustements ci-dessous sont les écritures enregistrées en base, distinctes des versements déjà effectués. Un crédit constaté n’est pas un remboursement exécuté.</p>
         <SimulationFiscale dossier={dossier} ca={impacts.find(i => i.code === 'ca_ht')?.final ?? null} orFin={impacts.find(i => i.code === 'or_fin')?.final ?? null} prix={impacts.find(i => i.code === 'prix')?.final ?? null} date={dateFixing} />
         {ecarts.some(e => e.parametre === 'taxe') && <div className="conciliation-table-scroll"><table className="conciliation-detail-table"><thead><tr><th>Taxe</th><th>Base initiale calculée</th><th>Montant définitif</th><th>Ajustement constaté</th></tr></thead><tbody>{ecarts.filter(e => e.parametre === 'taxe').map(e => <tr key={e.id}><th scope="row">{libelleTechnique(e.code_taxe)}</th><td>{formatMontantDetail(e.valeur_initiale, e.unite || dossier.devise_initiale)}</td><td>{formatMontantDetail(e.valeur_definitive, e.unite || dossier.devise_finale || dossier.devise_initiale)}</td><td>{formatMontantDetail(e.ecart_absolu, e.unite || dossier.devise_initiale)}</td></tr>)}</tbody></table></div>}
@@ -570,7 +601,7 @@ function SimulationFiscale({ dossier, ca, orFin, prix, date }: { dossier: Concil
   const libelles = { calculable: 'Estimation · à valider', regle_absente: 'Règle non disponible', conversion_requise: 'Conversion à justifier', assiette_incomplete: 'Assiette à compléter', base_initiale_absente: 'Base historique à compléter' };
   if (etat === 'loading') return <p className="conciliation-section-intro" role="status">Calcul des impacts fiscaux…</p>;
   if (etat === 'error') return <div className="conciliation-section-intro"><Note tone="warning">Simulation fiscale indisponible. Vérifiez la disponibilité du service de calcul ; aucune estimation locale de taxe ne remplace le résultat serveur.</Note></div>;
-  return <div className="conciliation-table-scroll"><table className="conciliation-detail-table" aria-label="Simulation des régularisations fiscales"><thead><tr><th>Taxe / assiette</th><th>Initial enregistré</th><th>Après analyse</th><th>Ajustement estimé</th><th>Versements consignés</th><th>Contrôle</th></tr></thead><tbody>{lignes.map(l => <tr key={l.code_taxe}><th scope="row">{libelleTechnique(l.code_taxe)}<br /><small>{libelleTechnique(l.assiette)}</small></th><td>{formatMontantDetail(l.initial, l.devise)}</td><td>{formatMontantDetail(l.definitif, l.devise)}</td><td>{formatMontantDetail(l.ecart, l.devise)}</td><td>{formatMontantDetail(l.versements, l.devise)}</td><td>{libelles[l.etat]}</td></tr>)}</tbody></table></div>;
+  return <div className="conciliation-table-scroll"><table className="conciliation-detail-table" aria-label="Simulation des régularisations fiscales"><thead><tr><th>Taxe et assiette</th><th>Initial enregistré</th><th>Après analyse</th><th>Ajustement estimé</th><th>Versements consignés</th><th>Contrôle</th></tr></thead><tbody>{lignes.map(l => <tr key={l.code_taxe}><th scope="row" aria-label={`${libelleTechnique(l.code_taxe)} · ${libelleTechnique(l.assiette)}`}><span className="conciliation-tax-label"><span>{libelleTechnique(l.code_taxe)}</span><span aria-hidden="true">·</span><small>{libelleTechnique(l.assiette)}</small></span></th><td>{formatMontantDetail(l.initial, l.devise)}</td><td>{formatMontantDetail(l.definitif, l.devise)}</td><td>{formatMontantDetail(l.ecart, l.devise)}</td><td>{formatMontantDetail(l.versements, l.devise)}</td><td>{libelles[l.etat]}</td></tr>)}</tbody></table></div>;
 }
 
 function EcartsAnalyse({ dossier, ecarts, peutValider, enCours, onValider }: {
@@ -634,7 +665,7 @@ function HistoriqueDossier({ evenements, dossier }: { evenements: EvenementDossi
   const liste = (evenements.length > 0 ? evenements : fallback).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return <section className="conciliation-detail-card conciliation-tab-card"><CardTitle icon={History}>Historique du dossier</CardTitle>
     {liste.length === 0 ? <EmptyPanel icon={History} title="Aucun événement visible" description="La chronologie ne contient encore aucun événement dans votre périmètre." /> : <ol className="conciliation-history">
-      {liste.map((evenement, index) => <li key={`${evenement.etape}-${evenement.date}-${index}`}><span aria-hidden="true" /><div><header><strong>{evenement.titre}</strong><time>{formatDateHeure(evenement.date)}</time></header>{evenement.detail && <p>{evenement.detail}</p>}{evenement.acteur && <small><UserRound aria-hidden="true" /> {evenement.acteur}</small>}</div></li>)}
+      {liste.map((evenement, index) => <li key={`${evenement.etape}-${evenement.date}-${index}`}><span aria-hidden="true" /><div><header><strong>{evenement.titre}</strong><time dateTime={evenement.date ?? undefined}>{formatDateHeure(evenement.date)}</time></header>{evenement.detail && <p>{evenement.detail}</p>}{evenement.acteur && <small><UserRound aria-hidden="true" /> {evenement.acteur}</small>}</div></li>)}
     </ol>}
   </section>;
 }
@@ -690,9 +721,9 @@ export function ConciliationDetails() {
       const details = contexteResultat.status === 'fulfilled' ? contexteResultat.value : CONTEXTE_VIDE;
       setContexte(details); setDossierComplet(dossierResultat.status === 'fulfilled' ? dossierResultat.value : null); initialiserFormulaire(fiche, details);
       const incidents = (details.incidents ?? []).map(i => `${i.section} (${i.type === 'acces' ? 'accès refusé' : 'erreur de chargement'} · ${i.code})`);
-      if (contexteResultat.status === 'rejected') incidents.push('Contexte métier : chargement impossible');
-      if (dossierResultat.status === 'rejected') incidents.push('Documents et historique : chargement impossible');
-      if (incidents.length) setAvertissement(`${incidents.join(' ; ')}. Les autres informations restent disponibles. Réessayez le chargement.`);
+      if (contexteResultat.status === 'rejected') incidents.push('Contexte métier (erreur technique)');
+      if (dossierResultat.status === 'rejected') incidents.push('Documents et historique (erreur technique)');
+      if (incidents.length) setAvertissement(`${incidents.join(' ; ')}. Le dossier principal reste utilisable.`);
     } catch (error) {
       setErreur(errorMessage(error, 'Le dossier n’a pas pu être chargé.')); setDossier(null);
     } finally { setChargement(false); }
@@ -702,7 +733,10 @@ export function ConciliationDetails() {
 
   const ouvrirOnglet = useCallback((nouvelOnglet: OngletConciliation) => {
     setOnglet(nouvelOnglet);
-    requestAnimationFrame(() => tabsRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }));
+    requestAnimationFrame(() => tabsRef.current?.scrollIntoView?.({
+      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'start',
+    }));
   }, []);
   const naviguerOnglets = (event: KeyboardEvent<HTMLElement>) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -820,7 +854,7 @@ export function ConciliationDetails() {
           <div className="conciliation-detail-actions">
             <button type="button" className="sn-btn" onClick={() => navigate('/conciliation')}><ArrowLeft aria-hidden="true" /> Retour à la liste</button><span />
             {peutExporter && <button type="button" className="sn-btn" onClick={() => void exporter()} disabled={exportEnCours}>{exportEnCours ? <Loader2 className="sn-spin" aria-hidden="true" /> : <FileDown aria-hidden="true" />}Exporter le dossier</button>}
-            {peutLancer && <button type="button" className="sn-btn sn-btn--primary" onClick={lancerConciliation}><Scale aria-hidden="true" /> Lancer la conciliation</button>}
+            {peutLancer && <button type="button" className="sn-btn sn-btn--primary" onClick={lancerConciliation}><Scale aria-hidden="true" /> Préparer la conciliation</button>}
           </div>
         </div>
 
@@ -835,16 +869,20 @@ export function ConciliationDetails() {
 
         <div ref={tabsRef} className="conciliation-detail-tabs-wrap">
           <nav className="conciliation-detail-tabs" aria-label="Sections du dossier" role="tablist" onKeyDown={naviguerOnglets}>
-            {ONGLETS.map(({ id: tabId, label, icon: Icon }) => <button key={tabId} type="button" role="tab" tabIndex={onglet === tabId ? 0 : -1} aria-selected={onglet === tabId} aria-controls={`conciliation-panel-${tabId}`} className={onglet === tabId ? 'is-active' : undefined} onClick={() => setOnglet(tabId)}><Icon aria-hidden="true" /> {label}</button>)}
+            {ONGLETS.map(({ id: tabId, label, icon: Icon }) => <button id={`conciliation-tab-${tabId}`} key={tabId} type="button" role="tab" tabIndex={onglet === tabId ? 0 : -1} aria-selected={onglet === tabId} aria-controls={`conciliation-panel-${tabId}`} className={onglet === tabId ? 'is-active' : undefined} onClick={() => setOnglet(tabId)}><Icon aria-hidden="true" /> {label}</button>)}
           </nav>
         </div>
 
         {erreur && <Note tone="danger" icon={AlertTriangle}>{erreur}</Note>}
-        {avertissement && <Note tone="warning" icon={AlertTriangle}>{avertissement} <button type="button" className="sn-btn" onClick={() => void charger()}>Réessayer</button></Note>}
+        {avertissement && <div className="conciliation-context-alert" role="status" aria-live="polite">
+          <AlertTriangle aria-hidden="true" />
+          <div><strong>Données complémentaires partiellement disponibles</strong><span>{avertissement}</span></div>
+          <button type="button" className="sn-btn" onClick={() => void charger()}><RefreshCw aria-hidden="true" /> Actualiser</button>
+        </div>}
         {message && <Note tone="success">{message}</Note>}
 
-        <section id={`conciliation-panel-${onglet}`} role="tabpanel" aria-label={ONGLETS.find((tab) => tab.id === onglet)?.label}>
-          <header className="conciliation-panel-heading"><span className="conciliation-eyebrow">DOSSIER DE CONCILIATION · {dossier.reference}</span><h2>{ONGLETS.find(tab => tab.id === onglet)?.label}</h2><p>{({ apercu: 'Synthèse de la vente et état du rapprochement.', vente: 'Données commerciales d’origine, contreparties et composition du lot.', raffinage: 'Confrontez les déclarations de la Mine aux mesures de la raffinerie sur la même expédition.', ecarts: 'Contrôlez les écarts avant toute validation des ajustements.', commentaires: 'Observations consignées et éléments de décision.', documents: 'Pièces justificatives rattachées à la chaîne de traçabilité.', historique: 'Chronologie des opérations et des décisions du dossier.' })[onglet]}</p></header>
+        <section id={`conciliation-panel-${onglet}`} role="tabpanel" aria-labelledby={`conciliation-tab-${onglet}`}>
+          <header className="conciliation-panel-heading"><span className="conciliation-eyebrow">DOSSIER DE CONCILIATION · {dossier.reference}</span><h2>{PRESENTATION_ONGLETS[onglet].titre}</h2><p>{PRESENTATION_ONGLETS[onglet].description}</p></header>
           {onglet === 'apercu' && <Apercu dossier={dossier} contexte={contexte} dossierComplet={dossierComplet} documentEnCours={documentEnCours} onDocument={(doc) => void ouvrirDocument(doc)} onTab={ouvrirOnglet} />}
           {onglet === 'vente' && <DetailsVente dossier={dossier} contexte={contexte} />}
           {onglet === 'raffinage' && <ResultatsRaffinage dossier={dossier} contexte={contexte} ecarts={ecarts} onCertificat={choisirCertificat} peutSaisir={peutSaisir} enCours={enCours} poids={poids} teneur={teneur} prix={prix} dateFixing={dateFixing} setPoids={setPoids} setTeneur={setTeneur} setPrix={setPrix} setDateFixing={setDateFixing} onSubmit={() => void enregistrerAnalyse()} onDocument={(doc) => void ouvrirDocument(doc)} documentEnCours={documentEnCours} />}

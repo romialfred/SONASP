@@ -182,6 +182,10 @@ describe('ConciliationDetails', () => {
     expect(screen.getAllByText('Raffinerie Africaine').length).toBeGreaterThan(0);
     expect(screen.getByText('FACT-2026-00891')).toBeInTheDocument();
     expect(screen.getByText('29/08/2026')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Vue d’ensemble du dossier' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Vente et contreparties' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Base financière déclarée' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Avancement du dossier' })).toBeInTheDocument();
 
     const tabs = within(screen.getByRole('tablist', { name: 'Sections du dossier' }));
     expect(tabs.getAllByRole('tab')).toHaveLength(7);
@@ -193,6 +197,8 @@ describe('ConciliationDetails', () => {
     render(<ConciliationDetails />);
     const tabs = within(await screen.findByRole('tablist', { name: 'Sections du dossier' }));
     const apercu = tabs.getByRole('tab', { name: 'Aperçu' });
+    expect(apercu).toHaveAttribute('aria-controls', 'conciliation-panel-apercu');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'conciliation-tab-apercu');
     apercu.focus();
     fireEvent.keyDown(apercu, { key: 'ArrowRight' });
     expect(tabs.getByRole('tab', { name: /Détails de la vente/ })).toHaveAttribute('aria-selected', 'true');
@@ -200,7 +206,7 @@ describe('ConciliationDetails', () => {
 
   it('le bouton principal ouvre le workflow réel puis enregistre la preuve approuvée', async () => {
     render(<ConciliationDetails />);
-    fireEvent.click(await screen.findByRole('button', { name: /Lancer la conciliation/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Préparer la conciliation/ }));
     expect(screen.getByRole('heading', { name: 'Lancer la conciliation' })).toBeInTheDocument();
     expect(screen.getByDisplayValue('601.31')).toBeInTheDocument();
     expect(screen.getByDisplayValue('91.65')).toBeInTheDocument();
@@ -231,7 +237,7 @@ describe('ConciliationDetails', () => {
 
   it('ouvre directement la preuve sélectionnée avec une URL privée', async () => {
     render(<ConciliationDetails />);
-    fireEvent.click(await screen.findByRole('button', { name: /Lancer la conciliation/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Préparer la conciliation/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Ouvrir le certificat sélectionné' }));
     await waitFor(() => expect(mocks.urlPourDocument).toHaveBeenCalledWith(expect.objectContaining({ id: 'cert-1', source: 'assay_certificates', chemin: 'certificats/resultats.pdf' })));
     expect(window.open).toHaveBeenCalledWith('https://signed.example/resultats.pdf', '_blank', 'noopener,noreferrer');
@@ -240,7 +246,7 @@ describe('ConciliationDetails', () => {
   it('laisse consulter une preuve non approuvée sans permettre son enregistrement', async () => {
     mocks.contexte.mockResolvedValue({ ...contexte, certificat: { ...contexte.certificat, approved_by: null, approved_at: null } });
     render(<ConciliationDetails />);
-    fireEvent.click(await screen.findByRole('button', { name: /Lancer la conciliation/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Préparer la conciliation/ }));
     expect(screen.getByRole('button', { name: 'Ouvrir le certificat sélectionné' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: 'Enregistrer le résultat' })).not.toBeInTheDocument();
   });
@@ -249,7 +255,7 @@ describe('ConciliationDetails', () => {
     mocks.authUser = { id: 'reader', role: 'manager', is_active: true, capabilities: [CAPABILITIES.RECONCILIATION_READ] };
     render(<ConciliationDetails />);
     await screen.findByRole('heading', { name: 'VE-OR-2026-00038' });
-    expect(screen.queryByRole('button', { name: /Lancer la conciliation/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Préparer la conciliation/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Exporter le dossier' })).not.toBeInTheDocument();
   });
 
@@ -273,14 +279,16 @@ describe('ConciliationDetails', () => {
     mocks.contexte.mockResolvedValue({ ...contexte, incidents: [{ section: 'Origine des lots', type: 'technique', code: 'PGRST200' }] });
     render(<ConciliationDetails />);
     expect(await screen.findByText(/Origine des lots \(erreur de chargement/)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Données complémentaires partiellement disponibles');
     expect(screen.getByText('FACT-2026-00891')).toBeInTheDocument();
+    expect(screen.queryByText(/Contexte métier \(erreur technique\)/)).not.toBeInTheDocument();
     expect(screen.queryByText(/avec vos droits actuels/)).not.toBeInTheDocument();
   });
 
   it('explique le dossier sans expédition et interdit l’enregistrement', async () => {
     mocks.contexte.mockResolvedValue({ ...contexte, expedition: null, certificat: null, donneesCertificat: null });
     render(<ConciliationDetails />);
-    fireEvent.click(await screen.findByRole('button', { name: /Lancer la conciliation/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Préparer la conciliation/ }));
     expect(screen.getByText(/Flux export incomplet/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Enregistrer le résultat' })).not.toBeInTheDocument();
   });
@@ -324,7 +332,7 @@ describe('ConciliationDetails', () => {
     });
 
     render(<ConciliationDetails />);
-    fireEvent.click(await screen.findByRole('button', { name: /Lancer la conciliation/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Préparer la conciliation/ }));
 
     expect(screen.getByText('2 expéditions physiques')).toBeInTheDocument();
     expect(screen.getAllByText('LOT-2026-38').length).toBeGreaterThan(0);
@@ -338,9 +346,11 @@ describe('ConciliationDetails', () => {
   it('montre les écarts et conserve la distinction entre estimation, dette et versement', async () => {
     mocks.impactsFiscaux.mockResolvedValue([{ code_taxe: 'fndl', assiette: 'ca_ht', initial: 100, definitif: 90, ecart: -10, versements: 100, devise: 'USD', etat: 'calculable' }]);
     render(<ConciliationDetails />);
-    fireEvent.click(await screen.findByRole('button', { name: /Lancer la conciliation/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Préparer la conciliation/ }));
     expect(await screen.findByRole('table', { name: 'Simulation des régularisations fiscales' })).toBeInTheDocument();
     expect(screen.getByText('Estimation · à valider')).toBeInTheDocument();
+    const taxe = screen.getByRole('rowheader', { name: /Fndl · Ca Ht/i });
+    expect(taxe.querySelector('br')).toBeNull();
     expect(screen.getByLabelText('Prix retenu / once')).toHaveValue('2650');
     expect(screen.getByLabelText('Date de fixing')).toHaveValue('2026-08-27');
     expect(mocks.valider).not.toHaveBeenCalled();

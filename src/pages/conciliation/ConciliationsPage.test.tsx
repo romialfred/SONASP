@@ -130,6 +130,22 @@ describe('modèle de la liste de conciliation', () => {
     })).toEqual([attente]);
   });
 
+  it('recherche sans être sensible aux accents ni aux espaces superflus', () => {
+    const dossierAccentue = dossier('39', 'en_attente_analyse', {
+      mining_company: { id: 'mine-2', name: 'Société\u00a0  Minière de Kalsaka', code: 'SMK' },
+      mining_company_id: 'mine-2',
+    });
+
+    expect(filtrerDossiers([dossierAccentue], {
+      recherche: '  societe   miniere  ',
+      societe: 'toutes',
+      acheteur: 'tous',
+      debut: '',
+      fin: '',
+      vue: 'attente',
+    })).toEqual([dossierAccentue]);
+  });
+
   it('ne mélange pas silencieusement des montants de devises différentes', () => {
     const xof = dossier('40', 'en_attente_analyse', { ca_initial: 900_000, devise_initiale: 'XOF' });
     expect(resumerMontants([attente, xof])).toEqual({ valeur: null, devise: null, multiDevises: true });
@@ -158,6 +174,87 @@ describe('ConciliationsPage', () => {
     const onglets = within(screen.getByRole('navigation', { name: 'États des dossiers' }));
     expect(onglets.getByRole('button', { name: /En raffinage 1/ })).toBeInTheDocument();
     expect(onglets.getByRole('button', { name: /En litige 1/ })).toBeInTheDocument();
+  });
+
+  it('n’impose aucune période silencieuse et affiche les 16 dossiers en attente', async () => {
+    const seizeDossiers = Array.from({ length: 16 }, (_, index) => {
+      const item = dossier(String(index + 1), 'en_attente_analyse');
+      return {
+        ...item,
+        sale: {
+          ...item.sale!,
+          sale_date: index < 13 ? `2025-${String((index % 12) + 1).padStart(2, '0')}-08` : `2026-08-${String(19 + index - 13).padStart(2, '0')}`,
+        },
+      };
+    });
+    mocks.lister.mockResolvedValue(seizeDossiers);
+
+    render(<ConciliationsPage />);
+
+    expect(await screen.findByText('VE-OR-2026-00001')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Voir les détails' })).toHaveLength(16);
+    expect(screen.getByText('Affichage 1 à 16 sur 16 dossiers')).toBeInTheDocument();
+    expect(screen.getByLabelText('Date de début')).toHaveValue('');
+    expect(screen.getByLabelText('Date de fin')).toHaveValue('');
+    expect(screen.getByLabelText('Nombre de dossiers par page')).toHaveValue('40');
+
+    const onglets = within(screen.getByRole('navigation', { name: 'États des dossiers' }));
+    expect(onglets.getByRole('button', { name: /En attente de conciliation 16/ })).toBeInTheDocument();
+  });
+
+  it('pagine tous les dossiers, exporte le périmètre complet et revient à la première page après filtrage', async () => {
+    const quaranteEtUnDossiers = Array.from(
+      { length: 41 },
+      (_, index) => dossier(String(index + 1), 'en_attente_analyse'),
+    );
+    mocks.lister.mockResolvedValue(quaranteEtUnDossiers);
+
+    render(<ConciliationsPage />);
+
+    expect(await screen.findByText('VE-OR-2026-00001')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Voir les détails' })).toHaveLength(40);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Page suivante' }));
+    expect(await screen.findByText('VE-OR-2026-00041')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Exporter' }));
+    await waitFor(() => expect(mocks.exportWorkbook).toHaveBeenCalledTimes(1));
+    expect(mocks.exportWorkbook.mock.calls[0][0][0].rows).toHaveLength(41);
+
+    fireEvent.change(screen.getByLabelText('Rechercher une vente'), { target: { value: '00001' } });
+    expect(await screen.findByText('VE-OR-2026-00001')).toBeInTheDocument();
+    expect(screen.getByText('Affichage 1 à 1 sur 1 dossier')).toBeInTheDocument();
+  });
+
+  it('synchronise les compteurs, la liste et la réinitialisation avec les filtres actifs', async () => {
+    const ancien = dossier('34', 'en_attente_analyse');
+    ancien.sale = { ...ancien.sale!, sale_date: '2025-07-10' };
+    const recent = dossier('38', 'en_attente_analyse');
+    recent.sale = { ...recent.sale!, sale_date: '2026-08-21' };
+    const recentRaffinage = dossier('37', 'analyse_recue');
+    recentRaffinage.sale = { ...recentRaffinage.sale!, sale_date: '2026-08-08' };
+    mocks.lister.mockResolvedValue([ancien, recent, recentRaffinage]);
+
+    render(<ConciliationsPage />);
+    expect(await screen.findByText('VE-OR-2026-00034')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Date de début'), { target: { value: '2026-08-01' } });
+    fireEvent.change(screen.getByLabelText('Date de fin'), { target: { value: '2026-08-31' } });
+
+    const onglets = within(screen.getByRole('navigation', { name: 'États des dossiers' }));
+    expect(onglets.getByRole('button', { name: /En attente de conciliation 1/ })).toBeInTheDocument();
+    expect(onglets.getByRole('button', { name: /En raffinage 1/ })).toBeInTheDocument();
+    expect(onglets.getByRole('button', { name: /Toutes les ventes 2/ })).toBeInTheDocument();
+    expect(screen.queryByText('VE-OR-2026-00034')).not.toBeInTheDocument();
+    expect(screen.getByText('Affichage 1 à 1 sur 1 dossier')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Filtres 2/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Filtres 2/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser' }));
+
+    expect(await screen.findByText('VE-OR-2026-00034')).toBeInTheDocument();
+    expect(onglets.getByRole('button', { name: /En attente de conciliation 2/ })).toBeInTheDocument();
+    expect(screen.getByText('Affichage 1 à 2 sur 2 dossiers')).toBeInTheDocument();
   });
 
   it('change de file de travail et ouvre le détail', async () => {

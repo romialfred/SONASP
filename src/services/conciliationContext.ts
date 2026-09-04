@@ -43,11 +43,6 @@ interface LigneLogistiqueConciliation {
   refining_approved_at: string | null;
 }
 
-const rpcExpeditions = supabase.rpc as unknown as (
-  name: 'snp_conciliation_expeditions_vente',
-  args: { p_sale_id: string },
-) => PromiseLike<{ data: unknown; error: unknown }>;
-
 const nombre = (value: unknown): number | null => {
   if (value === null || value === undefined || value === '') return null;
   const parsed = Number(value);
@@ -153,9 +148,9 @@ export function normaliserLogistiqueConciliation(
 /** Une panne secondaire ne détruit pas les données accessibles des autres sections. */
 export async function chargerContexteConciliation(dossier: Conciliation): Promise<ContexteConciliation> {
   const incidents: NonNullable<ContexteConciliation['incidents']> = [];
-  async function lire<T>(section: string, requete: PromiseLike<{ data: unknown; error: unknown }>, vide: T): Promise<T> {
+  async function lire<T>(section: string, creerRequete: () => PromiseLike<{ data: unknown; error: unknown }>, vide: T): Promise<T> {
     try {
-      const result = await requete;
+      const result = await creerRequete();
       if (result.error) throw result.error;
       return (result.data ?? vide) as T;
     } catch (error) {
@@ -166,17 +161,17 @@ export async function chargerContexteConciliation(dossier: Conciliation): Promis
   }
   const sp = dossier.sale?.shipping_preparation_id;
   const [lignes, lignesLogistiques, paiement, origines, fiscalite] = await Promise.all([
-    lire<LigneVenteConciliation[]>('Lignes de vente', supabase.from('sales_line_items').select('id, line_number, metal_type, quantity_grams, quantity_oz, fine_weight_oz, fineness_percentage, unit_price, line_total').eq('sale_id', dossier.sale_id).order('line_number'), []),
-    lire<LigneLogistiqueConciliation[]>('Chaîne logistique', rpcExpeditions('snp_conciliation_expeditions_vente', { p_sale_id: dossier.sale_id }), []),
-    lire<PaiementConciliation | null>('Référence financière', supabase.from('payments').select('id, invoice_number, reference_number, amount, currency, status, created_at').eq('sale_id', dossier.sale_id).order('created_at', { ascending: false }).limit(1).maybeSingle(), null),
-    lire<Affectation[]>('Origine des lots', tracabiliteVenteService.lotsDeVente(dossier.sale_id).then(data => ({ data, error: null })), []),
-    lire<MouvementFiscalConciliation[]>('Écritures fiscales', supabase.from('snp_grand_livre_fiscal').select('id, code_taxe, sens, montant, devise, type_mouvement, statut_credit, conciliation_id, created_at').eq('sale_id', dossier.sale_id).order('created_at'), []),
+    lire<LigneVenteConciliation[]>('Lignes de vente', () => supabase.from('sales_line_items').select('id, line_number, metal_type, quantity_grams, quantity_oz, fine_weight_oz, fineness_percentage, unit_price, line_total').eq('sale_id', dossier.sale_id).order('line_number'), []),
+    lire<LigneLogistiqueConciliation[]>('Chaîne logistique', () => supabase.rpc('snp_conciliation_expeditions_vente', { p_sale_id: dossier.sale_id }), []),
+    lire<PaiementConciliation | null>('Référence financière', () => supabase.from('payments').select('id, invoice_number, reference_number, amount, currency, status, created_at').eq('sale_id', dossier.sale_id).order('created_at', { ascending: false }).limit(1).maybeSingle(), null),
+    lire<Affectation[]>('Origine des lots', () => tracabiliteVenteService.lotsDeVente(dossier.sale_id).then(data => ({ data, error: null })), []),
+    lire<MouvementFiscalConciliation[]>('Écritures fiscales', () => supabase.from('snp_grand_livre_fiscal').select('id, code_taxe, sens, montant, devise, type_mouvement, statut_credit, conciliation_id, created_at').eq('sale_id', dossier.sale_id).order('created_at'), []),
   ]);
   let logistique = normaliserLogistiqueConciliation(lignesLogistiques, Boolean(dossier.sale?.is_internal_sale));
   // Compatibility while the migration is rolling out: a valid legacy direct
   // link remains visible, but is never guessed from the sale number.
   if (logistique.expeditions.length === 0 && sp) {
-    const expeditionDirecte = await lire<ExpeditionConciliation | null>('Expédition directe', supabase.from('shipping_preparations').select('id, expedition_lot_number, refinery_id, shipped_to_company, shipped_to_country, total_gross_weight_grams, total_net_weight_grams, total_weight_oz, prepared_at, shipped_at, status').eq('id', sp).maybeSingle(), null);
+    const expeditionDirecte = await lire<ExpeditionConciliation | null>('Expédition directe', () => supabase.from('shipping_preparations').select('id, expedition_lot_number, refinery_id, shipped_to_company, shipped_to_country, total_gross_weight_grams, total_net_weight_grams, total_weight_oz, prepared_at, shipped_at, status').eq('id', sp).maybeSingle(), null);
     if (expeditionDirecte) {
       logistique = {
         ...logistique,
@@ -188,16 +183,16 @@ export async function chargerContexteConciliation(dossier: Conciliation): Promis
   }
   const expeditionIds = [...new Set(logistique.expeditions.map((expedition) => expedition.id))];
   const [certificats, analysesMine] = expeditionIds.length ? await Promise.all([
-    lire<CertificatConciliation[]>('Certificats de raffinage', supabase.from('assay_certificates').select(CERTIFICAT).in('shipping_preparation_id', expeditionIds).order('created_at', { ascending: false }), []),
-    lire<AnalyseTeneurConciliation[]>('Analyses Mine', supabase.from('snp_analyses_teneur').select(ANALYSE).in('shipping_preparation_id', expeditionIds).order('date_declaration', { ascending: false }), []),
+    lire<CertificatConciliation[]>('Certificats de raffinage', () => supabase.from('assay_certificates').select(CERTIFICAT).in('shipping_preparation_id', expeditionIds).order('created_at', { ascending: false }), []),
+    lire<AnalyseTeneurConciliation[]>('Analyses Mine', () => supabase.from('snp_analyses_teneur').select(ANALYSE).in('shipping_preparation_id', expeditionIds).order('date_declaration', { ascending: false }), []),
   ]) : [[], []] as [CertificatConciliation[], AnalyseTeneurConciliation[]];
   const achatsMine = [...new Set(origines.filter(l => l.source_type === 'achat_mine').map(l => l.source_id))];
   if (achatsMine.length) {
-    const rapportsOrigine = await lire<AnalyseTeneurConciliation[]>('Analyses des achats Mine', supabase.from('snp_analyses_teneur').select(ANALYSE).in('achat_id', achatsMine).order('date_declaration', { ascending: false }), []);
+    const rapportsOrigine = await lire<AnalyseTeneurConciliation[]>('Analyses des achats Mine', () => supabase.from('snp_analyses_teneur').select(ANALYSE).in('achat_id', achatsMine).order('date_declaration', { ascending: false }), []);
     const ids = new Set(analysesMine.map(a => a.id));
     analysesMine.push(...rapportsOrigine.filter(a => !ids.has(a.id)));
   }
-  const mesuresCertificats = certificats.length ? await lire<DonneesCertificatConciliation[]>('Mesures vérifiées', supabase.from('assay_certificate_data').select('certificate_id, total_weight_g, gold_purity_percentage, fineness, is_verified').in('shipping_preparation_id', expeditionIds).in('certificate_id', certificats.map(c => c.id)).eq('is_verified', true).order('updated_at', { ascending: false }), []) : [];
+  const mesuresCertificats = certificats.length ? await lire<DonneesCertificatConciliation[]>('Mesures vérifiées', () => supabase.from('assay_certificate_data').select('certificate_id, total_weight_g, gold_purity_percentage, fineness, is_verified').in('shipping_preparation_id', expeditionIds).in('certificate_id', certificats.map(c => c.id)).eq('is_verified', true).order('updated_at', { ascending: false }), []) : [];
   // Ne jamais substituer silencieusement une autre preuve à celle enregistrée.
   const approuves = certificats.filter(c => c.approval_status === 'approved' && c.approved_at && c.approved_by);
   const certificat = dossier.assay_certificate_id

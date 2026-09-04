@@ -3,6 +3,7 @@ import type { Conciliation } from './conciliationService';
 const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(), lots: vi.fn(), queries: [] as Array<{ table: string; filters: unknown[][] }>, results: {} as Record<string, { data: unknown; error: unknown }> }));
 vi.mock('@/lib/supabase', () => ({ supabase: { from: mocks.from, rpc: mocks.rpc } }));
 vi.mock('./tracabiliteVenteService', () => ({ tracabiliteVenteService: { lotsDeVente: mocks.lots } }));
+import { supabase } from '@/lib/supabase';
 import { chargerContexteConciliation, normaliserLogistiqueConciliation } from './conciliationContext';
 const dossier = { id: 'c1', sale_id: 'sale1', sale: { shipping_preparation_id: 'sp1' }, assay_certificate_id: null, analyse_teneur_id: null } as Conciliation;
 const ligneLogistique = {
@@ -15,7 +16,10 @@ const ligneLogistique = {
 };
 beforeEach(() => {
   mocks.queries.length = 0; mocks.results = {}; mocks.lots.mockResolvedValue([]);
-  mocks.rpc.mockResolvedValue({ data: [ligneLogistique], error: null });
+  mocks.rpc.mockImplementation(function (this: unknown) {
+    if (this !== supabase) throw new TypeError('Supabase RPC appelé sans son client');
+    return Promise.resolve({ data: [ligneLogistique], error: null });
+  });
   mocks.from.mockImplementation((table: string) => {
     const query = { table, filters: [] as unknown[][] }; mocks.queries.push(query);
     const chain: Record<string, unknown> = { then: (resolve: (r: unknown) => unknown) => Promise.resolve(mocks.results[table] ?? { data: [], error: null }).then(resolve) };
@@ -24,6 +28,25 @@ beforeEach(() => {
   });
 });
 describe('chargement indépendant du contexte de conciliation', () => {
+  it('conserve le contexte du client Supabase lors de l’appel RPC', async () => {
+    const result = await chargerContexteConciliation(dossier);
+    expect(result.expedition?.id).toBe('sp1');
+    expect(mocks.rpc.mock.instances.at(-1)).toBe(supabase);
+  });
+
+  it('capture une erreur synchrone de construction sans perdre les autres sections', async () => {
+    mocks.rpc.mockImplementationOnce(function (this: unknown) {
+      expect(this).toBe(supabase);
+      throw Object.assign(new Error('Client RPC indisponible'), { code: 'CLIENT_SYNC' });
+    });
+    mocks.results.sales_line_items = { data: [{ id: 'line' }], error: null };
+
+    const result = await chargerContexteConciliation({ ...dossier, sale: { ...dossier.sale!, shipping_preparation_id: null } });
+
+    expect(result.lignes).toEqual([{ id: 'line' }]);
+    expect(result.incidents).toContainEqual({ section: 'Chaîne logistique', code: 'CLIENT_SYNC', type: 'technique' });
+  });
+
   it('une relation secondaire absente ne masque pas une preuve visible pour Owner', async () => {
     mocks.lots.mockRejectedValue({ code: 'PGRST200' });
     mocks.results.assay_certificates = { data: [{ id: 'cert', approval_status: 'approved', approved_by: 'owner', approved_at: '2026-08-30' }], error: null };

@@ -15694,6 +15694,41 @@ export type Database = {
         Args: { p_idempotency_key: string; p_response: Json }
         Returns: undefined
       }
+      snp_conciliation_expeditions_vente: {
+        Args: { p_sale_id: string }
+        Returns: {
+          allocated_quantity_oz: number | null
+          certificate_number: string | null
+          expedition_lot_number: string | null
+          final_fine_grams: number | null
+          final_fine_ounces: number | null
+          fineness_percentage: number | null
+          freight_reference: string | null
+          freight_shipment_id: string | null
+          freight_status: string | null
+          inventory_id: string | null
+          link_source: string
+          metal_retained_percentage: number | null
+          post_melting_weight_grams: number | null
+          pre_melting_weight_grams: number | null
+          preparation_status: string
+          prepared_at: string | null
+          processed_at: string | null
+          received_at: string | null
+          refinery_country: string | null
+          refinery_id: string | null
+          refinery_name: string | null
+          refining_approved_at: string | null
+          refining_record_id: string | null
+          shipped_at: string | null
+          shipped_to_company: string | null
+          shipped_to_country: string | null
+          shipping_preparation_id: string
+          total_gross_weight_grams: number | null
+          total_net_weight_grams: number | null
+          total_weight_oz: number | null
+        }[]
+      }
       snp_conciliation_enregistrer_analyse: {
         Args: {
           p_conciliation_id: string

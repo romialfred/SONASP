@@ -2250,6 +2250,16 @@
       "sha256": "95405baa508a9823239959237eed2212622551b7148528e46c1c61d0f3e77212"
     },
     {
+      "path": "supabase/migrations/20260903190000_resoudre_expeditions_reelles_conciliation.sql",
+      "version": "20260903190000",
+      "description": "resoudre_expeditions_reelles_conciliation",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 14473,
+      "sha256": "ac7c859f4e93beb55837cfe7fc3bcae271671cf212e627aab216c6f413f30c46"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3243,10 +3253,10 @@
       },
       {
         "digits": 14,
-        "count": 128
+        "count": 129
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "1443f177a31d05be8f744f6cafc27f0044389270e0edc7488a89c386fed1dae9"
+  "catalogueSha256": "e88084fd37e52b1896549fa45ea27fba85c6f7534e575b881dcd1329c392d01f"
 }

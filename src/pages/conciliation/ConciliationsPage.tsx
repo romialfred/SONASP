@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -149,11 +149,20 @@ export interface FiltresConciliation {
   vue: VueConciliation;
 }
 
+function normaliserRecherche(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLocaleLowerCase('fr');
+}
+
 export function filtrerDossiers(
   dossiers: Conciliation[],
   filtres: FiltresConciliation,
 ): Conciliation[] {
-  const terme = filtres.recherche.trim().toLocaleLowerCase('fr');
+  const terme = normaliserRecherche(filtres.recherche);
 
   return dossiers.filter((dossier) => {
     if (filtres.vue !== 'tous' && categorieDossier(dossier) !== filtres.vue) return false;
@@ -170,15 +179,8 @@ export function filtrerDossiers(
       referenceDossier(dossier),
       societeDossier(dossier),
       acheteurDossier(dossier),
-    ].some((valeur) => valeur.toLocaleLowerCase('fr').includes(terme));
+    ].some((valeur) => normaliserRecherche(valeur).includes(terme));
   });
-}
-
-function periodeParDefaut(dossiers: Conciliation[]): { debut: string; fin: string } | null {
-  const dates = dossiers.map(dateDossier).filter(Boolean).sort();
-  const fin = dates[dates.length - 1];
-  if (!fin) return null;
-  return { debut: `${fin.slice(0, 7)}-01`, fin };
 }
 
 function memeMois(value: string | null | undefined, date = new Date()): boolean {
@@ -292,7 +294,6 @@ function DossierCard({ dossier, onOpen }: { dossier: Conciliation; onOpen: () =>
 export function ConciliationsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const periodeInitialisee = useRef(false);
   const [dossiers, setDossiers] = useState<Conciliation[]>([]);
   const [ventes, setVentes] = useState<VenteConciliable[]>([]);
   const [chargement, setChargement] = useState(true);
@@ -310,7 +311,7 @@ export function ConciliationsPage() {
   const [ouverture, setOuverture] = useState(false);
   const [exportEnCours, setExportEnCours] = useState(false);
   const [page, setPage] = useState(1);
-  const [taillePage, setTaillePage] = useState(12);
+  const [taillePage, setTaillePage] = useState(40);
 
   const peutOuvrir = hasCapability(user, CAPABILITIES.RECONCILIATION_CREATE);
   const peutExporter = hasCapability(user, CAPABILITIES.RECONCILIATION_EXPORT);
@@ -325,15 +326,6 @@ export function ConciliationsPage() {
       ]);
       setDossiers(liste);
       setVentes(conciliables);
-
-      if (!periodeInitialisee.current) {
-        const periode = periodeParDefaut(liste);
-        if (periode) {
-          setDebut(periode.debut);
-          setFin(periode.fin);
-        }
-        periodeInitialisee.current = true;
-      }
     } catch (error) {
       setErreur(errorMessage(error, 'Les dossiers de conciliation n’ont pas pu être chargés.'));
       setDossiers([]);
@@ -347,20 +339,24 @@ export function ConciliationsPage() {
     void charger();
   }, [charger]);
 
-  const groupes = useMemo(() => ({
-    attente: dossiers.filter((dossier) => categorieDossier(dossier) === 'attente'),
-    raffinage: dossiers.filter((dossier) => categorieDossier(dossier) === 'raffinage'),
-    litige: dossiers.filter((dossier) => categorieDossier(dossier) === 'litige'),
-    concilies: dossiers.filter((dossier) => categorieDossier(dossier) === 'concilies'),
-  }), [dossiers]);
+  const dossiersDansPerimetre = useMemo(
+    () => filtrerDossiers(dossiers, { recherche, societe, acheteur, debut, fin, vue: 'tous' }),
+    [acheteur, debut, dossiers, fin, recherche, societe],
+  );
+  const groupesFiltres = useMemo(() => ({
+    attente: dossiersDansPerimetre.filter((dossier) => categorieDossier(dossier) === 'attente'),
+    raffinage: dossiersDansPerimetre.filter((dossier) => categorieDossier(dossier) === 'raffinage'),
+    litige: dossiersDansPerimetre.filter((dossier) => categorieDossier(dossier) === 'litige'),
+    concilies: dossiersDansPerimetre.filter((dossier) => categorieDossier(dossier) === 'concilies'),
+  }), [dossiersDansPerimetre]);
 
   const conciliesCeMois = useMemo(
-    () => groupes.concilies.filter((dossier) => memeMois(dossier.valide_le || dossier.cloture_le || dossier.updated_at)),
-    [groupes.concilies],
+    () => groupesFiltres.concilies.filter((dossier) => memeMois(dossier.valide_le || dossier.cloture_le || dossier.updated_at)),
+    [groupesFiltres.concilies],
   );
 
   const resumeEcart = useMemo(() => {
-    const lignes = groupes.concilies
+    const lignes = groupesFiltres.concilies
       .filter((dossier) => dossier.ca_initial !== null && dossier.ca_final !== null)
       .map((dossier) => ({
         valeur: (dossier.ca_final as number) - (dossier.ca_initial as number),
@@ -375,7 +371,7 @@ export function ConciliationsPage() {
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((ligne) => (cumul += ligne.valeur));
     return { valeur, devise: lignes[0]?.devise ?? null, multiDevises, serie };
-  }, [groupes.concilies]);
+  }, [groupesFiltres.concilies]);
 
   const societes = useMemo(() => {
     const uniques = new Map<string, string>();
@@ -393,22 +389,17 @@ export function ConciliationsPage() {
     return [...uniques.entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr'));
   }, [dossiers]);
 
-  const periodeReference = useMemo(() => periodeParDefaut(dossiers), [dossiers]);
-
-  const dossiersFiltres = useMemo(
-    () => filtrerDossiers(dossiers, { recherche, societe, acheteur, debut, fin, vue }),
-    [acheteur, debut, dossiers, fin, recherche, societe, vue],
-  );
+  const dossiersFiltres = vue === 'tous' ? dossiersDansPerimetre : groupesFiltres[vue];
   const nombrePages = Math.max(1, Math.ceil(dossiersFiltres.length / taillePage));
   const dossiersPage = dossiersFiltres.slice((page - 1) * taillePage, page * taillePage);
   const premier = dossiersFiltres.length === 0 ? 0 : (page - 1) * taillePage + 1;
   const dernier = Math.min(page * taillePage, dossiersFiltres.length);
   const nombreFiltres = [
-    recherche,
+    normaliserRecherche(recherche),
     societe !== 'toutes',
     acheteur !== 'tous',
-    Boolean(debut && debut !== periodeReference?.debut),
-    Boolean(fin && fin !== periodeReference?.fin),
+    Boolean(debut),
+    Boolean(fin),
   ]
     .filter(Boolean).length;
 
@@ -441,12 +432,11 @@ export function ConciliationsPage() {
   };
 
   const reinitialiserFiltres = () => {
-    const periode = periodeParDefaut(dossiers);
     setRecherche('');
     setSociete('toutes');
     setAcheteur('tous');
-    setDebut(periode?.debut ?? '');
-    setFin(periode?.fin ?? '');
+    setDebut('');
+    setFin('');
   };
 
   const exporter = async () => {
@@ -504,17 +494,17 @@ export function ConciliationsPage() {
         />
 
         <nav className="conciliation-tabs" aria-label="États des dossiers">
-          <StatusTab active={vue === 'attente'} count={groupes.attente.length} icon={Clock3} label="En attente de conciliation" tone="green" onClick={() => setVue('attente')} />
-          <StatusTab active={vue === 'raffinage'} count={groupes.raffinage.length} icon={FlaskConical} label="En raffinage" tone="blue" onClick={() => setVue('raffinage')} />
-          <StatusTab active={vue === 'litige'} count={groupes.litige.length} icon={AlertCircle} label="En litige" tone="red" onClick={() => setVue('litige')} />
-          <StatusTab active={vue === 'concilies'} count={groupes.concilies.length} icon={CheckCircle2} label="Conciliées" tone="mint" onClick={() => setVue('concilies')} />
-          <StatusTab active={vue === 'tous'} count={dossiers.length} icon={FileSpreadsheet} label="Toutes les ventes" tone="slate" onClick={() => setVue('tous')} />
+          <StatusTab active={vue === 'attente'} count={groupesFiltres.attente.length} icon={Clock3} label="En attente de conciliation" tone="green" onClick={() => setVue('attente')} />
+          <StatusTab active={vue === 'raffinage'} count={groupesFiltres.raffinage.length} icon={FlaskConical} label="En raffinage" tone="blue" onClick={() => setVue('raffinage')} />
+          <StatusTab active={vue === 'litige'} count={groupesFiltres.litige.length} icon={AlertCircle} label="En litige" tone="red" onClick={() => setVue('litige')} />
+          <StatusTab active={vue === 'concilies'} count={groupesFiltres.concilies.length} icon={CheckCircle2} label="Conciliées" tone="mint" onClick={() => setVue('concilies')} />
+          <StatusTab active={vue === 'tous'} count={dossiersDansPerimetre.length} icon={FileSpreadsheet} label="Toutes les ventes" tone="slate" onClick={() => setVue('tous')} />
         </nav>
 
         <section className="conciliation-metrics" aria-label="Synthèse des conciliations">
-          <MetricCard dossiers={groupes.attente} icon={Clock3} label="En attente de conciliation" tone="amber" />
-          <MetricCard dossiers={groupes.raffinage} icon={FlaskConical} label="En raffinage" tone="blue" />
-          <MetricCard dossiers={groupes.litige} icon={AlertTriangle} label="En litige" tone="red" />
+          <MetricCard dossiers={groupesFiltres.attente} icon={Clock3} label="En attente de conciliation" tone="amber" />
+          <MetricCard dossiers={groupesFiltres.raffinage} icon={FlaskConical} label="En raffinage" tone="blue" />
+          <MetricCard dossiers={groupesFiltres.litige} icon={AlertTriangle} label="En litige" tone="red" />
           <MetricCard dossiers={conciliesCeMois} icon={CheckCircle2} label="Conciliées (ce mois)" tone="green" />
           <article className={`conciliation-gap${(resumeEcart.valeur ?? 0) < 0 ? ' is-negative' : ' is-positive'}`}>
             <p>Écart cumulé</p>

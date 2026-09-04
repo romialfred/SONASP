@@ -36,7 +36,8 @@ describe('en-têtes de sécurité Vercel', () => {
     const html = readFileSync(resolve(process.cwd(), 'public/clear-sw.html'), 'utf8');
     const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
     expect(script).toBeTruthy();
-    const hash = `sha256-${createHash('sha256').update(script ?? '').digest('base64')}`;
+    const canonicalScript = (script ?? '').replace(/\r\n?/g, '\n');
+    const hash = `sha256-${createHash('sha256').update(canonicalScript).digest('base64')}`;
     expect(globalHeaders['Content-Security-Policy']).toContain(`'${hash}'`);
   });
 

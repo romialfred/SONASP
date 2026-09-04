@@ -40,6 +40,8 @@ describe('migration de gouvernance des accès', () => {
 
   it('migre tous les comptes et vérifie les invariants avant validation', () => {
     expect(migration).toContain('INSERT INTO public.snp_user_access_assignments');
+    expect(migration).toContain('GROUP BY policy.portal_code');
+    expect(migration).toContain('count(DISTINCT policy.organization_type)=1');
     expect(migration).toContain('Affectation sans perte de tous les profils existants');
     expect(migration).toContain('Postflight gouvernance des accès : invariants incomplets.');
     expect(migration.trimEnd()).toMatch(/COMMIT;$/);

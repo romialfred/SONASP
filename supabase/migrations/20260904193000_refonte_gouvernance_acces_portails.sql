@@ -350,7 +350,7 @@ ON CONFLICT DO NOTHING;
 -- Portails actuels : le code historique reste le lien de migration. Aucun
 -- portail ni utilisateur existant n’est supprimé ou renommé.
 INSERT INTO public.snp_access_portals(code,name,description,institutional_scope,is_active,is_system)
-SELECT DISTINCT policy.portal_code,
+SELECT policy.portal_code,
   CASE policy.portal_code
     WHEN 'sonasp' THEN 'Portail SONASP'
     WHEN 'dgmg' THEN 'Portail DGMG'
@@ -361,8 +361,11 @@ SELECT DISTINCT policy.portal_code,
     ELSE 'Portail '||upper(policy.portal_code)
   END,
   'Portail migré depuis le référentiel d’accès institutionnel existant.',
-  policy.organization_type,true,true
+  CASE WHEN count(DISTINCT policy.organization_type)=1
+    THEN min(policy.organization_type) ELSE NULL END,
+  true,true
 FROM public.snp_access_role_policies policy
+GROUP BY policy.portal_code
 ON CONFLICT(code) DO UPDATE SET is_system=true,updated_at=now();
 
 INSERT INTO public.snp_access_roles(portal_id,code,name,description,legacy_role,is_active,is_system)

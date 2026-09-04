@@ -2296,8 +2296,8 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 103885,
-      "sha256": "be5aaa76a4ea68ef4a92f9fc142f1ab45dfe201e073c7c28cb4e789be3e7bc38"
+      "normalizedBytes": 103988,
+      "sha256": "8a86b7a3039d75d0e87e3f24701e108a77c845609b184291df694da7a013a03c"
     },
     {
       "path": "supabase/migrations/20260904200000_portail_dgi_collecte_fiscale.sql",
@@ -3318,5 +3318,5 @@
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "607722ffb340be43490ef52ddef54c52e3bf5e4b67756c9636d478fc68f70904"
+  "catalogueSha256": "65c6c9a0a4a3bd05c56742a2f02995f3541f0f0697c663306070ca363479163e"
 }

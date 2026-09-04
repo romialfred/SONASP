@@ -133,7 +133,7 @@ class DailyProductionService {
 
       if (error) {
         console.error('Error fetching production by ID:', error);
-        throw new Error(`Impossible de charger la production: ${error.message}`);
+        throw error;
       }
 
       if (!data) {
@@ -178,14 +178,14 @@ class DailyProductionService {
 
       if (error) {
         console.error('❌ Supabase insert error:', error);
-        throw new Error(`Erreur d'enregistrement: ${error.message}`);
+        throw error;
       }
 
       console.log('✅ Production created successfully:', data);
       return data as DailyProduction;
     } catch (error: any) {
       console.error('❌ Service error:', error);
-      throw new Error(error.message || 'Impossible de créer la production');
+      throw error;
     }
   }
 

@@ -14,7 +14,7 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, Segmented, StatGrid } from '@/components/ui/sn';
 import { exportLicenseService, type ExportLicense } from '@/services/exportLicenseService';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
 import './export-licenses.css';
 
@@ -139,7 +139,7 @@ export function ExportLicensesPage() {
       setLicences(limiterLicencesAuPerimetre(resultat, isMine ? companyId : null));
     } catch (raison) {
       // L'échec n'était consigné qu'au journal : l'écran restait vide sans un mot.
-      setErreur(errorMessage(raison, 'Impossible de charger les licences d’exportation.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les licences d’exportation.'));
       setLicences([]);
     } finally {
       setChargement(false);

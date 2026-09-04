@@ -356,7 +356,8 @@ describe('DailyProductionPage', () => {
     mocks.listProduction.mockRejectedValue({ message: 'table indisponible' });
     render(<DailyProductionPage />);
 
-    await waitFor(() => expect(screen.getByText('table indisponible')).toBeInTheDocument());
+    // Le message PostgREST brut n'est plus divulgué : un repli propre est affiché.
+    await waitFor(() => expect(screen.getByText(/Impossible de charger les déclarations/)).toBeInTheDocument());
     expect(screen.getAllByText('Aucune déclaration').length).toBeGreaterThan(0);
   });
 });

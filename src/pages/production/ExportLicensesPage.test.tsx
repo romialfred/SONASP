@@ -181,7 +181,8 @@ describe('ExportLicensesPage', () => {
     mocks.getAllLicenses.mockRejectedValue({ message: 'lecture refusée' });
     render(<ExportLicensesPage />);
 
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('lecture refusée'));
+    // Le message PostgREST brut n'est plus divulgué : un repli propre est affiché.
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Impossible de charger les licences/));
     expect(screen.getByText('Aucune licence')).toBeInTheDocument();
   });
 

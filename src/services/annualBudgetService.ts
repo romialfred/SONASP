@@ -141,8 +141,15 @@ class AnnualBudgetService {
     budgets: MonthlyBudgetInput[],
     miningCompanyId?: string | null
   ): Promise<MonthlyBudget[]> {
-    // Extract year from various possible sources
-    const year = new Date().getFullYear(); // Fallback to current year
+    // Année autoritative du budget parent : indispensable pour le nombre de jours
+    // (février bissextile). L'ancien `new Date().getFullYear()` datait mal toute
+    // saisie faite pour une autre année que l'année courante.
+    const { data: annuel } = await supabase
+      .from('annual_budgets')
+      .select('year')
+      .eq('id', annualBudgetId)
+      .maybeSingle();
+    const year = annuel?.year ?? new Date().getFullYear();
 
     const records = budgets.map(b => {
       const daysInMonth = this.getDaysInMonth(b.month, year);
@@ -195,7 +202,13 @@ class AnnualBudgetService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const year = new Date().getFullYear(); // Fallback to current year
+    // Année autoritative du budget parent (février bissextile).
+    const { data: annuel } = await supabase
+      .from('annual_budgets')
+      .select('year')
+      .eq('id', annualBudgetId)
+      .maybeSingle();
+    const year = annuel?.year ?? new Date().getFullYear();
 
     const records = forecasts.map(f => {
       const daysInMonth = this.getDaysInMonth(f.month, year);

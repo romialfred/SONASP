@@ -13,6 +13,7 @@ import { productionDocumentService } from '@/services/productionDocumentService'
 import { ProductionDocumentUpload } from './ProductionDocumentUpload';
 import { ProductionDocumentsList, ProductionDocument } from './ProductionDocumentsList';
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { dailyProductionFieldGuides } from '@/data/productionFieldGuides';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 import { roundUpToFixed } from '@/utils/numberUtils';
@@ -340,7 +341,7 @@ export function DailyProductionFormEnhanced({ production, onCancel, onSuccess }:
       onSuccess();
     } catch (error: any) {
       console.error('Error saving production:', error);
-      showError(error.message || 'Erreur lors de la sauvegarde', 'Erreur de sauvegarde');
+      showError(messageErreurUtilisateur(error, 'Erreur lors de la sauvegarde'), 'Erreur de sauvegarde');
     } finally {
       setLoading(false);
     }

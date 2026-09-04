@@ -11,7 +11,7 @@ import { DailyProductionFormEnhanced } from '@/components/production/DailyProduc
 import { ProductionTable } from '@/components/production/ProductionTable';
 import { ProductionChart } from '@/components/production/ProductionChart';
 import { supabase } from '@/lib/supabase';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 import { useAuth } from '@/contexts/AuthContext';
 import { minePortalService } from '@/services/minePortalService';
@@ -137,7 +137,7 @@ export function DailyProductionPage() {
     if (mineCompanyId) query = query.eq('id', mineCompanyId);
     const { data, error } = await query;
     if (error) {
-      setErreur(errorMessage(error, 'Impossible de charger les compagnies minières.'));
+      setErreur(messageErreurUtilisateur(error, 'Impossible de charger les compagnies minières.'));
       return;
     }
     setCompagnies(mineCompanyId ? (data || []) : filterOperationalMiningCompanies(data || []));
@@ -151,7 +151,7 @@ export function DailyProductionPage() {
         await dailyProductionService.listProduction({ startDate: periode.debut, endDate: periode.fin })
       );
     } catch (reason) {
-      setErreur(errorMessage(reason, 'Impossible de charger les déclarations de production.'));
+      setErreur(messageErreurUtilisateur(reason, 'Impossible de charger les déclarations de production.'));
       setProductions([]);
     } finally {
       setLoading(false);
@@ -233,7 +233,7 @@ export function DailyProductionPage() {
       else await dailyProductionService.deleteProduction(id);
       await chargerProductions();
     } catch (reason) {
-      showError(errorMessage(reason, 'Suppression impossible.'));
+      showError(messageErreurUtilisateur(reason, 'Suppression impossible.'));
     }
   };
 

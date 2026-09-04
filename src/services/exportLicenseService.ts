@@ -311,14 +311,14 @@ class ExportLicenseService {
 
       if (error) {
         console.error('❌ Supabase insert error:', error);
-        throw new Error(`Erreur d'enregistrement de licence: ${error.message}`);
+        throw error;
       }
 
       console.log('✅ License created successfully:', data);
       return normalizeExportLicenseQuota(data as ExportLicense);
     } catch (error: any) {
       console.error('❌ Service error:', error);
-      throw new Error(error.message || 'Impossible de créer la licence');
+      throw error;
     }
   }
 

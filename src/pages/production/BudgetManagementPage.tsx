@@ -38,6 +38,7 @@ import {
   QuarterlyForecastInput
 } from '../../services/annualBudgetService';
 import { minePortalService } from '@/services/minePortalService';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 
 interface MiningCompany {
   id: string;
@@ -507,7 +508,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
       showSuccess('Prévision annuelle enregistrée');
     } catch (error) {
       console.error('Error saving budgets:', error);
-      showError('Impossible d\'enregistrer la prévision');
+      showError(messageErreurUtilisateur(error, 'Impossible d\'enregistrer la prévision'));
     } finally {
       setSaving(false);
     }
@@ -598,7 +599,7 @@ export function BudgetManagementPage({ initialMode = 'budget' }: { initialMode?:
       showSuccess(`Révision du trimestre ${selectedQuarter} enregistrée`);
     } catch (error) {
       console.error('Error saving forecasts:', error);
-      showError('Impossible d\'enregistrer la révision');
+      showError(messageErreurUtilisateur(error, 'Impossible d\'enregistrer la révision'));
     } finally {
       setSaving(false);
     }

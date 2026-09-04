@@ -14,7 +14,7 @@ import { filterOperationalMiningCompanies } from '@/utils/miningCompanyFilters';
 import { useAuth } from '@/contexts/AuthContext';
 import { FieldGuidePanel } from '@/components/ui/FieldGuidePanel';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 
 interface MiningCompany {
   id: string;
@@ -164,7 +164,7 @@ function MineExportLicenseRequestForm() {
       });
       setRequestSent(true);
     } catch (cause) {
-      setRequestError(errorMessage(cause, 'Impossible de transmettre la demande de licence.'));
+      setRequestError(messageErreurUtilisateur(cause, 'Impossible de transmettre la demande de licence.'));
     } finally {
       setSubmitting(false);
     }
@@ -539,7 +539,7 @@ function SonaspExportLicenseForm() {
     } catch (error: any) {
       console.error('Error saving license:', error);
       setErrorTitle('Erreur de sauvegarde');
-      setErrorMessage('Impossible de sauvegarder la licence: ' + (error.message || 'Erreur inconnue'));
+      setErrorMessage(messageErreurUtilisateur(error, 'Impossible de sauvegarder la licence.'));
       setShowErrorDialog(true);
     } finally {
       setSaving(false);

@@ -97,7 +97,7 @@ describe('AchatsMines', () => {
   });
 
   it('nomme la source quand le chargement échoue, sans inventer de chiffres', async () => {
-    mocks.stocksParSociete.mockRejectedValue({ message: 'réseau indisponible' });
+    mocks.stocksParSociete.mockRejectedValue({ message: 'accès refusé' });
     render(<AchatsMines />);
     expect(await screen.findByText(/Impossible de charger|réseau indisponible/)).toBeInTheDocument();
     expect(screen.queryByText('SEMAFO Boungou Gold Mine')).not.toBeInTheDocument();

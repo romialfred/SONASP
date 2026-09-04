@@ -17,7 +17,7 @@ import { Badge, EmptyState, Field, Note, PageHeader, Section, StatGrid } from '@
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { useCoursOr } from '@/hooks/useCoursOr';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { tauxAchatService, type TauxAchat } from '@/services/tauxAchatService';
 import {
   LIBELLES_STATUT_ACHAT,
@@ -80,7 +80,7 @@ export default function AchatsMines() {
       setStocks(listeStocks);
       setAchats(listeAchats);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les stocks et les achats.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les stocks et les achats.'));
       setStocks([]);
       setAchats([]);
     } finally {
@@ -197,7 +197,7 @@ export default function AchatsMines() {
       reinitialiser();
       await charger();
     } catch (raison) {
-      showError(errorMessage(raison, 'Impossible d’enregistrer l’achat.'));
+      showError(messageErreurUtilisateur(raison, 'Impossible d’enregistrer l’achat.'));
     } finally {
       setEnregistrement(false);
     }
@@ -209,7 +209,7 @@ export default function AchatsMines() {
       showSuccess(`Achat ${LIBELLES_STATUT_ACHAT[statut].toLowerCase()}.`);
       await charger();
     } catch (raison) {
-      showError(errorMessage(raison, 'Le changement de statut a échoué.'));
+      showError(messageErreurUtilisateur(raison, 'Le changement de statut a échoué.'));
     }
   };
 

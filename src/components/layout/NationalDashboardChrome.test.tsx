@@ -29,6 +29,24 @@ vi.mock('@/contexts/AuthContext', () => ({
 
 vi.mock('@/components/ui/ProfileErrorBanner', () => ({ ProfileErrorBanner: () => null }));
 
+vi.mock('@/services/modulesService', () => ({
+  MODULE_CATALOG_UPDATED_EVENT: 'sonasp:module-catalog-updated',
+  modulesService: { getNavigationAvailability: vi.fn().mockResolvedValue(null) },
+}));
+
+vi.mock('@/services/notificationsService', () => ({
+  notificationsService: {
+    lister: vi.fn().mockResolvedValue([]),
+    resume: vi.fn().mockResolvedValue({
+      non_lues: 0,
+      urgentes: 0,
+      hautes: 0,
+      plus_ancienne: null,
+    }),
+    marquerLues: vi.fn().mockResolvedValue(0),
+  },
+}));
+
 /** Page telle qu'elle est écrite aujourd'hui : elle rend son propre habillage. */
 const PageAvecHabillage = ({ titre }: { titre: string }) => (
   <NationalDashboardLayout>

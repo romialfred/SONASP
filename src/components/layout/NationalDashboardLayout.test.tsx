@@ -49,6 +49,19 @@ vi.mock('@/services/modulesService', () => ({
   modulesService: { getNavigationAvailability: vi.fn().mockResolvedValue(null) },
 }));
 
+vi.mock('@/services/notificationsService', () => ({
+  notificationsService: {
+    lister: vi.fn().mockResolvedValue([]),
+    resume: vi.fn().mockResolvedValue({
+      non_lues: 0,
+      urgentes: 0,
+      hautes: 0,
+      plus_ancienne: null,
+    }),
+    marquerLues: vi.fn().mockResolvedValue(0),
+  },
+}));
+
 describe('NationalDashboardLayout', () => {
   beforeEach(() => {
     localStorage.clear();

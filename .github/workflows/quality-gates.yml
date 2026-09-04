@@ -28,12 +28,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit
       - run: node scripts/check-migration-integrity.mjs verify
       - run: npm run lint
       - run: npm run typecheck
@@ -43,12 +43,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit
       - run: npx vitest run --maxWorkers=4
 
   production-build:
@@ -56,11 +56,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
-      - run: npm ci
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm ci --no-audit
+      - name: Audit des dépendances de production
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npm audit --omit=dev --audit-level=high \
+              --fetch-retries=1 \
+              --fetch-retry-mintimeout=5000 \
+              --fetch-retry-maxtimeout=15000 \
+              --fetch-timeout=60000; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::L'audit de sécurité npm a échoué après trois tentatives."
+              exit 1
+            fi
+
+            sleep $((attempt * 10))
+          done
       - run: npm run build

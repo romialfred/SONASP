@@ -90,7 +90,7 @@ export function Modal({ isOpen, onClose, children, title, size = 'md', maxWidth,
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
-        aria-label={title ? undefined : (ariaLabel || 'Dialog')}
+        aria-label={title ? undefined : (ariaLabel || 'Boîte de dialogue')}
         tabIndex={-1}
       >
         {title ? (
@@ -114,7 +114,7 @@ export function ModalHeader({ children, onClose, titleId }: { children: ReactNod
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Close modal"
+          aria-label="Fermer la fenêtre"
         >
           <X className="h-5 w-5" />
         </button>

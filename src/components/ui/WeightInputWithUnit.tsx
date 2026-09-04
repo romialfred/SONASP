@@ -123,7 +123,7 @@ export function WeightInputWithUnit({
 
       {displayConversions && conversionText && (
         <p className="text-xs text-slate-500 mt-1">
-          <span className="font-medium">Reference:</span> {conversionText}
+          <span className="font-medium">Référence :</span> {conversionText}
         </p>
       )}
 

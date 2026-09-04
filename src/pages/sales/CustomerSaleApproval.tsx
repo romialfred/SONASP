@@ -46,52 +46,52 @@ interface Sale {
 const getPaymentTermsSummary = (mechanismType: string | null | undefined) => {
   if (!mechanismType || mechanismType.toLowerCase() === 'spot') {
     return {
-      title: 'Spot Basis Payment',
-      timeline: 'Immediate',
-      commitment: 'Your approval constitutes payment commitment',
-      dueDate: 'Payment due within 2 business days',
-      pricing: 'Current market price locked',
+      title: 'Paiement au comptant',
+      timeline: 'Immédiat',
+      commitment: 'Votre approbation constitue un engagement de paiement',
+      dueDate: 'Paiement exigible sous deux jours ouvrés',
+      pricing: 'Cours actuel du marché verrouillé',
       icon: DollarSign,
       color: 'emerald',
-      alert: 'By approving this sale, you are committing to pay within 2 business days according to spot basis terms.'
+      alert: 'En approuvant cette vente, vous vous engagez à régler le montant sous deux jours ouvrés selon les conditions au comptant.'
     };
   }
 
   if (mechanismType.toLowerCase().includes('forward_7')) {
     return {
-      title: 'Forward 7 Days Payment',
-      timeline: '7 Business Days',
-      commitment: 'Payment required in 7 business days',
-      dueDate: 'Due date: 7 days from approval',
-      pricing: 'Price fixed at contract date',
+      title: 'Paiement à terme — 7 jours',
+      timeline: '7 jours ouvrés',
+      commitment: 'Paiement exigible sous sept jours ouvrés',
+      dueDate: 'Échéance fixée à sept jours après l’approbation',
+      pricing: 'Prix fixé à la date du contrat',
       icon: Clock,
       color: 'blue',
-      alert: 'By approving this sale, you agree to pay within 7 business days from today.'
+      alert: 'En approuvant cette vente, vous vous engagez à régler le montant sous sept jours ouvrés à compter de ce jour.'
     };
   }
 
   if (mechanismType.toLowerCase().includes('forward_14')) {
     return {
-      title: 'Forward 14 Days Payment',
-      timeline: '14 Business Days',
-      commitment: 'Payment required in 14 business days',
-      dueDate: 'Due date: 14 days from approval',
-      pricing: 'Price fixed at contract date',
+      title: 'Paiement à terme — 14 jours',
+      timeline: '14 jours ouvrés',
+      commitment: 'Paiement exigible sous quatorze jours ouvrés',
+      dueDate: 'Échéance fixée à quatorze jours après l’approbation',
+      pricing: 'Prix fixé à la date du contrat',
       icon: Clock,
       color: 'indigo',
-      alert: 'By approving this sale, you agree to pay within 14 business days from today.'
+      alert: 'En approuvant cette vente, vous vous engagez à régler le montant sous quatorze jours ouvrés à compter de ce jour.'
     };
   }
 
   return {
-    title: 'Standard Payment Terms',
-    timeline: '2 Business Days',
-    commitment: 'Standard payment terms apply',
-    dueDate: 'Payment within 2 business days',
-    pricing: 'Current price terms',
+    title: 'Conditions de paiement standard',
+    timeline: '2 jours ouvrés',
+    commitment: 'Les conditions de paiement standard s’appliquent',
+    dueDate: 'Paiement sous deux jours ouvrés',
+    pricing: 'Conditions de prix en vigueur',
     icon: DollarSign,
     color: 'gray',
-    alert: 'By approving this sale, you agree to the payment terms specified.'
+    alert: 'En approuvant cette vente, vous acceptez les conditions de paiement indiquées.'
   };
 };
 
@@ -146,7 +146,7 @@ export function CustomerSaleApproval() {
         setActionType('approve');
         setSuccess(true);
       } else {
-        throw new Error(result.error || 'Failed to approve sale');
+        throw new Error(result.error || 'La vente n’a pas pu être approuvée.');
       }
     } catch (err: any) {
       console.error('Error approving sale:', err);
@@ -173,7 +173,7 @@ export function CustomerSaleApproval() {
         setSuccess(true);
         setShowRejectModal(false);
       } else {
-        throw new Error(result.error || 'Failed to reject sale');
+        throw new Error(result.error || 'La vente n’a pas pu être rejetée.');
       }
     } catch (err: any) {
       console.error('Error rejecting sale:', err);
@@ -197,7 +197,7 @@ export function CustomerSaleApproval() {
     return (
       <MainLayout>
         <div className="max-w-2xl mx-auto py-12">
-          <Alert variant="error" title="Unable to Load Sale">
+          <Alert variant="error" title="Chargement de la vente impossible">
             {error}
           </Alert>
         </div>
@@ -221,14 +221,14 @@ export function CustomerSaleApproval() {
                   <XCircle className="h-8 w-8 text-red-600" />
                 )}
                 <span className={isApproved ? 'text-green-900' : 'text-red-900'}>
-                  {isApproved ? 'Sale Approved Successfully' : 'Sale Rejected'}
+                  {isApproved ? 'Vente approuvée avec succès' : 'Vente rejetée'}
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               <div className="text-center space-y-3">
                 <p className="text-xl font-semibold text-gray-900">
-                  Sale {sale?.sale_number}
+                  Vente {sale?.sale_number}
                 </p>
 
                 {isApproved && (
@@ -236,22 +236,22 @@ export function CustomerSaleApproval() {
                     {isSpot ? (
                       <div className="p-4 bg-emerald-50 border-2 border-emerald-300 rounded-lg">
                         <p className="text-sm font-semibold text-emerald-900 mb-2">
-                          Payment Status: COMMITTED
+                          État du paiement : ENGAGEMENT ENREGISTRÉ
                         </p>
                         <p className="text-sm text-emerald-800">
-                          Your approval on <strong>Spot Basis</strong> constitutes payment commitment.
-                          Payment is expected within <strong>2 business days</strong>.
+                          Votre approbation d’une vente <strong>au comptant</strong> constitue un engagement de paiement.
+                          Le règlement est attendu sous <strong>deux jours ouvrés</strong>.
                         </p>
                       </div>
                     ) : (
                       <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
                         <p className="text-sm font-semibold text-blue-900 mb-2">
-                          Payment Required
+                          Paiement requis
                         </p>
                         <p className="text-sm text-blue-800">
-                          Please proceed with payment according to the terms agreed:
+                          Veuillez procéder au paiement conformément aux conditions convenues :
                           <strong className="block mt-1">
-                            {sale?.mechanism_type?.includes('7') ? '7 business days' : '14 business days'}
+                            {sale?.mechanism_type?.includes('7') ? '7 jours ouvrés' : '14 jours ouvrés'}
                           </strong>
                         </p>
                       </div>
@@ -260,11 +260,11 @@ export function CustomerSaleApproval() {
                     <div className="pt-4 space-y-2 text-sm text-gray-700">
                       <p className="flex items-center justify-center gap-2">
                         <Mail className="h-4 w-4" />
-                        A confirmation email has been sent to {sale?.customer?.email}
+                        Un courriel de confirmation a été envoyé à {sale?.customer?.email}
                       </p>
                       <p className="flex items-center justify-center gap-2">
                         <FileText className="h-4 w-4" />
-                        Invoice and payment details will follow shortly
+                        La facture et les modalités de paiement seront communiquées prochainement.
                       </p>
                     </div>
                   </>
@@ -273,7 +273,7 @@ export function CustomerSaleApproval() {
                 {!isApproved && (
                   <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                     <p className="text-sm text-gray-700">
-                      The sale has been rejected. The sales team will be notified and may contact you to discuss alternatives.
+                      La vente a été rejetée. L’équipe commerciale en sera informée et pourra vous contacter afin d’examiner les solutions possibles.
                     </p>
                   </div>
                 )}
@@ -282,13 +282,13 @@ export function CustomerSaleApproval() {
               <div className="pt-6 border-t border-gray-200">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-600">Amount</p>
+                    <p className="text-gray-600">Montant</p>
                     <p className="font-bold text-lg text-gray-900">
                       {formatCurrency(sale?.final_proceeds || 0)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Quantity</p>
+                    <p className="text-gray-600">Quantité</p>
                     <p className="font-bold text-lg text-gray-900">
                       {sale?.quantity_oz.toFixed(3)} oz
                     </p>
@@ -310,8 +310,8 @@ export function CustomerSaleApproval() {
     return (
       <MainLayout>
         <div className="max-w-2xl mx-auto py-12">
-          <Alert variant="error" title="Sale Not Found">
-            The requested sale could not be found or is no longer available for approval.
+          <Alert variant="error" title="Vente introuvable">
+            La vente demandée est introuvable ou n’est plus disponible pour approbation.
           </Alert>
         </div>
       </MainLayout>
@@ -326,15 +326,15 @@ export function CustomerSaleApproval() {
       <div className="max-w-4xl mx-auto py-8 space-y-6">
         <div className="text-center space-y-2">
           <h1 className="font-heading text-3xl font-bold text-gray-900">
-            Sale Approval Request
+            Demande d’approbation d’une vente
           </h1>
           <p className="text-gray-600">
-            Please review the sale details and payment terms before approving
+            Vérifiez les informations de la vente et les conditions de paiement avant de statuer.
           </p>
         </div>
 
         {error && (
-          <Alert variant="error" title="Error">
+          <Alert variant="error" title="Erreur">
             {error}
           </Alert>
         )}
@@ -345,39 +345,39 @@ export function CustomerSaleApproval() {
               <CardHeader className="bg-blue-50">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-blue-600" />
-                  Sale Information
+                  Informations sur la vente
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center pb-3 border-b">
-                    <span className="text-sm font-semibold text-gray-700">Sale Number</span>
+                    <span className="text-sm font-semibold text-gray-700">Référence de la vente</span>
                     <span className="text-base font-bold text-gray-900">{sale.sale_number}</span>
                   </div>
 
                   <div className="flex justify-between items-center pb-3 border-b">
-                    <span className="text-sm font-semibold text-gray-700">Customer</span>
+                    <span className="text-sm font-semibold text-gray-700">Client</span>
                     <span className="text-base font-semibold text-gray-900">
                       {sale.customer?.name}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center pb-3 border-b">
-                    <span className="text-sm font-semibold text-gray-700">Quantity</span>
+                    <span className="text-sm font-semibold text-gray-700">Quantité</span>
                     <span className="text-base font-bold text-gray-900">
                       {sale.quantity_oz.toFixed(3)} oz
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center pb-3 border-b">
-                    <span className="text-sm font-semibold text-gray-700">Price per oz</span>
+                    <span className="text-sm font-semibold text-gray-700">Prix par once</span>
                     <span className="text-base font-bold text-gray-900">
                       {formatCurrency(sale.london_am_rate)}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center py-3 bg-green-50 rounded-lg px-4">
-                    <span className="text-sm font-semibold text-green-900">Gross Proceeds</span>
+                    <span className="text-sm font-semibold text-green-900">Produit brut</span>
                     <span className="text-lg font-bold text-green-700">
                       {formatCurrency(sale.gross_proceeds)}
                     </span>
@@ -385,7 +385,7 @@ export function CustomerSaleApproval() {
 
                   {sale.freight_cost > 0 && (
                     <div className="flex justify-between items-center px-4">
-                      <span className="text-sm text-gray-700">Freight Cost</span>
+                      <span className="text-sm text-gray-700">Frais de transport</span>
                       <span className="text-base font-semibold text-red-600">
                         -{formatCurrency(sale.freight_cost)}
                       </span>
@@ -394,7 +394,7 @@ export function CustomerSaleApproval() {
 
                   {sale.other_costs > 0 && (
                     <div className="flex justify-between items-center px-4">
-                      <span className="text-sm text-gray-700">Other Costs</span>
+                      <span className="text-sm text-gray-700">Autres frais</span>
                       <span className="text-base font-semibold text-red-600">
                         -{formatCurrency(sale.other_costs)}
                       </span>
@@ -402,21 +402,21 @@ export function CustomerSaleApproval() {
                   )}
 
                   <div className="flex justify-between items-center px-4 pt-2">
-                    <span className="text-sm font-semibold text-gray-700">Net Proceeds</span>
+                    <span className="text-sm font-semibold text-gray-700">Produit net</span>
                     <span className="text-base font-bold text-gray-900">
                       {formatCurrency(sale.net_proceeds)}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center px-4">
-                    <span className="text-sm text-gray-700">Royalties (3%)</span>
+                    <span className="text-sm text-gray-700">Redevances (3 %)</span>
                     <span className="text-base font-semibold text-red-600">
                       -{formatCurrency(sale.royalty_amount)}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center py-4 px-4 bg-gradient-to-r from-primary-100 to-blue-100 border-2 border-primary-300 rounded-lg mt-3">
-                    <span className="text-lg font-bold text-gray-900">Final Amount</span>
+                    <span className="text-lg font-bold text-gray-900">Montant final</span>
                     <span className="text-2xl font-bold text-primary-700">
                       {formatCurrency(sale.final_proceeds)}
                     </span>
@@ -436,11 +436,11 @@ export function CustomerSaleApproval() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Timeline</p>
+                      <p className="text-xs text-gray-600 mb-1">Délai</p>
                       <p className="font-semibold text-gray-900">{paymentTerms.timeline}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Pricing</p>
+                      <p className="text-xs text-gray-600 mb-1">Tarification</p>
                       <p className="font-semibold text-gray-900">{paymentTerms.pricing}</p>
                     </div>
                   </div>
@@ -456,7 +456,7 @@ export function CustomerSaleApproval() {
                     </div>
                     <div className="flex items-start gap-2 text-sm">
                       <CheckCircle className={`h-4 w-4 text-${paymentTerms.color}-600 flex-shrink-0 mt-0.5`} />
-                      <span className="text-gray-700">Wire transfer to designated account</span>
+                      <span className="text-gray-700">Virement bancaire sur le compte désigné</span>
                     </div>
                   </div>
 
@@ -474,7 +474,7 @@ export function CustomerSaleApproval() {
           <div className="space-y-6">
             <Card className="border-2 border-gray-200 sticky top-6">
               <CardHeader className="bg-gray-50">
-                <CardTitle className="text-base">Your Decision</CardTitle>
+                <CardTitle className="text-base">Votre décision</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-3">
@@ -484,7 +484,7 @@ export function CustomerSaleApproval() {
                     className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="h-4 w-4" />
-                    {submitting ? 'Processing...' : 'Approve Sale'}
+                    {submitting ? 'Traitement en cours…' : 'Approuver la vente'}
                   </Button>
 
                   <Button
@@ -494,13 +494,13 @@ export function CustomerSaleApproval() {
                     className="w-full flex items-center justify-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
                   >
                     <XCircle className="h-4 w-4" />
-                    Reject Sale
+                    Rejeter la vente
                   </Button>
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <p className="text-xs text-gray-600 text-center">
-                    By approving this sale, you agree to the payment terms and commit to complete the transaction as specified.
+                    En approuvant cette vente, vous acceptez les conditions de paiement et vous engagez à exécuter la transaction selon les modalités indiquées.
                   </p>
                 </div>
               </CardContent>
@@ -512,17 +512,17 @@ export function CustomerSaleApproval() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Card className="max-w-md w-full">
               <CardHeader className="bg-red-50">
-                <CardTitle className="text-red-900">Reject Sale</CardTitle>
+                <CardTitle className="text-red-900">Rejeter la vente</CardTitle>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 <p className="text-sm text-gray-700">
-                  Please provide a reason for rejecting this sale. This will help us understand your concerns.
+                  Indiquez le motif du rejet de cette vente afin de permettre son examen par l’équipe commerciale.
                 </p>
 
                 <TextArea
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Enter your reason for rejection..."
+                  placeholder="Saisissez le motif du rejet…"
                   rows={4}
                   className="w-full"
                 />
@@ -537,14 +537,14 @@ export function CustomerSaleApproval() {
                     disabled={submitting}
                     className="flex-1"
                   >
-                    Cancel
+                    Annuler
                   </Button>
                   <Button
                     onClick={handleReject}
                     disabled={submitting || !rejectionReason.trim()}
                     className="flex-1 bg-red-600 hover:bg-red-700"
                   >
-                    {submitting ? 'Processing...' : 'Confirm Rejection'}
+                    {submitting ? 'Traitement en cours…' : 'Confirmer le rejet'}
                   </Button>
                 </div>
               </CardContent>

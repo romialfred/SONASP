@@ -47,42 +47,42 @@ export default function FreightCustomsCreate() {
         catch { noteSaved = false; }
       }
       showNotification(noteSaved ? 'success' : 'warning', noteSaved
-        ? `Customs operation ${operation.reference_number} created.`
-        : `Operation ${operation.reference_number} exists, but its note could not be saved. Review the record before trying again.`);
+        ? `Opération douanière ${operation.reference_number} créée.`
+        : `L’opération ${operation.reference_number} existe, mais sa note n’a pas pu être enregistrée. Vérifiez le dossier avant de réessayer.`);
       navigate(`/freight-customs/${operation.id}`);
     } catch (reason) { setError(presentError(reason)); }
     finally { lock.current = false; setSubmitting(false); }
   };
   return <NationalDashboardLayout><div className="sn-page logistics-workspace">
-    <PageHeader title="New customs operation" subtitle="Open a customs file for an eligible shipment preparation." icon={ShieldCheck}
-      breadcrumb={[{ label: 'Shipments', to: '/shipping/preparation' }, { label: 'Customs & consignment', to: '/freight-customs' }, { label: 'New operation' }]}
-      actions={<Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight-customs')}><ArrowLeft size={16} />Back to operations</Button>} />
-    {!canPrepare ? <Section id="customs-denied" title="Creation not authorised" icon={ShieldCheck}><Note tone="danger">A verified session with freight preparation access is required.</Note></Section> :
+    <PageHeader title="Nouvelle opération douanière" subtitle="Ouvrez un dossier douanier pour une préparation d’expédition admissible." icon={ShieldCheck}
+      breadcrumb={[{ label: 'Expéditions', to: '/shipping/preparation' }, { label: 'Douane et consignation', to: '/freight-customs' }, { label: 'Nouvelle opération' }]}
+      actions={<Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight-customs')}><ArrowLeft size={16} />Retour aux opérations</Button>} />
+    {!canPrepare ? <Section id="customs-denied" title="Création non autorisée" icon={ShieldCheck}><Note tone="danger">Une session vérifiée disposant de l’accès à la préparation du fret est obligatoire.</Note></Section> :
       <form onSubmit={submit} className="logistics-form-main">
-        {loadFailed ? <Note tone="danger">Eligible shipments could not be loaded. Retry before creating an operation.</Note> :
-          !loading && !shipments.length && <Note tone="info">No eligible shipment is available. A preparation must be ready for shipment and not already have a customs operation.</Note>}
+        {loadFailed ? <Note tone="danger">Impossible de charger les expéditions admissibles. Réessayez avant de créer une opération.</Note> :
+          !loading && !shipments.length && <Note tone="info">Aucune expédition admissible n’est disponible. Une préparation doit être prête pour l’expédition et ne pas déjà posséder d’opération douanière.</Note>}
         <div className="logistics-form-grid"><div className="logistics-form-main">
-          <Section id="customs-shipment" title="Select the shipment" description="Only ready shipments within your authorised scope are offered." icon={Package}>
-            <Field label="Shipment preparation" required><select required value={selectedId} onChange={e => setSelectedId(e.target.value)} disabled={loading || submitting || loadFailed || !shipments.length}>
-              <option value="">{loading ? 'Loading eligible shipments…' : 'Select a shipment'}</option>
+          <Section id="customs-shipment" title="Sélectionner l’expédition" description="Seules les expéditions prêtes relevant de votre périmètre autorisé sont proposées." icon={Package}>
+            <Field label="Préparation d’expédition" required><select required value={selectedId} onChange={e => setSelectedId(e.target.value)} disabled={loading || submitting || loadFailed || !shipments.length}>
+              <option value="">{loading ? 'Chargement des expéditions admissibles…' : 'Sélectionnez une expédition'}</option>
               {shipments.map(row => <option key={row.id} value={row.id}>{row.reference_number} · {row.mining_companies?.name} · {logisticsNumber(row.total_weight_grams)} g</option>)}
             </select></Field>
-            {loadFailed && <Button type="button" className="mt-4" variant="outline" onClick={() => void load()}>Reload shipments</Button>}
+            {loadFailed && <Button type="button" className="mt-4" variant="outline" onClick={() => void load()}>Recharger les expéditions</Button>}
           </Section>
-          <Section id="customs-notes" title="Instructions & observations" description="Add any information needed to prepare this customs file." icon={FileText}>
-            <Field label="Notes" hint="Optional. Supporting documents can be added after creation."><textarea rows={5} maxLength={5000} value={notes} disabled={submitting} onChange={e => setNotes(e.target.value)} placeholder="Instructions or observations for this customs operation…" /></Field>
+          <Section id="customs-notes" title="Instructions et observations" description="Ajoutez les informations nécessaires à la préparation de ce dossier douanier." icon={FileText}>
+            <Field label="Notes" hint="Facultatif. Les pièces justificatives pourront être ajoutées après la création."><textarea rows={5} maxLength={5000} value={notes} disabled={submitting} onChange={e => setNotes(e.target.value)} placeholder="Instructions ou observations relatives à cette opération douanière…" /></Field>
           </Section>
-          <Section id="customs-process" title="What happens next" icon={ShieldCheck}>
-            <ol className="logistics-checklist"><li><CheckCircle />Preparation selected</li><li><Circle />Customs documents & approval</li><li><Circle />Transport arrangements & air waybill</li><li><Circle />Authorised dispatch to the refinery</li></ol>
+          <Section id="customs-process" title="Étapes suivantes" icon={ShieldCheck}>
+            <ol className="logistics-checklist"><li><CheckCircle />Préparation sélectionnée</li><li><Circle />Documents et approbation douanière</li><li><Circle />Organisation du transport et lettre de transport aérien</li><li><Circle />Expédition autorisée vers la raffinerie</li></ol>
           </Section>
-        </div><Card title="Shipment summary" className="logistics-summary"><dl>
-          <dt>Reference</dt><dd>{selected?.reference_number || '—'}</dd><dt>Company</dt><dd>{selected?.mining_companies?.name || '—'}</dd>
-          <dt>Prepared on</dt><dd>{logisticsDate(selected?.shipment_date)}</dd><dt>Fine gold weight</dt><dd>{logisticsNumber(selected?.total_weight_grams)} g</dd>
-          <dt>Troy ounces</dt><dd>{logisticsNumber(selected?.total_weight_oz)} oz</dd><dt>Initial status</dt><dd>Awaiting customs approval</dd>
-        </dl><p className="mt-6 text-xs text-slate-500">The operation reference is generated by the server. Creating the file does not approve or dispatch the shipment.</p></Card></div>
-        <FormActions><Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight-customs')}>Cancel</Button><Button type="submit" disabled={submitting || loading || loadFailed || !selected}><Save size={16} />{submitting ? 'Creating operation…' : 'Create operation'}</Button></FormActions>
+        </div><Card title="Synthèse de l’expédition" className="logistics-summary"><dl>
+          <dt>Référence</dt><dd>{selected?.reference_number || '—'}</dd><dt>Société</dt><dd>{selected?.mining_companies?.name || '—'}</dd>
+          <dt>Préparée le</dt><dd>{logisticsDate(selected?.shipment_date)}</dd><dt>Poids d’or fin</dt><dd>{logisticsNumber(selected?.total_weight_grams)} g</dd>
+          <dt>Onces troy</dt><dd>{logisticsNumber(selected?.total_weight_oz)} oz</dd><dt>Statut initial</dt><dd>En attente d’approbation douanière</dd>
+        </dl><p className="mt-6 text-xs text-slate-500">La référence de l’opération est générée par le serveur. La création du dossier n’approuve ni ne déclenche l’expédition.</p></Card></div>
+        <FormActions><Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight-customs')}>Annuler</Button><Button type="submit" disabled={submitting || loading || loadFailed || !selected}><Save size={16} />{submitting ? 'Création de l’opération…' : 'Créer l’opération'}</Button></FormActions>
       </form>}
     <ActionErrorDialog isOpen={Boolean(error)} onClose={() => setError(null)} title={error?.title} message={error?.message || ''} recovery={error?.recovery} diagnosticCode={error?.code}
-      onAction={loadFailed ? () => { setError(null); void load(); } : undefined} actionLabel="Reload shipments" />
+      onAction={loadFailed ? () => { setError(null); void load(); } : undefined} actionLabel="Recharger les expéditions" />
   </div></NationalDashboardLayout>;
 }

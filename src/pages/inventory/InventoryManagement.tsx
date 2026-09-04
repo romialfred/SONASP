@@ -34,6 +34,7 @@ import {
 import './inventory-overview.css';
 import { useAuth } from '@/contexts/AuthContext';
 import { StockHistoryDialog } from './StockHistoryDialog';
+import { formatStatusFr } from '@/utils/statusFormatter';
 
 const onces = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const entier = new Intl.NumberFormat('fr-FR');
@@ -42,14 +43,6 @@ export const formatOz = (valeur: number) => `${onces.format(valeur || 0)} oz`;
 export const formatKg = (valeur: number) => `${onces.format(ozVersKg(valeur || 0))} kg`;
 export const formatG = (valeur: number) => `${onces.format(valeur || 0)} g`;
 export const grammesEnOz = (grammes: number) => (grammes || 0) / GRAMMES_PAR_ONCE;
-
-/** Libellés français des étapes d'expédition affichées dans le suivi. */
-export const LIBELLES_TRANSIT: Record<string, string> = {
-  shipped_to_refinery: 'Expédié à la raffinerie',
-  received_at_refinery: 'Reçu à la raffinerie',
-  processing: 'En cours de raffinage',
-  processed: 'Raffinage terminé',
-};
 
 /** Part d'un poste dans le total national ; `null` quand il n'y a rien à rapporter. */
 export function part(valeur: number, total: number): number | null {
@@ -487,7 +480,7 @@ export function InventoryManagement() {
                         </div>
                         <div className="stocks__transit-droite">
                           <b>{formatOz(ligne.quantiteOz)}</b>
-                          <Badge tone="neutral">{LIBELLES_TRANSIT[ligne.statut] || ligne.statut}</Badge>
+                          <Badge tone="neutral">{formatStatusFr(ligne.statut)}</Badge>
                         </div>
                       </li>
                     ))}

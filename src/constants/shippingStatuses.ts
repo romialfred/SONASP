@@ -10,7 +10,7 @@ import { Clock, Plane, CheckCircle } from 'lucide-react';
  *    - Peut durer plusieurs jours
  *
  * 2. approved_by_customs → Douane approuvée
- *    - Transition manuelle via bouton "Customs Approved" dans Shipping Details
+ *    - Transition manuelle depuis le détail de l’expédition
  *
  * 3. ready_for_expedition → Prêt pour expédition
  *    - Autorisé à être expédié (STATUT FINAL)
@@ -39,8 +39,8 @@ export interface ShippingStatusConfig {
 export const SHIPPING_STATUSES: Record<ShippingStatus, ShippingStatusConfig> = {
   waiting_for_customs_approval: {
     value: 'waiting_for_customs_approval',
-    label: "Awaiting customs approval",
-    description: 'Shipment created and awaiting customs approval.',
+    label: "En attente d’approbation douanière",
+    description: 'Expédition créée et en attente de l’approbation douanière.',
     color: 'yellow',
     bgColor: 'bg-yellow-100',
     textColor: 'text-yellow-800',
@@ -50,8 +50,8 @@ export const SHIPPING_STATUSES: Record<ShippingStatus, ShippingStatusConfig> = {
   },
   approved_by_customs: {
     value: 'approved_by_customs',
-    label: "Customs approved",
-    description: 'Customs approval obtained; final preparation is in progress.',
+    label: "Approuvée par la douane",
+    description: 'Approbation douanière obtenue ; la préparation finale est en cours.',
     color: 'amber',
     bgColor: 'bg-amber-100',
     textColor: 'text-amber-700',
@@ -61,8 +61,8 @@ export const SHIPPING_STATUSES: Record<ShippingStatus, ShippingStatusConfig> = {
   },
   ready_for_expedition: {
     value: 'ready_for_expedition',
-    label: "Ready for shipment",
-    description: 'Authorised for dispatch to the final destination.',
+    label: "Prête pour l’expédition",
+    description: 'Expédition autorisée vers la destination finale.',
     color: 'emerald',
     bgColor: 'bg-emerald-100',
     textColor: 'text-emerald-700',

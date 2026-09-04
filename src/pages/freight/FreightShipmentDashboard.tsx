@@ -9,7 +9,7 @@ async function loadRows(): Promise<LogisticsRow[]> {
   }));
 }
 export default function FreightShipmentDashboard() {
-  return <LogisticsRegister title="Freight shipments" subtitle="Track international consignments from approval through refining and stock entry."
-    loadRows={loadRows} createPath="/freight/shipments/create" createLabel="New freight shipment" pendingStatus="pending" readyStatus="shipped_to_refinery"
-    statuses={{ pending: 'Pending', approved: 'Approved', shipped_to_refinery: 'Dispatched to refinery', received_at_refinery: 'Received at refinery', processing: 'Refining', processed: 'Refined', in_stock: 'In stock' }} />;
+  return <LogisticsRegister title="Expéditions de fret" subtitle="Suivez les envois internationaux, de leur approbation jusqu’au raffinage et à l’entrée en stock."
+    loadRows={loadRows} createPath="/freight/shipments/create" createLabel="Nouvelle expédition de fret" pendingStatus="pending" readyStatus="shipped_to_refinery"
+    statuses={{ pending: 'En attente', approved: 'Approuvée', shipped_to_refinery: 'Expédiée vers la raffinerie', received_at_refinery: 'Reçue à la raffinerie', processing: 'En cours de raffinage', processed: 'Raffinée', in_stock: 'En stock' }} />;
 }

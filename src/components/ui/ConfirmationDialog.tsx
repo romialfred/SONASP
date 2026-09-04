@@ -35,11 +35,11 @@ export function ConfirmationDialog({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText = 'Confirmer',
+  cancelText = 'Annuler',
   severity = 'info',
   requireComment = false,
-  commentPlaceholder = 'Enter a comment (optional)...',
+  commentPlaceholder = 'Saisissez un commentaire (facultatif)…',
   impacts = [],
   details = {},
   isLoading = false
@@ -143,7 +143,7 @@ export function ConfirmationDialog({
           {/* Details */}
           {Object.keys(details).length > 0 && (
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h4 className="font-medium text-gray-900 mb-2">Details:</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Détails :</h4>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
                 {Object.entries(details).map(([key, value]) => (
                   <div key={key} className="flex justify-between">
@@ -158,7 +158,7 @@ export function ConfirmationDialog({
           {/* Impacts */}
           {impacts.length > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <h4 className="font-medium text-blue-900 mb-2">This action will:</h4>
+              <h4 className="font-medium text-blue-900 mb-2">Cette action entraînera :</h4>
               <ul className="list-disc list-inside space-y-1">
                 {impacts.map((impact, index) => (
                   <li key={index} className="text-sm text-blue-800">{impact}</li>
@@ -170,7 +170,7 @@ export function ConfirmationDialog({
           {/* Comment Input */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Comment {requireComment && <span className="text-red-500">*</span>}
+              Commentaire {requireComment && <span className="text-red-500">*</span>}
             </label>
             <TextArea
               value={comment}
@@ -182,17 +182,17 @@ export function ConfirmationDialog({
             />
             {requireComment && !comment.trim() && (
               <p className="mt-1 text-sm text-red-600">
-                A comment is required for this action
+                Un commentaire est requis pour cette action.
               </p>
             )}
           </div>
 
           {/* Keyboard Shortcuts Help */}
           <div className="text-xs text-gray-500 mb-4">
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded">Esc</span> to cancel
+            <span className="font-mono bg-gray-100 px-2 py-1 rounded">Échap</span> pour annuler
             {!requireComment || comment.trim() ? (
               <>
-                {' '} or <span className="font-mono bg-gray-100 px-2 py-1 rounded">Ctrl+Enter</span> to confirm
+                {' '} ou <span className="font-mono bg-gray-100 px-2 py-1 rounded">Ctrl+Entrée</span> pour confirmer
               </>
             ) : null}
           </div>
@@ -214,7 +214,7 @@ export function ConfirmationDialog({
             onClick={handleConfirm}
             disabled={isLoading || (requireComment && !comment.trim())}
           >
-            {isLoading ? 'Processing...' : confirmText}
+            {isLoading ? 'Traitement…' : confirmText}
           </Button>
         </div>
       </div>
@@ -266,8 +266,8 @@ export function useConfirmationDialog() {
         isOpen={isOpen}
         onClose={handleClose}
         onConfirm={handleConfirm}
-        title={config.title || 'Confirm Action'}
-        message={config.message || 'Are you sure?'}
+        title={config.title || 'Confirmer l’action'}
+        message={config.message || 'Êtes-vous sûr de vouloir continuer ?'}
         {...config}
       />
     )

@@ -1,0 +1,52 @@
+.live-gold-drawer { position: fixed; top: 82px; right: 0; z-index: 40; width: min(350px, calc(100vw - 24px)); color: #132238; font-family: Inter, system-ui, sans-serif; pointer-events: none; }
+.live-gold-drawer__panel { width: 100%; overflow: hidden; border: 1px solid #dee5ed; border-right: 0; border-radius: 15px 0 0 15px; background: #fff; box-shadow: 0 16px 40px rgb(15 23 42 / 15%); opacity: 1; transform: translateX(0); transition: transform 220ms ease, opacity 180ms ease; pointer-events: auto; }
+.live-gold-drawer.is-closed .live-gold-drawer__panel { opacity: 0; transform: translateX(100%); pointer-events: none; }
+.live-gold-drawer__trigger { position: absolute; top: clamp(145px, 26vh, 260px); left: 0; z-index: 2; display: flex; width: 43px; height: 50px; align-items: center; justify-content: center; gap: 1px; padding: 0; border: 1px solid #d8e0e9; border-right: 0; border-radius: 9px 0 0 9px; color: #334155; background: #fff; box-shadow: -4px 5px 14px rgb(15 23 42 / 10%); transform: translateX(-100%); cursor: pointer; pointer-events: auto; }
+.live-gold-drawer__trigger:hover { color: #087f5b; background: #f8fafc; }
+.live-gold-drawer__trigger svg:first-child { width: 17px; height: 17px; }
+.live-gold-drawer__trigger svg:last-child { width: 14px; height: 14px; }
+.live-gold-drawer.is-closed .live-gold-drawer__trigger { position: fixed; top: 31vh; right: 0; left: auto; transform: none; }
+.live-gold-drawer__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 17px 18px 14px; border-bottom: 1px solid #e8edf3; }
+.live-gold-drawer__header h2, .live-gold-drawer__header p { margin: 0; }
+.live-gold-drawer__header h2 { font-size: 16px; }
+.live-gold-drawer__header p { max-width: 220px; margin-top: 4px; overflow: hidden; color: #64748b; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.live-gold-drawer__header-actions { display: flex; gap: 6px; }
+.live-gold-drawer__header-actions button { display: grid; width: 31px; height: 31px; place-items: center; padding: 0; border: 1px solid #dee5ed; border-radius: 7px; color: #475569; background: #fff; cursor: pointer; }
+.live-gold-drawer__header-actions button:hover:not(:disabled) { color: #087f5b; background: #f8fafc; }
+.live-gold-drawer__header-actions button:disabled { opacity: .45; }
+.live-gold-drawer__header-actions svg { width: 15px; height: 15px; }
+.live-gold-drawer__price { padding: 18px 18px 14px; text-align: center; }
+.live-gold-drawer__price strong, .live-gold-drawer__price span { display: block; }
+.live-gold-drawer__price strong { font-size: 27px; line-height: 1; }
+.live-gold-drawer__price span { margin-top: 5px; color: #64748b; font-size: 11px; }
+.live-gold-drawer__price p { margin: 11px 0 0; color: #64748b; font-size: 12px; font-weight: 650; }
+.live-gold-drawer__price p.is-positive { color: #087f5b; }
+.live-gold-drawer__price p.is-negative { color: #c93c37; }
+.live-gold-drawer__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0 18px 14px; }
+.live-gold-drawer__metrics > div { padding: 10px; border: 1px solid #e1e7ee; border-radius: 8px; background: #f8fafc; }
+.live-gold-drawer__metrics dt { color: #64748b; font-size: 10px; }
+.live-gold-drawer__metrics dd { margin: 5px 0 0; font-size: 12px; font-weight: 700; }
+.live-gold-drawer__markets { margin: 0 18px 14px; padding: 11px; border: 1px solid #dee5ed; border-radius: 8px; }
+.live-gold-drawer__markets h3 { margin: 0 0 8px; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.live-gold-drawer__markets > div { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 11px; }
+.live-gold-drawer__markets span { display: flex; align-items: center; gap: 7px; }
+.live-gold-drawer__markets svg { width: 7px; height: 7px; color: #cbd5e1; fill: #cbd5e1; }
+.live-gold-drawer__markets svg.is-open { color: #0f9f72; fill: #0f9f72; }
+.live-gold-drawer__markets strong { color: #475569; font-size: 10px; }
+.live-gold-drawer__footer { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 0 18px; padding: 12px 0 15px; border-top: 1px solid #e8edf3; color: #64748b; font-size: 10px; }
+.live-gold-drawer__footer svg { width: 13px; height: 13px; }
+.live-gold-drawer__skeleton { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 20px 18px; }
+.live-gold-drawer__skeleton span { height: 64px; border-radius: 8px; background: #edf1f5; animation: live-gold-pulse 1.2s ease-in-out infinite alternate; }
+.live-gold-drawer__skeleton span:first-child { grid-column: 1 / -1; height: 80px; }
+.live-gold-drawer__error { display: flex; min-height: 230px; align-items: center; justify-content: center; flex-direction: column; padding: 24px; color: #64748b; text-align: center; }
+.live-gold-drawer__error > svg { width: 25px; height: 25px; color: #c99518; }
+.live-gold-drawer__error strong { margin-top: 8px; color: #132238; }
+.live-gold-drawer__error p { margin: 5px 0 12px; font-size: 11px; }
+.live-gold-drawer__error button { padding: 7px 11px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; cursor: pointer; }
+.live-gold-drawer--embedded { position: static; width: 100%; pointer-events: auto; }
+.live-gold-drawer--embedded .live-gold-drawer__panel { border-right: 1px solid #dee5ed; border-radius: 12px; box-shadow: 0 2px 8px rgb(15 23 42 / 4%); }
+.is-spinning { animation: live-gold-spin .8s linear infinite; }
+@keyframes live-gold-spin { to { transform: rotate(360deg); } }
+@keyframes live-gold-pulse { to { opacity: .45; } }
+@media (max-width: 720px) { .live-gold-drawer { top: 70px; width: calc(100vw - 18px); } }
+@media (prefers-reduced-motion: reduce) { .live-gold-drawer__panel { transition: none; } .live-gold-drawer__skeleton span, .is-spinning { animation: none; } }

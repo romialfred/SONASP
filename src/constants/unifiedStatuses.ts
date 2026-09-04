@@ -62,7 +62,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-amber-200',
     description: 'Production validée, en attente d\'approbation douanière',
     icon: '📋',
-    phase: 'Production → Shipping'
+    phase: 'Production → Préparation de l’expédition'
   },
 
   // PHASE SHIPPING PREPARATION
@@ -74,7 +74,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-green-200',
     description: 'Documents douaniers approuvés',
     icon: '✓',
-    phase: 'Shipping Preparation'
+    phase: 'Préparation de l’expédition'
   },
   ready_for_expedition: {
     label: 'Prêt pour Expédition',
@@ -84,7 +84,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-purple-200',
     description: 'Prêt à être expédié vers la raffinerie',
     icon: '🚚',
-    phase: 'Shipping Preparation'
+    phase: 'Préparation de l’expédition'
   },
 
   // PHASE FREIGHT & CUSTOMS
@@ -96,7 +96,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-indigo-200',
     description: 'En transit vers la raffinerie',
     icon: '✈️',
-    phase: 'Invoice & Consignment'
+    phase: 'Facturation et consignation'
   },
 
   // PHASE REFINERY
@@ -108,7 +108,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-yellow-200',
     description: 'Or raffiné et prêt pour stockage',
     icon: '⚗️',
-    phase: 'Refinery'
+    phase: 'Raffinage'
   },
 
   // PHASE INVENTORY
@@ -120,7 +120,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-gray-200',
     description: 'Or raffiné en stock',
     icon: '🏦',
-    phase: 'Inventory'
+    phase: 'Stock'
   },
 
   // PHASE SALE
@@ -132,7 +132,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-emerald-200',
     description: 'Vendu, en attente de paiement',
     icon: '✓',
-    phase: 'Sale'
+    phase: 'Vente'
   },
   paid: {
     label: 'Payé',
@@ -142,7 +142,7 @@ export const UNIFIED_STATUS_CONFIG: Record<UnifiedStatus, {
     borderColor: 'border-green-300',
     description: 'Paiement reçu - Transaction complète',
     icon: '✓✓',
-    phase: 'Sale'
+    phase: 'Vente'
   },
 
   // ÉTAT D'EXCEPTION

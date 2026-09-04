@@ -88,12 +88,12 @@ export async function calculatePricingComparison(
 
     if (!goldPriceResult.success || !goldPriceResult.data) {
       console.error('❌ [SERVICE] Failed to fetch gold price:', goldPriceResult.error);
-      return { success: false, error: `Unable to fetch current gold price: ${goldPriceResult.error}` };
+      return { success: false, error: `Cours de l’or indisponible : ${goldPriceResult.error}` };
     }
 
     if (!forwardRatesResult.success || !forwardRatesResult.data) {
       console.error('❌ [SERVICE] Failed to fetch forward rates:', forwardRatesResult.error);
-      return { success: false, error: `Unable to fetch forward rates: ${forwardRatesResult.error}` };
+      return { success: false, error: `Taux à terme indisponibles : ${forwardRatesResult.error}` };
     }
 
     const spotPrice = goldPriceResult.data.london_am_rate;
@@ -116,14 +116,14 @@ export async function calculatePricingComparison(
     console.log('🟢 [SERVICE] Creating Spot mechanism...');
     mechanisms.push({
       mechanism: 'spot',
-      displayName: 'Spot Basis',
+      displayName: 'Prix au comptant',
       pricePerOz: spotPrice,
       totalValue: spotPrice * quantityOz,
       adjustment: 0,
       adjustmentPercentage: 0,
       benefit: 0,
       valueDate: spotValueDate.toISOString().split('T')[0],
-      description: 'Payment and delivery within 2 business days',
+      description: 'Paiement et livraison sous deux jours ouvrés',
       settlementDays: 2,
     });
     console.log('✅ [SERVICE] Spot mechanism created');
@@ -143,14 +143,14 @@ export async function calculatePricingComparison(
 
       mechanisms.push({
         mechanism: `forward_${days}d` as any,
-        displayName: `Forward ${days} Days`,
+        displayName: `Prix à terme — ${days} jours`,
         pricePerOz: forwardPrice,
         totalValue,
         adjustment: adjustmentAmount,
         adjustmentPercentage,
         benefit,
         valueDate: valueDate.toISOString().split('T')[0],
-        description: `Pricing up to ${days} days forward with market adjustment`,
+        description: `Fixation du prix à ${days} jours avec ajustement selon les conditions de marché`,
         settlementDays: days,
       });
     });
@@ -162,14 +162,14 @@ export async function calculatePricingComparison(
 
     mechanisms.push({
       mechanism: 'in_process',
-      displayName: 'In-Process Basis',
+      displayName: 'Prix en cours de raffinage',
       pricePerOz: inProcessPrice,
       totalValue: inProcessTotal,
       adjustment: -(spotPrice - inProcessPrice),
       adjustmentPercentage: -0.5,
       benefit: inProcessTotal - spotPrice * quantityOz,
       valueDate: inProcessValueDate.toISOString().split('T')[0],
-      description: 'Priced during refining process with slight discount',
+      description: 'Prix fixé pendant le raffinage, avec une légère décote',
       settlementDays: 7,
     });
 
@@ -244,7 +244,7 @@ function determineRecommendedMechanism(
   if (trend === 'bullish') {
     return {
       mechanism: 'spot',
-      reason: 'Market is bullish. Selling now captures current high prices. Further increases are expected but not guaranteed.',
+      reason: 'Le marché est haussier. Une vente immédiate permet de sécuriser le niveau de prix actuel ; une nouvelle progression reste possible, sans être garantie.',
     };
   }
 
@@ -253,7 +253,7 @@ function determineRecommendedMechanism(
     if (forward30d && forward30d.benefit > 0) {
       return {
         mechanism: 'forward_30d',
-        reason: 'Market is bearish. Locking in forward pricing protects against potential price drops. The premium compensates for the wait.',
+        reason: 'Le marché est baissier. La fixation d’un prix à terme protège contre une nouvelle baisse potentielle ; la prime compense le délai de règlement.',
       };
     }
   }
@@ -261,7 +261,7 @@ function determineRecommendedMechanism(
   if (volatility > 15) {
     return {
       mechanism: 'forward_14d',
-      reason: 'High market volatility detected. Medium-term forward contract balances risk and opportunity, providing price stability.',
+      reason: 'Une forte volatilité du marché est détectée. Un contrat à terme de durée intermédiaire équilibre le risque et l’opportunité tout en stabilisant le prix.',
     };
   }
 
@@ -271,7 +271,7 @@ function determineRecommendedMechanism(
 
   return {
     mechanism: bestMechanism.mechanism,
-    reason: `Based on current market conditions (${trend} trend, ${volatility.toFixed(1)}% volatility), this mechanism offers the best financial outcome (+$${bestMechanism.benefit.toFixed(2)}).`,
+    reason: `Au regard des conditions de marché actuelles (tendance ${trend === 'bearish' ? 'baissière' : 'neutre'}, volatilité de ${volatility.toFixed(1)} %), ce mécanisme présente le meilleur résultat financier indicatif (+${bestMechanism.benefit.toFixed(2)} USD).`,
   };
 }
 
@@ -289,7 +289,7 @@ export async function getQuantityRecommendation(
     ]);
 
     if (!trendResult.success || !goldPriceResult.success) {
-      return { success: false, error: 'Unable to fetch market data for recommendation' };
+      return { success: false, error: 'Les données de marché nécessaires à la recommandation sont indisponibles.' };
     }
 
     const { trend, volatility, avg_price } = trendResult.data!;
@@ -299,42 +299,42 @@ export async function getQuantityRecommendation(
     let reasoning = '';
     let riskLevel: 'low' | 'medium' | 'high' = 'medium';
     let confidenceScore = 70;
-    let optimalTiming = 'Now';
+    let optimalTiming = 'Dès maintenant';
 
     if (trend === 'bullish') {
       if (currentPrice > avg_price * 1.03) {
         recommendedPercentage = 70;
-        reasoning = 'Strong bullish trend with price 3%+ above 30-day average. High confidence to sell significant portion now to capture gains. Keep 30% for potential further upside.';
+        reasoning = 'La tendance est nettement haussière et le prix dépasse de plus de 3 % la moyenne des 30 derniers jours. La vente d’une part significative permet de sécuriser la hausse, tout en conservant 30 % du stock pour une progression éventuelle.';
         riskLevel = 'low';
         confidenceScore = 85;
-        optimalTiming = 'Immediate - within 24-48 hours';
+        optimalTiming = 'Immédiatement, sous 24 à 48 heures';
       } else {
         recommendedPercentage = 40;
-        reasoning = 'Bullish trend but price near average. Moderate selling recommended. Hold majority for continued upward movement.';
+        reasoning = 'La tendance est haussière, mais le prix reste proche de sa moyenne. Une vente modérée est recommandée afin de conserver une exposition à la poursuite du mouvement.';
         riskLevel = 'medium';
         confidenceScore = 65;
-        optimalTiming = 'Within 3-5 days';
+        optimalTiming = 'Sous 3 à 5 jours';
       }
     } else if (trend === 'bearish') {
       if (volatility > 15) {
         recommendedPercentage = 30;
-        reasoning = 'Bearish trend with high volatility. Conservative approach recommended. Consider forward contracts to lock in better pricing. Wait for market stabilization.';
+        reasoning = 'La tendance est baissière et la volatilité élevée. Une approche prudente est recommandée : envisager un contrat à terme pour sécuriser le prix et attendre une stabilisation du marché.';
         riskLevel = 'high';
         confidenceScore = 60;
-        optimalTiming = 'Wait 7-10 days or use forward contracts';
+        optimalTiming = 'Attendre 7 à 10 jours ou recourir à un contrat à terme';
       } else {
         recommendedPercentage = 45;
-        reasoning = 'Moderate bearish trend with stable volatility. Balanced selling strategy. Use forward pricing to mitigate downside risk.';
+        reasoning = 'La tendance est modérément baissière et la volatilité stable. Une stratégie de vente équilibrée, assortie d’un prix à terme, permet de limiter le risque de baisse.';
         riskLevel = 'medium';
         confidenceScore = 70;
-        optimalTiming = 'Within 5-7 days, prefer forward contracts';
+        optimalTiming = 'Sous 5 à 7 jours, de préférence au moyen d’un contrat à terme';
       }
     } else {
       recommendedPercentage = 50;
-      reasoning = 'Neutral market conditions. Standard 50% allocation provides balanced exposure. Monitor for trend development before committing remaining stock.';
+      reasoning = 'Les conditions de marché sont neutres. Une allocation de 50 % assure une exposition équilibrée ; l’évolution de la tendance doit être suivie avant d’engager le stock restant.';
       riskLevel = 'low';
       confidenceScore = 75;
-      optimalTiming = 'Flexible - next 7 days';
+      optimalTiming = 'Au cours des 7 prochains jours';
     }
 
     const recommendedQuantityOz = (availableStockOz * recommendedPercentage) / 100;

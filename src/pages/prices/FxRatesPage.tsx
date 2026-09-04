@@ -188,7 +188,7 @@ export function FxRatesPage() {
     if (!error && data) {
       setDailyRates(data.map(rate => ({
         ...rate,
-        source_name: rate.fx_rate_sources?.name || 'Unknown',
+        source_name: rate.fx_rate_sources?.name || 'Source inconnue',
       })));
     }
   };
@@ -237,7 +237,7 @@ export function FxRatesPage() {
         month: Number(rate.month ?? 0),
         currency_pair: rate.currency_pair,
         source_id: rate.source_id,
-        source_name: rate.fx_rate_sources?.name || 'Unknown',
+        source_name: rate.fx_rate_sources?.name || 'Source inconnue',
         avg_rate: Number(rate.avg_rate ?? 0),
         min_rate: Number(rate.min_rate ?? 0),
         max_rate: Number(rate.max_rate ?? 0),
@@ -276,7 +276,7 @@ export function FxRatesPage() {
     if (!error && data) {
       setCustomerRates(data.map(rate => ({
         ...rate,
-        customer_name: rate.customers?.name || 'Unknown',
+        customer_name: rate.customers?.name || 'Client inconnu',
       })));
     }
   };
@@ -322,8 +322,8 @@ export function FxRatesPage() {
       await loadDailyRates();
       resetDailyForm();
     } catch (error: any) {
-      console.error('Error adding daily rate:', error);
-      alert.error('Error adding rate: ' + error.message);
+      console.error('Erreur lors de l’ajout du taux journalier :', error);
+      alert.error('Impossible d’ajouter le taux : ' + error.message);
     }
   };
 
@@ -356,8 +356,8 @@ export function FxRatesPage() {
       await loadCustomerRates();
       resetCustomerForm();
     } catch (error: any) {
-      console.error('Error adding customer rate:', error);
-      alert.error('Error adding customer rate: ' + error.message);
+      console.error('Erreur lors de l’ajout du taux client :', error);
+      alert.error('Impossible d’ajouter le taux client : ' + error.message);
     }
   };
 
@@ -398,12 +398,11 @@ export function FxRatesPage() {
   const formatRate = (rate: number | null, pair: string) => {
     if (rate === null || !Number.isFinite(rate)) return '—';
     if (pair === 'EUR/USD') return rate.toFixed(4);
-    if (pair === 'EUR/USD') return rate.toFixed(5);
     return rate.toFixed(2);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -411,7 +410,7 @@ export function FxRatesPage() {
   };
 
   const getMonthName = (month: number) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     return months[month - 1];
   };
 
@@ -423,43 +422,43 @@ export function FxRatesPage() {
     if (activeTab === 'daily') {
       data = dailyRates.map(rate => ({
         Date: rate.rate_date,
-        'Currency Pair': rate.currency_pair,
+        'Paire de devises': rate.currency_pair,
         Source: rate.source_name,
-        Rate: rate.rate,
-        Bid: rate.bid_rate || '-',
-        Ask: rate.ask_rate || '-',
-        Spread: rate.spread || '-',
+        Taux: rate.rate,
+        Achat: rate.bid_rate || '-',
+        Vente: rate.ask_rate || '-',
+        Écart: rate.spread || '-',
         Notes: rate.notes || '-',
       }));
-      filename = 'Daily_FX_Rates.xlsx';
-      sheetName = 'Daily Rates';
+      filename = 'Taux_de_change_journaliers.xlsx';
+      sheetName = 'Taux journaliers';
     } else if (activeTab === 'monthly') {
       data = monthlyRates.map(rate => ({
-        Period: `${getMonthName(rate.month)} ${rate.year}`,
-        'Currency Pair': rate.currency_pair,
+        Période: `${getMonthName(rate.month)} ${rate.year}`,
+        'Paire de devises': rate.currency_pair,
         Source: rate.source_name,
-        'Avg Rate': rate.avg_rate,
-        'Min Rate': rate.min_rate,
-        'Max Rate': rate.max_rate,
-        'Opening': rate.opening_rate,
-        'Closing': rate.closing_rate,
-        'Data Points': rate.data_points,
+        'Taux moyen': rate.avg_rate,
+        'Taux minimal': rate.min_rate,
+        'Taux maximal': rate.max_rate,
+        Ouverture: rate.opening_rate,
+        Clôture: rate.closing_rate,
+        'Nombre de relevés': rate.data_points,
       }));
-      filename = 'Monthly_FX_Rates.xlsx';
-      sheetName = 'Monthly Rates';
+      filename = 'Taux_de_change_mensuels.xlsx';
+      sheetName = 'Taux mensuels';
     } else if (activeTab === 'customer') {
       data = customerRates.map(rate => ({
         Date: rate.transaction_date,
-        Customer: rate.customer_name,
-        'Currency Pair': rate.currency_pair,
-        'Rate Paid': rate.rate_paid,
-        'Market Rate': rate.market_rate || '-',
-        'Spread %': rate.spread_percentage ? `${rate.spread_percentage.toFixed(2)}%` : '-',
-        Amount: rate.amount,
-        Reference: rate.reference_number || '-',
+        Client: rate.customer_name,
+        'Paire de devises': rate.currency_pair,
+        'Taux appliqué': rate.rate_paid,
+        'Taux de marché': rate.market_rate || '-',
+        'Écart (%)': rate.spread_percentage ? `${rate.spread_percentage.toFixed(2)}%` : '-',
+        Montant: rate.amount,
+        Référence: rate.reference_number || '-',
       }));
-      filename = 'Customer_FX_Rates.xlsx';
-      sheetName = 'Customer Rates';
+      filename = 'Taux_de_change_clients.xlsx';
+      sheetName = 'Taux clients';
     }
 
     await downloadExcelWorkbook([{ name: sheetName, rows: data, widths: Object.keys(data[0] || {}).map(() => 15) }], filename);
@@ -478,8 +477,8 @@ export function FxRatesPage() {
 
     return Object.values(grouped).map(item => ({
       name: item.name,
-      'Rate Count': item.count,
-      'Avg Rate': item.total / item.count,
+      'Nombre de taux': item.count,
+      'Taux moyen': item.total / item.count,
     }));
   };
 
@@ -492,18 +491,18 @@ export function FxRatesPage() {
 
   const getCustomerChartData = () => {
     const grouped = customerRates.reduce((acc, rate) => {
-      if (!acc[rate.customer_name || 'Unknown']) {
-        acc[rate.customer_name || 'Unknown'] = { name: rate.customer_name || 'Unknown', count: 0, totalAmount: 0 };
+      if (!acc[rate.customer_name || 'Client inconnu']) {
+        acc[rate.customer_name || 'Client inconnu'] = { name: rate.customer_name || 'Client inconnu', count: 0, totalAmount: 0 };
       }
-      acc[rate.customer_name || 'Unknown'].count++;
-      acc[rate.customer_name || 'Unknown'].totalAmount += rate.amount;
+      acc[rate.customer_name || 'Client inconnu'].count++;
+      acc[rate.customer_name || 'Client inconnu'].totalAmount += rate.amount;
       return acc;
     }, {} as Record<string, { name: string; count: number; totalAmount: number }>);
 
     return Object.values(grouped).slice(0, 10).map(item => ({
       name: item.name,
-      'Transaction Count': item.count,
-      'Total Amount': item.totalAmount,
+      'Nombre de transactions': item.count,
+      'Montant total': item.totalAmount,
     }));
   };
 
@@ -513,8 +512,8 @@ export function FxRatesPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-1">
           <div>
-            <h1 className="text-2xl font-bold text-slate-700">FX Rates Management</h1>
-            <p className="text-slate-500 text-sm mt-0.5">Track and manage exchange rates from multiple sources</p>
+            <h1 className="text-2xl font-bold text-slate-700">Gestion des taux de change</h1>
+            <p className="text-slate-500 text-sm mt-0.5">Suivi et gestion des taux de change provenant de plusieurs sources</p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -524,7 +523,7 @@ export function FxRatesPage() {
               className="text-sm"
             >
               <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
+              Actualiser
             </Button>
             {activeTab !== 'analysis' && activeTab !== 'comparison' && (
               <Button
@@ -534,19 +533,19 @@ export function FxRatesPage() {
                 className="text-sm"
               >
                 <FileDown className="w-3.5 h-3.5 mr-1.5" />
-                Export Excel
+                Exporter vers Excel
               </Button>
             )}
             {activeTab === 'daily' && (
               <Button onClick={() => setShowAddModal(true)} className="text-sm bg-[#B8860B] hover:bg-[#9a7109]">
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Add Daily Rate
+                Ajouter un taux journalier
               </Button>
             )}
             {activeTab === 'customer' && (
               <Button onClick={() => setShowCustomerRateModal(true)} className="text-sm bg-[#B8860B] hover:bg-[#9a7109]">
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Add Customer Rate
+                Ajouter un taux client
               </Button>
             )}
           </div>
@@ -567,7 +566,7 @@ export function FxRatesPage() {
               }`}
             >
               <Calendar className="w-4 h-4 inline mr-2" />
-              Daily Rates
+              Taux journaliers
             </button>
             <button
               onClick={() => setActiveTab('monthly')}
@@ -578,7 +577,7 @@ export function FxRatesPage() {
               }`}
             >
               <TrendingUp className="w-4 h-4 inline mr-2" />
-              Monthly Aggregated
+              Agrégats mensuels
             </button>
             <button
               onClick={() => setActiveTab('customer')}
@@ -589,7 +588,7 @@ export function FxRatesPage() {
               }`}
             >
               <DollarSign className="w-4 h-4 inline mr-2" />
-              Customer Rates
+              Taux clients
             </button>
             <button
               onClick={() => setActiveTab('comparison')}
@@ -600,7 +599,7 @@ export function FxRatesPage() {
               }`}
             >
               <Filter className="w-4 h-4 inline mr-2" />
-              Compare Sources
+              Comparer les sources
             </button>
             <button
               onClick={() => setActiveTab('analysis')}
@@ -611,7 +610,7 @@ export function FxRatesPage() {
               }`}
             >
               <BarChart className="w-4 h-4 inline mr-2" />
-              FX Rate Analysis
+              Analyse des taux de change
             </button>
           </nav>
         </div>
@@ -621,12 +620,12 @@ export function FxRatesPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <FormField label="Currency Pair">
+                <FormField label="Paire de devises">
                   <Select
                     value={currencyFilter}
                     onChange={(e) => setCurrencyFilter(e.target.value)}
                   >
-                    <option value="all">All Currency Pairs</option>
+                    <option value="all">Toutes les paires de devises</option>
                     {CURRENCY_PAIRS.map(pair => (
                       <option key={pair.value} value={pair.value}>{pair.label}</option>
                     ))}
@@ -638,7 +637,7 @@ export function FxRatesPage() {
                     value={sourceFilter}
                     onChange={(e) => setSourceFilter(e.target.value)}
                   >
-                    <option value="all">All Sources</option>
+                    <option value="all">Toutes les sources</option>
                     {sources.map(source => (
                       <option key={source.id} value={source.id}>{source.name}</option>
                     ))}
@@ -657,7 +656,7 @@ export function FxRatesPage() {
 
                 {activeTab === 'monthly' && (
                   <>
-                    <FormField label="Year">
+                    <FormField label="Année">
                       <Input
                         type="number"
                         value={yearFilter}
@@ -667,24 +666,24 @@ export function FxRatesPage() {
                         max="2030"
                       />
                     </FormField>
-                    <FormField label="Month">
+                    <FormField label="Mois">
                       <Select
                         value={monthFilter}
                         onChange={(e) => setMonthFilter(e.target.value)}
                       >
-                        <option value="">All Months</option>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
+                        <option value="">Tous les mois</option>
+                        <option value="1">Janvier</option>
+                        <option value="2">Février</option>
+                        <option value="3">Mars</option>
+                        <option value="4">Avril</option>
+                        <option value="5">Mai</option>
+                        <option value="6">Juin</option>
+                        <option value="7">Juillet</option>
+                        <option value="8">Août</option>
+                        <option value="9">Septembre</option>
+                        <option value="10">Octobre</option>
+                        <option value="11">Novembre</option>
+                        <option value="12">Décembre</option>
                       </Select>
                     </FormField>
                   </>
@@ -692,12 +691,12 @@ export function FxRatesPage() {
 
                 {activeTab === 'customer' && (
                   <>
-                    <FormField label="Customer">
+                    <FormField label="Client">
                       <Select
                         value={customerFilter}
                         onChange={(e) => setCustomerFilter(e.target.value)}
                       >
-                        <option value="all">All Customers</option>
+                        <option value="all">Tous les clients</option>
                         {customers.map(customer => (
                           <option key={customer.id} value={customer.id}>{customer.name}</option>
                         ))}
@@ -719,7 +718,7 @@ export function FxRatesPage() {
                     onClick={clearFilters}
                     className="w-full"
                   >
-                    Clear Filters
+                    Réinitialiser les filtres
                   </Button>
                 </div>
               </div>
@@ -738,7 +737,7 @@ export function FxRatesPage() {
           <Card>
             <CardContent className="py-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading rates...</p>
+              <p className="mt-4 text-gray-600">Chargement des taux…</p>
             </CardContent>
           </Card>
         ) : activeTab !== 'analysis' && activeTab !== 'comparison' ? (
@@ -747,14 +746,14 @@ export function FxRatesPage() {
             {activeTab === 'daily' && dailyRates.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Rate Distribution by Currency Pair</CardTitle>
+                  <CardTitle>Répartition des taux par paire de devises</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <BarChartWidget
                     data={getDailyChartData()}
                     bars={[
-                      { dataKey: 'Rate Count', color: '#3b82f6', name: 'Rate Count' },
-                      { dataKey: 'Avg Rate', color: '#10b981', name: 'Avg Rate' }
+                      { dataKey: 'Nombre de taux', color: '#3b82f6', name: 'Nombre de taux' },
+                      { dataKey: 'Taux moyen', color: '#10b981', name: 'Taux moyen' }
                     ]}
                     height={300}
                   />
@@ -765,7 +764,7 @@ export function FxRatesPage() {
             {activeTab === 'monthly' && monthlyRates.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Monthly Rate Trends</CardTitle>
+                  <CardTitle>Évolution mensuelle des taux</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ComposedChartWidget
@@ -789,13 +788,13 @@ export function FxRatesPage() {
             {activeTab === 'customer' && customerRates.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Customer Transaction Overview</CardTitle>
+                  <CardTitle>Vue d’ensemble des transactions clients</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <BarChartWidget
                     data={getCustomerChartData()}
                     bars={[
-                      { dataKey: 'Transaction Count', color: '#3b82f6', name: 'Transaction Count' }
+                      { dataKey: 'Nombre de transactions', color: '#3b82f6', name: 'Nombre de transactions' }
                     ]}
                     height={300}
                   />
@@ -808,14 +807,14 @@ export function FxRatesPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Daily Exchange Rates ({dailyRates.length})</CardTitle>
+                    <CardTitle>Taux de change journaliers ({dailyRates.length})</CardTitle>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={exportToExcel}
                     >
                       <FileDown className="w-4 h-4 mr-2" />
-                      Export to Excel
+                      Exporter vers Excel
                     </Button>
                   </div>
                 </CardHeader>
@@ -825,12 +824,12 @@ export function FxRatesPage() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Currency Pair</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paire de devises</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Rate</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Bid</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ask</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spread</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Taux</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Achat</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Vente</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Écart</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -862,7 +861,7 @@ export function FxRatesPage() {
                         {dailyRates.length === 0 && (
                           <tr>
                             <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                              No daily rates found. Try adjusting your filters.
+                              Aucun taux journalier ne correspond aux filtres sélectionnés.
                             </td>
                           </tr>
                         )}
@@ -878,14 +877,14 @@ export function FxRatesPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Monthly Aggregated Rates ({monthlyRates.length})</CardTitle>
+                    <CardTitle>Agrégats mensuels des taux ({monthlyRates.length})</CardTitle>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={exportToExcel}
                     >
                       <FileDown className="w-4 h-4 mr-2" />
-                      Export to Excel
+                      Exporter vers Excel
                     </Button>
                   </div>
                 </CardHeader>
@@ -894,15 +893,15 @@ export function FxRatesPage() {
                     <table className="w-full">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Currency Pair</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Période</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paire de devises</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Avg Rate</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Taux moyen</th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Min</th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Max</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Opening</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Closing</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Data Points</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ouverture</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Clôture</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Nombre de relevés</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -940,7 +939,7 @@ export function FxRatesPage() {
                         {monthlyRates.length === 0 && (
                           <tr>
                             <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
-                              No monthly rates found. Try adjusting your filters.
+                              Aucun agrégat mensuel ne correspond aux filtres sélectionnés.
                             </td>
                           </tr>
                         )}
@@ -956,14 +955,14 @@ export function FxRatesPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Customer Exchange Rates ({customerRates.length})</CardTitle>
+                    <CardTitle>Taux de change clients ({customerRates.length})</CardTitle>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={exportToExcel}
                     >
                       <FileDown className="w-4 h-4 mr-2" />
-                      Export to Excel
+                      Exporter vers Excel
                     </Button>
                   </div>
                 </CardHeader>
@@ -973,13 +972,13 @@ export function FxRatesPage() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Currency Pair</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Rate Paid</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Market Rate</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spread %</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paire de devises</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Taux appliqué</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Taux de marché</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Écart (%)</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Montant</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Référence</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -1008,7 +1007,7 @@ export function FxRatesPage() {
                               {rate.spread_percentage ? `${rate.spread_percentage.toFixed(2)}%` : '-'}
                             </td>
                             <td className="px-4 py-3 text-sm text-right text-gray-900">
-                              {rate.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              {rate.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">
                               {rate.reference_number || '-'}
@@ -1018,7 +1017,7 @@ export function FxRatesPage() {
                         {customerRates.length === 0 && (
                           <tr>
                             <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                              No customer rates found. Try adjusting your filters.
+                              Aucun taux client ne correspond aux filtres sélectionnés.
                             </td>
                           </tr>
                         )}
@@ -1034,7 +1033,7 @@ export function FxRatesPage() {
         {/* Add Daily Rate Modal */}
         {showAddModal && (
           <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} size="lg">
-            <ModalHeader>Add Daily Exchange Rate</ModalHeader>
+            <ModalHeader>Ajouter un taux de change journalier</ModalHeader>
             <ModalBody>
               <div className="space-y-4">
                 <FormField label="Date" required>
@@ -1045,7 +1044,7 @@ export function FxRatesPage() {
                   />
                 </FormField>
 
-                <FormField label="Currency Pair" required>
+                <FormField label="Paire de devises" required>
                   <Select
                     value={dailyFormData.currency_pair}
                     onChange={(e) => setDailyFormData({ ...dailyFormData, currency_pair: e.target.value })}
@@ -1067,7 +1066,7 @@ export function FxRatesPage() {
                   </Select>
                 </FormField>
 
-                <FormField label="Rate" required>
+                <FormField label="Taux" required>
                   <Input
                     type="number"
                     step="0.00001"
@@ -1078,23 +1077,23 @@ export function FxRatesPage() {
                 </FormField>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField label="Bid Rate">
+                  <FormField label="Taux d’achat">
                     <Input
                       type="number"
                       step="0.00001"
                       value={dailyFormData.bid_rate}
                       onChange={(e) => setDailyFormData({ ...dailyFormData, bid_rate: e.target.value })}
-                      placeholder="Optional"
+                      placeholder="Facultatif"
                     />
                   </FormField>
 
-                  <FormField label="Ask Rate">
+                  <FormField label="Taux de vente">
                     <Input
                       type="number"
                       step="0.00001"
                       value={dailyFormData.ask_rate}
                       onChange={(e) => setDailyFormData({ ...dailyFormData, ask_rate: e.target.value })}
-                      placeholder="Optional"
+                      placeholder="Facultatif"
                     />
                   </FormField>
                 </div>
@@ -1103,17 +1102,17 @@ export function FxRatesPage() {
                   <Input
                     value={dailyFormData.notes}
                     onChange={(e) => setDailyFormData({ ...dailyFormData, notes: e.target.value })}
-                    placeholder="Optional notes"
+                    placeholder="Notes facultatives"
                   />
                 </FormField>
               </div>
             </ModalBody>
             <ModalFooter>
               <Button variant="outline" onClick={() => setShowAddModal(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button onClick={handleAddDailyRate}>
-                Add Rate
+                Ajouter le taux
               </Button>
             </ModalFooter>
           </Modal>
@@ -1122,22 +1121,22 @@ export function FxRatesPage() {
         {/* Add Customer Rate Modal */}
         {showCustomerRateModal && (
           <Modal isOpen={showCustomerRateModal} onClose={() => setShowCustomerRateModal(false)} size="lg">
-            <ModalHeader>Add Customer Exchange Rate</ModalHeader>
+            <ModalHeader>Ajouter un taux de change client</ModalHeader>
             <ModalBody>
               <div className="space-y-4">
-                <FormField label="Customer" required>
+                <FormField label="Client" required>
                   <Select
                     value={customerFormData.customer_id}
                     onChange={(e) => setCustomerFormData({ ...customerFormData, customer_id: e.target.value })}
                   >
-                    <option value="">Select Customer</option>
+                    <option value="">Sélectionner un client</option>
                     {customers.map(customer => (
                       <option key={customer.id} value={customer.id}>{customer.name}</option>
                     ))}
                   </Select>
                 </FormField>
 
-                <FormField label="Transaction Date" required>
+                <FormField label="Date de la transaction" required>
                   <Input
                     type="date"
                     value={customerFormData.transaction_date}
@@ -1145,7 +1144,7 @@ export function FxRatesPage() {
                   />
                 </FormField>
 
-                <FormField label="Currency Pair" required>
+                <FormField label="Paire de devises" required>
                   <Select
                     value={customerFormData.currency_pair}
                     onChange={(e) => setCustomerFormData({ ...customerFormData, currency_pair: e.target.value })}
@@ -1157,7 +1156,7 @@ export function FxRatesPage() {
                 </FormField>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField label="Rate Paid" required>
+                  <FormField label="Taux appliqué" required>
                     <Input
                       type="number"
                       step="0.00001"
@@ -1167,18 +1166,18 @@ export function FxRatesPage() {
                     />
                   </FormField>
 
-                  <FormField label="Market Rate">
+                  <FormField label="Taux de marché">
                     <Input
                       type="number"
                       step="0.00001"
                       value={customerFormData.market_rate}
                       onChange={(e) => setCustomerFormData({ ...customerFormData, market_rate: e.target.value })}
-                      placeholder="Optional"
+                      placeholder="Facultatif"
                     />
                   </FormField>
                 </div>
 
-                <FormField label="Amount" required>
+                <FormField label="Montant" required>
                   <Input
                     type="number"
                     step="0.01"
@@ -1188,11 +1187,11 @@ export function FxRatesPage() {
                   />
                 </FormField>
 
-                <FormField label="Reference Number">
+                <FormField label="Numéro de référence">
                   <Input
                     value={customerFormData.reference_number}
                     onChange={(e) => setCustomerFormData({ ...customerFormData, reference_number: e.target.value })}
-                    placeholder="Optional"
+                    placeholder="Facultatif"
                   />
                 </FormField>
 
@@ -1200,17 +1199,17 @@ export function FxRatesPage() {
                   <Input
                     value={customerFormData.notes}
                     onChange={(e) => setCustomerFormData({ ...customerFormData, notes: e.target.value })}
-                    placeholder="Optional notes"
+                    placeholder="Notes facultatives"
                   />
                 </FormField>
               </div>
             </ModalBody>
             <ModalFooter>
               <Button variant="outline" onClick={() => setShowCustomerRateModal(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button onClick={handleAddCustomerRate}>
-                Add Rate
+                Ajouter le taux
               </Button>
             </ModalFooter>
           </Modal>

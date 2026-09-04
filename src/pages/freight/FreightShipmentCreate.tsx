@@ -29,7 +29,7 @@ export default function FreightShipmentCreate() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [refineryId, setRefineryId] = useState('');
   const [boxes, setBoxes] = useState('1');
-  const [boxType, setBoxType] = useState('Plastic Box');
+  const [boxType, setBoxType] = useState('Caisse en plastique');
   const [price, setPrice] = useState('');
   const [rate, setRate] = useState('');
   const [notes, setNotes] = useState('');
@@ -88,9 +88,9 @@ export default function FreightShipmentCreate() {
     if (!selected.length || selected.length !== selectedIds.length || !refineries.some(row => row.id === refineryId)
       || !validNumber(price) || !validNumber(rate) || !validNumber(boxes) || !Number.isInteger(Number(boxes))
       || !Number.isFinite(fine) || fine <= 0 || !Number.isFinite(gross) || gross < fine || !date || !signatories.length) {
-      setError({ category: 'validation', code: undefined, title: 'Review the shipment',
-        message: 'Select eligible preparations, a refinery, a valid date, a package count and positive pricing values. Each preparation needs valid weights and signatories.',
-        recovery: 'Correct the information before saving. Signatories are managed in each shipment preparation.' });
+      setError({ category: 'validation', code: undefined, title: 'Vérifiez l’expédition',
+        message: 'Sélectionnez des préparations admissibles, une raffinerie, une date valide, un nombre de colis et des valeurs tarifaires positives. Chaque préparation doit comporter des poids et des signataires valides.',
+        recovery: 'Corrigez les informations avant l’enregistrement. Les signataires sont gérés dans chaque préparation d’expédition.' });
       return;
     }
     lock.current = true; setSubmitting(true);
@@ -113,56 +113,56 @@ export default function FreightShipmentCreate() {
         idempotency_key: submissionRequest.current.key,
       });
       submissionRequest.current = null;
-      showSuccess('Freight shipment created', `Shipment ${shipment.reference_number} is awaiting approval.`);
+      showSuccess('Expédition de fret créée', `L’expédition ${shipment.reference_number} est en attente d’approbation.`);
       navigate(`/freight/shipments/${shipment.id}`);
     } catch (reason) {
       if (reason instanceof FreightShipmentPartialSaveError) {
-        showWarning('Shipment requires review', `${reason.reference} exists, but some related records were not confirmed. Review the existing shipment; do not create another one.`);
+        showWarning('Expédition à vérifier', `${reason.reference} existe, mais certains enregistrements associés n’ont pas été confirmés. Vérifiez l’expédition existante ; n’en créez pas une autre.`);
         navigate(`/freight/shipments/${reason.shipmentId}`);
       } else setError(presentError(reason));
     }
     finally { lock.current = false; setSubmitting(false); }
   };
   return <NationalDashboardLayout><div className="sn-page logistics-workspace">
-    <PageHeader title="New freight shipment" subtitle="Consolidate cleared preparations for delivery to the refinery." icon={Package}
-      breadcrumb={[{ label: 'Shipments', to: '/shipping/preparation' }, { label: 'Freight shipments', to: '/freight' }, { label: 'New shipment' }]}
-      actions={<Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight')}><ArrowLeft size={16} />Back to freight shipments</Button>} />
-    {loadFailed && <Note tone="danger">Preparation data could not be loaded. <Button type="button" variant="outline" onClick={() => void load()}>Reload data</Button></Note>}
-    {!loading && !loadFailed && !shipments.length && <Note tone="info">No eligible preparations are available. Preparations must be ready for shipment and their lots must not already be assigned to freight.</Note>}
+    <PageHeader title="Nouvelle expédition de fret" subtitle="Regroupez les préparations dédouanées destinées à la raffinerie." icon={Package}
+      breadcrumb={[{ label: 'Expéditions', to: '/shipping/preparation' }, { label: 'Expéditions de fret', to: '/freight' }, { label: 'Nouvelle expédition' }]}
+      actions={<Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight')}><ArrowLeft size={16} />Retour aux expéditions de fret</Button>} />
+    {loadFailed && <Note tone="danger">Impossible de charger les données des préparations. <Button type="button" variant="outline" onClick={() => void load()}>Recharger les données</Button></Note>}
+    {!loading && !loadFailed && !shipments.length && <Note tone="info">Aucune préparation admissible n’est disponible. Les préparations doivent être prêtes pour l’expédition et leurs lots ne doivent pas être déjà affectés à un fret.</Note>}
     <form onSubmit={submit}><div className="logistics-form-grid"><fieldset className="logistics-form-main" disabled={loading || loadFailed || submitting}>
-      <Section id="freight-selection" title="Select shipment preparations" description="Search and select authorised preparations. Every production lot is included once." icon={Package}>
-        <Field label="Find a preparation"><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Reference or mining company…" /></Field>
-        <div className="my-4 flex gap-3"><Button type="button" variant="outline" onClick={() => selectIds(shipments.filter(row => `${row.expedition_lot_number} ${companyName(row)}`.toLowerCase().includes(search.toLowerCase())).map(row => row.id))}>Select matching</Button><Button type="button" variant="outline" onClick={() => selectIds([])}>Clear selection</Button></div>
-        <div className="overflow-x-auto"><table className="sn-table"><caption className="sr-only">Available preparations</caption><thead><tr><th>Select</th><th>Preparation</th><th>Company</th><th>Gross (g)</th><th>Fine gold (g)</th><th>Lots</th></tr></thead><tbody>
+      <Section id="freight-selection" title="Sélectionner les préparations d’expédition" description="Recherchez et sélectionnez les préparations autorisées. Chaque lot de production est inclus une seule fois." icon={Package}>
+        <Field label="Rechercher une préparation"><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Référence ou société minière…" /></Field>
+        <div className="my-4 flex gap-3"><Button type="button" variant="outline" onClick={() => selectIds(shipments.filter(row => `${row.expedition_lot_number} ${companyName(row)}`.toLowerCase().includes(search.toLowerCase())).map(row => row.id))}>Sélectionner les résultats</Button><Button type="button" variant="outline" onClick={() => selectIds([])}>Effacer la sélection</Button></div>
+        <div className="overflow-x-auto"><table className="sn-table"><caption className="sr-only">Préparations disponibles</caption><thead><tr><th>Sélection</th><th>Préparation</th><th>Société</th><th>Poids brut (g)</th><th>Or fin (g)</th><th>Lots</th></tr></thead><tbody>
           {shipments.filter(row => `${row.expedition_lot_number} ${companyName(row)}`.toLowerCase().includes(search.toLowerCase())).map(row => <tr key={row.id}>
-            <td><input type="checkbox" aria-label={`Select ${row.expedition_lot_number}`} checked={selectedIds.includes(row.id)} onChange={e => selectIds(e.target.checked ? [...selectedIds, row.id] : selectedIds.filter(id => id !== row.id))} /></td>
+            <td><input type="checkbox" aria-label={`Sélectionner ${row.expedition_lot_number}`} checked={selectedIds.includes(row.id)} onChange={e => selectIds(e.target.checked ? [...selectedIds, row.id] : selectedIds.filter(id => id !== row.id))} /></td>
             <td>{row.expedition_lot_number}</td><td>{companyName(row)}</td><td>{logisticsNumber(row.total_gross_weight_grams)}</td><td>{logisticsNumber(row.total_net_weight_grams)}</td><td>{row.items.length}</td></tr>)}
-          {loading && <tr><td colSpan={6}>Loading preparations…</td></tr>}
+          {loading && <tr><td colSpan={6}>Chargement des préparations…</td></tr>}
         </tbody></table></div>
       </Section>
-      <Section id="freight-destination" title="Destination & packaging" icon={Building2}><div className="logistics-fields">
-        <Field label="Shipment date" required><input type="date" value={date} onChange={e => setDate(e.target.value)} required /></Field>
-        <Field label="Destination refinery" required><select value={refineryId} onChange={e => setRefineryId(e.target.value)} required><option value="">Select a refinery</option>{refineries.map(row => <option key={row.id} value={row.id}>{row.name} · {row.country}</option>)}</select></Field>
-        <Field label="Number of packages" required><input type="number" min="1" step="1" value={boxes} onChange={e => setBoxes(e.target.value)} required /></Field>
-        <Field label="Packaging type" required><input value={boxType} onChange={e => setBoxType(e.target.value)} maxLength={100} required /></Field>
-      </div><div className="mt-4"><Note tone="info">Carriers are recorded in each preparation. Air waybills, customs clearance and dispatch evidence are recorded in the customs file.</Note></div></Section>
-      <Section id="freight-valuation" title="Declared value" description="Pricing is expressed per troy ounce. The exchange rate is XOF per 1 USD." icon={Scale}><div className="logistics-fields">
-        <Field label="Gold price (USD / oz)" required><input type="number" min="0.000001" step="any" value={price} onChange={e => setPrice(e.target.value)} required /></Field>
-        <Field label="Exchange rate (USD → XOF)" required><input type="number" min="0.000001" step="any" value={rate} onChange={e => setRate(e.target.value)} required /></Field>
+      <Section id="freight-destination" title="Destination et conditionnement" icon={Building2}><div className="logistics-fields">
+        <Field label="Date d’expédition" required><input type="date" value={date} onChange={e => setDate(e.target.value)} required /></Field>
+        <Field label="Raffinerie de destination" required><select value={refineryId} onChange={e => setRefineryId(e.target.value)} required><option value="">Sélectionnez une raffinerie</option>{refineries.map(row => <option key={row.id} value={row.id}>{row.name} · {row.country}</option>)}</select></Field>
+        <Field label="Nombre de colis" required><input type="number" min="1" step="1" value={boxes} onChange={e => setBoxes(e.target.value)} required /></Field>
+        <Field label="Type de conditionnement" required><input value={boxType} onChange={e => setBoxType(e.target.value)} maxLength={100} required /></Field>
+      </div><div className="mt-4"><Note tone="info">Les transporteurs sont consignés dans chaque préparation. Les lettres de transport aérien, le dédouanement et les preuves de départ sont enregistrés dans le dossier douanier.</Note></div></Section>
+      <Section id="freight-valuation" title="Valeur déclarée" description="Le prix est exprimé par once troy. Le taux de change correspond aux XOF pour 1 USD." icon={Scale}><div className="logistics-fields">
+        <Field label="Cours de l’or (USD / oz)" required><input type="number" min="0.000001" step="any" value={price} onChange={e => setPrice(e.target.value)} required /></Field>
+        <Field label="Taux de change (USD → XOF)" required><input type="number" min="0.000001" step="any" value={rate} onChange={e => setRate(e.target.value)} required /></Field>
       </div></Section>
-      <Section id="freight-signatories" title="Authorised signatories" description="Loaded from the selected preparations; the names are not inferred or generated." icon={ShieldCheck}>
-        {signatoriesLoading ? <p>Loading signatories…</p> : signatoriesFailed ? <Note tone="danger">Signatories could not be loaded. Reselect the preparations to retry.</Note> :
+      <Section id="freight-signatories" title="Signataires autorisés" description="Chargés depuis les préparations sélectionnées ; les noms ne sont ni déduits ni générés." icon={ShieldCheck}>
+        {signatoriesLoading ? <p>Chargement des signataires…</p> : signatoriesFailed ? <Note tone="danger">Impossible de charger les signataires. Sélectionnez de nouveau les préparations pour réessayer.</Note> :
           signatories.length ? <ul className="logistics-checklist">{signatories.map((row, index) => <li key={index}>{row.full_name} · {row.position}</li>)}</ul> :
-            <p>No signatories selected. Add the signatories to the source preparation before continuing.</p>}
+            <p>Aucun signataire sélectionné. Ajoutez les signataires à la préparation source avant de poursuivre.</p>}
       </Section>
-      <Section id="freight-notes" title="Instructions & observations" icon={FileText}><Field label="Notes"><textarea rows={4} maxLength={5000} value={notes} onChange={e => setNotes(e.target.value)} /></Field></Section>
-    </fieldset><Card title="Shipment summary" className="logistics-summary"><dl>
-      <dt>Preparations</dt><dd>{selected.length}</dd><dt>Production lots</dt><dd>{selected.reduce((sum, row) => sum + row.items.length, 0)}</dd>
-      <dt>Gross weight</dt><dd>{logisticsNumber(gross)} g</dd><dt>Fine gold weight</dt><dd>{logisticsNumber(fine)} g</dd><dt>Troy ounces</dt><dd>{logisticsNumber(ounces, 6)} oz</dd>
-      <dt>Declared value</dt><dd>{logisticsNumber(price ? ounces * Number(price) : null)} USD</dd><dt>Local value</dt><dd>{logisticsNumber(price && rate ? ounces * Number(price) * Number(rate) : null)} XOF</dd>
-    </dl><p className="mt-5 text-sm text-slate-500">The reference is assigned by the server. The initial status is Pending; dispatch requires a separate authorisation.</p></Card></div>
-    <FormActions><Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight')}>Cancel</Button><Button type="submit" disabled={submitting || loading || loadFailed || !selected.length || signatoriesLoading || signatoriesFailed}><Save size={16} />{submitting ? 'Creating shipment…' : 'Create freight shipment'}</Button></FormActions></form>
+      <Section id="freight-notes" title="Instructions et observations" icon={FileText}><Field label="Notes"><textarea rows={4} maxLength={5000} value={notes} onChange={e => setNotes(e.target.value)} /></Field></Section>
+    </fieldset><Card title="Synthèse de l’expédition" className="logistics-summary"><dl>
+      <dt>Préparations</dt><dd>{selected.length}</dd><dt>Lots de production</dt><dd>{selected.reduce((sum, row) => sum + row.items.length, 0)}</dd>
+      <dt>Poids brut</dt><dd>{logisticsNumber(gross)} g</dd><dt>Poids d’or fin</dt><dd>{logisticsNumber(fine)} g</dd><dt>Onces troy</dt><dd>{logisticsNumber(ounces, 6)} oz</dd>
+      <dt>Valeur déclarée</dt><dd>{logisticsNumber(price ? ounces * Number(price) : null)} USD</dd><dt>Valeur locale</dt><dd>{logisticsNumber(price && rate ? ounces * Number(price) * Number(rate) : null)} XOF</dd>
+    </dl><p className="mt-5 text-sm text-slate-500">La référence est attribuée par le serveur. Le statut initial est « En attente » ; le départ nécessite une autorisation distincte.</p></Card></div>
+    <FormActions><Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight')}>Annuler</Button><Button type="submit" disabled={submitting || loading || loadFailed || !selected.length || signatoriesLoading || signatoriesFailed}><Save size={16} />{submitting ? 'Création de l’expédition…' : 'Créer l’expédition de fret'}</Button></FormActions></form>
     <ActionErrorDialog isOpen={Boolean(error)} onClose={() => setError(null)} title={error?.title} message={error?.message || ''} recovery={error?.recovery} diagnosticCode={error?.code}
-      onAction={loadFailed ? () => { setError(null); void load(); } : undefined} actionLabel="Reload data" />
+      onAction={loadFailed ? () => { setError(null); void load(); } : undefined} actionLabel="Recharger les données" />
   </div></NationalDashboardLayout>;
 }

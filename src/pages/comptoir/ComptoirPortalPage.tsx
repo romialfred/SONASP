@@ -30,6 +30,7 @@ import {
   comptoirPortalService,
   type ComptoirDashboardData,
 } from '@/services/comptoirPortalService';
+import { formatStatusFr } from '@/utils/statusFormatter';
 import './comptoir-portal.css';
 
 const integer = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -197,7 +198,7 @@ export default function ComptoirPortalPage() {
                     <td>{new Date(purchase.date).toLocaleDateString('fr-FR')}</td>
                     <td className="is-number">{decimal.format(purchase.quantityGrams)} g</td>
                     <td className="is-number">{fcfa(purchase.amountFcfa)}</td>
-                    <td><span className={`comptoir-status is-${purchase.status}`}>{purchase.status.replace(/_/g, ' ')}</span></td>
+                    <td><span className={`comptoir-status is-${purchase.status}`}>{formatStatusFr(purchase.status)}</span></td>
                   </tr>
                 ))}
               </tbody>

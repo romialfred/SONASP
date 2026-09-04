@@ -105,7 +105,7 @@ const decimal = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-const usd = new Intl.NumberFormat('en-US', {
+const usd = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });

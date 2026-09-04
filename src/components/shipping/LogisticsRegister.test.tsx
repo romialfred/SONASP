@@ -11,15 +11,15 @@ describe('LogisticsRegister', () => {
   it('combines filters and preserves unknown quantities', () => {
     expect(filterLogisticsRows(rows, 'sonasp', 'ready', 'Mine A', '2026-08-01', '2026-08-01')).toEqual([rows[0]]);
     expect(filterLogisticsRows(rows, '', 'ready', 'Mine B', '', '')).toEqual([]);
-    expect(logisticsNumber(null)).toBe('—'); expect(logisticsNumber(NaN)).toBe('—'); expect(logisticsNumber(0)).toBe('0.00');
+    expect(logisticsNumber(null)).toBe('—'); expect(logisticsNumber(NaN)).toBe('—'); expect(logisticsNumber(0)).toBe('0,00');
   });
   it('shows actionable loading failure, never a false empty register', async () => {
     const loadRows = vi.fn().mockRejectedValueOnce({ code: 'PGRST201' }).mockResolvedValue(rows);
     render(<MemoryRouter><LogisticsRegister title="Preparations" subtitle="Tracking" loadRows={loadRows} statuses={{ pending: 'Awaiting approval', ready: 'Ready for shipment' }} readyStatus="ready" pendingStatus="pending" createPath="/new" createLabel="New preparation" /></MemoryRouter>);
     expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
-    expect(screen.getByText('Data unavailable')).toBeInTheDocument();
-    expect(screen.queryByText('No records match these filters.')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Reload records' }));
+    expect(screen.getByText('Données indisponibles')).toBeInTheDocument();
+    expect(screen.queryByText('Aucune expédition ne correspond à ces filtres.')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Recharger les dossiers' }));
     expect(await screen.findByRole('link', { name: rows[0].reference })).toHaveAttribute('href', rows[0].href);
     expect(loadRows).toHaveBeenCalledTimes(2);
     fireEvent(window, new Event('focus'));
@@ -36,13 +36,13 @@ describe('LogisticsRegister', () => {
       statuses={{ waiting_for_customs_approval: 'Awaiting customs approval', approved_by_customs: 'Customs approved', ready_for_expedition: 'Ready for shipment' }}
       readyStatus="ready_for_expedition" pendingStatus="waiting_for_customs_approval" createPath="/new" createLabel="New shipment" presentation="shipment-preparations" /></MemoryRouter>);
 
-    const overview = await screen.findByRole('region', { name: 'Shipment overview' });
-    expect(within(overview).getByRole('button', { name: /Prepared1Ready to ship/ })).toBeInTheDocument();
-    expect(within(overview).getByRole('button', { name: /Shipped1Dispatched shipments/ })).toBeInTheDocument();
-    expect(within(overview).getByText('Some weights are unavailable')).toBeInTheDocument();
+    const overview = await screen.findByRole('region', { name: 'Synthèse des expéditions' });
+    expect(within(overview).getByRole('button', { name: /Préparées1Prêtes à expédier/ })).toBeInTheDocument();
+    expect(within(overview).getByRole('button', { name: /Expédiées1Envois effectués/ })).toBeInTheDocument();
+    expect(within(overview).getByText('Certains poids sont indisponibles')).toBeInTheDocument();
 
-    fireEvent.click(within(overview).getByRole('button', { name: /Shipped1/ }));
-    expect(screen.getByRole('heading', { name: 'All shipments' })).toBeInTheDocument();
+    fireEvent.click(within(overview).getByRole('button', { name: /Expédiées1/ }));
+    expect(screen.getByRole('heading', { name: 'Toutes les expéditions' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: preparationRows[0].reference })).toHaveAttribute('href', preparationRows[0].href);
     expect(screen.queryByRole('link', { name: preparationRows[1].reference })).not.toBeInTheDocument();
   });

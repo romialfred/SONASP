@@ -55,7 +55,7 @@ export function DocumentUploadSection({
         setError(null);
       } catch {
         setFile(null);
-        showError('This file is not supported or exceeds the permitted size.');
+        showError('Ce fichier n’est pas pris en charge ou dépasse la taille autorisée.');
         e.target.value = '';
       }
     }
@@ -63,7 +63,7 @@ export function DocumentUploadSection({
 
   const handleUpload = async () => {
     if (!file || !title.trim()) {
-      showError('Enter a document title and select a supported file.');
+      showError('Saisissez un titre et sélectionnez un fichier pris en charge.');
       return;
     }
 
@@ -81,8 +81,8 @@ export function DocumentUploadSection({
       setFile(null);
       onDocumentAdded();
     } catch (err: any) {
-      console.error('Error uploading document:', err);
-      showError('The document could not be uploaded.');
+      console.error('Erreur lors du téléversement du document :', err);
+      showError('Impossible de téléverser le document.');
     } finally {
       setUploading(false);
       uploadLock.current = false;
@@ -90,14 +90,14 @@ export function DocumentUploadSection({
   };
 
   const handleDelete = async (docId: string, documentUrl: string) => {
-    if (!confirm('Delete this document permanently?')) return;
+    if (!confirm('Supprimer définitivement ce document ?')) return;
 
     try {
       await shippingPreparationService.deleteDocument(docId, documentUrl);
       onDocumentDeleted(docId);
     } catch (err) {
-      console.error('Error deleting document:', err);
-      showError('The document could not be deleted. Refresh the list and try again.');
+      console.error('Erreur lors de la suppression du document :', err);
+      showError('Impossible de supprimer le document. Actualisez la liste, puis réessayez.');
     }
   };
 
@@ -108,13 +108,13 @@ export function DocumentUploadSection({
     setError(null);
     try {
       const signedUrl = await shippingPreparationService.getDocumentUrl(doc.document_url);
-      if (!popup) throw new Error('Allow pop-up windows to open this document.');
+      if (!popup) throw new Error('Autorisez les fenêtres contextuelles pour ouvrir ce document.');
       popup.location.replace(signedUrl);
     } catch (reason) {
       popup?.close();
-      showError(reason instanceof Error && reason.message.startsWith('Allow pop-up')
+      showError(reason instanceof Error && reason.message.startsWith('Autorisez les fenêtres')
         ? reason.message
-        : 'The document could not be opened.');
+        : 'Impossible d’ouvrir le document.');
     } finally {
       setAccessingDocumentId(null);
     }
@@ -131,21 +131,21 @@ export function DocumentUploadSection({
       link.rel = 'noopener noreferrer';
       link.click();
     } catch {
-      showError('The document could not be downloaded.');
+      showError('Impossible de télécharger le document.');
     } finally {
       setAccessingDocumentId(null);
     }
   };
 
   const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return 'N/A';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
+    if (!bytes) return 'N/R';
+    if (bytes < 1024) return bytes + ' o';
+    if (bytes < 1048576) return (bytes / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' Ko';
+    return (bytes / 1048576).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' Mo';
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -164,7 +164,7 @@ export function DocumentUploadSection({
             </div>
             <div>
               <h3 className="text-base font-semibold text-slate-900">Documents</h3>
-              <p className="text-sm text-slate-500">{documents.length} document(s)</p>
+              <p className="text-sm text-slate-500">{documents.length} document{documents.length > 1 ? 's' : ''}</p>
             </div>
           </div>
           <Button
@@ -176,14 +176,14 @@ export function DocumentUploadSection({
             size="sm"
           >
             <Plus className="w-4 h-4" />
-            Add document
+            Ajouter un document
           </Button>
         </div>
 
         {documents.length === 0 ? (
           <div className="text-center py-12 text-slate-400">
             <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No document added</p>
+            <p className="text-sm">Aucun document ajouté</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -214,6 +214,7 @@ export function DocumentUploadSection({
                     onClick={() => void handleOpen(doc)}
                     disabled={accessingDocumentId === doc.id}
                     className="flex items-center gap-1"
+                    aria-label={`Ouvrir ${doc.title}`}
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
@@ -223,6 +224,7 @@ export function DocumentUploadSection({
                     onClick={() => void handleDownload(doc)}
                     disabled={accessingDocumentId === doc.id}
                     className="flex items-center gap-1"
+                    aria-label={`Télécharger ${doc.title}`}
                   >
                     <Download className="w-4 h-4" />
                   </Button>
@@ -231,6 +233,7 @@ export function DocumentUploadSection({
                     size="sm"
                     onClick={() => handleDelete(doc.id, doc.document_url)}
                     className="flex items-center gap-1 hover:bg-red-50 hover:text-red-600"
+                    aria-label={`Supprimer ${doc.title}`}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -245,7 +248,7 @@ export function DocumentUploadSection({
       <Modal
         isOpen={showUploadModal}
         onClose={() => !uploading && setShowUploadModal(false)}
-        title="Add document"
+        title="Ajouter un document"
       >
         <div className="space-y-4">
           {error && (
@@ -256,20 +259,20 @@ export function DocumentUploadSection({
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Document title *
+              Titre du document *
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ex: Packing List, Bill of Lading, etc."
+              placeholder="Ex. : liste de colisage, connaissement, etc."
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              File *
+              Fichier *
             </label>
             <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
               <input
@@ -286,9 +289,9 @@ export function DocumentUploadSection({
                     <span className="font-medium text-blue-600">{file.name}</span>
                   ) : (
                     <>
-                      Click to select or drag and drop a file
+                      Cliquez pour sélectionner un fichier ou glissez-déposez-le
                       <br />
-                      <span className="text-xs text-slate-500">PDF, DOC/DOCX, PNG, JPG (max. 10 MB)</span>
+                      <span className="text-xs text-slate-500">PDF, DOC/DOCX, PNG ou JPG (10 Mo maximum)</span>
                     </>
                   )}
                 </p>
@@ -302,13 +305,13 @@ export function DocumentUploadSection({
               onClick={() => setShowUploadModal(false)}
               disabled={uploading}
             >
-              Cancel
+              Annuler
             </Button>
             <Button
               onClick={handleUpload}
               disabled={uploading || !file || !title.trim()}
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? 'Téléversement…' : 'Téléverser'}
             </Button>
           </div>
         </div>
@@ -316,9 +319,9 @@ export function DocumentUploadSection({
       <ActionErrorDialog
         isOpen={errorDialogOpen}
         onClose={() => setErrorDialogOpen(false)}
-        title="Document operation failed"
-        message={error || 'The document operation could not be completed.'}
-        recovery="Your current page remains available. Check the file or connection, then try again."
+        title="Échec de l’opération sur le document"
+        message={error || 'Impossible de terminer l’opération sur le document.'}
+        recovery="Cette page reste disponible. Vérifiez le fichier ou votre connexion, puis réessayez."
       />
     </>
   );

@@ -2,11 +2,22 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { TrendingUp, TrendingDown, Minus, RefreshCw, AlertTriangle } from 'lucide-react';
 import { getCurrentGoldPrice, getGoldPriceStatistics, type GoldPrice, type GoldPriceStats } from '@/services/goldPriceService';
-import { formatPercentage } from '@/utils/numberUtils';
 
 interface GoldPriceWidgetProps {
   showDetailed?: boolean;
 }
+
+const formatUsd = (value: number, minimumFractionDigits = 2) => new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits,
+  maximumFractionDigits: 2,
+}).format(value);
+
+const formatPercent = (value: number, maximumFractionDigits = 2) => `${new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: maximumFractionDigits,
+  maximumFractionDigits,
+}).format(value)} %`;
 
 export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) {
   const [goldPrice, setGoldPrice] = useState<GoldPrice | null>(null);
@@ -60,7 +71,7 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
       <Card className="p-4 border-amber-200 bg-amber-50">
         <div className="flex items-center gap-2 text-amber-700">
           <AlertTriangle className="w-5 h-5" />
-          <p className="text-sm">Unable to load gold price data</p>
+          <p className="text-sm">Le cours de l’or ne peut pas être chargé.</p>
         </div>
       </Card>
     );
@@ -108,12 +119,13 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <h3 className="text-sm font-semibold text-gray-700">Live Gold Price (London Spot)</h3>
+            <h3 className="text-sm font-semibold text-gray-700">Cours de l’or en direct — marché au comptant de Londres</h3>
           </div>
           <button
             onClick={fetchGoldData}
             className="p-1 hover:bg-white/50 rounded transition-colors"
-            title="Refresh"
+            title="Actualiser le cours"
+            aria-label="Actualiser le cours de l’or"
           >
             <RefreshCw className="w-4 h-4 text-gray-600" />
           </button>
@@ -122,7 +134,7 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
         <div className="space-y-2">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-gray-900">
-              ${goldPrice.london_am_rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatUsd(goldPrice.london_am_rate)}
             </span>
             <span className="text-sm text-gray-500">/oz</span>
           </div>
@@ -130,24 +142,24 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
           <div className="flex items-center gap-2">
             {getTrendIcon()}
             <span className={`text-sm font-semibold ${getTrendColor()}`}>
-              {stats.change > 0 ? '+' : ''}${stats.change.toFixed(2)} ({stats.change_percentage > 0 ? '+' : ''}{stats.change_percentage.toFixed(2)}%)
+              {stats.change > 0 ? '+' : ''}{formatUsd(stats.change)} ({stats.change_percentage > 0 ? '+' : ''}{formatPercent(stats.change_percentage)})
             </span>
           </div>
 
           <div className="text-xs text-gray-500">
-            London AM Fix • {new Date(goldPrice.price_date).toLocaleDateString()}
+            Fixing de Londres du matin • {new Date(goldPrice.price_date).toLocaleDateString('fr-FR')}
           </div>
         </div>
 
         {showDetailed && (
           <>
             <div className="border-t border-gray-200 pt-3">
-              <div className="text-xs font-semibold text-gray-700 mb-3">Today's Statistics</div>
+              <div className="text-xs font-semibold text-gray-700 mb-3">Statistiques de la séance</div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-white/60 p-2 rounded">
                   <div className="text-gray-500 text-xs">Fixing du matin</div>
                   <div className="font-semibold text-gray-900">
-                    ${goldPrice.london_am_rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {formatUsd(goldPrice.london_am_rate)}
                   </div>
                 </div>
                 <div className="bg-white/60 p-2 rounded">
@@ -155,23 +167,23 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
                   <div className="font-semibold text-gray-900">
                     {goldPrice.london_pm_rate === null
                       ? 'non publié'
-                      : `$${goldPrice.london_pm_rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                      : formatUsd(goldPrice.london_pm_rate)}
                   </div>
                 </div>
                 <div className="bg-green-50 p-2 rounded border border-green-200">
-                  <div className="text-gray-500 text-xs">High (24h)</div>
+                  <div className="text-gray-500 text-xs">Plus haut sur 24 h</div>
                   <div className="font-semibold text-green-700">
                     {goldPrice.high_price === null
                       ? '—'
-                      : `$${goldPrice.high_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                      : formatUsd(goldPrice.high_price)}
                   </div>
                 </div>
                 <div className="bg-red-50 p-2 rounded border border-red-200">
-                  <div className="text-gray-500 text-xs">Low (24h)</div>
+                  <div className="text-gray-500 text-xs">Plus bas sur 24 h</div>
                   <div className="font-semibold text-red-700">
                     {goldPrice.low_price === null
                       ? '—'
-                      : `$${goldPrice.low_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                      : formatUsd(goldPrice.low_price)}
                   </div>
                 </div>
                 {variance === null ? (
@@ -188,10 +200,10 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
                     <div className="text-gray-500 text-xs">Variation du jour</div>
                     <div className="flex items-center justify-between">
                       <div className={`font-bold ${variance.value >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                        {variance.value >= 0 ? '+' : ''}${variance.value.toFixed(2)}
+                        {variance.value >= 0 ? '+' : ''}{formatUsd(variance.value)}
                       </div>
                       <div className={`text-sm font-semibold ${variance.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {variance.percentage >= 0 ? '+' : ''}{variance.percentage.toFixed(2)}%
+                        {variance.percentage >= 0 ? '+' : ''}{formatPercent(variance.percentage)}
                       </div>
                     </div>
                   </div>
@@ -200,24 +212,24 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
             </div>
 
             <div className="border-t border-gray-200 pt-3 space-y-2">
-              <div className="text-xs font-semibold text-gray-700">30-Day Statistics</div>
+              <div className="text-xs font-semibold text-gray-700">Statistiques sur 30 jours</div>
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
-                  <div className="text-gray-500 text-xs">Average</div>
+                  <div className="text-gray-500 text-xs">Moyenne</div>
                   <div className="font-semibold text-gray-900">
-                    ${stats.avg_30_days.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                    {formatUsd(stats.avg_30_days, 0)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500 text-xs">High</div>
+                  <div className="text-gray-500 text-xs">Plus haut</div>
                   <div className="font-semibold text-green-700">
-                    ${stats.high_30_days.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                    {formatUsd(stats.high_30_days, 0)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500 text-xs">Low</div>
+                  <div className="text-gray-500 text-xs">Plus bas</div>
                   <div className="font-semibold text-red-700">
-                    ${stats.low_30_days.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                    {formatUsd(stats.low_30_days, 0)}
                   </div>
                 </div>
               </div>
@@ -228,19 +240,19 @@ export function GoldPriceWidget({ showDetailed = false }: GoldPriceWidgetProps) 
               stats.trend === 'down' ? 'bg-red-100 text-red-800' :
               'bg-gray-100 text-gray-800'
             }`}>
-              <span className="font-semibold">Market Trend:</span>{' '}
-              {stats.trend === 'up' ? 'Bullish' : stats.trend === 'down' ? 'Bearish' : 'Neutral'}
+              <span className="font-semibold">Tendance du marché :</span>{' '}
+              {stats.trend === 'up' ? 'haussière' : stats.trend === 'down' ? 'baissière' : 'neutre'}
               {' • '}
-              Current price is{' '}
-              {formatPercentage((goldPrice.london_am_rate - stats.avg_30_days) / stats.avg_30_days * 100, 1)}
-              {' '}{goldPrice.london_am_rate > stats.avg_30_days ? 'above' : 'below'} 30-day average
+              Le cours actuel se situe{' '}
+              {formatPercent((goldPrice.london_am_rate - stats.avg_30_days) / stats.avg_30_days * 100, 1)}
+              {' '}{goldPrice.london_am_rate > stats.avg_30_days ? 'au-dessus' : 'en dessous'} de la moyenne sur 30 jours.
             </div>
           </>
         )}
 
         <div className="text-xs text-gray-400 flex items-center justify-between border-t border-gray-200 pt-2">
-          <span>Last update: {lastUpdate.toLocaleTimeString()}</span>
-          <span className="text-gray-500">Auto-refresh: 1 min</span>
+          <span>Dernière mise à jour : {lastUpdate.toLocaleTimeString('fr-FR')}</span>
+          <span className="text-gray-500">Actualisation automatique : 1 min</span>
         </div>
       </div>
     </Card>

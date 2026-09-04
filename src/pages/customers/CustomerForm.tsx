@@ -29,11 +29,17 @@ interface CustomerFormData {
   status: 'active' | 'inactive' | 'pending';
   banks: BankAccount[];
 }
-const paymentTermsOptions = ['Net 15 days', 'Net 30 days', 'Net 45 days', 'Net 60 days', 'Immediate'];
+const paymentTermsOptions = [
+  { value: 'Net 15 days', label: 'Paiement à 15 jours' },
+  { value: 'Net 30 days', label: 'Paiement à 30 jours' },
+  { value: 'Net 45 days', label: 'Paiement à 45 jours' },
+  { value: 'Net 60 days', label: 'Paiement à 60 jours' },
+  { value: 'Immediate', label: 'Paiement immédiat' },
+];
 const statusOptions = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'pending', label: 'Pending' },
+  { value: 'active', label: 'Actif' },
+  { value: 'inactive', label: 'Inactif' },
+  { value: 'pending', label: 'En attente' },
 ];
 
 export function CustomerForm() {
@@ -117,7 +123,7 @@ export function CustomerForm() {
       }
     } catch (error: any) {
       console.error('Error fetching customer:', error);
-      alert.error('Failed to load customer data');
+      alert.error('Impossible de charger les données du client.');
       navigate('/customers');
     } finally {
       setIsLoading(false);
@@ -140,30 +146,30 @@ export function CustomerForm() {
     const newErrors: Partial<Record<keyof CustomerFormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Company name is required';
+      newErrors.name = 'La raison sociale est obligatoire.';
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'L’adresse électronique est obligatoire.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = 'Le format de l’adresse électronique est invalide.';
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
+      newErrors.phone = 'Le numéro de téléphone est obligatoire.';
     }
 
     if (!formData.contactPerson.trim()) {
-      newErrors.contactPerson = 'Contact person is required';
+      newErrors.contactPerson = 'La personne à contacter est obligatoire.';
     }
 
     if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
+      newErrors.address = 'L’adresse est obligatoire.';
     }
 
     const creditLimit = parseFloat(formData.creditLimit);
     if (isNaN(creditLimit) || creditLimit < 0) {
-      newErrors.creditLimit = 'Valid credit limit is required';
+      newErrors.creditLimit = 'Une limite de crédit valide est obligatoire.';
     }
 
     setErrors(newErrors);
@@ -225,7 +231,7 @@ export function CustomerForm() {
           .single();
 
         if (error) throw error;
-        if (!newCustomer) throw new Error('Failed to create customer');
+        if (!newCustomer) throw new Error('Le client n’a pas pu être créé.');
 
         customerId = newCustomer.id;
       }
@@ -241,7 +247,7 @@ export function CustomerForm() {
         );
 
         if (invalidBanks.length > 0) {
-          throw new Error('All bank accounts must have a name, country, city, and currency. Please complete all required fields.');
+          throw new Error('Chaque compte bancaire doit comporter un nom de banque, un pays, une ville et une devise. Renseignez tous les champs obligatoires.');
         }
 
         const banksToInsert = formData.banks
@@ -266,13 +272,13 @@ export function CustomerForm() {
 
           if (banksError) {
             console.error('Error saving banks:', banksError);
-            throw new Error('Failed to save bank accounts: ' + banksError.message);
+            throw new Error('Impossible d’enregistrer les comptes bancaires.');
           }
         }
       }
 
       // Show success message after everything is saved
-      alert.success(`Customer ${isEditMode ? 'updated' : 'created'} successfully`);
+      alert.success(`Client ${isEditMode ? 'mis à jour' : 'créé'} avec succès.`);
 
       setSubmitSuccess(true);
       setTimeout(() => {
@@ -280,7 +286,7 @@ export function CustomerForm() {
       }, 1000);
     } catch (error: any) {
       console.error('Error saving customer:', error);
-      alert.error(error.message || 'Failed to save customer');
+      alert.error(error.message || 'Impossible d’enregistrer le client.');
     } finally {
       setIsSubmitting(false);
     }
@@ -304,18 +310,18 @@ export function CustomerForm() {
             </Button>
             <div>
               <h1 className="font-heading text-3xl font-bold text-gray-900">
-                {isEditMode ? 'Edit Customer' : 'New Customer'}
+                {isEditMode ? 'Modifier le client' : 'Nouveau client'}
               </h1>
               <p className="text-gray-600 mt-1">
-                {isEditMode ? 'Update customer information' : 'Add a new customer to the system'}
+                {isEditMode ? 'Mettez à jour les informations du client.' : 'Ajoutez un nouveau client au système.'}
               </p>
             </div>
           </div>
         </div>
 
         {submitSuccess && (
-          <Alert type="success" title="Success">
-            Customer {isEditMode ? 'updated' : 'created'} successfully! Redirecting...
+          <Alert type="success" title="Opération réussie">
+            Client {isEditMode ? 'mis à jour' : 'créé'} avec succès. Redirection en cours…
           </Alert>
         )}
 
@@ -325,20 +331,20 @@ export function CustomerForm() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Customer Information</CardTitle>
+                    <CardTitle>Informations sur le client</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label="Company Name" required error={errors.name}>
+                <FormField label="Raison sociale" required error={errors.name}>
                   <Input
                     value={formData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
                     error={!!errors.name}
-                    placeholder="Enter company name"
+                    placeholder="Saisissez la raison sociale"
                   />
                 </FormField>
 
-                <FormField label="Email Address" required error={errors.email}>
+                <FormField label="Adresse électronique" required error={errors.email}>
                   <Input
                     type="email"
                     value={formData.email}
@@ -348,7 +354,7 @@ export function CustomerForm() {
                   />
                 </FormField>
 
-                <FormField label="Phone Number" required error={errors.phone}>
+                <FormField label="Numéro de téléphone" required error={errors.phone}>
                   <Input
                     value={formData.phone}
                     onChange={(e) => handleChange('phone', e.target.value)}
@@ -357,21 +363,21 @@ export function CustomerForm() {
                   />
                 </FormField>
 
-                <FormField label="Contact Person" required error={errors.contactPerson}>
+                <FormField label="Personne à contacter" required error={errors.contactPerson}>
                   <Input
                     value={formData.contactPerson}
                     onChange={(e) => handleChange('contactPerson', e.target.value)}
                     error={!!errors.contactPerson}
-                    placeholder="Contact person name"
+                    placeholder="Nom de la personne à contacter"
                   />
                 </FormField>
 
-                <FormField label="Country" required>
+                <FormField label="Pays" required>
                   <Select
                     value={formData.country}
                     onChange={(e) => handleChange('country', e.target.value)}
                   >
-                    <option value="">Select a country</option>
+                    <option value="">Sélectionnez un pays</option>
                     {COUNTRIES.map((country) => (
                       <option key={country} value={country}>
                         {country}
@@ -380,37 +386,37 @@ export function CustomerForm() {
                   </Select>
                 </FormField>
 
-                <FormField label="Tax ID / Registration Number">
+                <FormField label="Identifiant fiscal / numéro d’immatriculation">
                   <Input
                     value={formData.taxId}
                     onChange={(e) => handleChange('taxId', e.target.value)}
-                    placeholder="Tax ID"
+                    placeholder="Identifiant fiscal"
                   />
                 </FormField>
 
-                <FormField label="Address" required error={errors.address} className="md:col-span-2">
+                <FormField label="Adresse" required error={errors.address} className="md:col-span-2">
                   <Input
                     value={formData.address}
                     onChange={(e) => handleChange('address', e.target.value)}
                     error={!!errors.address}
-                    placeholder="Full address"
+                    placeholder="Adresse complète"
                   />
                 </FormField>
 
-                <FormField label="Payment Terms">
+                <FormField label="Conditions de paiement">
                   <Select
                     value={formData.paymentTerms}
                     onChange={(e) => handleChange('paymentTerms', e.target.value)}
                   >
                     {paymentTermsOptions.map((term) => (
-                      <option key={term} value={term}>
-                        {term}
+                      <option key={term.value} value={term.value}>
+                        {term.label}
                       </option>
                     ))}
                   </Select>
                 </FormField>
 
-                <FormField label="Credit Limit (USD)" error={errors.creditLimit}>
+                <FormField label="Limite de crédit (USD)" error={errors.creditLimit}>
                   <Input
                     type="number"
                     value={formData.creditLimit}
@@ -421,7 +427,7 @@ export function CustomerForm() {
                   />
                 </FormField>
 
-                <FormField label="Status">
+                <FormField label="Statut">
                   <Select
                     value={formData.status}
                     onChange={(e) => handleChange('status', e.target.value as typeof formData.status)}
@@ -439,7 +445,7 @@ export function CustomerForm() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Bank Accounts</CardTitle>
+                    <CardTitle>Comptes bancaires</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <BankAccountForm
@@ -451,15 +457,15 @@ export function CustomerForm() {
 
                 <div className="flex justify-end gap-4">
                   <Button type="button" variant="outline" onClick={() => navigate('/customers')}>
-                    Cancel
+                    Annuler
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (
-                      'Saving...'
+                      'Enregistrement…'
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
-                        {isEditMode ? 'Update Customer' : 'Create Customer'}
+                        {isEditMode ? 'Mettre à jour le client' : 'Créer le client'}
                       </>
                     )}
                   </Button>
@@ -472,38 +478,38 @@ export function CustomerForm() {
             <div className="sticky top-6">
               <InfoPanelGroup>
                 <InfoPanel
-                  title="Customer Guidelines"
+                  title="Consignes relatives au client"
                   icon={Info}
                   variant="blue"
                   items={[
-                    { text: 'All fields marked with * are required' },
-                    { text: 'Email will be used for payment notifications' },
-                    { text: 'Credit limit determines maximum outstanding balance' },
-                    { text: 'New customers start with "Pending" status' },
+                    { text: 'Tous les champs marqués d’un astérisque (*) sont obligatoires.' },
+                    { text: 'L’adresse électronique sera utilisée pour les notifications de paiement.' },
+                    { text: 'La limite de crédit détermine le solde maximal autorisé.' },
+                    { text: 'Tout nouveau client reçoit initialement le statut « En attente ».' },
                   ]}
                 />
 
                 <InfoPanel
-                  title="Bank Information"
+                  title="Informations bancaires"
                   icon={Building2}
                   variant="amber"
                   items={[
-                    { text: 'Add at least one bank account for payments' },
-                    { text: 'Primary bank will be used as default' },
-                    { text: 'IBAN and SWIFT codes ensure accurate transfers' },
-                    { text: 'Multiple banks can be added for different currencies' },
+                    { text: 'Ajoutez au moins un compte bancaire pour les paiements.' },
+                    { text: 'Le compte bancaire principal sera utilisé par défaut.' },
+                    { text: 'Les codes IBAN et SWIFT permettent de sécuriser l’acheminement des virements.' },
+                    { text: 'Plusieurs comptes peuvent être ajoutés pour différentes devises.' },
                   ]}
                 />
 
                 <InfoPanel
-                  title="Required Documents"
+                  title="Documents requis"
                   icon={FileText}
                   variant="green"
                   items={[
-                    { text: 'Business registration certificate', icon: '✓' },
-                    { text: 'Tax identification documents', icon: '✓' },
-                    { text: 'Bank account verification letter', icon: '✓' },
-                    { text: 'Authorized signatory list', icon: '✓' },
+                    { text: 'Certificat d’immatriculation de l’entreprise', icon: '✓' },
+                    { text: 'Documents d’identification fiscale', icon: '✓' },
+                    { text: 'Attestation de compte bancaire', icon: '✓' },
+                    { text: 'Liste des signataires autorisés', icon: '✓' },
                   ]}
                 />
               </InfoPanelGroup>

@@ -20,7 +20,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
 
   useEffect(() => {
     if (!pdfSrc) {
-      setError('No PDF URL provided');
+      setError('Aucune adresse de document PDF n’a été fournie.');
       setLoading(false);
       return;
     }
@@ -30,7 +30,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
       iframe.onload = () => setLoading(false);
       iframe.onerror = () => {
         setLoading(false);
-        setError('Failed to load PDF document');
+        setError('Le document PDF n’a pas pu être chargé.');
       };
     }
   }, [pdfSrc]);
@@ -74,7 +74,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
           <div className="flex items-center justify-center h-full min-h-[400px]">
             <div className="text-center">
               <Loader className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-3" />
-              <p className="text-gray-600 text-sm">Loading PDF document...</p>
+              <p className="text-gray-600 text-sm">Chargement du document PDF…</p>
             </div>
           </div>
         )}
@@ -84,17 +84,17 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
             <div className="text-center max-w-md mx-auto px-4">
               <div className="bg-red-50 border-2 border-red-200 text-red-800 px-6 py-4 rounded-lg">
                 <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-600" />
-                <p className="font-semibold mb-2">Unable to Load PDF</p>
+                <p className="font-semibold mb-2">Impossible de charger le document PDF</p>
                 <p className="text-sm mb-3">{error}</p>
                 <p className="text-xs text-red-600">
-                  Please check if the file exists and you have permission to view it.
+                  Vérifiez que le fichier existe et que vous êtes autorisé à le consulter.
                 </p>
                 {pdfSrc && (
                   <button
                     onClick={() => window.open(pdfSrc, '_blank')}
                     className="mt-3 text-xs underline hover:no-underline"
                   >
-                    Try opening in new tab
+                    Ouvrir dans un nouvel onglet
                   </button>
                 )}
               </div>
@@ -110,9 +110,9 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
             style={{
               minHeight: '70vh',
             }}
-            title={fileName || 'PDF Document'}
+            title={fileName || 'Document PDF'}
             onError={() => {
-              setError('Failed to load PDF. The file may be corrupted or inaccessible.');
+              setError('Le document PDF n’a pas pu être chargé. Le fichier est peut-être endommagé ou inaccessible.');
               setLoading(false);
             }}
           />
@@ -127,8 +127,8 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
       <div className="relative w-full h-full max-w-7xl mx-4 my-4 bg-white rounded-lg shadow-2xl flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">{fileName || 'PDF Document'}</h3>
-            <p className="text-sm text-gray-500">PDF Document</p>
+            <h3 className="text-lg font-semibold text-gray-900 truncate">{fileName || 'Document PDF'}</h3>
+            <p className="text-sm text-gray-500">Document PDF</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
               size="sm"
               onClick={handleZoomOut}
               disabled={zoom <= 50}
-              title="Zoom Out"
+              title="Réduire le zoom"
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
@@ -151,7 +151,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
               size="sm"
               onClick={handleZoomIn}
               disabled={zoom >= 200}
-              title="Zoom In"
+              title="Augmenter le zoom"
             >
               <ZoomIn className="h-4 w-4" />
             </Button>
@@ -162,7 +162,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
               variant="outline"
               size="sm"
               onClick={handleRotate}
-              title="Rotate"
+              title="Pivoter"
             >
               <RotateCw className="h-4 w-4" />
             </Button>
@@ -171,7 +171,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
               variant="outline"
               size="sm"
               onClick={handleDownload}
-              title="Download"
+              title="Télécharger"
             >
               <Download className="h-4 w-4" />
             </Button>
@@ -180,7 +180,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
               variant="outline"
               size="sm"
               onClick={onClose}
-              title="Close"
+              title="Fermer"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -192,7 +192,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <Loader className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
-                <p className="text-gray-600">Loading PDF document...</p>
+                <p className="text-gray-600">Chargement du document PDF…</p>
               </div>
             </div>
           )}
@@ -201,7 +201,7 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="bg-red-100 text-red-800 px-6 py-4 rounded-lg">
-                  <p className="font-medium">Error loading PDF</p>
+                  <p className="font-medium">Erreur lors du chargement du document PDF</p>
                   <p className="text-sm mt-1">{error}</p>
                 </div>
               </div>
@@ -226,14 +226,14 @@ export function PDFViewer({ url, fileUrl, pdfUrl, fileName, onClose }: PDFViewer
                   width: '100%',
                   maxWidth: '1000px',
                 }}
-                title={fileName || 'PDF Document'}
+                title={fileName || 'Document PDF'}
               />
             </div>
           )}
         </div>
 
         <div className="p-3 border-t border-gray-200 bg-gray-50 text-center text-sm text-gray-500">
-          Double-click outside to close • Use toolbar controls to zoom and rotate
+          Double-cliquez à l’extérieur pour fermer • Utilisez la barre d’outils pour zoomer et faire pivoter le document
         </div>
       </div>
 

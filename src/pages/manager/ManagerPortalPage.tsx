@@ -8,6 +8,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Loading } from '@/components/ui/Loading';
 import { cn } from '@/utils/cn';
+import { formatStatusFr } from '@/utils/statusFormatter';
 import {
   ManagerPortalDataError, managerPortalService, type ManagerPortalSnapshot,
 } from '@/services/managerPortalService';
@@ -41,10 +42,6 @@ function fmtDate(value: string | null): string {
   if (!value) return 'Non renseignée';
   const date = new Date(`${value.slice(0, 10)}T00:00:00`);
   return Number.isNaN(date.getTime()) ? 'Non renseignée' : date.toLocaleDateString('fr-FR');
-}
-
-function labelStatus(status: string): string {
-  return status.split('_').join(' ').replace(/^./, (character: string) => character.toUpperCase());
 }
 
 export default function ManagerPortalPage() {
@@ -131,7 +128,7 @@ function SectionContent({ section, data, userName }: { section: Section; data: M
 
 function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) { return <article className="manager-metric"><span><Icon aria-hidden="true" /></span><div><p>{label}</p><strong>{value}</strong></div></article>; }
 type DisplayRow = { key: string; title: string; subtitle: string; value: string; status: string };
-function DataPanel({ title, rows }: { title: string; rows: DisplayRow[] }) { return <section className="manager-panel"><header><h2>{title}</h2><span>{rows.length} élément(s)</span></header>{rows.length ? <div>{rows.map((row) => <article key={row.key}><div><h3>{row.title}</h3><p>{row.subtitle}</p></div><div><strong>{row.value}</strong><span>{labelStatus(row.status)}</span></div></article>)}</div> : <p className="manager-panel__empty">Aucune donnée disponible dans le périmètre autorisé.</p>}</section>; }
+function DataPanel({ title, rows }: { title: string; rows: DisplayRow[] }) { return <section className="manager-panel"><header><h2>{title}</h2><span>{rows.length} élément(s)</span></header>{rows.length ? <div>{rows.map((row) => <article key={row.key}><div><h3>{row.title}</h3><p>{row.subtitle}</p></div><div><strong>{row.value}</strong><span>{formatStatusFr(row.status)}</span></div></article>)}</div> : <p className="manager-panel__empty">Aucune donnée disponible dans le périmètre autorisé.</p>}</section>; }
 function Empty({ icon: Icon, title, text }: { icon: LucideIcon; title: string; text: string }) { return <section className="manager-empty"><Icon aria-hidden="true" /><h2>{title}</h2><p>{text}</p></section>; }
 function CompanyPerformance({ data }: { data: ManagerPortalSnapshot }) {
   return <section className="manager-company-grid">{data.companies.map((company) => { const productions = data.productions.filter((row) => row.mining_company_id === company.id); const volume = productions.reduce((sum, row) => sum + Number(row.estimated_oz || 0), 0); const openRequests = data.requests.filter((row) => row.mining_company_id === company.id && !['approuvee', 'rejetee', 'annulee'].includes(row.statut)).length; return <article key={company.id}><span><Building2 aria-hidden="true" /></span><h2>{company.abbreviation || company.name}</h2><p>{company.name}</p><dl><div><dt>Production</dt><dd>{number.format(volume)} oz</dd></div><div><dt>Demandes ouvertes</dt><dd>{openRequests}</dd></div><div><dt>Analyses</dt><dd>{data.analyses.filter((row) => row.mining_company_id === company.id).length}</dd></div></dl></article>; })}</section>;

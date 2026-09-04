@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { AlertTriangle, ChevronLeft, ChevronRight, Circle, Clock, RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AlertTriangle, ChevronLeft, ChevronRight, Circle, Clock, RefreshCw, TrendingUp, X } from 'lucide-react';
 import {
   clearPriceCache,
   fetchLiveGoldPrice,
@@ -7,159 +7,174 @@ import {
   getMarketStatus,
   type LiveGoldPrice,
 } from '@/services/liveGoldPriceService';
+import './live-gold-market-panel.css';
 
 interface LiveGoldMarketPanelProps {
   onCollapseChange?: (isCollapsed: boolean) => void;
-  /** `embedded` integre le cours au flux de la page sans panneau flottant. */
+  /** `embedded` intègre le cours au flux de la page sans panneau flottant. */
   variant?: 'drawer' | 'embedded';
+  /** Évite une deuxième lecture au montage lorsqu’une page a déjà chargé le cours. */
+  initialGoldPrice?: LiveGoldPrice | null;
 }
+const displayPrice = (value: number | undefined) =>
+  typeof value === 'number' && Number.isFinite(value) ? `${formatGoldPrice(value)} $` : '—';
 
-const afficherCours = (value: number | undefined) =>
-  typeof value === 'number' && Number.isFinite(value) ? `$${formatGoldPrice(value)}` : '—';
-
-export function LiveGoldMarketPanel({ onCollapseChange, variant = 'drawer' }: LiveGoldMarketPanelProps) {
-  const [goldPrice, setGoldPrice] = useState<LiveGoldPrice | null>(null);
-  const [loading, setLoading] = useState(true);
+export function LiveGoldMarketPanel({
+  onCollapseChange,
+  variant = 'drawer',
+  initialGoldPrice,
+}: LiveGoldMarketPanelProps) {
+  const embedded = variant === 'embedded';
+  const [goldPrice, setGoldPrice] = useState<LiveGoldPrice | null>(initialGoldPrice ?? null);
+  const [loading, setLoading] = useState(!initialGoldPrice);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(initialGoldPrice ? new Date(initialGoldPrice.timestamp) : null);
+  const [isOpen, setIsOpen] = useState(embedded);
   const [error, setError] = useState<string | null>(null);
+  const wrapperRef = useRef<HTMLElement>(null);
+  const openerRef = useRef<HTMLButtonElement>(null);
+  const openedOnceRef = useRef(false);
 
-  const fetchGoldData = async (manual = false) => {
+  const fetchGoldData = useCallback(async (manual = false) => {
     if (manual) {
       setRefreshing(true);
       clearPriceCache();
     }
-
     try {
       const priceData = await fetchLiveGoldPrice();
       setGoldPrice(priceData);
       setLastUpdate(priceData ? new Date(priceData.timestamp) : null);
-      setError(priceData ? null : 'Aucune source de marché n’a répondu.');
+      setError(priceData ? null : 'Aucune source du référentiel n’a répondu.');
     } catch {
       setGoldPrice(null);
-      setError('La source de marché est momentanément inaccessible.');
+      setError('Le référentiel de marché est momentanément inaccessible.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    void fetchGoldData();
+    if (!initialGoldPrice) void fetchGoldData();
     const interval = window.setInterval(() => void fetchGoldData(), 60_000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [fetchGoldData, initialGoldPrice]);
+
+  const setOpen = useCallback((next: boolean, restoreFocus = true) => {
+    setIsOpen(next);
+    onCollapseChange?.(!next);
+    if (next) openedOnceRef.current = true;
+    if (!next && restoreFocus && openedOnceRef.current) window.setTimeout(() => openerRef.current?.focus(), 0);
+  }, [onCollapseChange]);
+
+  useEffect(() => {
+    if (embedded || !isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [embedded, isOpen, setOpen]);
 
   const marketStatus = getMarketStatus();
   const marketSchedules: Array<[string, typeof marketStatus.london]> = [
     ['Londres', marketStatus.london],
     ['New York', marketStatus.newYork],
   ];
-  const basculer = () => {
-    const next = !isCollapsed;
-    setIsCollapsed(next);
-    onCollapseChange?.(next);
-  };
-
-  const variationDisponible =
-    typeof goldPrice?.change24h === 'number' && typeof goldPrice.changePercent24h === 'number';
-  const positive = (goldPrice?.change24h ?? 0) >= 0;
+  const variationAvailable = typeof goldPrice?.changePercent24h === 'number';
+  const positive = (goldPrice?.changePercent24h ?? 0) >= 0;
 
   return (
     <aside
-      className={variant === 'embedded'
-        ? 'live-gold-panel live-gold-panel--embedded'
-        : `fixed right-0 top-20 z-40 transition-transform duration-300 ${isCollapsed ? 'translate-x-full' : 'translate-x-0'}`}
+      ref={wrapperRef}
+      className={embedded ? 'live-gold-drawer live-gold-drawer--embedded' : `live-gold-drawer ${isOpen ? 'is-open' : 'is-closed'}`}
       aria-label="Cours de l’or"
     >
-      {variant === 'drawer' && <button
-        type="button"
-        onClick={basculer}
-        className="absolute left-0 top-1/2 grid h-10 w-9 -translate-x-full -translate-y-1/2 place-items-center rounded-l-lg border border-r-0 border-slate-200 bg-white shadow-lg"
-        aria-label={isCollapsed ? 'Afficher le cours de l’or' : 'Masquer le cours de l’or'}
-      >
-        {isCollapsed ? <ChevronLeft aria-hidden="true" className="h-5 w-5" /> : <ChevronRight aria-hidden="true" className="h-5 w-5" />}
-      </button>}
+      {!embedded && (
+        <button
+          ref={openerRef}
+          type="button"
+          onClick={() => setOpen(!isOpen, false)}
+          className="live-gold-drawer__trigger"
+          aria-label={isOpen ? 'Masquer le cours de l’or' : 'Afficher le cours de l’or'}
+          title={isOpen ? 'Masquer le cours de l’or' : 'Afficher le cours de l’or'}
+          aria-expanded={isOpen}
+          aria-controls="live-gold-market-panel"
+        >
+          <TrendingUp aria-hidden="true" />
+          {isOpen ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
+        </button>
+      )}
 
-      <div className={variant === 'embedded'
-        ? 'w-full rounded-xl border border-slate-200 bg-white shadow-sm'
-        : 'w-80 rounded-l-2xl border border-r-0 border-slate-200 bg-white shadow-2xl'}>
-        <div className="p-5">
-          <header className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
-            <div>
-              <h2 className="font-bold text-slate-900">Cours de l’or</h2>
-              <p className="mt-1 text-xs text-slate-500">
-                {goldPrice ? `XAU/USD · ${goldPrice.source}` : 'XAU/USD'}
+      <div id="live-gold-market-panel" className="live-gold-drawer__panel" aria-hidden={!embedded && !isOpen}>
+        <header className="live-gold-drawer__header">
+          <div>
+            <h2>Cours de l’or</h2>
+            <p>{goldPrice ? `XAU/USD · ${goldPrice.source}` : 'XAU/USD · Référentiel SONASP'}</p>
+          </div>
+          <div className="live-gold-drawer__header-actions">
+            <button type="button" onClick={() => void fetchGoldData(true)} disabled={refreshing || loading || (!embedded && !isOpen)} aria-label="Actualiser le cours">
+              <RefreshCw aria-hidden="true" className={refreshing ? 'is-spinning' : ''} />
+            </button>
+            {!embedded && <button type="button" onClick={() => setOpen(false)} disabled={!isOpen} aria-label="Fermer le volet du cours de l’or"><X aria-hidden="true" /></button>}
+          </div>
+        </header>
+
+        {loading ? (
+          <div className="live-gold-drawer__skeleton" role="status" aria-label="Chargement du cours de l’or"><span /><span /><span /><span /></div>
+        ) : !goldPrice ? (
+          <div className="live-gold-drawer__error" role="status">
+            <AlertTriangle aria-hidden="true" />
+            <strong>Cours indisponible</strong>
+            <p>{error}</p>
+            <button type="button" onClick={() => void fetchGoldData(true)} disabled={refreshing || (!embedded && !isOpen)}>Réessayer</button>
+          </div>
+        ) : (
+          <>
+            <div className="live-gold-drawer__price">
+              <strong>{displayPrice(goldPrice.price)}</strong>
+              <span>par once troy</span>
+              <p className={variationAvailable ? (positive ? 'is-positive' : 'is-negative') : ''}>
+                {variationAvailable
+                  ? `${positive ? '+' : ''}${formatGoldPrice(goldPrice.changePercent24h!, 2)} % aujourd’hui`
+                  : 'Variation non communiquée'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => void fetchGoldData(true)}
-              disabled={refreshing || loading}
-              aria-label="Actualiser le cours"
-              className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-            >
-              <RefreshCw aria-hidden="true" className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            </button>
-          </header>
 
-          {loading ? (
-            <p className="py-8 text-center text-sm text-slate-600" role="status">Chargement du cours…</p>
-          ) : !goldPrice ? (
-            <div className="py-8 text-center" role="status">
-              <AlertTriangle aria-hidden="true" className="mx-auto h-6 w-6 text-amber-700" />
-              <p className="mt-3 text-sm font-semibold text-slate-800">Cours indisponible</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">{error}</p>
-            </div>
-          ) : (
-            <>
-              <div className="py-5 text-center">
-                <p className="text-3xl font-bold text-slate-900">${formatGoldPrice(goldPrice.price)}</p>
-                <p className="mt-1 text-xs text-slate-500">par once troy</p>
-                <p className={`mt-3 text-sm font-semibold ${variationDisponible ? (positive ? 'text-emerald-700' : 'text-red-700') : 'text-slate-500'}`}>
-                  {variationDisponible
-                    ? `${positive ? '+' : ''}${goldPrice.changePercent24h!.toFixed(2)} % sur 24 h`
-                    : 'Variation non communiquée'}
-                </p>
-              </div>
+            <dl className="live-gold-drawer__metrics">
+              {[
+                ['Ouverture', goldPrice.openPrice],
+                ['Plus haut 24 h', goldPrice.high24h],
+                ['Plus bas 24 h', goldPrice.low24h],
+                ['Variation', goldPrice.change24h],
+              ].map(([label, value]) => (
+                <div key={String(label)}><dt>{label}</dt><dd>{displayPrice(value as number | undefined)}</dd></div>
+              ))}
+            </dl>
 
-              <dl className="grid grid-cols-2 gap-2">
-                {[
-                  ['Ouverture', goldPrice.openPrice],
-                  ['Plus haut 24 h', goldPrice.high24h],
-                  ['Plus bas 24 h', goldPrice.low24h],
-                  ['Variation', variationDisponible ? goldPrice.change24h : undefined],
-                ].map(([label, value]) => (
-                  <div key={String(label)} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <dt className="text-xs text-slate-500">{label}</dt>
-                    <dd className="mt-1 text-sm font-bold text-slate-900">{afficherCours(value as number | undefined)}</dd>
-                  </div>
-                ))}
-              </dl>
+            <section className="live-gold-drawer__markets" aria-label="Marchés de référence">
+              <h3>Marchés de référence</h3>
+              {marketSchedules.map(([name, value]) => (
+                <div key={name}>
+                  <span><Circle aria-hidden="true" className={value.isOpen ? 'is-open' : ''} />{name}</span>
+                  <strong>{value.isOpen ? 'Ouvert' : 'Fermé'}</strong>
+                </div>
+              ))}
+            </section>
 
-              <section className="mt-4 rounded-lg border border-slate-200 p-3" aria-label="Horaires indicatifs des marchés">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Horaires indicatifs</h3>
-                {marketSchedules.map(([name, value]) => {
-                  return (
-                    <div key={String(name)} className="mt-2 flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-2 text-slate-700">
-                        <Circle aria-hidden="true" className={`h-2 w-2 ${value.isOpen ? 'fill-emerald-500 text-emerald-500' : 'fill-slate-300 text-slate-300'}`} />
-                        {name}
-                      </span>
-                      <span className="font-semibold text-slate-600">{value.isOpen ? 'Ouvert' : 'Fermé'}</span>
-                    </div>
-                  );
-                })}
-              </section>
-
-              <footer className="mt-4 flex items-center justify-center gap-2 border-t border-slate-200 pt-3 text-xs text-slate-500">
-                <Clock aria-hidden="true" className="h-3.5 w-3.5" />
-                {lastUpdate ? `Donnée reçue à ${lastUpdate.toLocaleTimeString('fr-FR')}` : 'Heure indisponible'}
-              </footer>
-            </>
-          )}
-        </div>
+            <footer className="live-gold-drawer__footer">
+              <Clock aria-hidden="true" />
+              {lastUpdate ? `Dernière actualisation : ${lastUpdate.toLocaleTimeString('fr-FR')}` : 'Heure indisponible'}
+            </footer>
+          </>
+        )}
       </div>
     </aside>
   );

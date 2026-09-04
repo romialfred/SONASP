@@ -117,6 +117,16 @@ describe('page de connexion SONASP', () => {
     expect(screen.getByRole('link', { name: 'Contactez l’administrateur' })).toHaveAttribute('href', '/assistance#incident');
   });
 
+  it('présente le français comme langue active et réserve l’anglais à une prochaine version', async () => {
+    const user = userEvent.setup();
+    renderLogin();
+
+    await user.click(screen.getByRole('button', { name: /Actuel: Français/ }));
+
+    expect(screen.getByRole('menuitemradio', { name: 'Français' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('menuitemradio', { name: 'Anglais — bientôt disponible' })).toBeDisabled();
+  });
+
   it('suit un ordre de tabulation logique', async () => {
     const user = userEvent.setup();
     renderLogin();

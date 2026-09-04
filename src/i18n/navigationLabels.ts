@@ -55,6 +55,7 @@ export const ENGLISH_NAVIGATION_LABELS: Readonly<Record<string, string>> = {
   "valorisation et analyse": "Valuation & analysis",
   "rapports et audit": "Reports & audit",
   "marchés internationaux": "International markets",
+  "simulateur de vente": "Sales simulator",
   "espace de négoce": "Trading desk",
   "cours de l'or": "Gold price",
   "taux de change": "Exchange rates",
@@ -186,7 +187,7 @@ export const ENGLISH_NAVIGATION_LABELS: Readonly<Record<string, string>> = {
   "vue d'ensemble des mines": "Mining overview"
 };
 
-export function navigationLabel(label: string, language = 'en'): string {
+export function navigationLabel(label: string, language = 'fr'): string {
   if (!language.startsWith('en')) return label;
   return ENGLISH_NAVIGATION_LABELS[label.replace(/[’‘]/g, "'").toLocaleLowerCase('fr')] ?? label;
 }

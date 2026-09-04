@@ -131,7 +131,7 @@ export default function ShippingPreparationNew() {
   // Error dialog state
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [errorTitle, setErrorTitle] = useState('Error');
+  const [errorTitle, setErrorTitle] = useState('Erreur');
   const [errorTechnicalDetails, setErrorTechnicalDetails] = useState<string | undefined>(undefined);
 
   // Form state
@@ -190,8 +190,8 @@ export default function ShippingPreparationNew() {
         loadRefineries(),
       ]);
     } catch (error) {
-      console.error('Error loading initial data:', error);
-      setErrorMessage('The form could not load its reference data. Reload before continuing.');
+      console.error('Erreur lors du chargement des données initiales :', error);
+      setErrorMessage('Impossible de charger les référentiels du formulaire. Actualisez la page avant de poursuivre.');
       setShowErrorDialog(true);
     } finally {
       setLoading(false);
@@ -308,7 +308,7 @@ export default function ShippingPreparationNew() {
       setDepositors(data || []);
     } catch (error) {
       if (request !== companyRequest.current) return;
-      console.error('Error loading depositors:', error);
+      console.error('Erreur lors du chargement des dépositaires :', error);
       setDepositors([]);
     }
   };
@@ -322,7 +322,7 @@ export default function ShippingPreparationNew() {
         setSelectedRefineryId(prep.refinery_id || '');
       }
     } catch (error) {
-      console.error('Error loading preparation:', error);
+      console.error('Erreur lors du chargement de la préparation :', error);
     }
   };
 
@@ -337,13 +337,13 @@ export default function ShippingPreparationNew() {
       );
       return expeditionLotNumber;
     } catch (error) {
-      console.error('❌ Error generating expedition lot number:', error);
-      console.error('Mining company ID:', selectedMiningCompanyId);
+      console.error('❌ Erreur lors de la génération du numéro de lot d’expédition :', error);
+      console.error('Identifiant de la société minière :', selectedMiningCompanyId);
       // Show error to user
-      setErrorTitle('Shipment reference unavailable');
+      setErrorTitle('Référence d’expédition indisponible');
       setErrorMessage(
-        'The canonical shipment reference could not be generated. ' +
-        'Check that the mining company has a configured abbreviation, then try again.'
+        'La référence canonique de l’expédition n’a pas pu être générée. ' +
+        'Vérifiez que la société minière dispose d’une abréviation configurée, puis réessayez.'
       );
       setShowErrorDialog(true);
       // No fabricated reference: the canonical numbering service must succeed.
@@ -374,7 +374,7 @@ export default function ShippingPreparationNew() {
       try { await Promise.all([loadProductions(companyId), loadActiveLicenses(companyId)]); }
       catch {
         if (request === companyRequest.current) {
-          setErrorMessage('Production could not be loaded for this company. Select the company again to retry.');
+          setErrorMessage('Impossible de charger les productions de cette société. Sélectionnez-la de nouveau pour réessayer.');
           setShowErrorDialog(true);
         }
       } finally { if (request === companyRequest.current) setLoadingCompany(false); }
@@ -389,7 +389,7 @@ export default function ShippingPreparationNew() {
     if (mineCompanyId && companyId !== mineCompanyId) {
       setAvailableLicenses([]);
       setSelectedLicenseId('');
-      setLicenseWarning('This mining company is outside your authorised scope.');
+      setLicenseWarning('Cette société minière ne relève pas de votre périmètre autorisé.');
       return;
     }
     try {
@@ -400,21 +400,21 @@ export default function ShippingPreparationNew() {
       setAvailableLicenses(selectableLicenses);
 
       if (selectableLicenses.length === 0) {
-        setLicenseWarning('No active licence is available for this company.');
+        setLicenseWarning('Aucune licence active n’est disponible pour cette société.');
       }
     } catch (error) {
       if (request !== companyRequest.current) return;
-      console.error('Error loading licenses:', error);
+      console.error('Erreur lors du chargement des licences :', error);
       setAvailableLicenses([]);
       setSelectedLicenseId('');
-      setLicenseWarning('Licences and available quotas could not be loaded.');
+      setLicenseWarning('Impossible de charger les licences et les quotas disponibles.');
     }
   };
 
   const handleLicenseChange = async (licenseId: string) => {
     if (licenseId && !availableLicenses.some((license) => license.id === licenseId)) {
       setSelectedLicenseId('');
-      setLicenseWarning('This licence is not active for the selected company.');
+      setLicenseWarning('Cette licence n’est pas active pour la société sélectionnée.');
       return;
     }
     setSelectedLicenseId(licenseId);
@@ -435,11 +435,11 @@ export default function ShippingPreparationNew() {
         if (!availability.is_available) {
           setLicenseWarning(`❌ ${availability.message}`);
         } else {
-          setLicenseWarning(`Available quota: ${availability.remaining_quantity.toLocaleString()}g`);
+          setLicenseWarning(`Quota disponible : ${availability.remaining_quantity.toLocaleString('fr-FR')} g`);
         }
       } catch (error) {
-        console.error('Error checking license:', error);
-        setLicenseWarning('The available licence quota could not be verified.');
+        console.error('Erreur lors du contrôle de la licence :', error);
+        setLicenseWarning('Impossible de vérifier le quota disponible de la licence.');
       }
     }
   };
@@ -451,7 +451,7 @@ export default function ShippingPreparationNew() {
     }
     const production = productions.find(p => p.id === productionId);
     if (!production) {
-      setProductionSelectionError('The selected production is no longer available. Reload the list before continuing.');
+      setProductionSelectionError('La production sélectionnée n’est plus disponible. Actualisez la liste avant de poursuivre.');
       return;
     }
 
@@ -466,7 +466,7 @@ export default function ShippingPreparationNew() {
 
     const alreadySelected = selectedProductions.some(sp => sp.production.id === productionId);
     if (alreadySelected) {
-      setProductionSelectionError('This production lot is already included in the preparation.');
+      setProductionSelectionError('Ce lot de production est déjà inclus dans la préparation.');
       return;
     }
 
@@ -487,10 +487,10 @@ export default function ShippingPreparationNew() {
           if (!availability.is_available) {
             setLicenseWarning(`❌ ${availability.message}`);
           } else {
-            setLicenseWarning(`Available quota: ${availability.remaining_quantity.toLocaleString()}g`);
+            setLicenseWarning(`Quota disponible : ${availability.remaining_quantity.toLocaleString('fr-FR')} g`);
           }
         })
-        .catch(() => setLicenseWarning('The available licence quota could not be verified.'));
+        .catch(() => setLicenseWarning('Impossible de vérifier le quota disponible de la licence.'));
     }
   };
 
@@ -510,10 +510,10 @@ export default function ShippingPreparationNew() {
     void exportLicenseService.checkLicenseAvailability(selectedLicenseId, totalNetWeight)
       .then((availability) => setLicenseWarning(
         availability.is_available
-          ? `Available quota: ${availability.remaining_quantity.toLocaleString()}g`
+          ? `Quota disponible : ${availability.remaining_quantity.toLocaleString('fr-FR')} g`
           : `❌ ${availability.message}`,
       ))
-      .catch(() => setLicenseWarning('The available licence quota could not be verified.'));
+      .catch(() => setLicenseWarning('Impossible de vérifier le quota disponible de la licence.'));
   };
 
   const handleSealNumber1Change = (productionId: string, value: string) => {
@@ -544,8 +544,8 @@ export default function ShippingPreparationNew() {
 
   const handleAddSignatory = () => {
     if (!newSignatoryPosition.trim() || !newSignatoryName.trim()) {
-      setErrorTitle('Missing information');
-      setErrorMessage('Select a registered signatory or enter their full name and position.');
+      setErrorTitle('Informations manquantes');
+      setErrorMessage('Sélectionnez un signataire enregistré ou saisissez son nom complet et sa fonction.');
       setShowErrorDialog(true);
       return;
     }
@@ -567,15 +567,15 @@ export default function ShippingPreparationNew() {
 
   const handleAddDocument = () => {
     if (!newDocumentTitle.trim() || !newDocumentFile) {
-      setErrorTitle('Missing information');
-      setErrorMessage('Enter a document title and select a file.');
+      setErrorTitle('Informations manquantes');
+      setErrorMessage('Saisissez un titre de document et sélectionnez un fichier.');
       setShowErrorDialog(true);
       return;
     }
     try { validateUploadFile(newDocumentFile, UPLOAD_POLICIES.shippingDocument); }
     catch (error) {
-      setErrorTitle('Unsupported document');
-      setErrorMessage(error instanceof Error ? error.message : 'Check the file type and size.');
+      setErrorTitle('Document non pris en charge');
+      setErrorMessage(error instanceof Error ? error.message : 'Vérifiez le type et la taille du fichier.');
       setShowErrorDialog(true);
       return;
     }
@@ -596,7 +596,7 @@ export default function ShippingPreparationNew() {
   };
 
   const handleCancel = () => {
-    if (confirm('Leave this form? Unsaved entries will be lost.')) {
+    if (confirm('Quitter ce formulaire ? Les informations non enregistrées seront perdues.')) {
       navigate('/shipping/preparation');
     }
   };
@@ -604,8 +604,8 @@ export default function ShippingPreparationNew() {
   const handleSendPackingListByEmail = async () => {
     try {
       if (selectedProductions.length === 0) {
-        setErrorTitle('No production selected');
-        setErrorMessage('Select at least one production lot before preparing the email.');
+        setErrorTitle('Aucune production sélectionnée');
+        setErrorMessage('Sélectionnez au moins un lot de production avant de préparer le courriel.');
         setShowErrorDialog(true);
         return;
       }
@@ -621,8 +621,8 @@ export default function ShippingPreparationNew() {
       }
 
       if (!selectedRefinery) {
-        setErrorTitle('No refinery selected');
-        setErrorMessage('Select the destination refinery before preparing the email.');
+        setErrorTitle('Aucune raffinerie sélectionnée');
+        setErrorMessage('Sélectionnez la raffinerie de destination avant de préparer le courriel.');
         setShowErrorDialog(true);
         return;
       }
@@ -654,9 +654,9 @@ export default function ShippingPreparationNew() {
       await PackingListPdfService.sendViaOutlook(packingListData);
 
     } catch (error) {
-      console.error('Error preparing the email:', error);
-      setErrorTitle('Email could not be prepared');
-      setErrorMessage('The email could not be prepared. Check the destination and try again.');
+      console.error('Erreur lors de la préparation du courriel :', error);
+      setErrorTitle('Courriel non préparé');
+      setErrorMessage('Impossible de préparer le courriel. Vérifiez la destination, puis réessayez.');
       setShowErrorDialog(true);
     }
   };
@@ -746,15 +746,15 @@ export default function ShippingPreparationNew() {
     saveLock.current = true;
     try {
     if (!effectiveCompanyId) {
-      setErrorTitle('Mining company required');
-      setErrorMessage('Select a mining company before continuing.');
+      setErrorTitle('Société minière obligatoire');
+      setErrorMessage('Sélectionnez une société minière avant de poursuivre.');
       setShowErrorDialog(true);
       return;
     }
 
     if (!selectedLicenseId) {
-      setErrorTitle('Export licence required');
-      setErrorMessage('Select a valid export licence.');
+      setErrorTitle('Licence d’exportation obligatoire');
+      setErrorMessage('Sélectionnez une licence d’exportation valide.');
       setShowErrorDialog(true);
       return;
     }
@@ -762,17 +762,17 @@ export default function ShippingPreparationNew() {
     if (!preparation && !availableLicenses.some((license) =>
       license.id === selectedLicenseId
       && isExportLicenseSelectable(license, effectiveCompanyId))) {
-      setErrorTitle('Licence not authorised');
-      setErrorMessage('This licence is inactive, belongs to another company or has no available quota.');
+      setErrorTitle('Licence non autorisée');
+      setErrorMessage('Cette licence est inactive, appartient à une autre société ou ne dispose d’aucun quota disponible.');
       setShowErrorDialog(true);
       return;
     }
 
     if (selectedProductions.length === 0) {
-      setErrorTitle('Production required');
-      setErrorMessage('Select at least one production lot to ship.');
+      setErrorTitle('Production obligatoire');
+      setErrorMessage('Sélectionnez au moins un lot de production à expédier.');
       setErrorTechnicalDetails(undefined);
-      setProductionSelectionError('Select at least one eligible production lot.');
+      setProductionSelectionError('Sélectionnez au moins un lot de production admissible.');
       setShowErrorDialog(true);
       document.getElementById('shipping-production-select')?.focus();
       return;
@@ -783,7 +783,7 @@ export default function ShippingPreparationNew() {
     );
     if (productionIssues.length > 0) {
       const validationMessage = summarizeShippingProductionIssues(productionIssues);
-      setErrorTitle('Invalid production');
+      setErrorTitle('Production non valide');
       setErrorMessage(validationMessage);
       setErrorTechnicalDetails(undefined);
       setProductionSelectionError(validationMessage);
@@ -799,22 +799,22 @@ export default function ShippingPreparationNew() {
       const availability = await exportLicenseService.checkLicenseAvailability(selectedLicenseId, totalNetWeight);
 
       if (!availability.is_available) {
-        setErrorTitle('Insufficient licence quota');
+        setErrorTitle('Quota de licence insuffisant');
         setErrorMessage(availability.message);
         setShowErrorDialog(true);
         return;
       }
     } catch (error) {
-      console.error('Error checking license:', error);
-      setErrorTitle('Licence check unavailable');
-      setErrorMessage('Licence availability could not be verified. Try again.');
+      console.error('Erreur lors du contrôle de la licence :', error);
+      setErrorTitle('Contrôle de licence indisponible');
+      setErrorMessage('Impossible de vérifier la disponibilité de la licence. Réessayez.');
       setShowErrorDialog(true);
       return;
     }
 
     if (!selectedFreightCompanyId || !selectedRefineryId) {
-      setErrorTitle('Transport information required');
-      setErrorMessage('Select a carrier and a destination refinery.');
+      setErrorTitle('Informations de transport obligatoires');
+      setErrorMessage('Sélectionnez un transporteur et une raffinerie de destination.');
       setShowErrorDialog(true);
       return;
     }
@@ -822,8 +822,8 @@ export default function ShippingPreparationNew() {
     // Check if all productions have at least seal number 1
     const missingSealNumbers = selectedProductions.filter(sp => !sp.sealNumber1.trim());
     if (missingSealNumbers.length > 0) {
-      setErrorTitle('Missing seal numbers');
-      setErrorMessage('Enter the first seal number for each selected lot.');
+      setErrorTitle('Numéros de scellé manquants');
+      setErrorMessage('Saisissez le premier numéro de scellé de chaque lot sélectionné.');
       setShowErrorDialog(true);
       return;
     }
@@ -831,7 +831,7 @@ export default function ShippingPreparationNew() {
     try {
       setSaving(true);
       const reference = expeditionLotNumber || await generateExpeditionLotNumber();
-      if (!reference) throw new Error('The shipment reference could not be generated.');
+      if (!reference) throw new Error('La référence de l’expédition n’a pas pu être générée.');
       setExpeditionLotNumber(reference);
 
       // Calculate total weights
@@ -866,7 +866,7 @@ export default function ShippingPreparationNew() {
         const recovered = pendingCreationId.current
           ? await shippingPreparationService.getPreparationById(pendingCreationId.current) : null;
         if (recovered && recovered.mining_company_id !== effectiveCompanyId) {
-          throw new Error('The existing preparation belongs to a different company. Open its record before continuing.');
+          throw new Error('La préparation existante appartient à une autre société. Ouvrez son dossier avant de poursuivre.');
         }
         pendingCreationId.current ||= crypto.randomUUID();
         const newPrep = recovered || await shippingPreparationService.createPreparation({
@@ -919,11 +919,11 @@ export default function ShippingPreparationNew() {
           prepId,
           totalNetWeightGrams
         );
-        if (!quotaReserved) throw new Error('The licence quota reservation was not confirmed.');
+        if (!quotaReserved) throw new Error('La réservation du quota de licence n’a pas été confirmée.');
       } catch (err) {
-        console.error('Failed to reserve license quota:', err);
+        console.error('Échec de la réservation du quota de licence :', err);
         // Keep the draft so the same operation can be resumed.
-        throw new Error(`Unable to reserve the licence quota: ${err instanceof Error ? err.message : 'No confirmation received'}`);
+        throw new Error(`Impossible de réserver le quota de licence : ${err instanceof Error ? err.message : 'aucune confirmation reçue'}`);
       }
 
       // A failed PDF leaves this same preparation resumable, never falsely complete.
@@ -940,12 +940,12 @@ export default function ShippingPreparationNew() {
       setSavedPreparationId(prepId);
       setShowSuccessDialog(true);
     } catch (error) {
-      console.error('Error saving preparation:', error);
+      console.error('Erreur lors de l’enregistrement de la préparation :', error);
 
-      setErrorTitle('Preparation could not be saved');
+      setErrorTitle('Préparation non enregistrée');
       setErrorMessage(error instanceof Error
         ? error.message
-        : 'The save request could not be completed. Review this preparation before retrying.');
+        : 'La demande d’enregistrement n’a pas pu aboutir. Vérifiez cette préparation avant de réessayer.');
       // Signal that the shared dialog must classify and sanitise the technical failure.
       setErrorTechnicalDetails('technical-error');
       setShowErrorDialog(true);
@@ -964,100 +964,100 @@ export default function ShippingPreparationNew() {
     effectiveCompanyId,
   );
   const checklist = [
-    ['Company & export licence', Boolean(effectiveCompanyId && selectedLicenseId)],
-    ['Production & seals', selectedProductions.length > 0
+    ['Société et licence d’exportation', Boolean(effectiveCompanyId && selectedLicenseId)],
+    ['Production et scellés', selectedProductions.length > 0
       && selectedProductionIssues.length === 0
       && selectedProductions.every(sp => sp.sealNumber1.trim())],
-    ['Carrier & refinery', Boolean(selectedFreightCompanyId && selectedRefineryId)],
+    ['Transporteur et raffinerie', Boolean(selectedFreightCompanyId && selectedRefineryId)],
   ] as const;
   return <NationalDashboardLayout><div className="sn-page logistics-workspace">
-    <PageHeader title="New shipment preparation" subtitle="Select eligible production, record the seals and prepare the packing list." icon={Package}
-      breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Gestion des expéditions', to: '/shipping/preparation' }, { label: 'New preparation' }]}
-      actions={<Button type="button" variant="outline" onClick={handleCancel} disabled={saving}><ArrowLeft size={16} />Back to preparations</Button>} />
-    <nav className="logistics-stepper" aria-label="Preparation sections">
-      {['Company & licence', 'Production & seals', 'Transport', 'Signatories & documents'].map((label, index) =>
+    <PageHeader title="Nouvelle préparation d’expédition" subtitle="Sélectionnez les productions admissibles, consignez les scellés et préparez la liste de colisage." icon={Package}
+      breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Gestion des expéditions', to: '/shipping/preparation' }, { label: 'Nouvelle préparation' }]}
+      actions={<Button type="button" variant="outline" onClick={handleCancel} disabled={saving}><ArrowLeft size={16} />Retour aux préparations</Button>} />
+    <nav className="logistics-stepper" aria-label="Sections de la préparation">
+      {['Société et licence', 'Production et scellés', 'Transport', 'Signataires et documents'].map((label, index) =>
         <a key={label} href={`#shipping-section-${index + 1}`}><b>{index + 1}</b>{label}</a>)}
     </nav>
-    {preparation && !showSuccessDialog && <Note tone="warning">Preparation {preparation.expedition_lot_number} has been created. Complete the remaining steps using this record; do not create another preparation.</Note>}
+    {preparation && !showSuccessDialog && <Note tone="warning">La préparation {preparation.expedition_lot_number} a été créée. Terminez les étapes restantes dans ce dossier ; ne créez pas une autre préparation.</Note>}
     <div className="logistics-form-grid">
       <div className="logistics-form-main">
         <fieldset disabled={loading || loadingCompany || saving || Boolean(preparation) || Boolean(pendingCreationId.current)} className="logistics-form-main">
-          <Section id="shipping-section-1" title="Company & export licence" description="The licence must belong to the company and have sufficient available quota." icon={Building2}>
+          <Section id="shipping-section-1" title="Société et licence d’exportation" description="La licence doit appartenir à la société et disposer d’un quota suffisant." icon={Building2}>
             <div className="logistics-fields">
-              {!mineCompanyId && <Field label="Mining company" required><select value={selectedMiningCompanyId} onChange={e => void handleMiningCompanyChange(e.target.value)}>
-                <option value="">Select a mining company</option>{miningCompanies.map(company => <option key={company.id} value={company.id}>{company.name} ({company.code})</option>)}
+              {!mineCompanyId && <Field label="Société minière" required><select value={selectedMiningCompanyId} onChange={e => void handleMiningCompanyChange(e.target.value)}>
+                <option value="">Sélectionnez une société minière</option>{miningCompanies.map(company => <option key={company.id} value={company.id}>{company.name} ({company.code})</option>)}
               </select></Field>}
               <ShippingLicenseSelect companyId={effectiveCompanyId} licenses={availableLicenses} value={selectedLicenseId} loading={loading} onChange={handleLicenseChange} />
             </div>
             {licenseWarning && <div className="mt-4"><Note tone={licenseWarning.startsWith('❌') ? 'danger' : licenseWarning.startsWith('✅') ? 'success' : 'warning'}>{licenseWarning.replace(/^[❌✅⚠️]+\s*/u, '')}</Note></div>}
           </Section>
-          <Section id="shipping-section-2" title="Production & seals" description="Only eligible production not already assigned to another preparation is available." icon={Package}>
-            <Field label="Add a production lot" htmlFor="shipping-production-select"><select id="shipping-production-select" value="" disabled={!effectiveCompanyId}
+          <Section id="shipping-section-2" title="Production et scellés" description="Seules les productions admissibles qui ne sont pas déjà affectées à une autre préparation sont proposées." icon={Package}>
+            <Field label="Ajouter un lot de production" htmlFor="shipping-production-select"><select id="shipping-production-select" value="" disabled={!effectiveCompanyId}
               aria-invalid={Boolean(productionSelectionError)} aria-describedby={`shipping-production-help${productionSelectionError ? ' shipping-production-error' : ''}`}
               onChange={e => handleAddProduction(e.target.value)}>
-              <option value="">{loading ? 'Loading production…' : 'Select an eligible production lot'}</option>
-              {productions.filter(p => !selectedProductions.some(sp => sp.production.id === p.id)).map(p => <option key={p.id} value={p.id}>{p.bar_reference || p.production_date} · {logisticsNumber(p.pure_gold_grams)} g fine gold</option>)}
+              <option value="">{loading ? 'Chargement des productions…' : 'Sélectionnez un lot de production admissible'}</option>
+              {productions.filter(p => !selectedProductions.some(sp => sp.production.id === p.id)).map(p => <option key={p.id} value={p.id}>{p.bar_reference || p.production_date} · {logisticsNumber(p.pure_gold_grams)} g d’or fin</option>)}
             </select></Field>
-            <p id="shipping-production-help" className="mt-2 text-xs text-slate-600">Eligible lots must be ready for customs, belong to the selected company and contain coherent positive weights and purity.</p>
+            <p id="shipping-production-help" className="mt-2 text-xs text-slate-600">Les lots admissibles doivent être prêts pour la douane, appartenir à la société sélectionnée et présenter des poids positifs ainsi qu’une pureté cohérente.</p>
             {productionSelectionError && <p id="shipping-production-error" className="mt-2 text-sm font-semibold text-red-700" role="alert">{productionSelectionError}</p>}
-            {excludedProductionCount > 0 && <div className="mt-4" role="status" aria-live="polite"><Note tone="warning">{excludedProductionCount} production lot{excludedProductionCount > 1 ? 's were' : ' was'} excluded because {excludedProductionCount > 1 ? 'their' : 'its'} physical data or workflow status is not admissible.</Note></div>}
-            {effectiveCompanyId && !loading && !productions.length && <div className="mt-4"><Note tone="info">No eligible production is available for this company.</Note></div>}
+            {excludedProductionCount > 0 && <div className="mt-4" role="status" aria-live="polite"><Note tone="warning">{excludedProductionCount} lot{excludedProductionCount > 1 ? 's de production ont été exclus' : ' de production a été exclu'} en raison de données physiques ou d’un statut de circuit non admissibles.</Note></div>}
+            {effectiveCompanyId && !loading && !productions.length && <div className="mt-4"><Note tone="info">Aucune production admissible n’est disponible pour cette société.</Note></div>}
             {selectedProductions.length > 0 && <div className="sn-table-wrap mt-5"><table className="sn-table">
-              <caption className="sr-only">Selected production lots and seal numbers</caption>
-              <thead><tr><th>Lot / bar</th><th>Gross (g)</th><th>Purity (%)</th><th>Fine gold (g)</th><th>Seal 1 *</th><th>Seal 2</th><th>Remove</th></tr></thead>
+              <caption className="sr-only">Lots de production sélectionnés et numéros de scellé</caption>
+              <thead><tr><th>Lot / lingot</th><th>Poids brut (g)</th><th>Pureté (%)</th><th>Or fin (g)</th><th>Scellé 1 *</th><th>Scellé 2</th><th>Retirer</th></tr></thead>
               <tbody>{selectedProductions.map(sp => <tr key={sp.production.id}>
                 <td><strong>{sp.production.bar_reference || '—'}</strong><small className="block">{logisticsDate(sp.production.production_date)}</small></td>
                 <td>{logisticsNumber(sp.production.bullion_grams)}</td><td>{logisticsNumber(sp.production.estimated_fineness_pct)}</td><td>{logisticsNumber(sp.production.pure_gold_grams)}</td>
-                <td><input aria-label={`Primary seal for ${sp.production.bar_reference || sp.production.id}`} value={sp.sealNumber1} onChange={e => handleSealNumber1Change(sp.production.id, e.target.value)} required /></td>
-                <td><input aria-label={`Secondary seal for ${sp.production.bar_reference || sp.production.id}`} value={sp.sealNumber2} onChange={e => handleSealNumber2Change(sp.production.id, e.target.value)} /></td>
-                <td><Button type="button" variant="ghost" aria-label={`Remove ${sp.production.bar_reference || sp.production.id}`} onClick={() => handleRemoveProduction(sp.production.id)}><Trash2 size={17} /></Button></td>
+                <td><input aria-label={`Scellé principal de ${sp.production.bar_reference || sp.production.id}`} value={sp.sealNumber1} onChange={e => handleSealNumber1Change(sp.production.id, e.target.value)} required /></td>
+                <td><input aria-label={`Scellé secondaire de ${sp.production.bar_reference || sp.production.id}`} value={sp.sealNumber2} onChange={e => handleSealNumber2Change(sp.production.id, e.target.value)} /></td>
+                <td><Button type="button" variant="ghost" aria-label={`Retirer ${sp.production.bar_reference || sp.production.id}`} onClick={() => handleRemoveProduction(sp.production.id)}><Trash2 size={17} /></Button></td>
               </tr>)}</tbody>
             </table></div>}
           </Section>
-          <Section id="shipping-section-3" title="Transport & destination" description="Choose the carrier and the receiving refinery." icon={Truck}>
+          <Section id="shipping-section-3" title="Transport et destination" description="Sélectionnez le transporteur et la raffinerie destinataire." icon={Truck}>
             <div className="logistics-fields">
-              <Field label="Carrier" required><select value={selectedFreightCompanyId} onChange={e => setSelectedFreightCompanyId(e.target.value)}><option value="">Select a carrier</option>{freightCompanies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
-              <Field label="Destination refinery" required><select value={selectedRefineryId} onChange={e => setSelectedRefineryId(e.target.value)}><option value="">Select a refinery</option>{refineries.map(r => <option key={r.id} value={r.id}>{r.name} · {r.country}</option>)}</select></Field>
+              <Field label="Transporteur" required><select value={selectedFreightCompanyId} onChange={e => setSelectedFreightCompanyId(e.target.value)}><option value="">Sélectionnez un transporteur</option>{freightCompanies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
+              <Field label="Raffinerie de destination" required><select value={selectedRefineryId} onChange={e => setSelectedRefineryId(e.target.value)}><option value="">Sélectionnez une raffinerie</option>{refineries.map(r => <option key={r.id} value={r.id}>{r.name} · {r.country}</option>)}</select></Field>
             </div>
           </Section>
-          <Section id="shipping-section-4" title="Signatories & supporting documents" description="Prepare the signatories and attach the supporting records." icon={FileText}>
-            <Field label="Registered signatory"><select value={selectedDepositorId} onChange={e => handleDepositorSelect(e.target.value)} disabled={!effectiveCompanyId}>
-              <option value="">Select a signatory or enter details below</option>{depositors.map(d => <option key={d.id} value={d.id}>{d.full_name} · {d.job_title}</option>)}
+          <Section id="shipping-section-4" title="Signataires et pièces justificatives" description="Renseignez les signataires et joignez les pièces justificatives." icon={FileText}>
+            <Field label="Signataire enregistré"><select value={selectedDepositorId} onChange={e => handleDepositorSelect(e.target.value)} disabled={!effectiveCompanyId}>
+              <option value="">Sélectionnez un signataire ou saisissez ses informations ci-dessous</option>{depositors.map(d => <option key={d.id} value={d.id}>{d.full_name} · {d.job_title}</option>)}
             </select></Field>
-            <div className="logistics-fields mt-4"><Field label="Full name"><input value={newSignatoryName} onChange={e => setNewSignatoryName(e.target.value)} /></Field>
-              <Field label="Position"><input value={newSignatoryPosition} onChange={e => setNewSignatoryPosition(e.target.value)} /></Field></div>
-            <Button type="button" className="mt-4" variant="outline" onClick={handleAddSignatory} disabled={!effectiveCompanyId}><Plus size={16} />Add signatory</Button>
-            <ul className="mt-4 space-y-2">{signatories.map(s => <li key={s.tempId} className="flex items-center justify-between gap-3"><span>{s.name} · {s.position}</span><Button type="button" variant="ghost" onClick={() => handleRemoveSignatory(s.tempId)} aria-label={`Remove signatory ${s.name}`}><Trash2 size={16} /></Button></li>)}</ul>
-            <div className="border-t mt-6 pt-6"><Button type="button" variant="outline" onClick={() => setShowDocumentForm(!showDocumentForm)}><Plus size={16} />Add document</Button></div>
+            <div className="logistics-fields mt-4"><Field label="Nom complet"><input value={newSignatoryName} onChange={e => setNewSignatoryName(e.target.value)} /></Field>
+              <Field label="Fonction"><input value={newSignatoryPosition} onChange={e => setNewSignatoryPosition(e.target.value)} /></Field></div>
+            <Button type="button" className="mt-4" variant="outline" onClick={handleAddSignatory} disabled={!effectiveCompanyId}><Plus size={16} />Ajouter le signataire</Button>
+            <ul className="mt-4 space-y-2">{signatories.map(s => <li key={s.tempId} className="flex items-center justify-between gap-3"><span>{s.name} · {s.position}</span><Button type="button" variant="ghost" onClick={() => handleRemoveSignatory(s.tempId)} aria-label={`Retirer le signataire ${s.name}`}><Trash2 size={16} /></Button></li>)}</ul>
+            <div className="border-t mt-6 pt-6"><Button type="button" variant="outline" onClick={() => setShowDocumentForm(!showDocumentForm)}><Plus size={16} />Ajouter un document</Button></div>
             {showDocumentForm && <div className="mt-4"><div className="logistics-fields">
-              <Field label="Document title" required><input value={newDocumentTitle} maxLength={200} onChange={e => setNewDocumentTitle(e.target.value)} /></Field>
-              <Field label="File" required hint="PDF, JPG or PNG. Files are checked before upload."><input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setNewDocumentFile(e.target.files?.[0] || null)} /></Field>
-            </div><Button type="button" className="mt-4" variant="outline" onClick={handleAddDocument}>Attach document</Button></div>}
-            <ul className="mt-4 space-y-2">{pendingDocuments.map(doc => <li key={doc.tempId} className="flex items-center justify-between gap-3"><span>{doc.title}<small className="block">{doc.file.name}</small></span><Button type="button" variant="ghost" onClick={() => handleRemoveDocument(doc.tempId)} aria-label={`Remove document ${doc.title}`}><Trash2 size={16} /></Button></li>)}</ul>
+              <Field label="Titre du document" required><input value={newDocumentTitle} maxLength={200} onChange={e => setNewDocumentTitle(e.target.value)} /></Field>
+              <Field label="Fichier" required hint="PDF, JPG ou PNG. Les fichiers sont contrôlés avant le téléversement."><input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setNewDocumentFile(e.target.files?.[0] || null)} /></Field>
+            </div><Button type="button" className="mt-4" variant="outline" onClick={handleAddDocument}>Joindre le document</Button></div>}
+            <ul className="mt-4 space-y-2">{pendingDocuments.map(doc => <li key={doc.tempId} className="flex items-center justify-between gap-3"><span>{doc.title}<small className="block">{doc.file.name}</small></span><Button type="button" variant="ghost" onClick={() => handleRemoveDocument(doc.tempId)} aria-label={`Retirer le document ${doc.title}`}><Trash2 size={16} /></Button></li>)}</ul>
           </Section>
         </fieldset>
       </div>
-      <SnCard title="Preparation summary" className="logistics-summary">
-        <dl><dt>Reference</dt><dd>{expeditionLotNumber || 'Generated on save'}</dd><dt>Packages</dt><dd>{selectedProductions.length}</dd>
-          <dt>Gross weight</dt><dd>{logisticsNumber(totalGrossWeight)} g</dd><dt>Fine gold</dt><dd>{logisticsNumber(totalNetWeight)} g</dd>
-          <dt>Fine gold</dt><dd>{logisticsNumber(totalNetWeight / 31.1034768)} oz</dd><dt>Weighted gold purity</dt><dd>{logisticsNumber(totalGrossWeight > 0 ? totalNetWeight / totalGrossWeight * 100 : null)} %</dd>
-          <dt>Refinery</dt><dd>{selectedRefinery?.name || '—'}</dd><dt>Documents</dt><dd>{pendingDocuments.length}</dd></dl>
-        <h4>Readiness checklist</h4><ul className="logistics-checklist">{checklist.map(([label, complete]) => <li key={label} className={complete ? 'is-complete' : ''}>{complete ? <CheckCircle /> : <Circle />}{label}</li>)}</ul>
-        <Button type="button" className="mt-6 w-full" variant="outline" disabled={!selectedProductions.length} onClick={() => setIsPreviewCollapsed(!isPreviewCollapsed)}><FileText size={16} />{isPreviewCollapsed ? 'Preview packing list' : 'Hide preview'}</Button>
-        <p className="mt-4 text-xs text-slate-500">Saving creates a preparation awaiting customs approval. It does not dispatch the shipment.</p>
+      <SnCard title="Synthèse de la préparation" className="logistics-summary">
+        <dl><dt>Référence</dt><dd>{expeditionLotNumber || 'Générée à l’enregistrement'}</dd><dt>Colis</dt><dd>{selectedProductions.length}</dd>
+          <dt>Poids brut</dt><dd>{logisticsNumber(totalGrossWeight)} g</dd><dt>Or fin</dt><dd>{logisticsNumber(totalNetWeight)} g</dd>
+          <dt>Or fin</dt><dd>{logisticsNumber(totalNetWeight / 31.1034768)} oz</dd><dt>Pureté pondérée de l’or</dt><dd>{logisticsNumber(totalGrossWeight > 0 ? totalNetWeight / totalGrossWeight * 100 : null)} %</dd>
+          <dt>Raffinerie</dt><dd>{selectedRefinery?.name || '—'}</dd><dt>Documents</dt><dd>{pendingDocuments.length}</dd></dl>
+        <h4>Liste de contrôle</h4><ul className="logistics-checklist">{checklist.map(([label, complete]) => <li key={label} className={complete ? 'is-complete' : ''}>{complete ? <CheckCircle /> : <Circle />}{label}</li>)}</ul>
+        <Button type="button" className="mt-6 w-full" variant="outline" disabled={!selectedProductions.length} onClick={() => setIsPreviewCollapsed(!isPreviewCollapsed)}><FileText size={16} />{isPreviewCollapsed ? 'Prévisualiser la liste de colisage' : 'Masquer l’aperçu'}</Button>
+        <p className="mt-4 text-xs text-slate-500">L’enregistrement crée une préparation en attente d’approbation douanière. Il ne déclenche pas l’expédition.</p>
       </SnCard>
     </div>
-    {!isPreviewCollapsed && selectedProductions.length > 0 && <Section id="packing-preview" title="Packing list preview" description="Review the quantities and seals before saving." icon={FileText}>
-      <Button type="button" variant="outline" onClick={handleSendPackingListByEmail}><Send size={16} />Prepare email</Button>
+    {!isPreviewCollapsed && selectedProductions.length > 0 && <Section id="packing-preview" title="Aperçu de la liste de colisage" description="Vérifiez les quantités et les scellés avant l’enregistrement." icon={FileText}>
+      <Button type="button" variant="outline" onClick={handleSendPackingListByEmail}><Send size={16} />Préparer le courriel</Button>
       <div className="overflow-auto mt-5"><DynamicPackingList expeditionLotNumber={expeditionLotNumber} productionDate={selectedProductions[0].production.production_date}
         miningCompany={selectedProductions[0].production.mining_company?.name || ''} refineryName={selectedRefinery?.name || ''} refineryAddress={selectedRefinery?.location || ''}
         refineryCountry={selectedRefinery?.country || ''} freightCompany={selectedFreightCompany?.name || ''}
         ingots={selectedProductions.map((sp, index) => ({ ingotBoxNumber: sp.production.bar_reference || `BOX-${index + 1}`, netWeight: sp.production.pure_gold_grams, grossWeight: sp.production.bullion_grams, sealNumber1: sp.sealNumber1, sealNumber2: sp.sealNumber2 }))}
         signatories={signatories.map(s => ({ position: s.position, name: s.name }))} /></div>
     </Section>}
-    <FormActions><Button type="button" variant="outline" onClick={handleCancel} disabled={saving}>Cancel</Button>
-      <Button type="button" onClick={handleSavePreparation} disabled={saving || loading || loadingCompany || showSuccessDialog}><Save size={16} />{saving ? 'Saving preparation…' : preparation ? 'Complete preparation' : 'Save preparation'}</Button></FormActions>
-    {showSuccessDialog && <SnCard title="Preparation saved"><Note>Your preparation {expeditionLotNumber} is recorded.</Note><Button type="button" className="mt-4" onClick={() => navigate(shippingPreparationDetailsPath(savedPreparationId))}>Open preparation</Button></SnCard>}
+    <FormActions><Button type="button" variant="outline" onClick={handleCancel} disabled={saving}>Annuler</Button>
+      <Button type="button" onClick={handleSavePreparation} disabled={saving || loading || loadingCompany || showSuccessDialog}><Save size={16} />{saving ? 'Enregistrement de la préparation…' : preparation ? 'Finaliser la préparation' : 'Enregistrer la préparation'}</Button></FormActions>
+    {showSuccessDialog && <SnCard title="Préparation enregistrée"><Note>La préparation {expeditionLotNumber} est enregistrée.</Note><Button type="button" className="mt-4" onClick={() => navigate(shippingPreparationDetailsPath(savedPreparationId))}>Ouvrir la préparation</Button></SnCard>}
     <BusinessErrorDialog isOpen={showErrorDialog} onClose={() => setShowErrorDialog(false)} title={errorTitle} message={errorMessage} technicalDetails={errorTechnicalDetails} />
   </div></NationalDashboardLayout>;
 }

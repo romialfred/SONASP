@@ -1,5 +1,10 @@
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { publicContent, type PublicLocale } from './publicContent';
+import {
+  DEFAULT_INTERFACE_LANGUAGE,
+  INTERFACE_LANGUAGE_STORAGE_KEY,
+  normalizeInterfaceLanguage,
+} from '@/i18n/interfaceLanguages';
 
 type PublicLocaleValue = {
   locale: PublicLocale;
@@ -10,21 +15,24 @@ type PublicLocaleValue = {
 const PublicLocaleContext = createContext<PublicLocaleValue | null>(null);
 
 function getInitialLocale(): PublicLocale {
-  if (typeof window === 'undefined') return 'en';
-  return window.localStorage.getItem('sonasp-public-locale') === 'fr' ? 'fr' : 'en';
+  if (typeof window === 'undefined') return DEFAULT_INTERFACE_LANGUAGE;
+  return normalizeInterfaceLanguage(window.localStorage.getItem(INTERFACE_LANGUAGE_STORAGE_KEY));
 }
 
 export function PublicLocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<PublicLocale>(getInitialLocale);
+  const [locale, setLocaleState] = useState<PublicLocale>(getInitialLocale);
+  const setLocale = useCallback((nextLocale: PublicLocale) => {
+    setLocaleState(normalizeInterfaceLanguage(nextLocale));
+  }, []);
 
   useEffect(() => {
-    window.localStorage.setItem('sonasp-public-locale', locale);
+    window.localStorage.setItem(INTERFACE_LANGUAGE_STORAGE_KEY, locale);
     document.documentElement.lang = locale;
   }, [locale]);
 
   const value = useMemo(
     () => ({ locale, setLocale, content: publicContent[locale] }),
-    [locale],
+    [locale, setLocale],
   );
 
   return <PublicLocaleContext.Provider value={value}>{children}</PublicLocaleContext.Provider>;

@@ -31,15 +31,15 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
     return [
       {
         id: 'create_sales',
-        label: 'Create Sales',
-        description: 'Sale initiated',
+        label: 'Création de la vente',
+        description: 'Vente enregistrée',
         icon: FileText,
         status: currentIndex >= 0 ? 'completed' : 'pending'
       },
       {
         id: 'pending_approval',
-        label: 'Pending Approval',
-        description: 'Awaiting management approval',
+        label: 'En attente d’approbation',
+        description: 'Validation de la direction requise',
         icon: Clock,
         status: isRejected ? 'rejected' :
                 currentIndex === 1 ? 'current' :
@@ -47,8 +47,8 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
       },
       {
         id: 'customer_approved',
-        label: 'Management Approved',
-        description: 'Management approved, customer notified',
+        label: 'Approuvée par la direction',
+        description: 'Validation accordée et client informé',
         icon: CheckCircle,
         status: isRejected ? 'rejected' :
                 currentIndex === 2 ? 'current' :
@@ -56,8 +56,8 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
       },
       {
         id: 'waiting_for_payment',
-        label: 'Customer Confirms',
-        description: 'Customer confirmed payment commitment',
+        label: 'Confirmation du client',
+        description: 'Engagement de paiement confirmé par le client',
         icon: AlertCircle,
         status: isRejected ? 'rejected' :
                 currentIndex === 3 ? 'current' :
@@ -65,8 +65,8 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
       },
       {
         id: 'virtual_payment',
-        label: 'Virtual Payment',
-        description: 'Payment auto-created',
+        label: 'Engagement de paiement',
+        description: 'Écriture d’engagement créée automatiquement',
         icon: Package,
         status: isRejected ? 'rejected' :
                 currentIndex === 4 ? 'current' :
@@ -74,8 +74,8 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
       },
       {
         id: 'payment_received',
-        label: 'Payment Received',
-        description: 'Payment confirmed',
+        label: 'Paiement reçu',
+        description: 'Encaissement confirmé',
         icon: DollarSign,
         status: isRejected ? 'rejected' :
                 currentIndex === 5 ? 'current' :
@@ -83,8 +83,8 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
       },
       {
         id: 'completed',
-        label: 'Completed',
-        description: 'Sale finalized',
+        label: 'Terminée',
+        description: 'Vente finalisée',
         icon: CheckCircle,
         status: isRejected ? 'rejected' :
                 currentIndex === 6 ? 'completed' : 'pending'
@@ -141,9 +141,9 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
           </div>
           <div>
             <h2 className="font-heading text-lg font-semibold text-gray-900">
-              Sales Workflow Progress
+              Progression du circuit de vente
             </h2>
-            <p className="text-sm text-gray-600">Track approval and payment stages</p>
+            <p className="text-sm text-gray-600">Suivi des étapes d’approbation et de règlement</p>
           </div>
         </div>
       </div>
@@ -153,9 +153,9 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
             <XCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-semibold text-red-900">Sale Rejected</p>
+              <p className="font-semibold text-red-900">Vente rejetée</p>
               <p className="text-sm text-red-700 mt-1">
-                This sale has been rejected by management or customer
+                Cette vente a été rejetée par la direction ou par le client.
               </p>
             </div>
           </div>
@@ -185,7 +185,7 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
                         <div className="mt-2">
                           <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
                             <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
-                            In Progress
+                            En cours
                           </span>
                         </div>
                       )}
@@ -210,15 +210,15 @@ export function SalesApprovalWorkflowPanel({ currentStatus, className = '' }: Sa
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-emerald-100 rounded-full border border-emerald-300" />
-              <span className="text-gray-600">Completed</span>
+              <span className="text-gray-600">Terminée</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-100 rounded-full border-2 border-blue-300" />
-              <span className="text-gray-600">Current</span>
+              <span className="text-gray-600">Étape actuelle</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-gray-100 rounded-full border border-gray-300" />
-              <span className="text-gray-600">Pending</span>
+              <span className="text-gray-600">En attente</span>
             </div>
           </div>
         </div>

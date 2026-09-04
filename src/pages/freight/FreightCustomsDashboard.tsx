@@ -13,8 +13,8 @@ async function loadRows(): Promise<LogisticsRow[]> {
 }
 export default function FreightCustomsDashboard() {
   const { user } = useAuth();
-  return <LogisticsRegister title="Customs & consignment" subtitle="Follow customs clearance, supporting documents and dispatch to the refinery."
-    loadRows={loadRows} createPath="/freight-customs/create" createLabel="New customs operation"
+  return <LogisticsRegister title="Douane et consignation" subtitle="Suivez le dédouanement, les pièces justificatives et l’expédition vers la raffinerie."
+    loadRows={loadRows} createPath="/freight-customs/create" createLabel="Nouvelle opération douanière"
     canCreate={hasFreightCapability(user, FREIGHT_CAPABILITIES.PREPARE)} pendingStatus="customs_pending" readyStatus="shipped_to_refinery"
-    statuses={{ customs_pending: 'Awaiting customs approval', customs_approved: 'Customs approved', ready_for_transport: 'Ready for transport', ready_for_expedition: 'Ready for shipment', shipped_to_refinery: 'Dispatched to refinery' }} />;
+    statuses={{ customs_pending: 'En attente d’approbation douanière', customs_approved: 'Approuvée par la douane', ready_for_transport: 'Prête pour le transport', ready_for_expedition: 'Prête pour l’expédition', shipped_to_refinery: 'Expédiée vers la raffinerie' }} />;
 }

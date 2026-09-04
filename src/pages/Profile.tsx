@@ -31,7 +31,7 @@ export function Profile() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState('fr');
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [approvalNotifications, setApprovalNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -42,7 +42,7 @@ export function Profile() {
       setName(user.full_name || '');
       setEmail(user.email);
       setPhone(user.phone || '');
-      setLanguage(user.language || 'fr');
+      setLanguage('fr');
       setEmailNotifications(user.email_notifications);
       setApprovalNotifications(user.approval_notifications);
     }
@@ -69,8 +69,8 @@ export function Profile() {
 
   const activityColumns: Column<ActivityLog>[] = [
     { key: 'action', label: 'Action', sortable: true },
-    { key: 'timestamp', label: 'Timestamp', sortable: true },
-    { key: 'ip', label: 'IP Address', sortable: false },
+    { key: 'timestamp', label: 'Horodatage', sortable: true },
+    { key: 'ip', label: 'Adresse IP', sortable: false },
   ];
 
   const validatePersonalInfo = (): boolean => {
@@ -136,7 +136,7 @@ export function Profile() {
       await refreshProfile();
       addToast(t('auth.changesSaved'), 'success');
     } catch (error: any) {
-      addToast(error.message || 'Failed to save changes', 'error');
+      addToast(error.message || 'L’enregistrement des modifications a échoué.', 'error');
     } finally {
       setLoading(false);
     }
@@ -160,7 +160,7 @@ export function Profile() {
         setConfirmPassword('');
       }
     } catch (error: any) {
-      addToast(error.message || 'Failed to change password', 'error');
+      addToast(error.message || 'La modification du mot de passe a échoué.', 'error');
     } finally {
       setLoading(false);
     }
@@ -171,7 +171,7 @@ export function Profile() {
       <div className="space-y-6">
         <div>
           <h1 className="font-heading text-3xl font-bold text-gray-900">{t('auth.profile')}</h1>
-          <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
+          <p className="text-gray-600 mt-1">Gérez les paramètres et les préférences de votre compte.</p>
         </div>
 
         <Card>
@@ -180,7 +180,7 @@ export function Profile() {
               <User className="h-5 w-5 text-primary-500" />
               <CardTitle>{t('auth.personalInfo')}</CardTitle>
             </div>
-            <CardDescription>Update your personal information</CardDescription>
+            <CardDescription>Mettez à jour vos informations personnelles.</CardDescription>
           </CardHeader>
           <CardContent>
             <form aria-label="Informations personnelles" onSubmit={handleSavePersonalInfo} className="space-y-4">
@@ -223,7 +223,7 @@ export function Profile() {
               <Lock className="h-5 w-5 text-primary-500" />
               <CardTitle>{t('auth.changePassword')}</CardTitle>
             </div>
-            <CardDescription>Update your password regularly for security</CardDescription>
+            <CardDescription>Renouvelez régulièrement votre mot de passe pour renforcer la sécurité de votre compte.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleChangePassword} className="space-y-4">
@@ -286,12 +286,12 @@ export function Profile() {
                 <Globe className="h-5 w-5 text-primary-500" />
                 <CardTitle>{t('auth.languagePreference')}</CardTitle>
               </div>
-              <CardDescription>Choose your preferred language</CardDescription>
+              <CardDescription>Choisissez la langue de votre interface</CardDescription>
             </CardHeader>
             <CardContent>
               <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                <option value="en">English</option>
                 <option value="fr">Français</option>
+                <option value="en" disabled>Anglais — bientôt disponible</option>
               </Select>
             </CardContent>
           </Card>
@@ -303,12 +303,12 @@ export function Profile() {
               <Bell className="h-5 w-5 text-primary-500" />
               <CardTitle>{t('auth.notificationSettings')}</CardTitle>
             </div>
-            <CardDescription>Manage your notification preferences</CardDescription>
+            <CardDescription>Gérez vos préférences de notification.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm text-gray-700">Email notifications</span>
+                <span className="text-sm text-gray-700">Notifications par courriel</span>
                 <input
                   type="checkbox"
                   checked={emailNotifications}
@@ -318,7 +318,7 @@ export function Profile() {
               </label>
 
               <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm text-gray-700">Approval notifications</span>
+                <span className="text-sm text-gray-700">Notifications d’approbation</span>
                 <input
                   type="checkbox"
                   checked={approvalNotifications}
@@ -336,7 +336,7 @@ export function Profile() {
               <Clock className="h-5 w-5 text-primary-500" />
               <CardTitle>{t('auth.activityHistory')}</CardTitle>
             </div>
-            <CardDescription>Recent account activity</CardDescription>
+            <CardDescription>Activité récente du compte.</CardDescription>
           </CardHeader>
           <CardContent>
             {activityState === 'loading' ? <p role="status">Chargement de l’historique…</p>

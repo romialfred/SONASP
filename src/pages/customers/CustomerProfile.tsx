@@ -41,6 +41,14 @@ interface Customer {
   lastPurchaseDate?: string;
 }
 
+const PAYMENT_TERM_LABELS: Record<string, string> = {
+  'Net 15 days': 'Paiement à 15 jours',
+  'Net 30 days': 'Paiement à 30 jours',
+  'Net 45 days': 'Paiement à 45 jours',
+  'Net 60 days': 'Paiement à 60 jours',
+  Immediate: 'Paiement immédiat',
+};
+
 export function CustomerProfile() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -57,7 +65,7 @@ export function CustomerProfile() {
 
   const fetchCustomerDetails = async () => {
     if (!id) {
-      setError('No customer ID provided');
+      setError('Aucun identifiant client n’a été fourni.');
       setLoading(false);
       return;
     }
@@ -79,7 +87,7 @@ export function CustomerProfile() {
       }
 
       if (!customerData) {
-        setError('Customer not found');
+        setError('Client introuvable.');
         setLoading(false);
         return;
       }
@@ -140,11 +148,11 @@ export function CustomerProfile() {
         id: customerData.id,
         name: customerData.name,
         email: customerData.email,
-        phone: customerData.phone || 'N/A',
+        phone: customerData.phone || 'N/D',
         country: customerData.country,
-        address: customerData.address || 'N/A',
-        contactPerson: customerData.contact_person || 'N/A',
-        taxId: customerData.tax_id || 'N/A',
+        address: customerData.address || 'N/D',
+        contactPerson: customerData.contact_person || 'N/D',
+        taxId: customerData.tax_id || 'N/D',
         registeredDate: customerData.created_at ?? undefined,
         status: customerData.status || 'active',
         paymentTerms: customerData.payment_terms || 'Net 30 days',
@@ -159,7 +167,7 @@ export function CustomerProfile() {
       setActiveSales(mappedActiveSales);
     } catch (err) {
       console.error('Error loading customer:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load customer details');
+      setError('Impossible de charger les informations du client.');
     } finally {
       setLoading(false);
     }
@@ -193,17 +201,17 @@ export function CustomerProfile() {
   ];
 
   const performanceData = [
-    { name: 'Apr', purchases: 3, amount: 425 },
-    { name: 'May', purchases: 4, amount: 582 },
-    { name: 'Jun', purchases: 5, amount: 695 },
-    { name: 'Jul', purchases: 4, amount: 612 },
-    { name: 'Aug', purchases: 5, amount: 748 },
-    { name: 'Sep', purchases: 6, amount: 823 },
+    { name: 'Avr.', purchases: 3, amount: 425 },
+    { name: 'Mai', purchases: 4, amount: 582 },
+    { name: 'Juin', purchases: 5, amount: 695 },
+    { name: 'Juil.', purchases: 4, amount: 612 },
+    { name: 'Août', purchases: 5, amount: 748 },
+    { name: 'Sept.', purchases: 6, amount: 823 },
     { name: 'Oct', purchases: 5, amount: 768 },
   ];
 
   const columns = [
-    { key: 'saleNumber', label: 'Sale Number' },
+    { key: 'saleNumber', label: 'Numéro de vente' },
     {
       key: 'date',
       label: 'Date',
@@ -211,24 +219,24 @@ export function CustomerProfile() {
     },
     {
       key: 'quantity',
-      label: 'Quantity (oz)',
+      label: 'Quantité (oz)',
       render: (tx: Transaction) => tx.quantity.toFixed(3),
     },
     {
       key: 'amount',
-      label: 'Amount',
+      label: 'Montant',
       render: (tx: Transaction) => formatCurrency(tx.amount),
     },
     {
       key: 'status',
-      label: 'Status',
+      label: 'Statut',
       render: (tx: Transaction) => {
         const statusMap = {
-          completed: { label: 'Completed', variant: 'success' as const },
-          pending: { label: 'Pending', variant: 'warning' as const },
-          payment_pending: { label: 'Payment Pending', variant: 'info' as const },
+          completed: { label: 'Terminée', variant: 'success' as const },
+          pending: { label: 'En attente', variant: 'warning' as const },
+          payment_pending: { label: 'Paiement en attente', variant: 'info' as const },
         };
-        const status = statusMap[tx.status] || { label: 'Unknown', variant: 'neutral' as const };
+        const status = statusMap[tx.status] || { label: 'Non renseigné', variant: 'neutral' as const };
         return <StatusBadge label={status.label} variant={status.variant} />;
       },
     },
@@ -250,12 +258,12 @@ export function CustomerProfile() {
     return (
       <MainLayout>
         <div className="max-w-xl mx-auto py-12 space-y-6">
-          <Alert variant="error" title="Unable to load customer">
-            {error || 'Customer not found'}
+          <Alert variant="error" title="Impossible de charger le client">
+            {error || 'Client introuvable.'}
           </Alert>
           <div className="flex justify-center">
             <Button onClick={() => navigate('/customers')}>
-              Back to Customers
+              Retour aux clients
             </Button>
           </div>
         </div>
@@ -273,16 +281,16 @@ export function CustomerProfile() {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            Retour
           </Button>
           <div className="flex-1">
             <h1 className="font-heading text-3xl font-bold text-gray-900">
               {customer.name}
             </h1>
-            <p className="text-gray-600 mt-1">Customer Profile</p>
+            <p className="text-gray-600 mt-1">Fiche client</p>
           </div>
           <StatusBadge
-            label={customer.status === 'active' ? 'Active' : 'Inactive'}
+            label={customer.status === 'active' ? 'Actif' : customer.status === 'pending' ? 'En attente' : 'Inactif'}
             variant={customer.status === 'active' ? 'success' : 'neutral'}
           />
           <Button
@@ -291,7 +299,7 @@ export function CustomerProfile() {
             className="flex items-center gap-2"
           >
             <Edit className="h-4 w-4" />
-            Edit
+            Modifier
           </Button>
         </div>
 
@@ -299,42 +307,44 @@ export function CustomerProfile() {
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
+                <CardTitle>Coordonnées</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-start gap-3">
                     <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Email</p>
+                      <p className="text-sm font-medium text-gray-500">Adresse électronique</p>
                       <p className="text-sm text-gray-900">{customer.email}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Phone</p>
+                      <p className="text-sm font-medium text-gray-500">Téléphone</p>
                       <p className="text-sm text-gray-900">{customer.phone}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Address</p>
+                      <p className="text-sm font-medium text-gray-500">Adresse</p>
                       <p className="text-sm text-gray-900">{customer.address}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Contact Person</p>
+                    <p className="text-sm font-medium text-gray-500">Personne à contacter</p>
                     <p className="text-sm text-gray-900 mt-1">{customer.contactPerson}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Tax ID</p>
+                    <p className="text-sm font-medium text-gray-500">Identifiant fiscal</p>
                     <p className="text-sm text-gray-900 mt-1">{customer.taxId}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Payment Terms</p>
-                    <p className="text-sm text-gray-900 mt-1">{customer.paymentTerms}</p>
+                    <p className="text-sm font-medium text-gray-500">Conditions de paiement</p>
+                    <p className="text-sm text-gray-900 mt-1">
+                      {customer.paymentTerms ? PAYMENT_TERM_LABELS[customer.paymentTerms] || customer.paymentTerms : 'N/D'}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -343,7 +353,7 @@ export function CustomerProfile() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Transaction History</CardTitle>
+                  <CardTitle>Historique des transactions</CardTitle>
                   <div className="flex gap-2">
                     <button
                       className={`px-3 py-1.5 text-sm rounded-lg ${
@@ -353,7 +363,7 @@ export function CustomerProfile() {
                       }`}
                       onClick={() => setActiveTab('overview')}
                     >
-                      Overview
+                      Vue d’ensemble
                     </button>
                     <button
                       className={`px-3 py-1.5 text-sm rounded-lg ${
@@ -363,7 +373,7 @@ export function CustomerProfile() {
                       }`}
                       onClick={() => setActiveTab('transactions')}
                     >
-                      All Transactions
+                      Toutes les transactions
                     </button>
                   </div>
                 </div>
@@ -373,7 +383,7 @@ export function CustomerProfile() {
                   <LineChartWidget
                     data={performanceData}
                     lines={[
-                      { dataKey: 'amount', color: '#B8860B', name: 'Purchase Amount ($K)' },
+                      { dataKey: 'amount', color: '#B8860B', name: 'Montant des achats (milliers USD)' },
                     ]}
                     height={300}
                   />
@@ -392,28 +402,28 @@ export function CustomerProfile() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Performance Metrics</CardTitle>
+                <CardTitle>Indicateurs de performance</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Total Purchases</p>
+                    <p className="text-sm font-medium text-gray-500">Nombre total d’achats</p>
                     <p className="text-2xl font-bold text-gray-900 mt-1">{customer.totalPurchases}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Total Spent</p>
+                    <p className="text-sm font-medium text-gray-500">Montant total</p>
                     <p className="text-2xl font-bold text-primary-700 mt-1">
                       {formatCurrency(customer.totalSpent)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Avg Order Value</p>
+                    <p className="text-sm font-medium text-gray-500">Valeur moyenne des commandes</p>
                     <p className="text-xl font-semibold text-gray-900 mt-1">
                       {formatCurrency(customer.averageOrderValue)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Payment Success Rate</p>
+                    <p className="text-sm font-medium text-gray-500">Taux de réussite des paiements</p>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-xl font-semibold text-accent-600">
                         {customer.paymentRate ?? 0}%
@@ -422,7 +432,7 @@ export function CustomerProfile() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Last Purchase</p>
+                    <p className="text-sm font-medium text-gray-500">Dernier achat</p>
                     <p className="text-sm text-gray-900 mt-1">
                       {customer.lastPurchaseDate
                         ? new Date(customer.lastPurchaseDate).toLocaleDateString('fr-FR')
@@ -435,21 +445,24 @@ export function CustomerProfile() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Active Sales</CardTitle>
+                <CardTitle>Ventes en cours</CardTitle>
               </CardHeader>
               <CardContent>
                 {activeSales.length === 0 ? (
                   <div className="text-center py-6">
-                    <p className="text-sm text-gray-500">No active sales for this customer</p>
+                    <p className="text-sm text-gray-500">Aucune vente en cours pour ce client</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {activeSales.map((sale) => {
                       const statusMap: Record<string, { label: string; variant: 'success' | 'warning' | 'info' | 'neutral' }> = {
-                        pending: { label: 'Pending', variant: 'warning' },
-                        customer_pending: { label: 'Customer Pending', variant: 'info' },
-                        approved: { label: 'Approved', variant: 'success' },
-                        customer_approved: { label: 'Customer Approved', variant: 'success' },
+                        pending: { label: 'En attente', variant: 'warning' },
+                        customer_pending: { label: 'En attente du client', variant: 'info' },
+                        approved: { label: 'Approuvée', variant: 'success' },
+                        pending_management_approval: { label: 'En attente de l’approbation de la direction', variant: 'warning' },
+                        management_approved: { label: 'Approuvée par la direction', variant: 'success' },
+                        pending_for_customer_approval: { label: 'En attente de l’approbation du client', variant: 'info' },
+                        customer_approved: { label: 'Approuvée par le client', variant: 'success' },
                       };
                       const statusInfo = statusMap[sale.status] || { label: sale.status, variant: 'neutral' as const };
 
@@ -477,7 +490,7 @@ export function CustomerProfile() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle>Actions rapides</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -486,21 +499,21 @@ export function CustomerProfile() {
                     onClick={() => navigate('/sales/new')}
                     className="w-full"
                   >
-                    Create New Sale
+                    Créer une vente
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => navigate(`/customers/${id}/payments`)}
                     className="w-full"
                   >
-                    View Payments
+                    Consulter les paiements
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => console.log('Send email')}
                     className="w-full"
                   >
-                    Send Email
+                    Envoyer un courriel
                   </Button>
                 </div>
               </CardContent>

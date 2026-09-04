@@ -71,7 +71,7 @@ describe('utilitaires des tableaux de bord métier', () => {
   it('traduit les statuts techniques', () => {
     expect(statutFr('pending_approval')).toBe('À approuver');
     expect(statutFr('in_transit')).toBe('En transit');
-    expect(statutFr('statut_inconnu')).toBe('statut_inconnu');
+    expect(statutFr('statut_inconnu')).toBe('Statut non reconnu');
     expect(statutFr(null)).toBe('—');
   });
 

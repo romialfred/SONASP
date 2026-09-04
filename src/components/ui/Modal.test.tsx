@@ -30,7 +30,7 @@ describe('Modal accessibility', () => {
     );
 
     const dialog = screen.getByRole('dialog', { name: 'Confirm shipment' });
-    const close = screen.getByRole('button', { name: 'Close modal' });
+    const close = screen.getByRole('button', { name: 'Fermer la fenêtre' });
     const confirm = screen.getByRole('button', { name: 'Confirm' });
     expect(dialog).toHaveFocus();
 

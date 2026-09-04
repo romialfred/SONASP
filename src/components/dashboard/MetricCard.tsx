@@ -56,7 +56,7 @@ export function MetricCard({
             {value}
             {valueInGrams && (
               <span className="text-sm font-normal text-gray-500 ml-1">
-                ({valueInGrams.toLocaleString('en-US', { maximumFractionDigits: 2 })}g)
+                ({valueInGrams.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} g)
               </span>
             )}
           </div>

@@ -290,7 +290,7 @@ describe('VenteOrForm', () => {
     render(<VenteOrForm />);
     await waitFor(() => expect(screen.getByText(/cours de l’or/i)).toBeInTheDocument());
 
-    expect(screen.getByText(/4,522\.75/)).toBeInTheDocument();
+    expect(screen.getByText(/4[\s\u202f]522,75/)).toBeInTheDocument();
     expect(screen.queryByText('Référentiel SONASP')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Actualiser le cours de l’or' }));
     await waitFor(() => expect(mocks.actualiserCours).toHaveBeenCalledTimes(1));

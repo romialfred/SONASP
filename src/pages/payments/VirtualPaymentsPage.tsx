@@ -303,7 +303,7 @@ export function VirtualPaymentsPage() {
           <Modal isOpen onClose={() => !submitting && setSelected(null)} title="Rejeter le paiement">
             <div className="space-y-4">
               <Alert variant="warning" title="Conséquence métier">
-                Le paiement passera à « rejected » et la vente reviendra atomiquement à « waiting_for_payment ».
+                Le paiement passera au statut « Rejeté » et la vente reviendra automatiquement au statut « En attente de paiement ».
               </Alert>
               <FormField label="Motif du rejet" required htmlFor="payment-rejection-reason">
                 <textarea

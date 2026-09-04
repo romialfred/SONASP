@@ -32,6 +32,8 @@ describe('file de validation Réserve DGMG', () => {
     render(<MemoryRouter><DgmgReserveValidationPage /></MemoryRouter>);
 
     fireEvent.click(await screen.findByText('AFF-2026-0049'));
+    expect(screen.getByText('En cours de contrôle')).toBeInTheDocument();
+    expect(screen.queryByText('UNDER_REVIEW')).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/Commentaire ou motif/), {
       target: { value: 'Contrôles réglementaires conformes.' },
     });

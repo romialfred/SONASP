@@ -89,13 +89,13 @@ describe('ShippingPreparationEdit', () => {
   it('affiche le statut en lecture seule sans choix arbitraire', async () => {
     renderEdit();
 
-    await screen.findByRole('heading', { name: 'Edit shipment preparation' });
-    expect(screen.getByText(/Status changes are only available through the shipment workflow/i)).toBeInTheDocument();
+    await screen.findByRole('heading', { name: 'Modifier la préparation d’expédition' });
+    expect(screen.getByText(/changements de statut s’effectuent uniquement depuis le circuit de l’expédition/i)).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Douane Approuvée' })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Prêt pour Expédition' })).not.toBeInTheDocument();
   });
 
-  it.each(['Back', 'Cancel'])('redirige le bouton %s vers les détails canoniques', async (label) => {
+  it.each(['Retour', 'Annuler'])('redirige le bouton %s vers les détails canoniques', async (label) => {
     renderEdit();
 
     fireEvent.click(await screen.findByRole('button', { name: label }));
@@ -105,11 +105,11 @@ describe('ShippingPreparationEdit', () => {
 
   it('enregistre uniquement les informations générales puis revient aux détails canoniques', async () => {
     renderEdit();
-    await screen.findByRole('heading', { name: 'Edit shipment preparation' });
+    await screen.findByRole('heading', { name: 'Modifier la préparation d’expédition' });
     vi.useFakeTimers();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Enregistrer les modifications' }));
       await Promise.resolve();
     });
 
@@ -118,7 +118,7 @@ describe('ShippingPreparationEdit', () => {
       expect.not.objectContaining({ status: expect.anything() }),
     );
     expect(serviceMock.updatePreparation).toHaveBeenCalledWith('shipping-1', expect.not.objectContaining({ expedition_lot_number: expect.anything() }));
-    fireEvent.click(screen.getByRole('button', { name: 'Open preparation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir la préparation' }));
 
     expect(screen.getByText('Détails canoniques')).toBeInTheDocument();
   });

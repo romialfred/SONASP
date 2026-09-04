@@ -285,7 +285,7 @@ export function AnalyticsIntelligenceCenter() {
                   {formatCurrency(financialKPIs?.totalRevenue || 0)}
                 </p>
                 <p className="text-emerald-200 text-xs">
-                  {financialKPIs?.totalQuantitySoldOz.toFixed(2)} oz sold
+                  {financialKPIs?.totalQuantitySoldOz.toFixed(2)} oz vendues
                 </p>
               </div>
             </div>

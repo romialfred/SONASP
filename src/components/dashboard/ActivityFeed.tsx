@@ -18,7 +18,7 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
   if (items.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        <p className="text-sm">No recent activity</p>
+        <p className="text-sm">Aucune activité récente</p>
       </div>
     );
   }

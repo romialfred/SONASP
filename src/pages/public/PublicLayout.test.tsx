@@ -13,7 +13,7 @@ vi.mock('@/hooks/useCoursOr', () => ({
 }));
 
 describe('header de la vitrine publique', () => {
-  beforeEach(() => window.localStorage.setItem('sonasp-public-locale', 'fr'));
+  beforeEach(() => window.localStorage.setItem('sonasp-language', 'fr'));
   it('conserve quatre menus sur le header et un seul accès principal au Portail SONASP', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
@@ -66,6 +66,7 @@ describe('header de la vitrine publique', () => {
     expect(menuButton).toHaveFocus();
 
     fireEvent.change(screen.getByLabelText('Choisir la langue'), { target: { value: 'en' } });
-    expect(within(header).getByRole('link', { name: 'SONASP Portal' })).toHaveAttribute('href', '/login');
+    expect(within(header).getByRole('link', { name: 'Portail SONASP' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('option', { name: 'EN — bientôt disponible' })).toBeDisabled();
   });
 });

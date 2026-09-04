@@ -43,6 +43,17 @@ interface MiningCompany {
   company_type: 'production_mine' | 'institution' | 'parent_company';
 }
 
+const formatNumber = (value: number, digits = 2) => new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: digits,
+  maximumFractionDigits: digits,
+}).format(value);
+
+const formatUsd = (value: number) => new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+}).format(value);
+
 export function GoldTradeSpace() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -269,9 +280,9 @@ export function GoldTradeSpace() {
                   <div>
                     <p className="text-xs text-gray-600 mb-1">Stock exportable</p>
                     <p className={`text-2xl font-bold ${availableStock > 0 ? 'text-amber-700' : 'text-gray-400'}`}>
-                      {availableStock.toFixed(3)} oz
+                      {formatNumber(availableStock, 3)} oz
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">{(availableStock * 31.1034768).toFixed(2)} g</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatNumber(availableStock * 31.1034768)} g</p>
                   </div>
                   {availableStock > 0 && <CheckCircle className="w-8 h-8 text-green-500" />}
                 </div>
@@ -280,19 +291,19 @@ export function GoldTradeSpace() {
                   <div className="mt-4 pt-4 border-t border-amber-100 grid grid-cols-2 gap-4 text-xs sm:grid-cols-4">
                     <div>
                       <p className="text-gray-600">Acheté aux mines</p>
-                      <p className="text-gray-900">{stockExport.achatMinesOz.toFixed(3)} oz</p>
+                      <p className="text-gray-900">{formatNumber(stockExport.achatMinesOz, 3)} oz</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Acheté aux artisans</p>
-                      <p className="text-gray-900">{stockExport.achatArtisansOz.toFixed(3)} oz</p>
+                      <p className="text-gray-900">{formatNumber(stockExport.achatArtisansOz, 3)} oz</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Cédé par les comptoirs</p>
-                      <p className="text-gray-900">{stockExport.cessionComptoirsOz.toFixed(3)} oz</p>
+                      <p className="text-gray-900">{formatNumber(stockExport.cessionComptoirsOz, 3)} oz</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Déjà vendu à l’export</p>
-                      <p className="text-gray-900">{stockExport.venduOz.toFixed(3)} oz</p>
+                      <p className="text-gray-900">{formatNumber(stockExport.venduOz, 3)} oz</p>
                     </div>
                   </div>
                 )}
@@ -301,15 +312,15 @@ export function GoldTradeSpace() {
                   <div className="mt-4 pt-4 border-t border-amber-100 grid grid-cols-3 gap-4 text-xs">
                     <div>
                       <p className="text-gray-600">Production déclarée</p>
-                      <p className="text-gray-900">{stockMine.productionOz.toFixed(3)} oz</p>
+                      <p className="text-gray-900">{formatNumber(stockMine.productionOz, 3)} oz</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Racheté par la SONASP</p>
-                      <p className="text-gray-900">{stockMine.purchasedBySonaspOz.toFixed(3)} oz</p>
+                      <p className="text-gray-900">{formatNumber(stockMine.purchasedBySonaspOz, 3)} oz</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Déjà engagé à l’export</p>
-                      <p className="text-gray-900">{stockMine.soldByMineOz.toFixed(3)} oz</p>
+                      <p className="text-gray-900">{formatNumber(stockMine.soldByMineOz, 3)} oz</p>
                     </div>
                   </div>
                 )}
@@ -345,13 +356,13 @@ export function GoldTradeSpace() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">{t('tradeSpace.recommendedQuantity')}</span>
                         <span className="text-xl font-bold text-purple-900">
-                          {quantityRecommendation.recommendedQuantityOz.toFixed(2)} {t('tradeSpace.oz')}
+                          {formatNumber(quantityRecommendation.recommendedQuantityOz)} {t('tradeSpace.oz')}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">{t('tradeSpace.stockPercentage')}</span>
                         <span className="font-semibold text-purple-800">
-                          {quantityRecommendation.recommendedPercentage}%
+                          {formatNumber(quantityRecommendation.recommendedPercentage, 0)} %
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
@@ -365,7 +376,7 @@ export function GoldTradeSpace() {
                           {t('tradeSpace.risk')} {quantityRecommendation.riskLevel === 'low' ? t('tradeSpace.lowRisk') : quantityRecommendation.riskLevel === 'medium' ? t('tradeSpace.mediumRisk') : t('tradeSpace.highRisk')}
                         </span>
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
-                          {quantityRecommendation.confidenceScore}% {t('tradeSpace.confidence')}
+                          {formatNumber(quantityRecommendation.confidenceScore, 0)} % {t('tradeSpace.confidence')}
                         </span>
                       </div>
                       </div>
@@ -414,16 +425,16 @@ export function GoldTradeSpace() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-700">{t('tradeSpace.quantity')}</span>
-                      <span className="font-semibold text-gray-900">{comparisonData.quantityOz.toFixed(2)} {t('tradeSpace.oz')}</span>
+                      <span className="font-semibold text-gray-900">{formatNumber(comparisonData.quantityOz)} {t('tradeSpace.oz')}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-700">{t('tradeSpace.pricePerOz')}</span>
-                      <span className="font-semibold text-gray-900">${selectedMechanism.pricePerOz.toFixed(2)}</span>
+                      <span className="font-semibold text-gray-900">{formatUsd(selectedMechanism.pricePerOz)}</span>
                     </div>
                     <div className="flex justify-between border-t border-blue-200 pt-2">
                       <span className="text-base font-semibold text-gray-700">{t('tradeSpace.totalValue')}</span>
                       <span className="text-xl font-bold text-blue-900">
-                      ${selectedMechanism.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {formatUsd(selectedMechanism.totalValue)}
                       </span>
                     </div>
                   </div>

@@ -1,993 +1,390 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Package, Building2, User, FileText, Lock } from 'lucide-react';
-import type { PricingMechanism } from '@/services/goldTradeSpaceService';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { FormField } from '@/components/ui/FormField';
-import { Alert } from '@/components/ui/Alert';
-import { Loading } from '@/components/ui/Loading';
-import { WeightInput, gramsToOunces, ouncesToGrams } from '@/components/ui/WeightInput';
-import { calculateSaleProceeds, formatCurrency } from '@/utils/salesUtils';
-import { supabase } from '@/lib/supabase';
-import { useAlert } from '@/hooks/useAlert';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  getAuthorizedCustomersForMine,
-  checkSaleAuthorization,
-  type AuthorizedCustomer
+  Building2, Calculator, Check, CheckCircle2, Clock3, ExternalLink,
+  FileCheck2, FileText, Landmark, LockKeyhole, PackageCheck, Save, Search,
+  Send, ShieldCheck, WalletCards,
+} from 'lucide-react';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/hooks/useAlert';
+import { supabase } from '@/lib/supabase';
+import {
+  checkSaleAuthorization, getAuthorizedCustomersForMine, type AuthorizedCustomer,
 } from '@/services/goldSalesSettingsService';
+import { getApprovedRefineries, type PricingMechanism } from '@/services/goldTradeSpaceService';
+import { mineStockService, type MineExportableStock } from '@/services/mineStockService';
+import {
+  calculateSaleCreationSummary, loadCustomerSaleContext, loadSaleMarketContext,
+  normalizeSaleWorkspaceError, quantityToOunces, saveSaleDraft, submitSaleDraft,
+  validateSaleCreationInputs, type CustomerContractContext, type CustomerSaleContext,
+  type GoldPricePoint, type SaleCreationInputs, type SaleCreationSummary,
+  type SaleDraftRecord, type SaleFixingMethod, type SaleMarketContext, type SaleWeightUnit,
+} from '@/services/saleCreationWorkspaceService';
 import { stockSonaspService, type StockSonasp } from '@/services/stockSonaspService';
 import {
-  composer,
-  messageIndisponibiliteLots,
-  tracabiliteVenteService,
-  validerComposition,
+  composer, messageIndisponibiliteLots, tracabiliteVenteService, validerComposition,
   type LotsVenteDisponibles,
 } from '@/services/tracabiliteVenteService';
-import { InvoicePreviewPanel, type InvoicePreviewData } from '@/components/sales/InvoicePreviewPanel';
-import { formatNumberInWords } from '@/utils/numberToWords';
-import { createExportSale, createMineExportSale } from '@/services/saleCreationService';
-import { useAuth } from '@/contexts/AuthContext';
-import { mineStockService, type MineExportableStock } from '@/services/mineStockService';
+import './sale-create.css';
 
-interface MiningCompany {
+interface SellerContext {
   id: string;
   name: string;
   abbreviation: string | null;
   country: string;
+  companyType: string;
+}
+
+interface RefineryOption { id: string; name: string; location: string }
+
+interface SaleFormState {
+  customerId: string;
+  quantity: string;
+  unit: SaleWeightUnit;
+  proposedPrice: string;
+  fixingDate: string;
+  settlementCurrency: 'USD';
+  freightCost: string;
+  otherCosts: string;
+  fixingMethod: SaleFixingMethod;
+  paymentTermDays: string;
+  customerContractId: string;
+  inProcessRefineryId: string;
+}
+
+type FormErrors = Partial<Record<keyof SaleCreationInputs | 'form', string>>;
+
+const numberValue = (value: string) => {
+  const parsed = Number(value.replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+};
+
+const money = (value: number | null, currency = 'USD', digits = 2) => value === null
+  ? '—'
+  : new Intl.NumberFormat('fr-FR', {
+      style: 'currency', currency, minimumFractionDigits: digits, maximumFractionDigits: digits,
+    }).format(value);
+
+const number = (value: number | null, digits = 2) => value === null
+  ? '—'
+  : new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: digits, maximumFractionDigits: digits,
+    }).format(value);
+
+const initials = (name: string) => name.split(/\s+/u).filter(Boolean).slice(0, 2)
+  .map((part) => part[0]?.toUpperCase()).join('');
+
+const validFixingMethod = (value: unknown): SaleFixingMethod => (
+  value === 'forward' || value === 'in_process' ? value : 'spot'
+);
+
+function parsePaymentDays(value: string | null | undefined) {
+  const match = value?.match(/\d+/u);
+  return match ? Math.min(365, Number(match[0])) : null;
+}
+
+function errorText(error: unknown) {
+  if (error && typeof error === 'object' && 'message' in error) return String(error.message);
+  return 'Une erreur inattendue est survenue.';
+}
+
+function scrollToSection(id: string) {
+  const target = document.getElementById(id);
+  if (target && typeof target.scrollIntoView === 'function') {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function Field({ label, controlId, error, help, wide = false, children }: {
+  label: string; controlId: string; error?: string; help?: string; wide?: boolean; children: React.ReactNode;
+}) {
+  return (
+    <div className={`sale-create__field${wide ? ' sale-create__field--wide' : ''}`}>
+      <label htmlFor={controlId}>{label}</label>
+      {children}
+      {error ? <p className="sale-create__error" role="alert">{error}</p> : help ? <p className="sale-create__help">{help}</p> : null}
+    </div>
+  );
+}
+
+function CreationStepper({ activeStep }: { activeStep: number }) {
+  const steps = [
+    ['Client', 'seller-client'], ['Conditions de vente', 'sale-conditions'],
+    ['Analyse du prix', 'price-analysis'], ['Validation', 'sale-actions'],
+  ];
+  return (
+    <nav className="sale-create__stepper" aria-label="Étapes de création de la vente">
+      <ol>{steps.map(([label, target], index) => {
+        const step = index + 1;
+        const state = step < activeStep ? 'is-complete' : step === activeStep ? 'is-current' : '';
+        return <li key={label}><button type="button" className={state} aria-current={step === activeStep ? 'step' : undefined}
+          onClick={() => scrollToSection(target)}>
+          <span>{step < activeStep ? <Check aria-hidden="true" size={13} /> : step}</span>{label}
+        </button></li>;
+      })}</ol>
+    </nav>
+  );
+}
+
+function CustomerContextPanel({ context, loading, selectedSetting, selectedContract }: {
+  context: CustomerSaleContext | null;
+  loading: boolean;
+  selectedSetting: AuthorizedCustomer | null;
+  selectedContract: CustomerContractContext | null;
+}) {
+  if (loading) return <aside className="sale-create__panel sale-create__client-loading" aria-label="Chargement du contexte client"><span aria-hidden="true" /><p>Chargement du contexte client…</p></aside>;
+  if (!context) return <aside className="sale-create__panel sale-create__client-empty"><div><Building2 aria-hidden="true" size={32} /><p>Sélectionnez un client autorisé pour afficher son contexte commercial et financier.</p></div></aside>;
+  const performance = context.performance;
+  const contract = selectedContract ?? context.contracts[0] ?? null;
+  return (
+    <aside className="sale-create__panel" aria-label={`Contexte du client ${context.name}`}>
+      <div className="sale-create__client-head">
+        <div className="sale-create__avatar" aria-hidden="true">{initials(context.name)}</div>
+        <div><h2>{context.name}</h2><p>{context.country}</p><span className="sale-create__badge"><CheckCircle2 aria-hidden="true" size={10} />{context.isActive ? 'Client actif' : 'Client inactif'}</span></div>
+        <Link to={`/customers/${context.id}`}>Voir la fiche <ExternalLink aria-hidden="true" size={11} /></Link>
+      </div>
+      <section className="sale-create__context-section">
+        <h3>Performance commerciale confirmée</h3>
+        <div className="sale-create__metrics">
+          <div className="sale-create__metric"><span>Quantité déjà vendue</span><strong>{number(performance.confirmedQuantityOz, 3)} oz</strong></div>
+          <div className="sale-create__metric"><span>Prix moyen pondéré</span><strong>{money(performance.weightedAveragePriceUsdOz)}/oz</strong></div>
+          <div className="sale-create__metric"><span>Montant encaissé</span><strong>{money(performance.confirmedPaymentsUsd)}</strong></div>
+          <div className="sale-create__metric"><span>Ventes réalisées</span><strong>{performance.confirmedSalesCount}</strong></div>
+        </div>
+      </section>
+      <section className="sale-create__context-section">
+        <h3>Conditions contractuelles</h3>
+        {contract ? <dl className="sale-create__definition">
+          <div><dt>Contrat actif</dt><dd>{contract.contractNumber}</dd></div>
+          <div><dt>Modèle de prix</dt><dd>{contract.pricingModel}{contract.priceAdjustmentPct !== null ? ` · ${number(contract.priceAdjustmentPct, 2)} %` : ''}</dd></div>
+          <div><dt>Plafond par commande</dt><dd>{contract.maximumOrderOz === null ? 'Non défini' : `${number(contract.maximumOrderOz, 3)} oz`}</dd></div>
+          <div><dt>Conditions de paiement</dt><dd>{contract.paymentTerms}</dd></div>
+          <div><dt>Responsable des frais</dt><dd>Transport : {selectedSetting?.transport_fees_paid_by_customer ? 'Client' : 'Vendeur'} · Raffinage : {selectedSetting?.refining_fees_paid_by_customer ? 'Client' : 'Vendeur'}</dd></div>
+        </dl> : <p className="sale-create__help">Aucun contrat client actif n’est visible. Les règles d’autorisation du vendeur restent applicables.</p>}
+      </section>
+      <section className="sale-create__context-section">
+        <h3>Performance de paiement</h3>
+        <div className="sale-create__performance"><div><strong>{performance.onTimePaymentPct === null ? 'Non mesurée' : `${number(performance.onTimePaymentPct, 1)} % à l’échéance`}</strong><p>Calcul fondé uniquement sur les paiements réels approuvés.</p></div><WalletCards aria-hidden="true" size={28} /></div>
+        <dl className="sale-create__definition">
+          <div><dt>Retard moyen</dt><dd>{performance.averagePaymentDelayDays === null ? '—' : `${number(performance.averagePaymentDelayDays, 1)} jour(s)`}</dd></div>
+          <div><dt>Encours confirmé</dt><dd>{money(performance.outstandingUsd)}</dd></div>
+          <div><dt>Contrôle du risque</dt><dd>{performance.riskLabel}</dd></div>
+        </dl>
+        <div className="sale-create__risk"><ShieldCheck aria-hidden="true" /><span>{performance.riskReason}</span></div>
+      </section>
+    </aside>
+  );
+}
+
+function PriceChart({ history }: { history: GoldPricePoint[] }) {
+  if (history.length < 2) return <div className="sale-create__chart"><p className="sale-create__help">Historique insuffisant pour tracer une courbe fiable.</p></div>;
+  const prices = history.map((point) => point.priceUsdOz);
+  const min = Math.min(...prices); const max = Math.max(...prices); const span = Math.max(1, max - min);
+  const points = history.map((point, index) => `${index / (history.length - 1) * 100},${95 - (point.priceUsdOz - min) / span * 80}`).join(' ');
+  return <figure className="sale-create__chart"><svg viewBox="0 0 100 105" preserveAspectRatio="none" role="img" aria-label="Évolution récente du cours de l’or en dollars par once">
+    <line className="sale-create__chart-axis" x1="0" y1="100" x2="100" y2="100" /><line className="sale-create__chart-axis" x1="0" y1="55" x2="100" y2="55" />
+    <polygon className="sale-create__chart-area" points={`0,100 ${points} 100,100`} /><polyline className="sale-create__chart-line" points={points} />
+  </svg><figcaption><span>{history[0]?.date}</span><strong>{number(history.at(-1)?.priceUsdOz ?? null, 2)} USD/oz</strong><span>{history.at(-1)?.date}</span></figcaption></figure>;
+}
+
+function PriceAnalysisPanel({ market, proposedPrice, analyzed }: { market: SaleMarketContext | null; proposedPrice: number; analyzed: boolean }) {
+  const delta = market?.spotPriceUsdOz && Number.isFinite(proposedPrice) ? proposedPrice - market.spotPriceUsdOz : null;
+  const deltaPct = delta !== null && market?.spotPriceUsdOz ? delta / market.spotPriceUsdOz * 100 : null;
+  return <section id="price-analysis" className="sale-create__panel sale-create__analysis" aria-labelledby="price-analysis-title">
+    <div className="sale-create__analysis-head"><div><h2 id="price-analysis-title">Analyse du cours et projection</h2><p>Comparaison du prix proposé avec le référentiel de marché disponible.</p></div><span className="sale-create__source"><Clock3 aria-hidden="true" size={13} />{market?.goldPriceUpdatedAt ? `Cours horodaté le ${new Date(market.goldPriceUpdatedAt).toLocaleString('fr-FR')}` : 'Cours indisponible'}</span></div>
+    <div className="sale-create__analysis-grid">
+      <PriceChart history={market?.history ?? []} />
+      <div className="sale-create__price-card"><span>Clôture précédente</span><strong>{money(market?.previousCloseUsdOz ?? null)}</strong><small>Réel · USD/oz</small></div>
+      <div className="sale-create__price-card is-current"><span>Cours de référence</span><strong>{money(market?.spotPriceUsdOz ?? null)}</strong><small>{market?.goldPriceSource ?? 'Source indisponible'}</small></div>
+      <div className="sale-create__price-card is-unavailable"><span>J+7 / J+14</span><strong>Projection indisponible</strong><small>Aucun moteur validé</small></div>
+      <div className="sale-create__price-card is-unavailable"><span>J+30</span><strong>Projection indisponible</strong><small>Aucune valeur inventée</small></div>
+    </div>
+    <div className="sale-create__delta" aria-live="polite"><span>Prix proposé : <strong>{Number.isFinite(proposedPrice) ? `${money(proposedPrice)}/oz` : '—'}</strong></span><span>Écart au cours : <strong>{delta === null ? '—' : `${delta >= 0 ? '+' : ''}${money(delta)} (${deltaPct && deltaPct >= 0 ? '+' : ''}${number(deltaPct, 2)} %)`}</strong></span><span>{analyzed ? 'Analyse actualisée' : 'Analyse à actualiser'}</span></div>
+    {market && market.history.length > 0 && <details className="sale-create__history"><summary>Afficher les valeurs textuelles de l’historique</summary><table><thead><tr><th>Date</th><th>Cours (USD/oz)</th><th>Source</th></tr></thead><tbody>{market.history.map((point) => <tr key={`${point.date}-${point.priceUsdOz}`}><td>{point.date}</td><td>{number(point.priceUsdOz, 2)}</td><td>{point.source ?? 'Référentiel SONASP'}</td></tr>)}</tbody></table></details>}
+  </section>;
 }
 
 export function SaleCreate() {
-  const { user } = useAuth();
-  const mineCompanyId = user?.mining_company_id || null;
-  const isMineAccount = Boolean(mineCompanyId);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const alert = useAlert();
-
-  // Extract data from navigation state (from Gold Trade Space simulation or Inventory)
-  const mechanismData = (location.state as any)?.mechanismData as PricingMechanism | undefined;
-  const initialQuantity = (location.state as any)?.quantityOz || 0;
-  const preselectedCustomerId = (location.state as any)?.preselectedCustomerId; // New: preselected customer
-  const preselectedRefineryId = (location.state as any)?.preselectedRefineryId;
-
-  const [formData, setFormData] = useState({
-    customerId: preselectedCustomerId || '',
-    miningCompanyId: '', // Renseigné au chargement depuis le périmètre authentifié.
-    quantityOz: initialQuantity || 0,
-    londonAMRate: mechanismData?.pricePerOz.toFixed(2) || '',
-    freightCost: '',
-    otherCosts: '',
-    mechanismType: mechanismData?.mechanism || '',
-    mechanismDisplayName: mechanismData?.displayName || '',
-    inProcessRefineryId: preselectedRefineryId || '',
+  const { user } = useAuth(); const navigate = useNavigate(); const location = useLocation(); const alert = useAlert();
+  const navigationState = location.state as { mechanismData?: PricingMechanism; quantityOz?: number; preselectedCustomerId?: string; preselectedRefineryId?: string } | null;
+  const mechanismData = navigationState?.mechanismData;
+  const [form, setForm] = useState<SaleFormState>({
+    customerId: navigationState?.preselectedCustomerId ?? '', quantity: navigationState?.quantityOz ? String(navigationState.quantityOz) : '', unit: 'oz',
+    proposedPrice: mechanismData?.pricePerOz ? String(mechanismData.pricePerOz) : '', fixingDate: new Date().toISOString().slice(0, 10), settlementCurrency: 'USD',
+    freightCost: '', otherCosts: '', fixingMethod: validFixingMethod(mechanismData?.mechanism), paymentTermDays: mechanismData?.settlementDays ? String(mechanismData.settlementDays) : '15',
+    customerContractId: '', inProcessRefineryId: navigationState?.preselectedRefineryId ?? '',
   });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showCalculations, setShowCalculations] = useState(false);
+  const [seller, setSeller] = useState<SellerContext | null>(null);
   const [authorizedCustomers, setAuthorizedCustomers] = useState<AuthorizedCustomer[]>([]);
-  const [selectedMiningCompany, setSelectedMiningCompany] = useState<MiningCompany | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<AuthorizedCustomer | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [availableInventory, setAvailableInventory] = useState({ availableOz: 0, availableGrams: 0 });
+  const [availableStockOz, setAvailableStockOz] = useState(0);
+  const [saleEligibility, setSaleEligibility] = useState<LotsVenteDisponibles | null>(null);
   const [stockExport, setStockExport] = useState<StockSonasp | null>(null);
   const [mineStock, setMineStock] = useState<MineExportableStock | null>(null);
-  const [saleEligibility, setSaleEligibility] = useState<LotsVenteDisponibles | null>(null);
-  const [eligibilityLoadFailed, setEligibilityLoadFailed] = useState(false);
-  const [loadingInventory, setLoadingInventory] = useState(false);
-  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
-  const [invoicePreviewData, setInvoicePreviewData] = useState<InvoicePreviewData | null>(null);
+  const [market, setMarket] = useState<SaleMarketContext | null>(null);
+  const [refineries, setRefineries] = useState<RefineryOption[]>([]);
+  const [customerContext, setCustomerContext] = useState<CustomerSaleContext | null>(null);
+  const [customerLoading, setCustomerLoading] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [submitting, setSubmitting] = useState(false);
+  const [draft, setDraft] = useState<SaleDraftRecord | null>(null); const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [dirty, setDirty] = useState(false); const [analyzedSignature, setAnalyzedSignature] = useState<string | null>(null);
+  const isMineAccount = Boolean(user?.mining_company_id);
+  const selectedSetting = useMemo(() => authorizedCustomers.find((customer) => customer.customer_id === form.customerId) ?? null, [authorizedCustomers, form.customerId]);
+  const selectedContract = useMemo(() => customerContext?.contracts.find((contract) => contract.id === form.customerContractId) ?? null, [customerContext, form.customerContractId]);
+  const filteredCustomers = useMemo(() => { const query = customerSearch.trim().toLocaleLowerCase('fr'); return authorizedCustomers.filter((customer) => !query || customer.customer_name.toLocaleLowerCase('fr').includes(query)); }, [authorizedCustomers, customerSearch]);
+  const inputs = useMemo<SaleCreationInputs>(() => ({
+    customerId: form.customerId, sellerId: seller?.id ?? '', quantity: numberValue(form.quantity), unit: form.unit,
+    proposedPriceUsdOz: numberValue(form.proposedPrice), fixingDate: form.fixingDate, settlementCurrency: form.settlementCurrency,
+    freightCostUsd: form.freightCost ? numberValue(form.freightCost) : 0, otherCostsUsd: form.otherCosts ? numberValue(form.otherCosts) : 0,
+    fixingMethod: form.fixingMethod, paymentTermDays: numberValue(form.paymentTermDays), customerContractId: form.customerContractId || null,
+    inProcessRefineryId: form.inProcessRefineryId || null,
+  }), [form, seller?.id]);
+  const signature = JSON.stringify(inputs); const analyzed = analyzedSignature === signature;
+  const summary = useMemo<SaleCreationSummary | null>(() => {
+    if (market?.royaltyRatePct === null || market?.royaltyRatePct === undefined || !market.usdXofRate) return null;
+    try { return calculateSaleCreationSummary(inputs, market.royaltyRatePct, market.usdXofRate); } catch { return null; }
+  }, [inputs, market]);
 
   useEffect(() => {
-    fetchMiningCompanies();
-  }, []);
-
-  useEffect(() => {
-    if (formData.miningCompanyId) {
-      fetchAuthorizedCustomers();
-      fetchInventory();
-    } else {
-      setAuthorizedCustomers([]);
-      setAvailableInventory({ availableOz: 0, availableGrams: 0 });
-      setSaleEligibility(null);
-      setEligibilityLoadFailed(false);
-    }
-  }, [formData.miningCompanyId]);
-
-  useEffect(() => {
-    if (formData.customerId && authorizedCustomers.length > 0) {
-      const customer = authorizedCustomers.find(c => c.customer_id === formData.customerId);
-      setSelectedCustomer(customer || null);
-    } else {
-      setSelectedCustomer(null);
-    }
-  }, [formData.customerId, authorizedCustomers]);
-
-  const fetchMiningCompanies = async () => {
-    try {
-      let query = supabase
-        .from('mining_companies')
-        .select('id, name, abbreviation, country, code, company_type')
-        .eq('is_active', true)
-        .order('name');
-      if (mineCompanyId) query = query.eq('id', mineCompanyId);
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const seller = mineCompanyId
-        ? (data || []).find((company) => company.id === mineCompanyId)
-        : (data || []).find(
-            (company) => company.code?.toUpperCase() === 'SONASP'
-              && company.company_type === 'institution'
-          );
-      if (!seller) {
-        alert.error("La société vendeuse n'est pas disponible : la vente à l'export est impossible.");
-        return;
-      }
-      setSelectedMiningCompany(seller);
-      setFormData(prev => ({ ...prev, miningCompanyId: seller.id }));
-    } catch (error) {
-      console.error('Error fetching mining companies:', error);
-      alert.error("Échec du chargement du vendeur.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAuthorizedCustomers = async () => {
-    if (!formData.miningCompanyId) return;
-
-    try {
-      const result = await getAuthorizedCustomersForMine(formData.miningCompanyId);
-      if (result.success) {
-        setAuthorizedCustomers(result.data);
-      } else {
-        console.error('Error fetching authorized customers:', result.error);
-        alert.error('Failed to load authorized customers');
-        setAuthorizedCustomers([]);
-      }
-    } catch (error) {
-      console.error('Error fetching authorized customers:', error);
-      alert.error('Failed to load customers');
-      setAuthorizedCustomers([]);
-    }
-  };
-
-  const fetchInventory = async () => {
-    if (!formData.miningCompanyId) return;
-
-    try {
-      setLoadingInventory(true);
-      if (isMineAccount) {
-        const stock = await mineStockService.stock(formData.miningCompanyId);
-        setMineStock(stock);
-        setStockExport(null);
-        setSaleEligibility(null);
-        setEligibilityLoadFailed(false);
-        setAvailableInventory({ availableOz: stock.availableOz, availableGrams: stock.availableGrams });
-      } else {
-        const [eligibility, stock] = await Promise.all([
-          tracabiliteVenteService.lotsDisponibles(),
-          stockSonaspService.stock(formData.miningCompanyId).catch((error) => {
-            console.warn('Acquisition summary unavailable:', error);
-            return null;
-          }),
+    if (!user) return; let active = true;
+    const load = async () => {
+      setLoading(true); setLoadError(null);
+      try {
+        const sellerQuery = user.mining_company_id
+          ? supabase.from('mining_companies').select('id,name,abbreviation,country,company_type').eq('id', user.mining_company_id).eq('is_active', true).maybeSingle()
+          : supabase.from('mining_companies').select('id,name,abbreviation,country,company_type').eq('code', 'SONASP').eq('company_type', 'institution').eq('is_active', true).maybeSingle();
+        const [sellerResult, marketContext, refineryResult] = await Promise.all([sellerQuery, loadSaleMarketContext(), getApprovedRefineries()]);
+        if (sellerResult.error) throw sellerResult.error; if (!sellerResult.data) throw new Error('Le vendeur rattaché au compte est indisponible.');
+        const sellerData: SellerContext = { id: sellerResult.data.id, name: sellerResult.data.name, abbreviation: sellerResult.data.abbreviation, country: sellerResult.data.country, companyType: sellerResult.data.company_type };
+        const [customersResult, inventoryResult] = await Promise.all([
+          getAuthorizedCustomersForMine(sellerData.id), user.mining_company_id
+            ? mineStockService.stock(sellerData.id)
+            : Promise.all([tracabiliteVenteService.lotsDisponibles(), stockSonaspService.stock(sellerData.id).catch(() => null)]),
         ]);
-        const availableOz = eligibility.lots.reduce((total, lot) => total + lot.disponibleOz, 0);
-        setStockExport(stock);
-        setMineStock(null);
-        setSaleEligibility(eligibility);
-        setEligibilityLoadFailed(false);
-        setAvailableInventory({ availableOz, availableGrams: ouncesToGrams(availableOz) });
-      }
-    } catch (error) {
-      console.error('Error fetching inventory:', error);
-      setStockExport(null);
-      setMineStock(null);
-      setSaleEligibility(null);
-      setEligibilityLoadFailed(!isMineAccount);
-      setAvailableInventory({ availableOz: 0, availableGrams: 0 });
-    } finally {
-      setLoadingInventory(false);
-    }
-  };
-
-  const availableInventoryOz = availableInventory.availableOz;
-
-  const handleInputChange = (field: string, value: string) => {
-    // Le vendeur provient du compte authentifié et ne peut jamais être remplacé.
-    if (field === 'miningCompanyId') {
-      return;
-    }
-
-    {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
-
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-    setShowCalculations(false);
-    // Don't hide preview - let the auto-update effect handle it
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.miningCompanyId) {
-      newErrors.miningCompanyId = 'La société vendeuse est indisponible.';
-    }
-
-    // Check if seller has inventory
-    if (formData.miningCompanyId && availableInventoryOz === 0) {
-      newErrors.miningCompanyId = 'Aucun stock exportable n’est disponible pour cette vente.';
-    }
-
-    if (!formData.customerId) {
-      newErrors.customerId = 'Sélectionnez un client autorisé.';
-    }
-
-    if (formData.mechanismType === 'in_process' && !formData.inProcessRefineryId) {
-      newErrors.inProcessRefineryId = 'La raffinerie de destination est obligatoire.';
-    }
-
-    const quantity = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0');
-    if (!formData.quantityOz || quantity === 0 || isNaN(quantity) || quantity <= 0) {
-      newErrors.quantityOz = 'Saisissez une quantité valide.';
-    } else if (quantity > availableInventoryOz) {
-      newErrors.quantityOz = `La quantité dépasse le stock disponible (${availableInventoryOz.toFixed(3)} oz).`;
-    }
-
-    const londonRate = parseFloat(formData.londonAMRate);
-    if (!formData.londonAMRate || isNaN(londonRate) || londonRate <= 0) {
-      newErrors.londonAMRate = 'Saisissez un prix de vente valide.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const updateInvoicePreviewData = async () => {
-    if (!calculations || !selectedMiningCompany || !selectedCustomer) return;
-
-    // Fetch full customer details
-    const { data: customerData } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('id', formData.customerId)
-      .single();
-
-    // Fetch full mining company details
-    const { data: miningCompanyData } = await supabase
-      .from('mining_companies')
-      .select('*')
-      .eq('id', formData.miningCompanyId)
-      .single();
-
-    const quantityOz = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
-    const quantityGrams = quantityOz * 31.1034768;
-    const quantityKg = quantityGrams / 1000;
-    const pricePerOz = parseFloat(formData.londonAMRate);
-    const pricePerKg = pricePerOz * (1000 / 31.1034768); // Convert $/oz to $/kg
-
-    // Calculate amount in words
-    const finalAmountInWords = formatNumberInWords(calculations.finalAmount);
-
-    const previewData: InvoicePreviewData = {
-      // Seller Information
-      sellerName: miningCompanyData?.name || selectedMiningCompany.name,
-      sellerAddress: miningCompanyData?.abbreviation || selectedMiningCompany.abbreviation || '',
-      sellerCity: miningCompanyData?.city || '',
-      sellerCountry: miningCompanyData?.country || selectedMiningCompany.country,
-      sellerPhone: miningCompanyData?.contact_person_phone || '',
-
-      // Customer Information
-      customerName: selectedCustomer.customer_name,
-      customerAddress: customerData?.address || '',
-      customerCity: '',
-      customerCountry: customerData?.country || '',
-      customerPhone: customerData?.phone || '',
-
-      // Invoice Details
-      invoiceDate: new Date().toISOString(),
-
-      // Sale Details
-      quantityOz: quantityOz,
-      quantityGrams: quantityGrams,
-      quantityKg: quantityKg,
-      pricePerOz: pricePerOz,
-      pricePerKg: pricePerKg,
-      currency: 'USD',
-
-      // Pricing Details
-      grossProceeds: calculations.grossProceeds,
-      freightCost: calculations.freight,
-      otherCosts: calculations.otherCosts,
-      netProceeds: calculations.netProceeds,
-      royaltiesPercentage: 3,
-      royaltiesAmount: calculations.royalties,
-      finalAmount: calculations.finalAmount,
-      finalAmountInWords: finalAmountInWords,
-      estimatedValue: calculations.grossProceeds,
-
-      // Additional Info
-      mechanismType: formData.mechanismType,
-      mechanismDisplayName: formData.mechanismDisplayName,
-      valueDate: mechanismData?.valueDate,
-      settlementDays: mechanismData?.settlementDays
+        if (!customersResult.success) throw new Error(customersResult.error?.message ?? 'Les clients autorisés sont indisponibles.'); if (!active) return;
+        setSeller(sellerData); setMarket(marketContext); setAuthorizedCustomers(customersResult.data);
+        setRefineries(refineryResult.success ? (refineryResult.data ?? []).map((refinery) => ({ id: refinery.id, name: refinery.refinery_name, location: refinery.refinery_location })) : []);
+        if (user.mining_company_id) { const stock = inventoryResult as MineExportableStock; setMineStock(stock); setAvailableStockOz(stock.availableOz); }
+        else { const [eligibility, stock] = inventoryResult as [LotsVenteDisponibles, StockSonasp | null]; setSaleEligibility(eligibility); setStockExport(stock); setAvailableStockOz(eligibility.lots.reduce((total, lot) => total + lot.disponibleOz, 0)); }
+        if (!form.proposedPrice && marketContext.spotPriceUsdOz) setForm((current) => ({ ...current, proposedPrice: String(marketContext.spotPriceUsdOz) }));
+      } catch (error) { if (active) setLoadError(errorText(error)); } finally { if (active) setLoading(false); }
     };
+    void load(); return () => { active = false; };
+  }, [user?.id, user?.mining_company_id]);
 
-    setInvoicePreviewData(previewData);
-    setShowInvoicePreview(true);
+  useEffect(() => {
+    if (!form.customerId) { setCustomerContext(null); return; } let active = true; setCustomerLoading(true); setCustomerContext(null);
+    void loadCustomerSaleContext(form.customerId).then((context) => {
+      if (!active) return; setCustomerContext(context); const firstContract = context.contracts[0] ?? null;
+      setForm((current) => { const paymentDays = parsePaymentDays(firstContract?.paymentTerms ?? context.paymentTerms); return { ...current, customerContractId: firstContract?.id ?? '', paymentTermDays: paymentDays === null ? current.paymentTermDays : String(paymentDays) }; });
+    }).catch((error) => { if (active) setErrors((current) => ({ ...current, form: `Contexte client indisponible : ${errorText(error)}` })); })
+      .finally(() => { if (active) setCustomerLoading(false); });
+    return () => { active = false; };
+  }, [form.customerId]);
+
+  useEffect(() => { const beforeUnload = (event: BeforeUnloadEvent) => { if (!dirty) return; event.preventDefault(); event.returnValue = ''; }; window.addEventListener('beforeunload', beforeUnload); return () => window.removeEventListener('beforeunload', beforeUnload); }, [dirty]);
+
+  const setField = <K extends keyof SaleFormState>(field: K, value: SaleFormState[K]) => {
+    setForm((current) => ({ ...current, [field]: value })); setErrors((current) => ({ ...current, [field]: undefined, form: undefined })); setDirty(true); setAnalyzedSignature(null);
   };
 
-  const handleCalculate = async () => {
-    if (!validateForm()) return;
-
-    // Check authorization
-    if (formData.miningCompanyId && formData.customerId) {
-      const quantity = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
-      const result = await checkSaleAuthorization(
-        formData.miningCompanyId,
-        formData.customerId,
-        quantity,
-        availableInventoryOz
-      );
-
-      if (!result.success || !result.data?.is_authorized) {
-        alert.error(result.data?.reason || 'Sale not authorized');
-        return;
-      }
+  const validateCurrent = () => {
+    const next: FormErrors = validateSaleCreationInputs(inputs, availableStockOz, selectedContract);
+    if (selectedSetting && Number.isFinite(inputs.quantity) && inputs.quantity > 0) {
+      const settingLimit = availableStockOz * selectedSetting.max_stock_percentage / 100;
+      if (quantityToOunces(inputs.quantity, inputs.unit) > settingLimit + 0.000001) next.quantity = `La règle d’autorisation limite ce client à ${number(settingLimit, 3)} oz (${number(selectedSetting.max_stock_percentage, 2)} % du stock).`;
     }
-
-    setShowCalculations(true);
-    await updateInvoicePreviewData();
+    if (!customerContext?.isActive && inputs.customerId) next.customerId = 'Le client sélectionné n’est plus actif.';
+    if (!market?.usdXofRate) next.form = 'Le taux USD/XOF est indisponible : les montants locaux ne peuvent pas être fiabilisés.';
+    if (market?.royaltyRatePct === null || market?.royaltyRatePct === undefined) next.form = 'La règle de redevance est indisponible : la vente ne peut pas être calculée.';
+    if (!summary && !next.form) next.form = 'Les paramètres financiers ne permettent pas de calculer un produit net positif.';
+    setErrors(next); return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm() || !showCalculations) return;
+  const analyzeSale = async () => {
+    if (!validateCurrent() || !seller) return;
+    try {
+      const authorization = await checkSaleAuthorization(seller.id, inputs.customerId, quantityToOunces(inputs.quantity, inputs.unit), availableStockOz);
+      if (!authorization.success || !authorization.data?.is_authorized) { setErrors({ form: authorization.data?.reason || 'La règle d’autorisation du client refuse cette quantité.' }); return; }
+      setAnalyzedSignature(signature); window.setTimeout(() => scrollToSection('price-analysis'), 0);
+    } catch (error) { setErrors({ form: normalizeSaleWorkspaceError(error).message }); }
+  };
 
+  const snapshot = () => ({ capturedAt: new Date().toISOString(), seller: seller ? { id: seller.id, name: seller.name, country: seller.country } : null,
+    customer: customerContext, authorization: selectedSetting, contract: selectedContract, stockAvailableOz: availableStockOz,
+    physicalEligibility: saleEligibility?.diagnostic ?? null, market: market ? { spotPriceUsdOz: market.spotPriceUsdOz, previousCloseUsdOz: market.previousCloseUsdOz,
+      goldPriceSource: market.goldPriceSource, goldPriceUpdatedAt: market.goldPriceUpdatedAt, usdXofRate: market.usdXofRate, fxSource: market.fxSource,
+      fxRateDate: market.fxRateDate, royaltyRatePct: market.royaltyRatePct, projectionMethod: 'unavailable' } : null, calculation: summary });
+
+  const persistDraft = async (notify: boolean) => {
+    if (!validateCurrent()) return null; setSaving(true);
+    try {
+      const saved = await saveSaleDraft({ draftId: draft?.id ?? null, expectedVersion: draft?.version ?? null, idempotencyKey, inputs, snapshot: snapshot() });
+      setDraft(saved); setDirty(false); if (notify) alert.success(`Brouillon ${saved.draftNumber} enregistré sans réservation de stock.`); return saved;
+    } catch (error) { const failure = normalizeSaleWorkspaceError(error); setErrors({ [failure.field ?? 'form']: failure.message }); return null; }
+    finally { setSaving(false); }
+  };
+
+  const submit = async () => {
+    if (!validateCurrent() || !analyzed) { if (!analyzed) setErrors((current) => ({ ...current, form: 'Actualisez l’analyse du prix avant la soumission.' })); return; }
     setSubmitting(true);
     try {
-      const requestedQuantityOz = typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz);
-
-      const currentEligibility = isMineAccount
-        ? null
-        : await tracabiliteVenteService.lotsDisponibles();
-      const composition = isMineAccount
-        ? { affectations: [], resteOz: 0, couverte: true }
-        : composer(currentEligibility?.lots ?? [], requestedQuantityOz);
-      if (!isMineAccount) {
-        const eligibilityRefusal = currentEligibility
-          ? messageIndisponibiliteLots(currentEligibility)
-          : 'La disponibilité physique des lots n’a pas pu être vérifiée.';
-        if (eligibilityRefusal) {
-          alert.error(eligibilityRefusal);
-          setSubmitting(false);
-          return;
-        }
-        const refus = validerComposition(composition, requestedQuantityOz);
-        if (refus) {
-          alert.error(refus);
-          setSubmitting(false);
-          return;
-        }
-      }
-
-      const commonSale = {
-        customerId: formData.customerId,
-        quantityOz: requestedQuantityOz,
-        londonAmRate: parseFloat(formData.londonAMRate),
-        freightCost: parseFloat(formData.freightCost) || 0,
-        otherCosts: parseFloat(formData.otherCosts) || 0,
-        mechanismType: formData.mechanismType,
-        inProcessRefineryId: formData.inProcessRefineryId || undefined,
-      };
-      const result = isMineAccount
-        ? await createMineExportSale(commonSale)
-        : await createExportSale({
-            ...commonSale,
-            sellerId: formData.miningCompanyId,
-            lots: composition.affectations,
-          });
-
-      if (!result.success || !result.data) {
-        alert.error(result.error || "La vente n'a pas pu être créée.");
-        return;
-      }
-
-      alert.success(
-        `Vente ${result.data.sale_number} enregistrée et transmise à la direction pour validation.`
-      );
-      setTimeout(() => {
-        navigate('/sales');
-      }, 100);
-    } catch (error: unknown) {
-      console.error('Error creating sale:', error);
-      alert.error("La vente n'a pas pu être créée. Aucune écriture partielle n'a été conservée.");
-    } finally {
-      setSubmitting(false);
-    }
+      const saved = await persistDraft(false); if (!saved) return; let lots: Array<{ source_type: string; source_id: string; quantite_oz: number }> = [];
+      if (!isMineAccount) { const eligibility = await tracabiliteVenteService.lotsDisponibles(); const unavailable = messageIndisponibiliteLots(eligibility); if (unavailable) throw new Error(unavailable);
+        const quantityOz = quantityToOunces(inputs.quantity, inputs.unit); const composition = composer(eligibility.lots, quantityOz); const refusal = validerComposition(composition, quantityOz); if (refusal) throw new Error(refusal); lots = composition.affectations; }
+      const result = await submitSaleDraft({ draftId: saved.id, expectedVersion: saved.version, lots }); setDirty(false); alert.success(`Vente ${result.saleNumber} transmise à la direction pour validation.`); navigate(`/sales/${result.saleId}`);
+    } catch (error) { const failure = normalizeSaleWorkspaceError(error); setErrors({ [failure.field ?? 'form']: failure.message }); }
+    finally { setSubmitting(false); }
   };
 
-  const calculations = formData.quantityOz && formData.londonAMRate
-    ? calculateSaleProceeds(
-        (typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)) || 0,
-        parseFloat(formData.londonAMRate) || 0,
-        parseFloat(formData.freightCost) || 0,
-        parseFloat(formData.otherCosts) || 0
-      )
-    : null;
+  const cancel = () => { if ((dirty || draft) && !window.confirm('Des informations ont été saisies. Voulez-vous quitter cette vente ?')) return; navigate('/sales'); };
+  const activeStep = !form.customerId ? 1 : !analyzed ? 2 : draft?.status === 'submitted' ? 4 : 3;
+  const canSave = Boolean(seller && form.customerId && summary && !saving && !submitting); const canSubmit = canSave && analyzed && customerContext?.isActive === true;
+  const stockProblem = stockExport?.decouvert || mineStock?.overAllocated || saleEligibility?.diagnostic.blocked;
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loading />
-        </div>
-      </MainLayout>
-    );
-  }
+  if (loading) return <MainLayout><main className="sn-page sale-create"><div className="sale-create__loading" role="status"><div><span aria-hidden="true" /><p>Chargement sécurisé du formulaire de vente…</p></div></div></main></MainLayout>;
 
-  return (
-    <MainLayout>
-      <div className={`transition-all duration-300 space-y-6 ${showInvoicePreview ? 'max-w-5xl mr-[600px] ml-auto' : 'max-w-5xl mx-auto'}`}>
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2"
-            disabled={submitting}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour
-          </Button>
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-gray-900">
-              Créer une vente export
-            </h1>
-            <p className="text-gray-600 mt-1">
-              {mechanismData
-                ? `Based on ${mechanismData.displayName} pricing mechanism`
-                : 'Définissez la quantité, le client et les conditions de vente'}
-            </p>
+  return <MainLayout><main className="sn-page sale-create">
+    <header className="sale-create__header"><div><div className="sale-create__breadcrumb"><span>Ventes internationales</span><span>/</span><strong>Nouvelle vente</strong></div><h1>Créer une vente internationale</h1><p>Définissez le client, le volume et les conditions commerciales avant validation.</p></div>
+      <div className="sale-create__header-actions"><button className="sale-create__button" type="button" onClick={() => void persistDraft(true)} disabled={!canSave}><Save aria-hidden="true" />{saving ? 'Enregistrement…' : 'Enregistrer le brouillon'}</button><button className="sale-create__button sale-create__button--primary" type="button" onClick={() => void submit()} disabled={!canSubmit}><Send aria-hidden="true" />{submitting ? 'Soumission…' : 'Soumettre pour validation'}</button></div></header>
+    <CreationStepper activeStep={activeStep} />
+    {loadError && <div className="sale-create__notice" role="alert"><strong>Chargement incomplet.</strong> {loadError}</div>}
+    {errors.form && <div className="sale-create__notice" role="alert">{errors.form}</div>}
+    {draft && !errors.form && <div className="sale-create__notice is-success" role="status">Brouillon {draft.draftNumber} · version {draft.version} · dernière sauvegarde {new Date(draft.updatedAt).toLocaleString('fr-FR')}.</div>}
+    <div className="sale-create__workspace">
+      <section className="sale-create__panel" aria-label="Paramètres de la vente">
+        <div id="seller-client" className="sale-create__section"><h2 className="sale-create__section-title">1. Vendeur et client <span>Le vendeur provient du compte connecté.</span></h2>
+          <div className="sale-create__seller"><div className="sale-create__seller-main"><span className="sale-create__seller-icon"><Landmark aria-hidden="true" /></span><div><strong>{seller?.name ?? 'Vendeur indisponible'}</strong><small>{seller?.country ?? '—'} · vendeur verrouillé</small></div></div><div className="sale-create__stock"><span>Stock exportable vérifié</span><strong>{number(availableStockOz, 3)} oz</strong></div></div>
+          <p className={`sale-create__stock-note${!stockProblem && availableStockOz > 0 ? ' is-valid' : ''}`}><LockKeyhole aria-hidden="true" />{stockProblem ? 'Un contrôle de stock bloque actuellement la soumission.' : 'Le stock est contrôlé à nouveau sous verrou transactionnel lors de la soumission.'}</p>
+          <div className="sale-create__customer-search"><label htmlFor="customer-search" className="sale-create__section-title">Client international autorisé</label><Search aria-hidden="true" /><input id="customer-search" type="search" value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} placeholder={selectedSetting?.customer_name ?? 'Rechercher un client actif…'} autoComplete="off" />
+            <div className="sale-create__customer-options" role="listbox" aria-label="Clients internationaux autorisés">{filteredCustomers.length === 0 ? <p className="sale-create__help">Aucun client autorisé ne correspond à la recherche.</p> : filteredCustomers.map((customer) => <button key={customer.customer_id} type="button" role="option" aria-selected={form.customerId === customer.customer_id} onClick={() => { setField('customerId', customer.customer_id); setCustomerSearch(customer.customer_name); }}><span>{customer.customer_name}</span><small>{form.customerId === customer.customer_id ? 'Sélectionné' : 'Autorisé'}</small></button>)}</div>{errors.customerId && <p className="sale-create__error" role="alert">{errors.customerId}</p>}
           </div>
         </div>
-
-        {/* Pricing Mechanism Info (from Gold Trade Space) */}
-        {mechanismData && (
-          <Card className="border-2 border-emerald-500 bg-gradient-to-r from-emerald-50 to-teal-50">
-            <CardHeader className="border-b border-emerald-200 bg-emerald-100/50 py-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-emerald-900 flex items-center gap-2 text-base">
-                    <TrendingUp className="h-4 w-4" />
-                    Selected Pricing Mechanism
-                  </CardTitle>
-                  <p className="text-xs text-emerald-700 mt-0.5">{mechanismData.description}</p>
-                </div>
-                <div className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg">
-                  <p className="text-xs mb-0.5">MECHANISM</p>
-                  <p className="text-base">{mechanismData.displayName}</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="py-2">
-              <div className="grid grid-cols-4 gap-2">
-                <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-0.5">Price per oz</p>
-                  <p className="text-lg text-emerald-700">
-                    ${mechanismData.pricePerOz.toFixed(2)}
-                  </p>
-                  {mechanismData.adjustmentPercentage !== 0 && (
-                    <p className={`text-xs mt-0.5 ${
-                      mechanismData.adjustmentPercentage > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {mechanismData.adjustmentPercentage > 0 ? '+' : ''}{mechanismData.adjustmentPercentage.toFixed(3)}%
-                    </p>
-                  )}
-                </div>
-                <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-0.5">Simulated Quantity</p>
-                  <p className="text-lg text-gray-900">
-                    {(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')).toFixed(3)} oz
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0')) * 31.1034768).toFixed(2)} g
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-0.5">Estimated Value</p>
-                  <p className="text-lg text-gray-900">
-                    ${(((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0'))) * mechanismData.pricePerOz).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm border border-emerald-200">
-                  <p className="text-xs text-gray-600 mb-0.5">Value Date</p>
-                  <p className="text-sm text-gray-900">
-                    {new Date(mechanismData.valueDate).toLocaleDateString()}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">{mechanismData.settlementDays} days</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {errors.inProcessRefineryId && (
-          <Alert type="error" title="Raffinerie requise">
-            {errors.inProcessRefineryId} Revenez à l’espace de négoce pour choisir une raffinerie agréée.
-          </Alert>
-        )}
-
-        {/* Seller and Customer Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Vendeur et client
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Vendeur déterminé par le compte authentifié */}
-              <div>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    Vendeur
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <p className="text-xs text-gray-600">
-                    {isMineAccount
-                      ? "Votre société peut vendre à l’international la production qui n’a pas été rachetée par la SONASP."
-                      : "La SONASP vend à l’international l’or qu’elle a acquis auprès des mines et des artisans miniers."}
-                  </p>
-                </div>
-
-                {!selectedMiningCompany && (
-                  <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                    <Building2 className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">Vendeur indisponible</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      La société rattachée à votre compte n’est pas disponible dans le référentiel.
-                    </p>
-                  </div>
-                )}
-
-                {selectedMiningCompany && (
-                  <div>
-                    <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Building2 className="h-4 w-4 text-amber-700" />
-                            <h3 className="text-base text-gray-900">{selectedMiningCompany.name}</h3>
-                          </div>
-                          <div className="space-y-1 text-sm ml-6">
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-600">Sigle :</span>
-                              <span className="text-gray-900">{selectedMiningCompany.abbreviation || 'SONASP'}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-600">Pays :</span>
-                              <span className="text-gray-900">{selectedMiningCompany.country || 'Burkina Faso'}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right ml-4 bg-white rounded-lg px-3 py-2 border border-amber-200">
-                          <p className="text-xs text-gray-600 mb-0.5">
-                            {isMineAccount ? 'Stock exportable' : 'Stock physique éligible'}
-                          </p>
-                          <p className={`text-xl ${availableInventoryOz > 0 ? 'text-amber-700' : 'text-red-600'}`}>
-                            {loadingInventory ? '…' : `${availableInventoryOz.toFixed(3)} oz`}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {loadingInventory ? '' : `${availableInventory.availableGrams.toFixed(2)} g`}
-                          </p>
-                        </div>
-                      </div>
-
-                      {stockExport && !loadingInventory && (
-                        <div className="mt-3 pt-3 border-t border-amber-200 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-                          <div>
-                            <p className="text-gray-600">Acheté aux mines</p>
-                            <p className="text-gray-900">{stockExport.achatMinesOz.toFixed(3)} oz</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Acheté aux artisans</p>
-                            <p className="text-gray-900">{stockExport.achatArtisansOz.toFixed(3)} oz</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Cédé par les comptoirs</p>
-                            <p className="text-gray-900">{stockExport.cessionComptoirsOz.toFixed(3)} oz</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Déjà vendu à l’export</p>
-                            <p className="text-gray-900">{stockExport.venduOz.toFixed(3)} oz</p>
-                          </div>
-                          <p className="col-span-2 text-gray-600 sm:col-span-4">
-                            Ces totaux décrivent les acquisitions. Seuls les achats miniers reliés au stock physique
-                            sont inclus dans le stock éligible affiché ci-dessus.
-                          </p>
-                        </div>
-                      )}
-
-                      {mineStock && !loadingInventory && (
-                        <div className="mt-3 grid grid-cols-3 gap-3 border-t border-amber-200 pt-3 text-xs">
-                          <div>
-                            <p className="text-gray-600">Production déclarée</p>
-                            <p className="text-gray-900">{mineStock.productionOz.toFixed(3)} oz</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Rachetée par la SONASP</p>
-                            <p className="text-gray-900">{mineStock.purchasedBySonaspOz.toFixed(3)} oz</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Déjà engagée à l’export</p>
-                            <p className="text-gray-900">{mineStock.soldByMineOz.toFixed(3)} oz</p>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="mt-2 pt-2 border-t border-amber-200">
-                        <div className="flex items-center gap-2 text-xs text-amber-800">
-                          <Lock className="h-3 w-3" />
-                          <span>Le vendeur est déterminé par votre compte et ne peut pas être modifié.</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {stockExport?.decouvert && (
-                      <Alert type="error" title="Stock à découvert" className="mt-3">
-                        Les ventes enregistrées dépassent les achats : {stockExport.venduOz.toFixed(3)} oz vendues pour{' '}
-                        {stockExport.entreesOz.toFixed(3)} oz acquises. Régularisez les achats avant toute nouvelle vente.
-                      </Alert>
-                    )}
-
-                    {eligibilityLoadFailed && (
-                      <Alert type="error" title="Vérification physique indisponible" className="mt-3">
-                        La chaîne achat–production–fret–inventaire n’a pas pu être vérifiée. La création reste
-                        bloquée afin de ne proposer aucun stock incertain.
-                      </Alert>
-                    )}
-
-                    {saleEligibility?.diagnostic.blocked && (
-                      <Alert type="error" title="Rapprochement physique requis" className="mt-3">
-                        Des ventes historiques doivent être rapprochées du stock physique avant toute nouvelle
-                        vente export. Aucun détail hors de votre périmètre n’est affiché.
-                      </Alert>
-                    )}
-
-                    {!saleEligibility?.diagnostic.blocked
-                      && (saleEligibility?.diagnostic.excludedUntraceableSourceCount ?? 0) > 0 && (
-                      <Alert type="warning" title="Filières sans provenance physique complète" className="mt-3">
-                        Les acquisitions artisanales et les cessions de comptoir ne sont pas proposées tant
-                        qu’elles ne sont pas reliées à une production, un fret reçu en stock et un inventaire
-                        raffiné vérifiables.
-                      </Alert>
-                    )}
-
-                    {mineStock?.overAllocated && (
-                      <Alert type="error" title="Production surallouée" className="mt-3">
-                        Les achats SONASP et les ventes engagées dépassent la production déclarée. Aucune nouvelle vente
-                        n’est autorisée avant régularisation.
-                      </Alert>
-                    )}
-
-                    {!loadingInventory
-                      && availableInventoryOz === 0
-                      && !stockExport?.decouvert
-                      && !mineStock?.overAllocated
-                      && !eligibilityLoadFailed
-                      && !saleEligibility?.diagnostic.blocked
-                      && (saleEligibility?.diagnostic.excludedUntraceableSourceCount ?? 0) === 0 && (
-                      <Alert type="warning" title="Aucun stock disponible" className="mt-3">
-                        {isMineAccount
-                          ? "Toute votre production disponible est déjà rachetée ou engagée dans une vente."
-                          : "Aucun achat minier ne dispose d’une chaîne physique complète jusqu’au stock raffiné."}
-                      </Alert>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Customer */}
-              <div>
-                <FormField
-                  label="Customer (Authorized Buyer)"
-                  required
-                  error={errors.customerId}
-                  hint={
-                    !formData.miningCompanyId
-                      ? 'Select a seller first to see authorized customers'
-                      : authorizedCustomers.length === 0
-                        ? 'No authorized customers found for this seller'
-                        : 'Select from authorized customers based on Gold Sales Settings'
-                  }
-                >
-                  <Select
-                    value={formData.customerId}
-                    onChange={(e) => handleInputChange('customerId', e.target.value)}
-                    error={!!errors.customerId}
-                    disabled={!formData.miningCompanyId || authorizedCustomers.length === 0}
-                  >
-                    <option value="">Select customer</option>
-                    {authorizedCustomers.map((customer) => (
-                      <option key={customer.customer_id} value={customer.customer_id}>
-                        {customer.customer_name}
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
-
-                {selectedCustomer && (
-                  <div className="mt-3 px-4 py-2.5 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2 ml-2">
-                      <User className="h-4 w-4 text-purple-600" />
-                      <h4 className="text-sm text-gray-900">{selectedCustomer.customer_name}</h4>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 ml-6">
-                      <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-0.5">Max Stock %</p>
-                        <p className="text-base text-purple-700">{selectedCustomer.max_stock_percentage}%</p>
-                      </div>
-                      <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-0.5">Sale Method</p>
-                        <p className="text-sm text-gray-900">{selectedCustomer.sale_method}</p>
-                      </div>
-                      <div className="bg-white rounded-lg px-2.5 py-2 shadow-sm">
-                        <p className="text-xs text-gray-600 mb-0.5">Fees</p>
-                        <div className="text-xs space-y-0.5">
-                          <p className={selectedCustomer.refining_fees_paid_by_customer ? 'text-green-600' : 'text-red-600'}>
-                            Refining: {selectedCustomer.refining_fees_paid_by_customer ? 'Customer' : 'Seller'}
-                          </p>
-                          <p className={selectedCustomer.transport_fees_paid_by_customer ? 'text-green-600' : 'text-red-600'}>
-                            Transport: {selectedCustomer.transport_fees_paid_by_customer ? 'Customer' : 'Seller'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Sale Details */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                <FormField
-                  label="Quantity to Sell"
-                  required
-                  error={errors.quantityOz}
-                >
-                  <WeightInput
-                    value={ouncesToGrams(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz || '0'))}
-                    onChange={(grams) => handleInputChange('quantityOz', gramsToOunces(grams).toString())}
-                    placeholder="Enter quantity"
-                    error={!!errors.quantityOz}
-                    defaultUnit="oz"
-                    showConversion={true}
-                  />
-                  {formData.miningCompanyId && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Max available: {availableInventoryOz.toFixed(3)} oz
-                    </p>
-                  )}
-                </FormField>
-
-                <FormField
-                  label="Sale Price (USD/oz)"
-                  required
-                  error={errors.londonAMRate}
-                  hint={mechanismData ? 'Price locked from pricing mechanism' : 'Enter sale price per ounce'}
-                >
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.londonAMRate}
-                    onChange={(e) => handleInputChange('londonAMRate', e.target.value)}
-                    error={!!errors.londonAMRate}
-                    placeholder="0.00"
-                    className={mechanismData ? 'bg-emerald-50 font-semibold' : ''}
-                    disabled={!!mechanismData}
-                  />
-                </FormField>
-              </div>
-
-              {/* Costs */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Freight Cost (USD)"
-                  hint="Optional transportation cost"
-                >
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.freightCost}
-                    onChange={(e) => handleInputChange('freightCost', e.target.value)}
-                    placeholder="0.00"
-                  />
-                </FormField>
-
-                <FormField
-                  label="Other Costs (USD)"
-                  hint="Optional additional costs"
-                >
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.otherCosts}
-                    onChange={(e) => handleInputChange('otherCosts', e.target.value)}
-                    placeholder="0.00"
-                  />
-                </FormField>
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleCalculate}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Package className="h-4 w-4" />
-                  Calculate Invoice
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Professional Invoice Preview */}
-        {showCalculations && calculations && (
-          <Card className="border-2 border-slate-300 shadow-lg">
-            <CardHeader className="bg-[#B8860B] text-white py-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Professional Invoice
-              </CardTitle>
-              <p className="text-sm text-white/90 mt-1">
-                Invoice calculation summary
-              </p>
-            </CardHeader>
-            <CardContent className="p-6">
-              {/* Summary Grid */}
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                {/* Seller Info */}
-                <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-[#B8860B]">
-                  <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    SELLER
-                  </h3>
-                  {selectedMiningCompany && (
-                    <>
-                      <p className="font-bold text-gray-900">{selectedMiningCompany.name}</p>
-                      <p className="text-sm text-gray-600">{selectedMiningCompany.country}</p>
-                    </>
-                  )}
-                </div>
-
-                {/* Customer Info */}
-                <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-slate-600">
-                  <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    CUSTOMER
-                  </h3>
-                  {selectedCustomer && (
-                    <>
-                      <p className="font-bold text-gray-900">{selectedCustomer.customer_name}</p>
-                      <p className="text-sm text-gray-600">Payment Method: {selectedCustomer.sale_method}</p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Calculation Summary */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm text-gray-600">Fine Gold Quantity</span>
-                  <span className="font-semibold text-gray-900">
-                    {(typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)).toFixed(3)} oz
-                    <span className="text-sm text-gray-500 ml-2">
-                      ({((typeof formData.quantityOz === 'number' ? formData.quantityOz : parseFloat(formData.quantityOz)) * 31.1034768).toFixed(2)} g)
-                    </span>
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm text-gray-600">Price per oz</span>
-                  <span className="font-semibold text-gray-900">{formatCurrency(parseFloat(formData.londonAMRate))}</span>
-                </div>
-
-                <div className="flex justify-between items-center py-3 bg-amber-50 px-3 rounded">
-                  <span className="font-semibold text-amber-900">Gross Proceeds</span>
-                  <span className="text-lg font-bold text-amber-800">{formatCurrency(calculations.grossProceeds)}</span>
-                </div>
-
-                {calculations.freight > 0 && (
-                  <div className="flex justify-between items-center py-2 pl-6">
-                    <span className="text-sm text-gray-600">Less: Freight Cost</span>
-                    <span className="font-semibold text-red-600">-{formatCurrency(calculations.freight)}</span>
-                  </div>
-                )}
-
-                {calculations.otherCosts > 0 && (
-                  <div className="flex justify-between items-center py-2 pl-6">
-                    <span className="text-sm text-gray-600">Less: Other Costs</span>
-                    <span className="font-semibold text-red-600">-{formatCurrency(calculations.otherCosts)}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center py-3 bg-slate-50 px-3 rounded">
-                  <span className="font-semibold text-slate-800">Net Proceeds</span>
-                  <span className="text-lg font-bold text-slate-700">{formatCurrency(calculations.netProceeds)}</span>
-                </div>
-
-                <div className="flex justify-between items-center py-2 pl-6">
-                  <span className="text-sm text-gray-600">Less: Royalties (3%)</span>
-                  <span className="font-semibold text-red-600">-{formatCurrency(calculations.royalties)}</span>
-                </div>
-
-                <div className="flex justify-between items-center py-4 bg-gradient-to-r from-[#B8860B] to-[#8B6914] px-4 rounded-lg shadow-lg mt-4">
-                  <span className="text-lg font-bold text-white">TOTAL AMOUNT</span>
-                  <span className="text-2xl font-bold text-white">{formatCurrency(calculations.finalAmount)}</span>
-                </div>
-              </div>
-
-              {/* PDF Notice */}
-              <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-slate-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Professional Invoice PDF</p>
-                    <p className="text-xs text-slate-700 mt-1">
-                      The professional PDF invoice includes company logos, detailed seller/customer information,
-                      line items, payment terms, and meets international invoicing standards.
-                      Use the buttons above to preview or download.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Actions */}
-        <div className="flex justify-between items-center pt-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            disabled={submitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!showCalculations || submitting}
-            className="px-8"
-          >
-            {submitting ? 'Creating Sale...' : 'Create Sale'}
-          </Button>
+        <div id="sale-conditions" className="sale-create__section"><h2 className="sale-create__section-title">2. Conditions de la vente <span>Montants exprimés dans la devise de règlement.</span></h2>
+          <div className="sale-create__fields">
+            <Field label="Quantité à vendre" controlId="sale-quantity" error={errors.quantity} help={`Disponible : ${number(availableStockOz, 3)} oz`}><div className="sale-create__affix"><input id="sale-quantity" type="number" min="0" step="any" value={form.quantity} onChange={(event) => setField('quantity', event.target.value)} aria-invalid={Boolean(errors.quantity)} /><select aria-label="Unité de poids" value={form.unit} onChange={(event) => setField('unit', event.target.value as SaleWeightUnit)}><option value="oz">oz</option><option value="g">g</option></select></div></Field>
+            <Field label="Prix proposé" controlId="sale-price" error={errors.proposedPriceUsdOz} help={market?.spotPriceUsdOz ? `Cours de référence : ${money(market.spotPriceUsdOz)}/oz` : 'Cours de référence indisponible'}><div className="sale-create__affix"><input id="sale-price" type="number" min="0" step="0.01" value={form.proposedPrice} onChange={(event) => setField('proposedPrice', event.target.value)} aria-invalid={Boolean(errors.proposedPriceUsdOz)} /><span>USD/oz</span></div></Field>
+            <Field label="Date de fixation du prix" controlId="sale-fixing-date" error={errors.fixingDate}><input id="sale-fixing-date" type="date" value={form.fixingDate} onChange={(event) => setField('fixingDate', event.target.value)} aria-invalid={Boolean(errors.fixingDate)} /></Field>
+            <Field label="Devise de règlement" controlId="sale-currency"><select id="sale-currency" value={form.settlementCurrency} disabled><option value="USD">USD — Dollar américain</option></select></Field>
+            <Field label="Frais de transport" controlId="sale-freight" error={errors.freightCostUsd}><div className="sale-create__affix"><input id="sale-freight" type="number" min="0" step="0.01" value={form.freightCost} onChange={(event) => setField('freightCost', event.target.value)} aria-invalid={Boolean(errors.freightCostUsd)} /><span>USD</span></div></Field>
+            <Field label="Autres frais" controlId="sale-other-costs" error={errors.otherCostsUsd}><div className="sale-create__affix"><input id="sale-other-costs" type="number" min="0" step="0.01" value={form.otherCosts} onChange={(event) => setField('otherCosts', event.target.value)} aria-invalid={Boolean(errors.otherCostsUsd)} /><span>USD</span></div></Field>
+            <Field label="Mode de fixation" controlId="sale-fixing-method"><select id="sale-fixing-method" value={form.fixingMethod} onChange={(event) => setField('fixingMethod', event.target.value as SaleFixingMethod)}><option value="spot">Prix fixé à la date de valeur</option><option value="forward">Prix à terme</option><option value="in_process">Prix en cours de traitement</option></select></Field>
+            <Field label="Délai de paiement" controlId="sale-payment-days" error={errors.paymentTermDays}><div className="sale-create__affix"><input id="sale-payment-days" type="number" min="0" max="365" step="1" value={form.paymentTermDays} onChange={(event) => setField('paymentTermDays', event.target.value)} aria-invalid={Boolean(errors.paymentTermDays)} /><span>jours</span></div></Field>
+            <Field label="Contrat applicable" controlId="sale-contract" error={errors.customerContractId} wide><select id="sale-contract" value={form.customerContractId} onChange={(event) => { const contract = customerContext?.contracts.find((item) => item.id === event.target.value); setField('customerContractId', event.target.value); const days = parsePaymentDays(contract?.paymentTerms); if (days !== null) setField('paymentTermDays', String(days)); }} disabled={!customerContext || customerContext.contracts.length === 0}><option value="">{customerContext?.contracts.length ? 'Autorisation sans contrat sélectionné' : 'Aucun contrat client actif'}</option>{customerContext?.contracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.contractNumber} · valide jusqu’au {new Date(contract.validUntil).toLocaleDateString('fr-FR')}</option>)}</select></Field>
+            {form.fixingMethod === 'in_process' && <Field label="Raffinerie agréée" controlId="sale-refinery" error={errors.inProcessRefineryId} wide><select id="sale-refinery" value={form.inProcessRefineryId} onChange={(event) => setField('inProcessRefineryId', event.target.value)} aria-invalid={Boolean(errors.inProcessRefineryId)}><option value="">Sélectionner une raffinerie</option>{refineries.map((refinery) => <option key={refinery.id} value={refinery.id}>{refinery.name} · {refinery.location}</option>)}</select></Field>}
+          </div>
+          <div className="sale-create__form-summary" aria-live="polite"><span>Montant brut estimé</span><strong>{summary ? money(summary.grossUsd) : '—'}</strong><strong>{summary ? money(summary.grossXof, 'XOF', 0) : '—'}</strong></div>
+          <div id="sale-actions" className="sale-create__form-footer"><span className="sale-create__save-state">{draft ? `${dirty ? 'Modifications non enregistrées' : 'Brouillon à jour'} · ${draft.draftNumber}` : 'Aucun brouillon enregistré'}</span><div className="sale-create__actions"><button className="sale-create__button" type="button" onClick={cancel}>Annuler</button><button className="sale-create__button" type="button" onClick={() => void persistDraft(true)} disabled={!canSave}><FileText aria-hidden="true" />Enregistrer</button><button className="sale-create__button sale-create__button--primary" type="button" onClick={() => void analyzeSale()} disabled={!canSave}><Calculator aria-hidden="true" />Analyser la vente</button></div></div>
         </div>
-
-        {/* Info Alert */}
-        {showCalculations && (
-          <Alert type="info" title="Next Steps">
-            After creating this sale, the customer will receive an email notification for approval.
-            Once approved, you can proceed with payment processing.
-          </Alert>
-        )}
-      </div>
-
-      {/* Invoice Preview Panel */}
-      <InvoicePreviewPanel
-        data={invoicePreviewData}
-        isVisible={showInvoicePreview}
-      />
-    </MainLayout>
-  );
+      </section>
+      <CustomerContextPanel context={customerContext} loading={customerLoading} selectedSetting={selectedSetting} selectedContract={selectedContract} />
+    </div>
+    <PriceAnalysisPanel market={market} proposedPrice={inputs.proposedPriceUsdOz} analyzed={analyzed} />
+    <section className="sale-create__panel sale-create__analysis" aria-labelledby="journey-title"><div className="sale-create__analysis-head"><div><h2 id="journey-title">Parcours de la vente</h2><p>Les contrôles aval restent inchangés et s’appuient sur la vente validée.</p></div></div><div className="sale-create__analysis-grid">
+      <div className="sale-create__price-card is-current"><Calculator aria-hidden="true" /><strong>Préparation</strong><small>Brouillon et analyse</small></div><div className="sale-create__price-card"><FileCheck2 aria-hidden="true" /><strong>Validation</strong><small>Revue et approbation</small></div><div className="sale-create__price-card"><WalletCards aria-hidden="true" /><strong>Contrat et paiement</strong><small>Facturation et règlement</small></div><div className="sale-create__price-card"><PackageCheck aria-hidden="true" /><strong>Expédition et conciliation</strong><small>Traçabilité jusqu’à la clôture</small></div>
+    </div></section>
+  </main></MainLayout>;
 }

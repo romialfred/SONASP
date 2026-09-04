@@ -341,6 +341,8 @@ describe('NationalDashboardLayout', () => {
     const language = screen.getByRole('button', { name: /FR/i });
     await user.click(language);
     expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Français' })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('menuitem', { name: 'Anglais — bientôt disponible' })).toBeDisabled();
 
     await user.click(screen.getByRole('button', { name: 'Ouvrir le menu utilisateur' }));
     expect(language).toHaveAttribute('aria-expanded', 'false');

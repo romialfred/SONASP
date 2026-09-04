@@ -11,32 +11,32 @@ interface WorkflowStep {
 const WORKFLOW_STEPS: WorkflowStep[] = [
   {
     status: 'pending',
-    label: 'Pending Approval',
-    description: 'Awaiting management approval',
+    label: 'En attente d’approbation',
+    description: 'Validation de la direction requise',
     icon: Clock
   },
   {
     status: 'approved',
-    label: 'Management Approved',
-    description: 'Management approved the sale',
+    label: 'Approuvée par la direction',
+    description: 'Vente validée par la direction',
     icon: CheckCircle
   },
   {
     status: 'customer_approved',
-    label: 'Customer Approved',
-    description: 'Customer accepted the sale',
+    label: 'Approuvée par le client',
+    description: 'Vente acceptée par le client',
     icon: CheckCircle
   },
   {
     status: 'payment_received',
-    label: 'Payment Received',
-    description: 'Payment confirmed',
+    label: 'Paiement reçu',
+    description: 'Encaissement confirmé',
     icon: DollarSign
   },
   {
     status: 'completed',
-    label: 'Completed',
-    description: 'Sale finalized',
+    label: 'Terminée',
+    description: 'Vente finalisée',
     icon: Send
   }
 ];
@@ -72,7 +72,7 @@ export function SalesWorkflowProgressPanel({
       <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
         <CardTitle className="text-base flex items-center gap-2">
           <FileCheck className="h-5 w-5 text-blue-600" />
-          Sales Workflow Progress
+          Progression du circuit de vente
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
@@ -134,7 +134,7 @@ export function SalesWorkflowProgressPanel({
                       <div className="mt-1 flex items-center gap-1">
                         <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" />
                         <span className="text-xs text-yellow-700 font-medium">
-                          Current stage
+                          Étape actuelle
                         </span>
                       </div>
                     )}
@@ -142,7 +142,7 @@ export function SalesWorkflowProgressPanel({
                       <div className="mt-1 flex items-center gap-1">
                         <CheckCircle className="w-3 h-3 text-green-600" />
                         <span className="text-xs text-green-600 font-medium">
-                          Completed
+                          Terminée
                         </span>
                       </div>
                     )}
@@ -160,14 +160,14 @@ export function SalesWorkflowProgressPanel({
                   <XCircle className="h-5 w-5" />
                 </div>
                 <div className="flex-1 pt-1">
-                  <p className="text-sm font-semibold text-red-900">Rejected</p>
+                  <p className="text-sm font-semibold text-red-900">Rejetée</p>
                   <p className="text-xs text-red-600 mt-0.5">
-                    Sale was rejected
+                    La vente a été rejetée.
                   </p>
                   <div className="mt-1 flex items-center gap-1">
                     <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
                     <span className="text-xs text-red-700 font-medium">
-                      Current stage
+                      Étape actuelle
                     </span>
                   </div>
                 </div>
@@ -179,10 +179,10 @@ export function SalesWorkflowProgressPanel({
         {/* Progress summary */}
         <div className="mt-6 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-600">Progress</span>
+            <span className="text-gray-600">Progression</span>
             <span className="font-semibold text-gray-900">
               {isRejected ? (
-                <span className="text-red-600">Rejected</span>
+                <span className="text-red-600">Rejetée</span>
               ) : (
                 <>
                   {currentStepIndex + 1} / {WORKFLOW_STEPS.length}

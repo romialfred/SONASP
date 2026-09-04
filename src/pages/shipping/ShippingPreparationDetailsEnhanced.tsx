@@ -53,19 +53,19 @@ const getDocumentType = (title: string): { type: string; order: number; icon: an
   const titleLower = title.toLowerCase();
 
   if (titleLower.includes('packing') || titleLower.includes('liste de colisage')) {
-    return { type: 'packing', order: 1, icon: ClipboardList, label: 'Packing List' };
+    return { type: 'packing', order: 1, icon: ClipboardList, label: 'Liste de colisage' };
   }
   if (titleLower.includes('assay') || titleLower.includes('certificat') || titleLower.includes('essai')) {
-    return { type: 'assay', order: 2, icon: FlaskConical, label: 'Assay certificate' };
+    return { type: 'assay', order: 2, icon: FlaskConical, label: 'Certificat d’analyse' };
   }
   if (titleLower.includes('invoice') || titleLower.includes('facture')) {
-    return { type: 'invoice', order: 3, icon: Receipt, label: 'Invoice' };
+    return { type: 'invoice', order: 3, icon: Receipt, label: 'Facture' };
   }
   if (titleLower.includes('consignment') || titleLower.includes('consignation')) {
-    return { type: 'consignment', order: 4, icon: Truck, label: 'Consignment' };
+    return { type: 'consignment', order: 4, icon: Truck, label: 'Consignation' };
   }
 
-  return { type: 'other', order: 5, icon: Paperclip, label: 'Other document' };
+  return { type: 'other', order: 5, icon: Paperclip, label: 'Autre document' };
 };
 
 export function ShippingPreparationDetailsEnhanced() {
@@ -104,8 +104,8 @@ export function ShippingPreparationDetailsEnhanced() {
   const loadShippingDetails = async (forceRefresh = false) => {
     if (!id) {
       setError({
-        title: 'ID Invalide',
-        message: "The shipment identifier is missing."
+        title: 'Identifiant invalide',
+        message: "L’identifiant de l’expédition est manquant."
       });
       setLoading(false);
       return;
@@ -122,8 +122,8 @@ export function ShippingPreparationDetailsEnhanced() {
       const prep = await shippingPreparationService.getPreparationById(id);
       if (!prep) {
         setError({
-          title: "Shipment unavailable",
-          message: "The requested shipment could not be found or is not accessible."
+          title: "Expédition indisponible",
+          message: "L’expédition demandée est introuvable ou ne vous est pas accessible."
         });
         setLoading(false);
         return;
@@ -141,14 +141,14 @@ export function ShippingPreparationDetailsEnhanced() {
         const docs = await shippingPreparationService.getDocuments(id);
         setDocuments(docs || []);
       } catch (docError) {
-        console.warn('Error loading documents:', docError);
+        console.warn('Erreur lors du chargement des documents :', docError);
         setDocuments([]);
       }
 
       try {
         await loadCertificates();
       } catch (certError) {
-        console.warn('Error loading certificates:', certError);
+        console.warn('Erreur lors du chargement des certificats :', certError);
         setCertificates([]);
       }
 
@@ -190,10 +190,10 @@ export function ShippingPreparationDetailsEnhanced() {
         if (data) setMiningCompany(data);
       }
     } catch (error: any) {
-      console.error('Error loading shipping details:', error);
+      console.error('Erreur lors du chargement du détail de l’expédition :', error);
       setError({
-        title: "Data unavailable",
-        message: error.message || "Shipment details could not be loaded. Please try again."
+        title: "Données indisponibles",
+        message: error.message || "Impossible de charger le détail de l’expédition. Veuillez réessayer."
       });
     } finally {
       setLoading(false);
@@ -207,11 +207,11 @@ export function ShippingPreparationDetailsEnhanced() {
       if (result.success && result.data && Array.isArray(result.data)) {
         setCertificates(result.data);
       } else {
-        console.warn('Failed to load certificates:', result.error);
+        console.warn('Échec du chargement des certificats :', result.error);
         setCertificates([]);
       }
     } catch (error) {
-      console.warn('Could not load certificates:', error);
+      console.warn('Impossible de charger les certificats :', error);
       setCertificates([]);
     }
   };
@@ -228,15 +228,15 @@ export function ShippingPreparationDetailsEnhanced() {
       const signedUrl = certificate
         ? await getCertificateUrl(reference)
         : await shippingPreparationService.getDocumentUrl(reference);
-      if (!popup) throw new Error("Allow pop-ups to open this document.");
+      if (!popup) throw new Error("Autorisez les fenêtres contextuelles pour ouvrir ce document.");
       popup.location.replace(signedUrl);
     } catch (reason) {
       popup?.close();
       showErrorDialog(
-        'Document unavailable',
-        reason instanceof Error && reason.message.startsWith('Allow pop-ups')
+        'Document indisponible',
+        reason instanceof Error && reason.message.startsWith('Autorisez les fenêtres')
           ? reason.message
-          : 'The private document could not be opened.',
+          : 'Impossible d’ouvrir le document privé.',
       );
     } finally {
       setOpeningDocumentId(null);
@@ -305,30 +305,30 @@ export function ShippingPreparationDetailsEnhanced() {
 
       setStatusHistory(historyWithEmails);
     } catch (error) {
-      console.error('Error loading status history:', error);
+      console.error('Erreur lors du chargement de l’historique des statuts :', error);
       setStatusHistory([]);
     }
   };
 
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "Not specified";
+    if (!dateString) return "Non renseignée";
 
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Invalid date';
-      return date.toLocaleDateString('en-GB', {
+      if (isNaN(date.getTime())) return 'Date non valide';
+      return date.toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: 'long',
         year: 'numeric'
       });
     } catch (error) {
-      return 'Invalid date';
+      return 'Date non valide';
     }
   };
 
   const formatWeight = (grams: number | null | undefined) => {
     if (grams === null || grams === undefined || !Number.isFinite(grams)) return '—';
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(grams);
@@ -338,8 +338,8 @@ export function ShippingPreparationDetailsEnhanced() {
     if (!preparation || !id) return;
 
     const confirmMessages = {
-      'approved_by_customs': "Confirm customs approval?",
-      'ready_for_expedition': "Confirm readiness for shipment?"
+      'approved_by_customs': "Confirmer l’approbation douanière ?",
+      'ready_for_expedition': "Confirmer que la préparation est prête pour l’expédition ?"
     };
 
     const confirmMessage = confirmMessages[newStatus as keyof typeof confirmMessages];
@@ -359,10 +359,10 @@ export function ShippingPreparationDetailsEnhanced() {
           );
 
           await loadShippingDetails(true);
-          showSuccess('Success', `The status was changed successfully to "${newStatus}".`);
+          showSuccess('Statut modifié', `Le statut est désormais « ${SHIPPING_STATUSES[newStatus].label} ».`);
         } catch (err: any) {
-          console.error('Error changing status:', err);
-          showErrorDialog("Error", err.message || "The workflow status could not be updated");
+          console.error('Erreur lors du changement de statut :', err);
+          showErrorDialog("Erreur", err.message || "Impossible de mettre à jour le statut du circuit");
         } finally {
           setLoading(false);
         }
@@ -382,9 +382,9 @@ export function ShippingPreparationDetailsEnhanced() {
     return (
       <NationalDashboardLayout>
         <div className="sn-page text-center py-12">
-          <p className="text-sm text-gray-600">Shipment unavailable</p>
+          <p className="text-sm text-gray-600">Expédition indisponible</p>
           <Button onClick={handleBack} className="mt-4" size="sm">
-            Back to list
+            Retour à la liste
           </Button>
         </div>
       </NationalDashboardLayout>
@@ -407,19 +407,19 @@ export function ShippingPreparationDetailsEnhanced() {
 
       <div className="space-y-6">
         <PageHeader
-          title={`Shipment preparation ${preparation.expedition_lot_number || 'without a lot reference'}`}
-          subtitle={`Created on ${formatDate(preparation.created_at)} · Authoritative quantities, seals and supporting documents.`}
+          title={`Préparation d’expédition ${preparation.expedition_lot_number || 'sans référence de lot'}`}
+          subtitle={`Créée le ${formatDate(preparation.created_at)} · Quantités, scellés et pièces justificatives de référence.`}
           icon={Package}
-          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Gestion des expéditions', to: '/shipping/preparation' }, { label: preparation.expedition_lot_number || 'Preparation details' }]}
+          breadcrumb={[{ label: 'Mine industrielle' }, { label: 'Gestion des expéditions', to: '/shipping/preparation' }, { label: preparation.expedition_lot_number || 'Détail de la préparation' }]}
           actions={<div className="flex items-center gap-3">
             <ShippingStatusBadge status={preparation.status as ShippingStatus} size="md" showIcon />
             {canPrepare && preparation.status === 'waiting_for_customs_approval' && (
               <Button onClick={() => navigate(`/shipping/preparation/${id}/edit`)} variant="outline" size="sm">
-                <Edit className="w-4 h-4 mr-2" />Edit
+                <Edit className="w-4 h-4 mr-2" />Modifier
               </Button>
             )}
             <Button variant="outline" onClick={handleBack} size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />Back to register
+              <ArrowLeft className="w-4 h-4 mr-2" />Retour au registre
             </Button>
           </div>}
         />
@@ -436,12 +436,12 @@ export function ShippingPreparationDetailsEnhanced() {
             tabs={[
               {
                 id: 'details',
-                label: 'Shipment details',
+                label: 'Détail de l’expédition',
                 icon: Package,
               },
               {
                 id: 'signatories',
-                label: "Signatories",
+                label: "Signataires",
                 icon: Users,
                 count: signatories.length,
               },
@@ -453,7 +453,7 @@ export function ShippingPreparationDetailsEnhanced() {
               },
               {
                 id: 'history',
-                label: "History",
+                label: "Historique",
                 icon: History,
                 count: statusHistory.length,
               },
@@ -469,15 +469,15 @@ export function ShippingPreparationDetailsEnhanced() {
                     {/* Informations d'Expédition - Format ligne par ligne */}
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                        Shipment information
+                        Informations sur l’expédition
                       </h3>
                       <div className="space-y-3">
                         <div className="flex items-start">
-                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Mining company:</span>
-                          <span className="text-sm text-gray-900 font-medium">{miningCompany?.name || "Not specified"}</span>
+                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Société minière :</span>
+                          <span className="text-sm text-gray-900 font-medium">{miningCompany?.name || "Non renseignée"}</span>
                         </div>
                         <div className="flex items-start">
-                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Destination refinery:</span>
+                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Raffinerie de destination :</span>
                           <div>
                             {refinery ? (
                               <>
@@ -489,16 +489,16 @@ export function ShippingPreparationDetailsEnhanced() {
                                 )}
                               </>
                             ) : (
-                              <span className="text-sm text-gray-500 italic">Not specified</span>
+                              <span className="text-sm text-gray-500 italic">Non renseignée</span>
                             )}
                           </div>
                         </div>
                         <div className="flex items-start">
-                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Freight company:</span>
-                          <span className="text-sm text-gray-900">{transportCompany?.name || "Not specified"}</span>
+                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Société de transport :</span>
+                          <span className="text-sm text-gray-900">{transportCompany?.name || "Non renseignée"}</span>
                         </div>
                         <div className="flex items-start">
-                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Export licence:</span>
+                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Licence d’exportation :</span>
                           <div>
                             {license ? (
                               <div className="group relative inline-block">
@@ -510,26 +510,26 @@ export function ShippingPreparationDetailsEnhanced() {
                                 <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute z-50 bottom-full left-0 mb-2 w-80 bg-white border border-gray-300 rounded-lg shadow-xl p-4">
                                   <div className="space-y-2">
                                     <div className="flex items-start justify-between border-b border-gray-200 pb-2">
-                                      <h4 className="font-semibold text-gray-900 text-sm">Licence details</h4>
+                                      <h4 className="font-semibold text-gray-900 text-sm">Détail de la licence</h4>
                                       <FileText className="w-4 h-4 text-blue-600" />
                                     </div>
 
                                     <div className="space-y-1.5">
                                       <div className="flex justify-between">
-                                        <span className="text-xs font-medium text-gray-600">Number:</span>
+                                        <span className="text-xs font-medium text-gray-600">Numéro :</span>
                                         <span className="text-xs text-gray-900 font-semibold">{license.license_number}</span>
                                       </div>
 
                                       {license.start_date && (
                                         <div className="flex justify-between">
-                                          <span className="text-xs font-medium text-gray-600">Issued on:</span>
+                                          <span className="text-xs font-medium text-gray-600">Délivrée le :</span>
                                           <span className="text-xs text-gray-900">{formatDate(license.start_date)}</span>
                                         </div>
                                       )}
 
                                       {license.end_date && (
                                         <div className="flex justify-between">
-                                          <span className="text-xs font-medium text-gray-600">Expires on:</span>
+                                          <span className="text-xs font-medium text-gray-600">Expire le :</span>
                                           <span className="text-xs text-gray-900">{formatDate(license.end_date)}</span>
                                         </div>
                                       )}
@@ -540,12 +540,12 @@ export function ShippingPreparationDetailsEnhanced() {
                                             {new Date(license.end_date) > new Date() ? (
                                               <>
                                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                                <span className="text-xs text-green-700 font-medium">Valid licence</span>
+                                                <span className="text-xs text-green-700 font-medium">Licence valide</span>
                                               </>
                                             ) : (
                                               <>
                                                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                                <span className="text-xs text-red-700 font-medium">Expired licence</span>
+                                                <span className="text-xs text-red-700 font-medium">Licence expirée</span>
                                               </>
                                             )}
                                           </div>
@@ -560,12 +560,12 @@ export function ShippingPreparationDetailsEnhanced() {
                                 </div>
                               </div>
                             ) : (
-                              <span className="text-sm text-gray-500 italic">Not specified</span>
+                              <span className="text-sm text-gray-500 italic">Non renseignée</span>
                             )}
                           </div>
                         </div>
                         <div className="flex items-start">
-                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Created on:</span>
+                          <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">Créée le :</span>
                           <span className="text-sm text-gray-900">{formatDate(preparation.created_at)}</span>
                         </div>
                       </div>
@@ -574,20 +574,20 @@ export function ShippingPreparationDetailsEnhanced() {
                     {/* Détails des Productions avec Poids - Tableau */}
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                        Production details
+                        Détail des productions
                       </h3>
                       {productionItems.length > 0 ? (
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
                             <thead className="bg-gradient-to-r from-slate-50 to-gray-50">
                               <tr>
-                                <th className="px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200">Package no.</th>
-                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Net weight (g)</th>
-                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Net weight (oz)</th>
-                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Gross weight (g)</th>
-                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Fineness (%)</th>
-                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Fine gold (g)</th>
-                                <th className="px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200">Seals</th>
+                                <th className="px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200">N° de colis</th>
+                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Poids net (g)</th>
+                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Poids net (oz)</th>
+                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Poids brut (g)</th>
+                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Titre (%)</th>
+                                <th className="px-4 py-3 text-right font-semibold text-gray-700 border-b border-gray-200">Or fin (g)</th>
+                                <th className="px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200">Scellés</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
@@ -619,7 +619,7 @@ export function ShippingPreparationDetailsEnhanced() {
                               {/* Ligne de Total */}
                               <tr className="bg-gradient-to-r from-amber-50 to-yellow-50 font-bold border-t-2 border-amber-200">
                                 <td className="px-4 py-4 text-gray-900">
-                                  TOTAL ({productionItems.length} box{productionItems.length > 1 ? 'es' : ''})
+                                  TOTAL ({productionItems.length} colis)
                                 </td>
                                 <td className="px-4 py-4 text-right text-gray-900">
                                   {formatWeight(preparation.total_net_weight_grams)}
@@ -642,7 +642,7 @@ export function ShippingPreparationDetailsEnhanced() {
                       ) : (
                         <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
                           <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                          <p className="text-sm text-gray-600">No production has been recorded</p>
+                          <p className="text-sm text-gray-600">Aucune production n’a été enregistrée</p>
                         </div>
                       )}
                     </div>
@@ -653,7 +653,7 @@ export function ShippingPreparationDetailsEnhanced() {
               if (activeTab === 'signatories') {
                 return (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Signatories</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Signataires</h3>
                     {signatories.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {signatories.map((sig) => (
@@ -675,7 +675,7 @@ export function ShippingPreparationDetailsEnhanced() {
                     ) : (
                       <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
                         <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-sm text-gray-600 font-medium">No signatories have been recorded</p>
+                        <p className="text-sm text-gray-600 font-medium">Aucun signataire n’a été enregistré</p>
                       </div>
                     )}
                   </div>
@@ -687,7 +687,7 @@ export function ShippingPreparationDetailsEnhanced() {
                   ...(documents || []).map(doc => ({ ...doc, isDocument: true, isCertificate: false })),
                   ...(certificates || []).map(cert => ({
                     id: cert.id,
-                    title: `Assay certificate — ${cert.certificate_number || cert.file_name || 'N/A'}`,
+                    title: `Certificat d’analyse — ${cert.certificate_number || cert.file_name || 'N/R'}`,
                     file_name: cert.file_name || 'certificate.pdf',
                     document_url: cert.file_path,
                     isDocument: false,
@@ -739,7 +739,7 @@ export function ShippingPreparationDetailsEnhanced() {
                                   )}
                                   disabled={openingDocumentId === doc.id}
                                 >
-                                  View
+                                  Consulter
                                 </Button>
                               )}
                             </div>
@@ -749,8 +749,8 @@ export function ShippingPreparationDetailsEnhanced() {
                     ) : (
                       <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
                         <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-sm text-gray-600 font-medium">No documents available</p>
-                        <p className="text-xs text-gray-500 mt-2">Attached documents will appear here</p>
+                        <p className="text-sm text-gray-600 font-medium">Aucun document disponible</p>
+                        <p className="text-xs text-gray-500 mt-2">Les documents joints apparaîtront ici</p>
                       </div>
                     )}
                   </div>
@@ -761,15 +761,15 @@ export function ShippingPreparationDetailsEnhanced() {
                 return (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Status history
+                      Historique des statuts
                     </h3>
                     {statusHistory.length > 0 ? (
                       <ShippingStatusHistory history={statusHistory} />
                     ) : (
                       <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
                         <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-sm text-gray-600 font-medium">No changes recorded</p>
-                        <p className="text-xs text-gray-500 mt-2">Recorded changes will appear here</p>
+                        <p className="text-sm text-gray-600 font-medium">Aucune modification enregistrée</p>
+                        <p className="text-xs text-gray-500 mt-2">Les modifications enregistrées apparaîtront ici</p>
                       </div>
                     )}
                   </div>
@@ -786,15 +786,15 @@ export function ShippingPreparationDetailsEnhanced() {
           <Card className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 border-2">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">Available actions</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Actions disponibles</h3>
                 <p className="text-sm text-gray-600">
                    {preparation.status === 'waiting_for_customs_approval' && (canApprove
-                     ? 'Approve customs clearance for this preparation.'
-                     : 'Customs approval is pending. This page is read-only for your current responsibilities.')}
+                     ? 'Approuvez le dédouanement de cette préparation.'
+                     : 'L’approbation douanière est en attente. Cette page est en lecture seule pour vos responsabilités actuelles.')}
                    {preparation.status === 'approved_by_customs' && (canPrepare
-                     ? 'Mark this preparation as ready for shipment.'
-                     : 'Final preparation is pending. This page is read-only for your current responsibilities.')}
-                  {preparation.status === 'ready_for_expedition' && "This preparation is ready. Manage dispatch from Customs & consignment."}
+                     ? 'Déclarez cette préparation prête pour l’expédition.'
+                     : 'La préparation finale est en attente. Cette page est en lecture seule pour vos responsabilités actuelles.')}
+                  {preparation.status === 'ready_for_expedition' && "Cette préparation est prête. Gérez son départ depuis Douane et consignation."}
                 </p>
               </div>
               <div className="flex gap-3">
@@ -806,7 +806,7 @@ export function ShippingPreparationDetailsEnhanced() {
                     className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800"
                   >
                     <Check className="w-4 h-4 mr-2" />
-                    Approve customs clearance
+                    Approuver le dédouanement
                   </Button>
                 )}
                  {preparation.status === 'approved_by_customs' && canPrepare && (
@@ -817,7 +817,7 @@ export function ShippingPreparationDetailsEnhanced() {
                     className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
                   >
                     <Ship className="w-4 h-4 mr-2" />
-                    Ready for shipment
+                    Prête pour l’expédition
                   </Button>
                 )}
                 {preparation.status === 'ready_for_expedition' && (
@@ -827,7 +827,7 @@ export function ShippingPreparationDetailsEnhanced() {
                     size="md"
                   >
                     <Ship className="w-4 h-4 mr-2" />
-                    Open Customs & consignment
+                    Ouvrir Douane et consignation
                   </Button>
                 )}
               </div>

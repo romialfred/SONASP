@@ -9,6 +9,7 @@ import artisanPaiementsService from '@/services/artisanPaiementsService';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { comptoirPortalService } from '@/services/comptoirPortalService';
 import { normaliserArtisan } from '@/pages/artisan-minier/artisanRow';
+import { formatStatusFr } from '@/utils/statusFormatter';
 
 interface CollectorDashboard {
   artisans: ArtisanMinier[];
@@ -83,7 +84,7 @@ export default function CollectorPortalPage() {
     { key: 'date', header: 'Date', render: (sale) => new Date(sale.date_vente).toLocaleDateString('fr-FR') },
     { key: 'quantity', header: 'Quantité', numeric: true, render: (sale) => `${decimal.format(sale.quantite_grammes)} g` },
     { key: 'amount', header: 'Montant', numeric: true, render: (sale) => `${integer.format(sale.montant_total_fcfa)} FCFA` },
-    { key: 'status', header: 'État', render: (sale) => sale.statut.replace('_', ' ') },
+    { key: 'status', header: 'État', render: (sale) => formatStatusFr(sale.statut) },
   ];
 
   return (

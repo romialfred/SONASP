@@ -59,8 +59,8 @@ export function ReportsDashboard() {
   const reportTypes: ReportType[] = [
     {
       id: 'executive',
-      title: 'Executive Summary',
-      description: 'High-level overview for Direction Générale with key metrics, trends, and strategic recommendations',
+      title: 'Synthèse exécutive',
+      description: 'Vue d’ensemble destinée à la Direction générale, avec les indicateurs clés, les tendances et les recommandations stratégiques',
       icon: BarChart3,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
@@ -68,8 +68,8 @@ export function ReportsDashboard() {
     },
     {
       id: 'sales',
-      title: 'Sales Performance',
-      description: 'Detailed sales analysis with revenue breakdown, pipeline status, and customer insights',
+      title: 'Performance commerciale',
+      description: 'Analyse détaillée des ventes, de la répartition des recettes, du portefeuille d’opérations et de la relation client',
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
@@ -77,8 +77,8 @@ export function ReportsDashboard() {
     },
     {
       id: 'batch',
-      title: 'Batch Operations',
-      description: 'Processing efficiency, quality metrics, and operational performance across all sites',
+      title: 'Opérations sur les lots',
+      description: 'Efficacité du traitement, indicateurs de qualité et performance opérationnelle de l’ensemble des sites',
       icon: Package,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100',
@@ -86,8 +86,8 @@ export function ReportsDashboard() {
     },
     {
       id: 'customer',
-      title: 'Customer Analysis',
-      description: 'Customer behavior, retention rates, payment patterns, and relationship health',
+      title: 'Analyse de la clientèle',
+      description: 'Comportement des clients, fidélisation, habitudes de paiement et qualité de la relation commerciale',
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
@@ -95,8 +95,8 @@ export function ReportsDashboard() {
     },
     {
       id: 'financial',
-      title: 'Financial Analysis',
-      description: 'P&L statement, cash flow analysis, cost breakdown, and FX impact assessment',
+      title: 'Analyse financière',
+      description: 'Compte de résultat, analyse des flux de trésorerie, répartition des coûts et incidence du change',
       icon: TrendingUp,
       color: 'text-red-600',
       bgColor: 'bg-red-100',
@@ -104,8 +104,8 @@ export function ReportsDashboard() {
     },
     {
       id: 'operations',
-      title: 'Operations Report',
-      description: 'Operational KPIs, process efficiency, resource utilization, and improvement opportunities',
+      title: 'Rapport opérationnel',
+      description: 'Indicateurs opérationnels, efficacité des processus, utilisation des ressources et axes d’amélioration',
       icon: Settings,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100',
@@ -144,13 +144,13 @@ export function ReportsDashboard() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Professional Reports</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Rapports professionnels</h1>
             <p className="text-gray-600 mt-1">
-              Generate comprehensive reports for Direction Générale
+              Produisez des rapports complets à l’attention de la Direction générale.
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">Last generated: Today</span>
+            <span className="text-sm text-gray-500">Dernière génération : aujourd’hui</span>
           </div>
         </div>
 
@@ -215,14 +215,14 @@ export function ReportsDashboard() {
                       className="w-full flex items-center justify-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
                     >
                       <Calendar className="h-4 w-4" />
-                      Schedule Report
+                      Planifier le rapport
                     </Button>
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Last generated</span>
-                      <span className="font-medium">Today</span>
+                      <span>Dernière génération</span>
+                      <span className="font-medium">Aujourd’hui</span>
                     </div>
                   </div>
                 </CardContent>
@@ -233,40 +233,40 @@ export function ReportsDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Report Features</CardTitle>
+            <CardTitle>Caractéristiques des rapports</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <h4 className="font-semibold text-gray-900">Professional Format</h4>
+                <h4 className="font-semibold text-gray-900">Présentation professionnelle</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Cover page with logo and period</li>
-                  <li>• Executive summary (1 page)</li>
-                  <li>• Detailed analysis (2-3 pages)</li>
-                  <li>• Recommendations & action items</li>
-                  <li>• Professional charts and tables</li>
+                  <li>• Page de garde avec logo et période</li>
+                  <li>• Synthèse exécutive sur une page</li>
+                  <li>• Analyse détaillée sur deux à trois pages</li>
+                  <li>• Recommandations et plan d’action</li>
+                  <li>• Graphiques et tableaux professionnels</li>
                 </ul>
               </div>
 
               <div className="space-y-2">
-                <h4 className="font-semibold text-gray-900">Key Insights</h4>
+                <h4 className="font-semibold text-gray-900">Enseignements clés</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Traffic light indicators</li>
-                  <li>• KPI performance metrics</li>
-                  <li>• Trend analysis with charts</li>
-                  <li>• Risk and opportunity assessment</li>
-                  <li>• Strategic recommendations</li>
+                  <li>• Indicateurs de vigilance tricolores</li>
+                  <li>• Indicateurs clés de performance</li>
+                  <li>• Analyse graphique des tendances</li>
+                  <li>• Évaluation des risques et des opportunités</li>
+                  <li>• Recommandations stratégiques</li>
                 </ul>
               </div>
 
               <div className="space-y-2">
-                <h4 className="font-semibold text-gray-900">Distribution</h4>
+                <h4 className="font-semibold text-gray-900">Diffusion</h4>
                 <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• PDF export for sharing</li>
-                  <li>• Excel export for analysis</li>
-                  <li>• Automated scheduling</li>
-                  <li>• Email delivery</li>
-                  <li>• Archive and history</li>
+                  <li>• Export PDF pour le partage</li>
+                  <li>• Export Excel pour l’analyse</li>
+                  <li>• Planification automatisée</li>
+                  <li>• Envoi par courriel</li>
+                  <li>• Archivage et historique</li>
                 </ul>
               </div>
             </div>
@@ -275,14 +275,14 @@ export function ReportsDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Scheduled Reports ({scheduledReports.length})</CardTitle>
+            <CardTitle>Rapports planifiés ({scheduledReports.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-gray-500">Loading scheduled reports...</div>
+              <div className="text-center py-8 text-gray-500">Chargement des rapports planifiés…</div>
             ) : scheduledReports.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No scheduled reports yet. Click "Schedule Report" on any report type to create one.
+                Aucun rapport n’est encore planifié. Utilisez « Planifier le rapport » pour créer une programmation.
               </div>
             ) : (
               <div className="space-y-3">
@@ -290,10 +290,10 @@ export function ReportsDashboard() {
                   const reportType = reportTypes.find(r => r.id === schedule.report_type);
                   const Icon = reportType?.icon || FileText;
                   const frequencyText = schedule.frequency === 'weekly'
-                    ? `Weekly - ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][schedule.schedule_weekday || 1]} at ${schedule.schedule_time}`
+                    ? `Chaque ${['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'][schedule.schedule_weekday || 1]} à ${schedule.schedule_time}`
                     : schedule.frequency === 'monthly'
-                    ? `Monthly - Day ${schedule.schedule_day} at ${schedule.schedule_time}`
-                    : `${schedule.frequency.charAt(0).toUpperCase() + schedule.frequency.slice(1)} at ${schedule.schedule_time}`;
+                    ? `Chaque mois, le ${schedule.schedule_day} à ${schedule.schedule_time}`
+                    : `${schedule.frequency} à ${schedule.schedule_time}`;
 
                   return (
                     <div key={schedule.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -305,7 +305,7 @@ export function ReportsDashboard() {
                         </div>
                       </div>
                       <span className={`text-xs font-medium ${schedule.is_active ? 'text-green-600' : 'text-gray-400'}`}>
-                        {schedule.is_active ? 'Active' : 'Inactive'}
+                        {schedule.is_active ? 'Actif' : 'Inactif'}
                       </span>
                     </div>
                   );

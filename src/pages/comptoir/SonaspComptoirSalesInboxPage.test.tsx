@@ -59,6 +59,9 @@ describe('SonaspComptoirSalesInboxPage', () => {
 
     await user.click(screen.getByRole('button', { name: /Historique \(1\)/i }));
     expect(screen.getByText('Cession initiale')).toBeInTheDocument();
+    expect(screen.getByText('Création → Soumis')).toBeInTheDocument();
+    expect(screen.getByText(/Client/)).toBeInTheDocument();
+    expect(screen.queryByText(/customer|comptoir\.manage/)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Accepter/i }));
     await user.type(screen.getByLabelText(/Commentaire/i), 'Contrôle conforme');

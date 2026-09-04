@@ -134,8 +134,8 @@ export function Table<T extends Record<string, any>>({
       {pagination && totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 px-4">
           <div className="text-sm text-gray-700">
-            Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of{' '}
-            {sortedData.length} results
+            Résultats {startIndex + 1} à {Math.min(endIndex, sortedData.length)} sur{' '}
+            {sortedData.length}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -143,17 +143,19 @@ export function Table<T extends Record<string, any>>({
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
+              aria-label="Page précédente"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm text-gray-700">
-              Page {currentPage} of {totalPages}
+              Page {currentPage} sur {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
+              aria-label="Page suivante"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

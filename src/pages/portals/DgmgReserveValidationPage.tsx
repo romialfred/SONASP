@@ -3,6 +3,7 @@ import { RefreshCw, ShieldCheck } from 'lucide-react';
 import { Badge, DataTable, Note, PageHeader, Section, type Column } from '@/components/ui/sn';
 import { errorMessage } from '@/lib/errorMessage';
 import { supabase } from '@/lib/supabase';
+import { formatStatusFr } from '@/utils/statusFormatter';
 import './institutional-work-queue.css';
 
 type ValidationTarget = 'UNDER_REVIEW' | 'VALIDATED_LEVEL_1' | 'REJECTED';
@@ -90,7 +91,7 @@ export function DgmgReserveValidationPage() {
     },
     {
       key: 'status', header: 'Étape',
-      render: (row) => <Badge tone={row.status === 'SUBMITTED' ? 'warning' : 'info'}>{row.status}</Badge>,
+      render: (row) => <Badge tone={row.status === 'SUBMITTED' ? 'warning' : 'info'}>{formatStatusFr(row.status)}</Badge>,
     },
   ], []);
 

@@ -51,9 +51,9 @@ describe('ChangeStatusModal', () => {
     render(<ChangeStatusModal operation={operation} onClose={vi.fn()} onSuccess={onSuccess} />);
 
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    expect(screen.getByText("Customs approved")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Customs reference"), { target: { value: 'DOU-42' } });
-    fireEvent.click(screen.getByRole('button', { name: "Confirm next step" }));
+    expect(screen.getByText("Approuvée par la douane")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Référence douanière"), { target: { value: 'DOU-42' } });
+    fireEvent.click(screen.getByRole('button', { name: "Confirmer l’étape suivante" }));
 
     await waitFor(() => expect(mocks.transitionStatus).toHaveBeenCalledWith(
       operation.id,
@@ -77,7 +77,7 @@ describe('ChangeStatusModal', () => {
     render(<ChangeStatusModal operation={operation} onClose={vi.fn()} onSuccess={vi.fn()} />);
 
     expect(screen.getByRole('alert')).toHaveTextContent('preparer');
-    expect(screen.getByRole('button', { name: "Confirm next step" })).toBeDisabled();
+    expect(screen.getByRole('button', { name: "Confirmer l’étape suivante" })).toBeDisabled();
     expect(mocks.transitionStatus).not.toHaveBeenCalled();
   });
 
@@ -86,6 +86,6 @@ describe('ChangeStatusModal', () => {
     render(<ChangeStatusModal operation={operation} onClose={vi.fn()} onSuccess={vi.fn()} />);
 
     expect(screen.getByRole('alert')).toHaveTextContent('capability required');
-    expect(screen.getByRole('button', { name: "Confirm next step" })).toBeDisabled();
+    expect(screen.getByRole('button', { name: "Confirmer l’étape suivante" })).toBeDisabled();
   });
 });

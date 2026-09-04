@@ -20,6 +20,12 @@ import {
   type ResumeNotifications,
 } from '@/services/notificationsService';
 import { navigationLabel } from '@/i18n/navigationLabels';
+import {
+  INTERFACE_LANGUAGES,
+  INTERFACE_LANGUAGE_STORAGE_KEY,
+  isInterfaceLanguageEnabled,
+  type InterfaceLanguage,
+} from '@/i18n/interfaceLanguages';
 import { useTranslation } from 'react-i18next';
 import {
   Bell,
@@ -120,7 +126,7 @@ export function NationalDashboardLayout({ children }: NationalDashboardLayoutPro
  */
 export function NationalDashboardChrome({ children }: NationalDashboardLayoutProps) {
   const { i18n } = useTranslation();
-  const label = (value: string) => navigationLabel(value, i18n.language || 'en');
+  const label = (value: string) => navigationLabel(value, i18n.language || 'fr');
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -384,9 +390,10 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     };
   }, [closeMenus, languageOpen, notificationsOpen, profileOpen]);
 
-  const changeLanguage = async (language: 'fr' | 'en') => {
+  const changeLanguage = async (language: InterfaceLanguage) => {
+    if (!isInterfaceLanguageEnabled(language)) return;
     await i18n.changeLanguage(language);
-    localStorage.setItem('i18nextLng', language);
+    localStorage.setItem(INTERFACE_LANGUAGE_STORAGE_KEY, language);
     setLanguageOpen(false);
   };
 
@@ -630,15 +637,28 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 aria-expanded={languageOpen}
                 aria-haspopup="menu"
                 aria-controls="language-menu"
+                aria-label="Choisir la langue (FR)"
               >
                 <Languages aria-hidden="true" />
-                <span>{i18n.language?.startsWith('en') ? 'EN' : 'FR'}</span>
+                <span>FR</span>
                 <ChevronDown aria-hidden="true" />
               </button>
               {languageOpen && (
                 <div id="language-menu" role="menu" className="national-header__menu national-header__language-menu">
-                  <button role="menuitem" type="button" onClick={() => changeLanguage('fr')}>Français</button>
-                  <button role="menuitem" type="button" onClick={() => changeLanguage('en')}>English</button>
+                  {INTERFACE_LANGUAGES.map((option) => (
+                    <button
+                      key={option.code}
+                      role="menuitem"
+                      type="button"
+                      disabled={!option.enabled}
+                      aria-disabled={!option.enabled}
+                      aria-current={option.code === 'fr' ? 'true' : undefined}
+                      title={option.enabled ? undefined : 'Disponible dans une prochaine version'}
+                      onClick={() => void changeLanguage(option.code)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

@@ -4417,6 +4417,110 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_simulations: {
+        Row: {
+          adjusted_value_usd: number
+          counterparty_id: string
+          counterparty_name_snapshot: string
+          counterparty_type: string
+          created_at: string
+          created_by: string
+          fx_source: string | null
+          gold_price_source: string | null
+          gross_value_usd: number
+          id: string
+          input_unit: string
+          logistics_cost_usd: number
+          net_margin_pct: number
+          net_price_xof_oz: number
+          net_proceeds_usd: number
+          net_proceeds_xof: number
+          premium_discount_pct: number
+          quantity_oz: number
+          reference_price_usd_oz: number
+          seller_id: string
+          seller_name_snapshot: string
+          settlement_currency: string
+          simulation_reference: string
+          status: string
+          stock_available_oz: number
+          tax_amount_usd: number
+          tax_rate_pct: number
+          usd_xof_rate: number
+          value_date: string
+        }
+        Insert: {
+          adjusted_value_usd: number
+          counterparty_id: string
+          counterparty_name_snapshot: string
+          counterparty_type: string
+          created_at?: string
+          created_by: string
+          fx_source?: string | null
+          gold_price_source?: string | null
+          gross_value_usd: number
+          id?: string
+          input_unit: string
+          logistics_cost_usd?: number
+          net_margin_pct: number
+          net_price_xof_oz: number
+          net_proceeds_usd: number
+          net_proceeds_xof: number
+          premium_discount_pct?: number
+          quantity_oz: number
+          reference_price_usd_oz: number
+          seller_id: string
+          seller_name_snapshot: string
+          settlement_currency?: string
+          simulation_reference?: string
+          status?: string
+          stock_available_oz: number
+          tax_amount_usd: number
+          tax_rate_pct?: number
+          usd_xof_rate: number
+          value_date: string
+        }
+        Update: {
+          adjusted_value_usd?: number
+          counterparty_id?: string
+          counterparty_name_snapshot?: string
+          counterparty_type?: string
+          created_at?: string
+          created_by?: string
+          fx_source?: string | null
+          gold_price_source?: string | null
+          gross_value_usd?: number
+          id?: string
+          input_unit?: string
+          logistics_cost_usd?: number
+          net_margin_pct?: number
+          net_price_xof_oz?: number
+          net_proceeds_usd?: number
+          net_proceeds_xof?: number
+          premium_discount_pct?: number
+          quantity_oz?: number
+          reference_price_usd_oz?: number
+          seller_id?: string
+          seller_name_snapshot?: string
+          settlement_currency?: string
+          simulation_reference?: string
+          status?: string
+          stock_available_oz?: number
+          tax_amount_usd?: number
+          tax_rate_pct?: number
+          usd_xof_rate?: number
+          value_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_simulations_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           buyer_notice_days: number | null
@@ -12380,6 +12484,96 @@ export type Database = {
           },
         ]
       }
+      snp_ventes_export_brouillons: {
+        Row: {
+          context_snapshot: Json
+          created_at: string
+          created_by: string
+          customer_contract_id: string | null
+          customer_id: string
+          draft_number: string
+          id: string
+          idempotency_key: string
+          payload: Json
+          seller_id: string
+          status: string
+          submitted_at: string | null
+          submitted_sale_id: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          context_snapshot?: Json
+          created_at?: string
+          created_by: string
+          customer_contract_id?: string | null
+          customer_id: string
+          draft_number: string
+          id?: string
+          idempotency_key: string
+          payload: Json
+          seller_id: string
+          status?: string
+          submitted_at?: string | null
+          submitted_sale_id?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          context_snapshot?: Json
+          created_at?: string
+          created_by?: string
+          customer_contract_id?: string | null
+          customer_id?: string
+          draft_number?: string
+          id?: string
+          idempotency_key?: string
+          payload?: Json
+          seller_id?: string
+          status?: string
+          submitted_at?: string | null
+          submitted_sale_id?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snp_ventes_export_brouillons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_ventes_export_brouillons_customer_contract_id_fkey"
+            columns: ["customer_contract_id"]
+            isOneToOne: false
+            referencedRelation: "customer_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_ventes_export_brouillons_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_ventes_export_brouillons_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "mining_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snp_ventes_export_brouillons_submitted_sale_id_fkey"
+            columns: ["submitted_sale_id"]
+            isOneToOne: true
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       snp_ventes_lots: {
         Row: {
           achat_mine_id: string | null
@@ -16148,6 +16342,16 @@ export type Database = {
       }
       snp_encoder_instant_carte: { Args: { instant: string }; Returns: string }
       snp_enregistrer_connexion: { Args: never; Returns: undefined }
+      snp_enregistrer_brouillon_vente_export: {
+        Args: {
+          p_context_snapshot?: Json
+          p_draft_id: string | null
+          p_expected_version: number | null
+          p_idempotency_key: string
+          p_payload: Json
+        }
+        Returns: Json
+      }
       snp_enregistrer_reglement: {
         Args: {
           p_affecter_fifo?: boolean | null
@@ -17555,6 +17759,14 @@ export type Database = {
           p_notes?: string | null
           p_production_id: string
           p_request_id: string
+        }
+        Returns: Json
+      }
+      snp_soumettre_brouillon_vente_export: {
+        Args: {
+          p_draft_id: string
+          p_expected_version: number
+          p_lots?: Json
         }
         Returns: Json
       }

@@ -26,13 +26,13 @@ interface BankAccountFormProps {
 }
 
 const CURRENCIES = [
-  { value: 'USD', label: 'USD - US Dollar' },
-  { value: 'EUR', label: 'EUR - Euro' },
-  { value: 'GBP', label: 'GBP - British Pound' },
-  { value: 'CHF', label: 'CHF - Swiss Franc' },
-  { value: 'GNF', label: 'GNF - Guinean Franc' },
-  { value: 'XOF', label: 'XOF - West African CFA Franc' },
-  { value: 'XAF', label: 'XAF - Central African CFA Franc' },
+  { value: 'USD', label: 'USD — dollar américain' },
+  { value: 'EUR', label: 'EUR — euro' },
+  { value: 'GBP', label: 'GBP — livre sterling' },
+  { value: 'CHF', label: 'CHF — franc suisse' },
+  { value: 'GNF', label: 'GNF — franc guinéen' },
+  { value: 'XOF', label: 'XOF — franc CFA d’Afrique de l’Ouest' },
+  { value: 'XAF', label: 'XAF — franc CFA d’Afrique centrale' },
 ];
 
 // Banks in Côte d'Ivoire
@@ -154,7 +154,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Building2 className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Bank Accounts</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Comptes bancaires</h3>
           <span className="text-sm text-gray-500">({banks.length})</span>
         </div>
         {!readOnly && (
@@ -166,7 +166,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
             className="flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add Bank
+            Ajouter un compte
           </Button>
         )}
       </div>
@@ -175,14 +175,14 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
         <Card className="bg-gray-50 border-dashed">
           <div className="p-8 text-center">
             <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 mb-2">No bank accounts added yet</p>
+            <p className="text-gray-600 mb-2">Aucun compte bancaire ajouté</p>
             <p className="text-sm text-gray-500 mb-4">
-              Add at least one bank account for payment processing
+              Ajoutez au moins un compte bancaire pour le traitement des paiements.
             </p>
             {!readOnly && (
               <Button type="button" onClick={handleAddBank} variant="primary" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                Add First Bank Account
+                Ajouter le premier compte bancaire
               </Button>
             )}
           </div>
@@ -222,19 +222,19 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-semibold text-gray-900">
-                          {bank.bankName || `Bank Account ${index + 1}`}
+                          {bank.bankName || `Compte bancaire ${index + 1}`}
                         </h4>
                         {bank.isPrimary && (
                           <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
                             <Star className="w-3 h-3 fill-current" />
-                            Primary
+                            Principal
                           </span>
                         )}
                       </div>
                       <p className="text-sm text-gray-600">
                         {bank.country && bank.city
                           ? `${bank.city}, ${bank.country}`
-                          : bank.country || 'Location not set'}
+                          : bank.country || 'Localisation non renseignée'}
                         {bank.currency && ` • ${bank.currency}`}
                       </p>
                     </div>
@@ -262,7 +262,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Country <span className="text-red-500">*</span>
+                          Pays <span className="text-red-500">*</span>
                         </label>
                         <Select
                           value={bank.country}
@@ -271,7 +271,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                           }
                           disabled={readOnly}
                         >
-                          <option value="">Select country</option>
+                          <option value="">Sélectionnez un pays</option>
                           {COUNTRIES.map((country) => (
                             <option key={country} value={country}>
                               {country}
@@ -282,14 +282,14 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          City <span className="text-red-500">*</span>
+                          Ville <span className="text-red-500">*</span>
                         </label>
                         <Input
                           value={bank.city}
                           onChange={(e) =>
                             handleUpdateBank(index, 'city', e.target.value)
                           }
-                          placeholder="e.g., Abidjan, Ouagadougou"
+                          placeholder="Ex. : Abidjan, Ouagadougou"
                           disabled={readOnly}
                         />
                       </div>
@@ -298,7 +298,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Bank Name <span className="text-red-500">*</span>
+                          Nom de la banque <span className="text-red-500">*</span>
                         </label>
                         {availableBanks.length > 0 ? (
                           <Select
@@ -308,13 +308,13 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                             }
                             disabled={readOnly}
                           >
-                            <option value="">Select a bank</option>
+                            <option value="">Sélectionnez une banque</option>
                             {availableBanks.map((bankName) => (
                               <option key={bankName} value={bankName}>
                                 {bankName}
                               </option>
                             ))}
-                            <option value="__other__">Other (specify below)</option>
+                            <option value="__other__">Autre (à préciser ci-dessous)</option>
                           </Select>
                         ) : (
                           <Input
@@ -322,7 +322,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                             onChange={(e) =>
                               handleUpdateBank(index, 'bankName', e.target.value)
                             }
-                            placeholder="e.g., UBS, Credit Suisse"
+                            placeholder="Ex. : UBS, Credit Suisse"
                             disabled={readOnly}
                           />
                         )}
@@ -333,7 +333,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                             onChange={(e) =>
                               handleUpdateBank(index, 'bankName', e.target.value)
                             }
-                            placeholder="Enter bank name"
+                            placeholder="Saisissez le nom de la banque"
                             disabled={readOnly}
                           />
                         )}
@@ -341,7 +341,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Currency <span className="text-red-500">*</span>
+                          Devise <span className="text-red-500">*</span>
                         </label>
                         <Select
                           value={bank.currency}
@@ -350,7 +350,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                           }
                           disabled={readOnly}
                         >
-                          <option value="">Select currency</option>
+                          <option value="">Sélectionnez une devise</option>
                           {CURRENCIES.map((curr) => (
                             <option key={curr.value} value={curr.value}>
                               {curr.label}
@@ -363,14 +363,14 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Account Number
+                          Numéro de compte
                         </label>
                         <Input
                           value={bank.accountNumber}
                           onChange={(e) =>
                             handleUpdateBank(index, 'accountNumber', e.target.value)
                           }
-                          placeholder="Account number"
+                          placeholder="Numéro de compte"
                           disabled={readOnly}
                         />
                       </div>
@@ -392,14 +392,14 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        SWIFT/BIC Code
+                        Code SWIFT/BIC
                       </label>
                       <Input
                         value={bank.swiftCode}
                         onChange={(e) =>
                           handleUpdateBank(index, 'swiftCode', e.target.value.toUpperCase())
                         }
-                        placeholder="e.g., SGBFCIAB"
+                        placeholder="Ex. : SGBFCIAB"
                         disabled={readOnly}
                       />
                     </div>
@@ -419,7 +419,7 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
                           htmlFor={`primary-${index}`}
                           className="text-sm font-medium text-gray-700 cursor-pointer"
                         >
-                          Set as primary bank account
+                          Définir comme compte bancaire principal
                         </label>
                       </div>
                     )}
@@ -434,8 +434,8 @@ export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccou
       {banks.length > 0 && !readOnly && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p className="text-sm text-blue-800">
-            <strong>Note:</strong> The primary bank account will be used as the default for payment processing.
-            You can add multiple bank accounts in different currencies.
+            <strong>Remarque :</strong> le compte bancaire principal sera utilisé par défaut pour le traitement des
+            paiements. Vous pouvez ajouter plusieurs comptes bancaires dans différentes devises.
           </p>
         </div>
       )}

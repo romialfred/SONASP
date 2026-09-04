@@ -12,64 +12,64 @@ interface WorkflowStep {
 const WORKFLOW_STEPS: WorkflowStep[] = [
   {
     status: SALES_STATUSES.CREATE_SALES,
-    label: 'Create Sales',
-    description: 'Sale initiated',
+    label: 'Création de la vente',
+    description: 'Vente enregistrée',
     icon: FileCheck,
     color: 'blue'
   },
   {
     status: SALES_STATUSES.PENDING_MANAGEMENT_APPROVAL,
-    label: 'Pending Management',
-    description: 'Awaiting management approval',
+    label: 'Validation de la direction',
+    description: 'Approbation de la direction requise',
     icon: Clock,
     color: 'yellow'
   },
   {
     status: SALES_STATUSES.MANAGEMENT_APPROVED,
-    label: 'Management Approved',
-    description: 'Approved by management',
+    label: 'Approuvée par la direction',
+    description: 'Validation accordée par la direction',
     icon: CheckCircle,
     color: 'green'
   },
   {
     status: SALES_STATUSES.PENDING_FOR_CUSTOMER_APPROVAL,
-    label: 'Pending Customer',
-    description: 'Awaiting customer approval',
+    label: 'Validation du client',
+    description: 'Approbation du client requise',
     icon: Clock,
     color: 'blue'
   },
   {
     status: SALES_STATUSES.CUSTOMER_APPROVED,
-    label: 'Customer Approved',
-    description: 'Customer accepted the sale',
+    label: 'Approuvée par le client',
+    description: 'Vente acceptée par le client',
     icon: CheckCircle,
     color: 'green'
   },
   {
     status: SALES_STATUSES.WAITING_FOR_PAYMENT,
-    label: 'Waiting Payment',
-    description: 'Awaiting payment confirmation',
+    label: 'En attente de paiement',
+    description: 'Confirmation de l’encaissement requise',
     icon: Clock,
     color: 'orange'
   },
   {
     status: SALES_STATUSES.VIRTUAL_PAYMENT,
-    label: 'Virtual Payment',
-    description: 'Payment auto-created',
+    label: 'Engagement de paiement',
+    description: 'Écriture d’engagement créée automatiquement',
     icon: AlertCircle,
     color: 'slate'
   },
   {
     status: SALES_STATUSES.PAYMENT_RECEIVED,
-    label: 'Payment Received',
-    description: 'Payment confirmed',
+    label: 'Paiement reçu',
+    description: 'Encaissement confirmé',
     icon: DollarSign,
     color: 'emerald'
   },
   {
     status: SALES_STATUSES.COMPLETED,
-    label: 'Completed',
-    description: 'Sale finalized',
+    label: 'Terminée',
+    description: 'Vente finalisée',
     icon: Send,
     color: 'gray'
   }
@@ -78,15 +78,15 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
 const REJECTED_STEPS: WorkflowStep[] = [
   {
     status: SALES_STATUSES.MANAGEMENT_REJECTED,
-    label: 'Management Rejected',
-    description: 'Rejected by management',
+    label: 'Rejetée par la direction',
+    description: 'Refus prononcé par la direction',
     icon: XCircle,
     color: 'red'
   },
   {
     status: SALES_STATUSES.CUSTOMER_REJECTED,
-    label: 'Customer Rejected',
-    description: 'Rejected by customer',
+    label: 'Rejetée par le client',
+    description: 'Refus prononcé par le client',
     icon: XCircle,
     color: 'red'
   }
@@ -222,7 +222,7 @@ export function SalesWorkflowVisualizer({
                     </h3>
                     {isCurrent(step.status) && (
                       <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                        Current
+                        Étape actuelle
                       </span>
                     )}
                     {isCompleted(index) && !isCurrent(step.status) && (
@@ -245,12 +245,12 @@ export function SalesWorkflowVisualizer({
               <XCircle className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-red-900">{rejectedStep?.label || 'Rejected'}</h3>
-              <p className="text-sm text-red-700 mt-1">{rejectedStep?.description || 'Sale rejected'}</p>
+              <h3 className="font-semibold text-red-900">{rejectedStep?.label || 'Rejetée'}</h3>
+              <p className="text-sm text-red-700 mt-1">{rejectedStep?.description || 'Vente rejetée'}</p>
               <p className="text-xs text-red-600 mt-2">
                 {currentStatus === SALES_STATUSES.MANAGEMENT_REJECTED
-                  ? 'The sale was rejected by management and requires review or resubmission.'
-                  : 'The sale was rejected by the customer and requires review or cancellation.'}
+                  ? 'La vente a été rejetée par la direction et doit être révisée avant une nouvelle soumission.'
+                  : 'La vente a été rejetée par le client et doit être réexaminée ou annulée.'}
               </p>
             </div>
           </div>
@@ -263,7 +263,7 @@ export function SalesWorkflowVisualizer({
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <p className="text-sm font-medium text-green-900">
-              This sale has been successfully completed through all workflow stages.
+              Cette vente a franchi avec succès toutes les étapes du circuit de traitement.
             </p>
           </div>
         </div>

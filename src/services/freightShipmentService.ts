@@ -118,7 +118,7 @@ export interface AvailableShippingPreparation {
 /** The parent row exists. Retrying would create a duplicate shipment. */
 export class FreightShipmentPartialSaveError extends Error {
   constructor(public readonly shipmentId: string, public readonly reference: string, cause: unknown) {
-    super('The freight shipment exists, but its related records were not fully saved. Open the existing shipment; do not create another one.');
+    super('L’expédition de fret existe, mais ses données associées n’ont pas été intégralement enregistrées. Ouvrez l’expédition existante ; n’en créez pas une autre.');
     this.name = 'FreightShipmentPartialSaveError';
     this.cause = cause;
   }
@@ -299,46 +299,46 @@ export const freightShipmentService = {
   }): Promise<FreightShipment> {
     const preparationIds = Array.from(new Set(data.shipping_preparation_ids.filter(Boolean)));
     if (preparationIds.length === 0 || preparationIds.length !== data.shipping_preparation_ids.length) {
-      throw new Error('Select one or more distinct shipment preparations.');
+      throw new Error('Sélectionnez une ou plusieurs préparations d’expédition distinctes.');
     }
     if (!data.destination_refinery_id) {
-      throw new Error('Select the destination refinery.');
+      throw new Error('Sélectionnez la raffinerie de destination.');
     }
     if (!Number.isInteger(data.number_of_boxes) || data.number_of_boxes <= 0) {
-      throw new Error('The number of packages must be a positive whole number.');
+      throw new Error('Le nombre de colis doit être un entier strictement positif.');
     }
     if (!data.box_type.trim()) {
-      throw new Error('Enter the package type.');
+      throw new Error('Renseignez le type d’emballage.');
     }
     if (!Number.isFinite(data.gold_price_usd_per_oz) || data.gold_price_usd_per_oz <= 0) {
-      throw new Error('Enter a valid gold price.');
+      throw new Error('Renseignez un cours de l’or valide.');
     }
     if (!Number.isFinite(data.exchange_rate) || data.exchange_rate <= 0) {
-      throw new Error('Enter a valid exchange rate.');
+      throw new Error('Renseignez un taux de change valide.');
     }
     if (!data.local_currency.trim()) {
-      throw new Error('Select the settlement currency.');
+      throw new Error('Sélectionnez la devise de règlement.');
     }
     const currency = data.local_currency.trim().toUpperCase();
     if (!/^[A-Z]{3}$/.test(currency)) {
-      throw new Error('The settlement currency must use a three-letter ISO code.');
+      throw new Error('La devise de règlement doit utiliser un code ISO à trois lettres.');
     }
     const boxType = data.box_type.trim();
     if (boxType.length > 100) {
-      throw new Error('The package type cannot exceed 100 characters.');
+      throw new Error('Le type d’emballage ne peut pas dépasser 100 caractères.');
     }
     const notes = data.notes?.trim() || null;
     if (notes && notes.length > 5_000) {
-      throw new Error('Notes cannot exceed 5,000 characters.');
+      throw new Error('Les notes ne peuvent pas dépasser 5 000 caractères.');
     }
     const shipmentDate = data.shipment_date?.trim() || new Date().toISOString();
     if (!Number.isFinite(Date.parse(shipmentDate))) {
-      throw new Error('Enter a valid shipment date.');
+      throw new Error('Renseignez une date d’expédition valide.');
     }
 
     const idempotencyKey = data.idempotency_key || crypto.randomUUID();
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idempotencyKey)) {
-      throw new Error('The shipment request identifier is invalid.');
+      throw new Error('L’identifiant de la demande de création d’expédition est invalide.');
     }
 
     // The database owns the entire creation saga: tenant/status checks,
@@ -362,16 +362,16 @@ export const freightShipmentService = {
 
     if (error) throw error;
     if (!result || typeof result !== 'object' || Array.isArray(result)) {
-      throw new Error('The atomic freight creation returned an invalid response.');
+      throw new Error('La création atomique du fret a renvoyé une réponse invalide.');
     }
     const shipmentId = 'id' in result && typeof result.id === 'string' ? result.id : null;
     if (!shipmentId) {
-      throw new Error('The atomic freight creation did not return a shipment identifier.');
+      throw new Error('La création atomique du fret n’a renvoyé aucun identifiant d’expédition.');
     }
 
     const shipment = await this.getShipmentById(shipmentId);
     if (!shipment) {
-      throw new Error('The created freight shipment is not visible in the authorised perimeter.');
+      throw new Error('L’expédition de fret créée n’est pas visible dans le périmètre autorisé.');
     }
     return shipment;
   },

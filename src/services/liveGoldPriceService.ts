@@ -64,6 +64,9 @@ async function fetchFromSonaspReferential(): Promise<LiveGoldPrice | null> {
     const parsedTimestamp = Date.parse(data.updated_at ?? data.price_date);
     const high = data.high_price === null ? undefined : Number(data.high_price);
     const low = data.low_price === null ? undefined : Number(data.low_price);
+    const open = data.london_am_rate === null ? undefined : Number(data.london_am_rate);
+    const change = Number.isFinite(open) ? price - open! : undefined;
+    const changePercent = Number.isFinite(change) && open! > 0 ? change! / open! * 100 : undefined;
     return {
       price,
       timestamp: Number.isFinite(parsedTimestamp) ? parsedTimestamp : Date.now(),
@@ -71,6 +74,9 @@ async function fetchFromSonaspReferential(): Promise<LiveGoldPrice | null> {
       currency: data.currency || 'USD',
       high24h: Number.isFinite(high) ? high : undefined,
       low24h: Number.isFinite(low) ? low : undefined,
+      openPrice: Number.isFinite(open) ? open : undefined,
+      change24h: Number.isFinite(change) ? change : undefined,
+      changePercent24h: Number.isFinite(changePercent) ? changePercent : undefined,
     };
   } catch {
     return null;
@@ -138,7 +144,7 @@ export function calculate24hMetrics(current: number, open: number) {
  * Format price for display
  */
 export function formatGoldPrice(price: number, decimals: number = 2): string {
-  return price.toLocaleString('en-US', {
+  return price.toLocaleString('fr-FR', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });

@@ -389,7 +389,7 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     roles: ['management', 'mine', 'customer', 'refinery'], accountTypes: ['sonasp', 'mine', 'refinery', 'customer'],
     capabilities: [], readOnly: true, national: false,
   }),
-  ...policies(['/sales/new', '/sales/trade-space'], {
+  ...policies(['/sales/new', '/sales/simulator', '/sales/simulations', '/sales/trade-space'], {
     roles: ['management', 'mine', 'customer'], accountTypes: ['sonasp', 'mine'],
     capabilities: [CAPABILITIES.SONASP_PREPARE, CAPABILITIES.MINE_OPERATE],
     readOnly: false, national: false,

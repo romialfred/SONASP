@@ -43,7 +43,7 @@ export function NotificationPanel({
             onClick={onMarkAllRead}
             className="text-xs text-primary-600 hover:text-primary-700 font-medium"
           >
-            Mark all as read
+            Tout marquer comme lu
           </button>
         )}
       </div>
@@ -52,7 +52,7 @@ export function NotificationPanel({
         {notifications.length === 0 ? (
           <div className="px-4 py-8 text-center text-gray-500">
             <Info className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-            <p className="text-sm">No notifications</p>
+            <p className="text-sm">Aucune notification</p>
           </div>
         ) : (
           notifications.map((notification) => (

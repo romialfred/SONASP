@@ -12,9 +12,9 @@ interface ShippingStatusWorkflowEnhancedProps {
 }
 
 const WORKFLOW_STEPS = [
-  { key: 'waiting_for_customs_approval', label: 'Awaiting customs', phase: 'Shipment preparation' },
-  { key: 'approved_by_customs', label: 'Customs approved', phase: 'Shipment preparation' },
-  { key: 'ready_for_expedition', label: 'Ready for shipment', phase: 'Shipment preparation' },
+  { key: 'waiting_for_customs_approval', label: 'En attente de la douane', phase: 'Préparation de l’expédition' },
+  { key: 'approved_by_customs', label: 'Approuvée par la douane', phase: 'Préparation de l’expédition' },
+  { key: 'ready_for_expedition', label: 'Prête pour l’expédition', phase: 'Préparation de l’expédition' },
 ];
 
 export function ShippingStatusWorkflowEnhanced({
@@ -57,9 +57,9 @@ export function ShippingStatusWorkflowEnhanced({
     <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       <div className="px-6 pt-5 pb-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-semibold text-gray-900 tracking-tight">Shipment workflow</h2>
+          <h2 className="text-base font-semibold text-gray-900 tracking-tight">Circuit de l’expédition</h2>
           <div className="text-sm text-gray-500 font-medium">
-            Step {Math.max(currentIndex + 1, 1)} / {WORKFLOW_STEPS.length}
+            Étape {Math.max(currentIndex + 1, 1)} sur {WORKFLOW_STEPS.length}
           </div>
         </div>
 

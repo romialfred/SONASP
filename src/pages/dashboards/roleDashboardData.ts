@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
+import { formatStatusFr } from '@/utils/statusFormatter';
 
 /**
  * Socle de données des tableaux de bord métier.
@@ -103,26 +104,7 @@ export function lignes<T>(resultat: PromiseSettledResult<Resultat>): T[] | null 
   return resultat.value.data as T[];
 }
 
-const STATUTS_FR: Record<string, string> = {
-  draft: 'Brouillon',
-  pending: 'En attente',
-  pending_approval: 'À approuver',
-  submitted: 'Soumis',
-  under_review: 'En revue',
-  in_progress: 'En cours',
-  in_transit: 'En transit',
-  prepared: 'Préparé',
-  shipped: 'Expédié',
-  received: 'Reçu',
-  completed: 'Terminé',
-  approved: 'Approuvé',
-  validated: 'Validé',
-  rejected: 'Rejeté',
-  cancelled: 'Annulé',
-  paid: 'Payé',
-};
-
-export const statutFr = (statut?: string | null) => (statut ? STATUTS_FR[statut] || statut : '—');
+export const statutFr = (statut?: string | null) => statut ? formatStatusFr(statut) : '—';
 
 /* ------------------------------------------------------------------ Usine */
 

@@ -5,6 +5,7 @@ import { useCoursOr } from '@/hooks/useCoursOr';
 import { PublicLocaleProvider, usePublicLocale } from './PublicLocaleContext';
 import { PortalAccessButton } from './PortalAccessButton';
 import type { PublicLocale } from './publicContent';
+import { INTERFACE_LANGUAGES } from '@/i18n/interfaceLanguages';
 import './public-site.css';
 
 const publicLinks = [
@@ -167,8 +168,11 @@ function PublicLayoutInner() {
                 onChange={(event) => setLocale(event.target.value as PublicLocale)}
                 aria-label={locale === 'fr' ? 'Choisir la langue' : 'Choose language'}
               >
-                <option value="fr">FR</option>
-                <option value="en">EN</option>
+                {INTERFACE_LANGUAGES.map((option) => (
+                  <option key={option.code} value={option.code} disabled={!option.enabled}>
+                    {option.code.toUpperCase()}{option.enabled ? '' : ' — bientôt disponible'}
+                  </option>
+                ))}
               </select>
               <ChevronDown aria-hidden="true" />
             </label>

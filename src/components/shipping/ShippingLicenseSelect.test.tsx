@@ -45,8 +45,8 @@ describe('ShippingLicenseSelect', () => {
       />,
     );
 
-    const select = screen.getByLabelText('Export licence *');
-    expect(screen.getByRole('option', { name: /EXP-ACTIVE — Available: 400/ })).toBeInTheDocument();
+    const select = screen.getByLabelText('Licence d’exportation *');
+    expect(screen.getByRole('option', { name: /EXP-ACTIVE — Disponible : 400/ })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /EXP-OTHER/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /EXP-PENDING/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /EXP-EXPIRED/ })).not.toBeInTheDocument();
@@ -66,7 +66,7 @@ describe('ShippingLicenseSelect', () => {
       />,
     );
 
-    expect(screen.getByLabelText('Export licence *')).toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent('No active licence');
+    expect(screen.getByLabelText('Licence d’exportation *')).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('Aucune licence active');
   });
 });

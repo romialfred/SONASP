@@ -68,8 +68,9 @@ describe('liveGoldPriceService', () => {
     expect(cours).toMatchObject({ price: 3_125.5, source: 'Référentiel SONASP · LBMA' });
     expect(cours?.high24h).toBeUndefined();
     expect(cours?.low24h).toBeUndefined();
-    expect(cours?.change24h).toBeUndefined();
-    expect(cours?.openPrice).toBeUndefined();
+    expect(cours?.change24h).toBe(5.5);
+    expect(cours?.changePercent24h).toBeCloseTo(0.1763, 3);
+    expect(cours?.openPrice).toBe(3_120);
     expect(fetch).not.toHaveBeenCalled();
   });
 

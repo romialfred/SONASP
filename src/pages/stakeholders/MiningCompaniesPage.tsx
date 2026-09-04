@@ -54,7 +54,7 @@ export function MiningCompaniesPage() {
         }))
       );
     } catch (error) {
-      console.error('Error loading mining companies:', error);
+      console.error('Erreur lors du chargement des sociétés minières :', error);
     } finally {
       setLoading(false);
     }
@@ -74,28 +74,28 @@ export function MiningCompaniesPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <Factory className="h-8 w-8 text-amber-700" />
-              Mining Companies
+              Sociétés minières
             </h1>
             <p className="text-gray-600 mt-1">
-              Manage mining company information and track their activities
+              Gérez les informations des sociétés minières et suivez leurs activités.
             </p>
           </div>
           <Button onClick={() => navigate('/stakeholders/mining-companies/new')}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Mining Company
+            Ajouter une société minière
           </Button>
         </div>
 
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>All Mining Companies ({filteredCompanies.length})</CardTitle>
+              <CardTitle>Sociétés minières ({filteredCompanies.length})</CardTitle>
               <div className="w-80">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     type="text"
-                    placeholder="Search companies..."
+                    placeholder="Rechercher une société…"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -108,19 +108,19 @@ export function MiningCompaniesPage() {
             {loading ? (
               <div className="py-12 text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading companies...</p>
+                <p className="mt-4 text-gray-600">Chargement des sociétés…</p>
               </div>
             ) : filteredCompanies.length === 0 ? (
               <div className="py-12 text-center">
                 <Factory className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No mining companies found</p>
+                <p className="text-gray-600">Aucune société minière trouvée.</p>
                 <Button
                   variant="outline"
                   onClick={() => navigate('/stakeholders/mining-companies/new')}
                   className="mt-4"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add First Mining Company
+                  Ajouter la première société minière
                 </Button>
               </div>
             ) : (
@@ -128,12 +128,12 @@ export function MiningCompaniesPage() {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Company Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Société</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Person</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Localisation</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Personne-ressource</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Statut</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
@@ -156,7 +156,7 @@ export function MiningCompaniesPage() {
                                   className="text-xs text-blue-600 hover:underline flex items-center gap-1"
                                 >
                                   <Globe className="w-3 h-3" />
-                                  Website
+                                  Site internet
                                 </a>
                               )}
                             </div>

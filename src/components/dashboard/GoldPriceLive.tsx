@@ -82,9 +82,9 @@ export function GoldPriceLive() {
   if (!priceData) {
     return (
       <div className="relative bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200 p-6">
-        <p className="text-sm text-gray-600">Gold Price</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">N/A</p>
-        <p className="text-xs text-gray-500 mt-1">No data available</p>
+        <p className="text-sm text-gray-600">Cours de l’or</p>
+        <p className="text-2xl font-bold text-gray-900 mt-1">Non disponible</p>
+        <p className="text-xs text-gray-500 mt-1">Aucune donnée disponible</p>
       </div>
     );
   }
@@ -144,7 +144,7 @@ export function GoldPriceLive() {
             onClick={handleRefresh}
             disabled={refreshing}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
-            title="Refresh price"
+            title="Actualiser le cours"
           >
             <RefreshCw className={`w-3 h-3 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
@@ -153,7 +153,7 @@ export function GoldPriceLive() {
         <div className="space-y-0.5">
           {/* Current Price */}
           <div className="text-xl font-bold text-gray-900">
-            ${priceData.current.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {priceData.current.toLocaleString('fr-FR', { style: 'currency', currency: 'USD' })}
             <span className="text-sm font-normal text-gray-500 ml-1">/oz</span>
           </div>
 
@@ -191,7 +191,9 @@ export function GoldPriceLive() {
         <div className="flex items-center justify-between text-xs">
           <span className="text-gray-500">Cours précédent :</span>
           <span className="font-medium text-gray-700">
-            {priceData.previous === null ? 'Non communiqué' : `$${priceData.previous.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            {priceData.previous === null
+              ? 'Non communiqué'
+              : priceData.previous.toLocaleString('fr-FR', { style: 'currency', currency: 'USD' })}
           </span>
         </div>
       </div>

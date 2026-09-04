@@ -135,7 +135,7 @@ export function CustomerListing() {
           name: customer.name,
           email: customer.email,
           country: customer.country,
-          phone: customer.phone || 'N/A',
+          phone: customer.phone || 'N/D',
           totalPurchases,
           totalSpent: finalTotalSpent,
           lastPurchaseDate,
@@ -164,33 +164,33 @@ export function CustomerListing() {
 
   const metrics = [
     {
-      title: 'Total Customers',
+      title: 'Nombre total de clients',
       value: totalCustomers.toString(),
-      change: '+3 this quarter',
+      change: '+3 ce trimestre',
       changeType: 'positive' as const,
       icon: Users,
       iconColor: 'text-blue-500',
     },
     {
-      title: 'Active Customers',
+      title: 'Clients actifs',
       value: activeCustomers.toString(),
-      change: `${activePercentage}% of total`,
+      change: `${activePercentage} % du total`,
       changeType: 'positive' as const,
       icon: TrendingUp,
       iconColor: 'text-accent-500',
     },
     {
-      title: 'Total Revenue (YTD)',
+      title: 'Chiffre d’affaires cumulé',
       value: formatCurrency(totalRevenue),
-      change: '+24% from last year',
+      change: '+24 % par rapport à l’année précédente',
       changeType: 'positive' as const,
       icon: DollarSign,
       iconColor: 'text-primary-500',
     },
     {
-      title: 'Avg Order Value',
+      title: 'Valeur moyenne des commandes',
       value: formatCurrency(avgOrderValue),
-      change: '+8% this quarter',
+      change: '+8 % ce trimestre',
       changeType: 'positive' as const,
       icon: DollarSign,
       iconColor: 'text-accent-500',
@@ -198,24 +198,24 @@ export function CustomerListing() {
   ];
 
   const columns = [
-    { key: 'name', label: 'Customer Name' },
-    { key: 'country', label: 'Country' },
-    { key: 'email', label: 'Email' },
+    { key: 'name', label: 'Nom du client' },
+    { key: 'country', label: 'Pays' },
+    { key: 'email', label: 'Adresse électronique' },
     {
       key: 'totalPurchases',
-      label: 'Purchases',
+      label: 'Achats',
       render: (customer: Customer) => (
         <span className="font-medium">{customer.totalPurchases}</span>
       ),
     },
     {
       key: 'totalSpent',
-      label: 'Total Spent',
+      label: 'Montant total',
       render: (customer: Customer) => formatCurrency(customer.totalSpent),
     },
     {
       key: 'paymentRate',
-      label: 'Payment Rate',
+      label: 'Taux de paiement',
       render: (customer: Customer) => {
         const rate = customer.paymentRate ?? 0;
         return (
@@ -227,14 +227,14 @@ export function CustomerListing() {
     },
     {
       key: 'status',
-      label: 'Status',
+      label: 'Statut',
       render: (customer: Customer) => {
         const statusMap = {
-          active: { label: 'Active', variant: 'success' as const },
-          inactive: { label: 'Inactive', variant: 'neutral' as const },
-          pending: { label: 'Pending', variant: 'warning' as const },
+          active: { label: 'Actif', variant: 'success' as const },
+          inactive: { label: 'Inactif', variant: 'neutral' as const },
+          pending: { label: 'En attente', variant: 'warning' as const },
         };
-        const status = statusMap[customer.status] || { label: 'Unknown', variant: 'neutral' as const };
+        const status = statusMap[customer.status] || { label: 'Non renseigné', variant: 'neutral' as const };
         return <StatusBadge label={status.label} variant={status.variant} />;
       },
     },
@@ -269,7 +269,7 @@ export function CustomerListing() {
             <h1 className="font-heading text-3xl font-bold text-gray-900">
               {t('nav.customers')}
             </h1>
-            <p className="text-gray-600 mt-1">Customer Relationship Management</p>
+            <p className="text-gray-600 mt-1">Gestion de la relation client</p>
           </div>
           <div className="flex gap-3">
             <Button
@@ -277,7 +277,7 @@ export function CustomerListing() {
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
-              Add Customer
+              Ajouter un client
             </Button>
           </div>
         </div>
@@ -290,13 +290,13 @@ export function CustomerListing() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Customer Directory</CardTitle>
+            <CardTitle>Répertoire des clients</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="mb-4 flex flex-wrap gap-4">
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Rechercher par nom ou adresse électronique…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -306,7 +306,7 @@ export function CustomerListing() {
                 onChange={(e) => setCountryFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
-                <option value="all">All Countries</option>
+                <option value="all">Tous les pays</option>
                 {countries.map((country) => (
                   <option key={country} value={country}>
                     {country}
@@ -318,10 +318,10 @@ export function CustomerListing() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="pending">Pending</option>
+                <option value="all">Tous les statuts</option>
+                <option value="active">Actif</option>
+                <option value="inactive">Inactif</option>
+                <option value="pending">En attente</option>
               </select>
             </div>
             <Table

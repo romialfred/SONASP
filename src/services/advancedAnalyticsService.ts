@@ -268,7 +268,7 @@ export class AdvancedAnalyticsService {
           : `${year}-Q${quarter}`;
 
         const periodLabel = periodType === 'month'
-          ? date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          ? date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
           : `Q${quarter} ${year}`;
 
         if (!periodTotals[period]) {
@@ -465,7 +465,7 @@ export class AdvancedAnalyticsService {
           : `${year}-Q${quarter}`;
 
         const periodLabel = periodType === 'month'
-          ? date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          ? date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
           : `Q${quarter} ${year}`;
 
         if (!periodTotals[period]) {

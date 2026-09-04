@@ -86,9 +86,9 @@ describe('FreightShipmentCreate', () => {
     mocks.getAvailable.mockRejectedValue({ code: '42501', message: 'denied' });
     render(<FreightShipmentCreate />);
 
-    expect(await screen.findByText(/Preparation data could not be loaded/i)).toBeInTheDocument();
-    expect(screen.queryByText(/No eligible preparations are available/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Create freight shipment/i })).toBeDisabled();
+    expect(await screen.findByText(/Impossible de charger les données des préparations/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Aucune préparation admissible n’est disponible/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Créer l’expédition de fret/i })).toBeDisabled();
   });
 
   async function completeForm() {
@@ -100,7 +100,7 @@ describe('FreightShipmentCreate', () => {
     const numbers = screen.getAllByRole('spinbutton');
     fireEvent.change(numbers[1], { target: { value: '2400' } });
     fireEvent.change(numbers[2], { target: { value: '600' } });
-    return screen.getByRole('button', { name: /Create freight shipment/i });
+    return screen.getByRole('button', { name: /Créer l’expédition de fret/i });
   }
 
   it('creates once even when the submit action is activated twice', async () => {
@@ -145,8 +145,8 @@ describe('FreightShipmentCreate', () => {
     fireEvent.click(submit);
 
     await waitFor(() => expect(mocks.showWarning).toHaveBeenCalledWith(
-      'Shipment requires review',
-      expect.stringContaining('do not create another one'),
+      'Expédition à vérifier',
+      expect.stringContaining('n’en créez pas une autre'),
     ));
     expect(mocks.navigate).toHaveBeenCalledWith('/freight/shipments/freight-1');
     expect(mocks.createShipment).toHaveBeenCalledTimes(1);

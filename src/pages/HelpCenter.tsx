@@ -405,16 +405,16 @@ export default function HelpCenter() {
       <div className="mt-12 bg-gray-100 border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Still need help?</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Besoin d’une assistance complémentaire ?</h3>
             <p className="text-gray-600 mb-4">
-              Contact your system administrator or reach out to support
+              Contactez votre administrateur système ou le service d’assistance.
             </p>
             <div className="flex justify-center gap-4">
               <Button variant="secondary" size="sm">
-                Contact Support
+                Contacter l’assistance
               </Button>
               <Button variant="secondary" size="sm" onClick={() => navigate('/audit')}>
-                View System Logs
+                Consulter les journaux système
               </Button>
             </div>
           </div>

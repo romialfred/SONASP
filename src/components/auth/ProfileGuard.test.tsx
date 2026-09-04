@@ -63,18 +63,18 @@ describe('ProfileGuard', () => {
 
     renderGuard();
 
-    expect(screen.getByText(/Loading profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/Chargement du profil/i)).toBeInTheDocument();
   });
 
   it('renders error state when profile fails to load and user is missing', () => {
     const refreshProfile = vi.fn().mockResolvedValue(undefined);
     mockedUseAuth.mockReturnValue(
-      createAuthValue({ profileError: 'Unable to load user profile.', refreshProfile })
+      createAuthValue({ profileError: 'Impossible de charger le profil utilisateur.', refreshProfile })
     );
 
     renderGuard();
 
-    expect(screen.getByText(/Unable to load user profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/Impossible de charger le profil utilisateur/i)).toBeInTheDocument();
   });
 
   it('renders fallback when user is missing', () => {
@@ -82,21 +82,21 @@ describe('ProfileGuard', () => {
 
     renderGuard();
 
-    expect(screen.getByText(/could not load your profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/Impossible de charger les informations de votre profil/i)).toBeInTheDocument();
   });
 
   it('renders children with warning when profileError exists but user is present', () => {
     const refreshProfile = vi.fn().mockResolvedValue(undefined);
     mockedUseAuth.mockReturnValue(
-      createAuthValue({ user: baseUser, profileError: 'Using limited profile information.', refreshProfile })
+      createAuthValue({ user: baseUser, profileError: 'Certaines informations du profil sont indisponibles.', refreshProfile })
     );
 
     renderGuard();
 
     expect(screen.getByTestId('guard-content')).toBeInTheDocument();
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent(/Limited profile information/i);
-    expect(alert).toHaveTextContent(/Using limited profile information/i);
+    expect(alert).toHaveTextContent(/Informations de profil partielles/i);
+    expect(alert).toHaveTextContent(/Certaines informations du profil sont indisponibles/i);
   });
 
   it('renders children when profile is available', () => {

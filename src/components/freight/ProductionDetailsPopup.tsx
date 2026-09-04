@@ -42,10 +42,10 @@ export function ProductionDetailsPopup({
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-t-lg">
         <h3 className="font-bold text-lg">
-          Production details — {expeditionLotNumber}
+          Détail des productions — {expeditionLotNumber}
         </h3>
         <p className="text-xs text-blue-100 mt-1">
-          {productions.length} production lot{productions.length === 1 ? '' : 's'} in this shipment
+          {productions.length} lot{productions.length > 1 ? 's' : ''} de production dans cette expédition
         </p>
       </div>
 
@@ -55,12 +55,12 @@ export function ProductionDetailsPopup({
           <thead className="bg-gray-100 sticky top-0">
             <tr>
               <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">#</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Bar reference</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Production date</th>
-              <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700">Bullion (g)</th>
-              <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700">Fine gold (g)</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Référence du lingot</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Date de production</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700">Lingot (g)</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700">Or fin (g)</th>
               <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700">Oz</th>
-              <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700">Fineness (%)</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700">Titre (%)</th>
             </tr>
           </thead>
           <tbody>
@@ -74,13 +74,13 @@ export function ProductionDetailsPopup({
                   {formatDateShort(prod.production_date)}
                 </td>
                 <td className="px-2 py-2 text-right font-medium text-gray-900">
-                  {prod.bullion_grams.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {prod.bullion_grams.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-2 py-2 text-right font-medium text-green-700">
-                  {prod.pure_gold_grams.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {prod.pure_gold_grams.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-2 py-2 text-right font-medium text-blue-700">
-                  {prod.estimated_oz.toLocaleString('en-GB', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                  {prod.estimated_oz.toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
                 </td>
                 <td className="px-2 py-2 text-right text-gray-700">
                   {prod.estimated_fineness_pct.toFixed(2)}%
@@ -94,13 +94,13 @@ export function ProductionDetailsPopup({
                 TOTAL:
               </td>
               <td className="px-2 py-3 text-right text-gray-900">
-                {totalBullion.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} g
+                {totalBullion.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} g
               </td>
               <td className="px-2 py-3 text-right text-green-700">
-                {totalPure.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} g
+                {totalPure.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} g
               </td>
               <td className="px-2 py-3 text-right text-blue-700">
-                {totalOz.toLocaleString('en-GB', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} oz
+                {totalOz.toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} oz
               </td>
               <td className="px-2 py-3"></td>
             </tr>
@@ -111,7 +111,7 @@ export function ProductionDetailsPopup({
       {/* Footer Info */}
       <div className="bg-gray-50 px-4 py-2 rounded-b-lg border-t border-gray-200">
         <p className="text-xs text-gray-600 italic">
-          Select another lot to view its details
+          Sélectionnez un autre lot pour consulter son détail
         </p>
       </div>
     </div>

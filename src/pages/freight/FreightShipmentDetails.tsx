@@ -57,8 +57,8 @@ export default function FreightShipmentDetails() {
       const data = await freightShipmentService.getShipmentById(id);
       setShipment(data);
     } catch (error: any) {
-      console.error("Load error:", error);
-      showError('Data unavailable', 'The freight shipment could not be loaded. Return to the register and try again.');
+      console.error("Erreur de chargement :", error);
+      showError('Données indisponibles', 'L’expédition de fret n’a pas pu être chargée. Revenez au registre puis réessayez.');
     } finally {
       setLoading(false);
     }
@@ -66,18 +66,18 @@ export default function FreightShipmentDetails() {
 
   const handleSendToRefinery = async () => {
     if (!id || !shipment) {
-      showError("Error", "No shipment selected");
+      showError("Erreur", "Aucune expédition sélectionnée");
       return;
     }
 
     try {
       const confirmed = await showConfirm(
-        "Confirm dispatch to the refinery",
-        `Mark this shipment as dispatched to the refinery?\n\n` +
-        `Reference: ${shipment.reference_number}\n` +
-        `Destination: ${shipment.destination_refinery?.name || "Not specified"}\n` +
-        `Total fine-gold weight: ${formatWeightOunces(shipment.total_pure_gold_oz)} oz\n\n` +
-        `This action cannot be undone.`
+        "Confirmer l’envoi à la raffinerie",
+        `Marquer cette expédition comme envoyée à la raffinerie ?\n\n` +
+        `Référence : ${shipment.reference_number}\n` +
+        `Destination : ${shipment.destination_refinery?.name || "Non renseignée"}\n` +
+        `Poids total d’or fin : ${formatWeightOunces(shipment.total_pure_gold_oz)} oz\n\n` +
+        `Cette action est irréversible.`
       );
 
       if (!confirmed) return;
@@ -86,14 +86,14 @@ export default function FreightShipmentDetails() {
       await freightShipmentService.updateStatus(id, 'shipped_to_refinery');
 
       showSuccess(
-        "Dispatch confirmed",
-        "The shipment is recorded as dispatched and is available in Refining."
+        "Envoi confirmé",
+        "L’expédition est enregistrée comme envoyée et est désormais disponible dans le module Raffinage."
       );
 
       await loadShipment();
     } catch (error: any) {
-      console.error('Error dispatching to the refinery:', error);
-      showError('Dispatch not confirmed', 'The status could not be updated. Refresh the record before trying again.');
+      console.error('Erreur lors de l’envoi à la raffinerie :', error);
+      showError('Envoi non confirmé', 'Le statut n’a pas pu être mis à jour. Actualisez la fiche avant de réessayer.');
     } finally {
       setActionLoading(false);
     }
@@ -101,7 +101,7 @@ export default function FreightShipmentDetails() {
 
   const handleGenerateDocuments = async () => {
     if (!shipment || !id) {
-      showError("Error", "Missing shipment data");
+      showError("Erreur", "Les données de l’expédition sont incomplètes");
       return;
     }
 
@@ -111,15 +111,15 @@ export default function FreightShipmentDetails() {
       const sourceCompanies = shipment.source_mining_companies || [];
       if (sourceCompanies.length !== 1) {
         showError(
-          "Source company required",
+          "Société d’origine requise",
           sourceCompanies.length === 0
-            ? "The source mining company could not be determined. Documents cannot be generated with an assumed identity."
-            : "This shipment contains lots from several companies. Generate separate documents for each source company.",
+            ? "La société minière d’origine n’a pas pu être déterminée. Les documents ne peuvent pas être générés sur la base d’une identité supposée."
+            : "Cette expédition contient des lots de plusieurs sociétés. Générez des documents distincts pour chaque société d’origine.",
         );
         return;
       }
       const sourceCompany = sourceCompanies[0];
-      showSuccess("Generating documents", "Creating PDF documents…");
+      showSuccess("Génération des documents", "Création des documents PDF…");
 
       const bullionData: BullionSummaryData = {
         issuerName: sourceCompany.name,
@@ -204,12 +204,12 @@ export default function FreightShipmentDetails() {
       await loadShipment();
 
       showSuccess(
-        "Documents generated",
-        'The bullion summary and invoice were generated successfully.'
+        "Documents générés",
+        'Le bordereau récapitulatif des lingots et la facture ont été générés.'
       );
     } catch (error: any) {
-      console.error('Document generation error:', error);
-      showError('Document generation unavailable', 'The documents could not be generated or stored. Review the record and try again.');
+      console.error('Erreur de génération des documents :', error);
+      showError('Génération indisponible', 'Les documents n’ont pas pu être générés ou enregistrés. Vérifiez la fiche puis réessayez.');
     } finally {
       setGeneratingDocs(false);
     }
@@ -230,9 +230,9 @@ export default function FreightShipmentDetails() {
       <NationalDashboardLayout>
         <div className="sn-page logistics-workspace">
           <Card className="p-6">
-            <p className="text-gray-600">Shipment unavailable</p>
+            <p className="text-gray-600">Expédition indisponible</p>
             <Button onClick={() => navigate('/freight')} className="mt-4">
-              Back to overview
+              Retour au registre
             </Button>
           </Card>
         </div>
@@ -244,12 +244,12 @@ export default function FreightShipmentDetails() {
     <NationalDashboardLayout>
       <div className="sn-page logistics-workspace">
         <PageHeader
-          title={`Freight shipment ${shipment.reference_number}`}
-          subtitle="Authoritative quantities, destination, documents and dispatch history."
+          title={`Expédition de fret ${shipment.reference_number}`}
+          subtitle="Quantités de référence, destination, documents et historique d’acheminement."
           icon={Package}
           breadcrumb={[
-            { label: 'Shipments', to: '/shipping/preparation' },
-            { label: 'Freight shipments', to: '/freight' },
+            { label: 'Expéditions', to: '/shipping/preparation' },
+            { label: 'Expéditions de fret', to: '/freight' },
             { label: shipment.reference_number },
           ]}
           actions={<div className="flex items-center gap-3">
@@ -263,18 +263,18 @@ export default function FreightShipmentDetails() {
                 {actionLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Processing...
+                    Traitement…
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4 mr-2" />
-                    Dispatch to refinery
+                    Envoyer à la raffinerie
                   </>
                 )}
               </Button>
             )}
             <Button type="button" variant="outline" onClick={() => navigate('/freight')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />Back to register
+              <ArrowLeft className="w-4 h-4 mr-2" />Retour au registre
             </Button>
           </div>}
         />
@@ -286,25 +286,25 @@ export default function FreightShipmentDetails() {
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
                 <Package className="w-5 h-5 text-blue-600" />
-                General information
+                Informations générales
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <label className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Shipment date</label>
+                  <label className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Date d’expédition</label>
                   <p className="text-gray-900 font-semibold mt-1.5 text-base">
-                    {new Date(shipment.shipment_date).toLocaleDateString('en-GB')}
+                    {new Date(shipment.shipment_date).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Number of packages</label>
+                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Nombre de colis</label>
                   <p className="text-gray-900 font-semibold mt-1.5 text-base">{shipment.number_of_boxes}</p>
                 </div>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <label className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Packaging type</label>
+                  <label className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Type d’emballage</label>
                   <p className="text-gray-900 font-semibold mt-1.5 text-base">{shipment.box_type}</p>
                 </div>
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                  <label className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Production lots</label>
+                  <label className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Lots de production</label>
                   <p className="text-gray-900 font-semibold mt-1.5 text-base">{shipment.production_count}</p>
                 </div>
               </div>
@@ -313,7 +313,7 @@ export default function FreightShipmentDetails() {
                 <div className="mt-4 pt-4 border-t">
                   <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
                     <Plane className="w-4 h-4" />
-                    Destination refinery
+                    Raffinerie de destination
                   </label>
                   <p className="text-gray-900 mt-1 font-medium">
                     {shipment.destination_refinery.name} - {shipment.destination_refinery.location}, {shipment.destination_refinery.country}
@@ -334,33 +334,33 @@ export default function FreightShipmentDetails() {
               <Card className="p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <Package className="w-5 h-5 text-blue-600" />
-                  Included production lots
+                  Lots de production inclus
                 </h2>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead className="bg-slate-50">
                       <tr>
                         <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
-                          Bar Ref.
+                          Réf. lingot
                         </th>
                         <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
                           Date
                         </th>
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                          Gross weight (g)
+                          Poids brut (g)
                         </th>
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                          Fineness (%)
+                          Titre (%)
                         </th>
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                          Fine gold (g)
+                          Or fin (g)
                         </th>
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                          Fine gold (oz)
+                          Or fin (oz)
                         </th>
                         {(shipment.total_pure_silver_grams ?? 0) > 0 && (
                           <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                            Fine silver (g)
+                            Argent fin (g)
                           </th>
                         )}
                       </tr>
@@ -373,7 +373,7 @@ export default function FreightShipmentDetails() {
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-600 border border-gray-300">
                             {prod.production_date
-                              ? new Date(prod.production_date).toLocaleDateString('en-GB')
+                              ? new Date(prod.production_date).toLocaleDateString('fr-FR')
                               : '—'}
                           </td>
                           <td className="px-3 py-2 text-sm text-right text-gray-900 border border-gray-300">
@@ -398,7 +398,7 @@ export default function FreightShipmentDetails() {
                       {/* Grand Total Row */}
                       <tr className="bg-amber-50 border-t-2 border-amber-300 font-bold">
                         <td colSpan={2} className="px-3 py-3 text-sm text-gray-900 border border-gray-400">
-                          GRAND TOTAL
+                          TOTAL GÉNÉRAL
                         </td>
                         <td className="px-3 py-3 text-sm text-right text-amber-900 border border-gray-400">
                           {formatWeightGrams(shipment.total_bullion_grams)}
@@ -428,19 +428,19 @@ export default function FreightShipmentDetails() {
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-green-600" />
-                Financial information
+                Informations financières
               </h2>
 
               {/* Price & Exchange Rate Summary */}
               <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
                 <div>
-                  <label className="text-sm font-medium text-emerald-700">Gold price (USD/oz)</label>
+                  <label className="text-sm font-medium text-emerald-700">Cours de l’or (USD/oz)</label>
                   <p className="text-gray-900 mt-1 font-bold text-lg">
                     ${shipment.gold_price_usd_per_oz.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-emerald-700">Exchange rate</label>
+                  <label className="text-sm font-medium text-emerald-700">Taux de change</label>
                   <p className="text-gray-900 mt-1 font-bold text-lg">
                     {shipment.exchange_rate.toFixed(2)} {shipment.local_currency}/USD
                   </p>
@@ -454,19 +454,19 @@ export default function FreightShipmentDetails() {
                     <thead className="bg-slate-50">
                       <tr>
                         <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 border border-gray-300">
-                          Bar Ref.
+                          Réf. lingot
                         </th>
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                          Fine gold (oz)
+                          Or fin (oz)
                         </th>
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                          Price (USD/oz)
+                          Prix (USD/oz)
                         </th>
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                          Value (USD)
+                          Valeur (USD)
                         </th>
                         <th className="px-3 py-3 text-right text-xs font-semibold text-gray-700 border border-gray-300">
-                          Value ({shipment.local_currency})
+                          Valeur ({shipment.local_currency})
                         </th>
                       </tr>
                     </thead>
@@ -526,7 +526,7 @@ export default function FreightShipmentDetails() {
               <div className="bg-gradient-to-r from-blue-500/70 to-blue-400/60 px-4 py-3">
                 <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                   Timeline
+                   Historique
                 </h2>
               </div>
               <div className="p-4">
@@ -534,9 +534,9 @@ export default function FreightShipmentDetails() {
                   <div className="flex gap-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Created</p>
+                      <p className="text-sm font-medium text-gray-900">Créée</p>
                       <p className="text-xs text-gray-600">
-                        {shipment.created_at ? new Date(shipment.created_at).toLocaleString('en-GB') : '—'}
+                        {shipment.created_at ? new Date(shipment.created_at).toLocaleString('fr-FR') : '—'}
                       </p>
                     </div>
                   </div>
@@ -545,9 +545,9 @@ export default function FreightShipmentDetails() {
                     <div className="flex gap-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Approved</p>
+                        <p className="text-sm font-medium text-gray-900">Approuvée</p>
                         <p className="text-xs text-gray-600">
-                          {new Date(shipment.approved_at).toLocaleString('en-GB')}
+                          {new Date(shipment.approved_at).toLocaleString('fr-FR')}
                         </p>
                       </div>
                     </div>
@@ -557,9 +557,9 @@ export default function FreightShipmentDetails() {
                     <div className="flex gap-3">
                       <div className="w-2 h-2 bg-teal-500 rounded-full mt-2"></div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Dispatched</p>
+                        <p className="text-sm font-medium text-gray-900">Envoyée</p>
                         <p className="text-xs text-gray-600">
-                          {new Date(shipment.shipped_at).toLocaleString('en-GB')}
+                          {new Date(shipment.shipped_at).toLocaleString('fr-FR')}
                         </p>
                       </div>
                     </div>
@@ -569,9 +569,9 @@ export default function FreightShipmentDetails() {
                     <div className="flex gap-3">
                       <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Received</p>
+                        <p className="text-sm font-medium text-gray-900">Réceptionnée</p>
                         <p className="text-xs text-gray-600">
-                          {new Date(shipment.received_at).toLocaleString('en-GB')}
+                          {new Date(shipment.received_at).toLocaleString('fr-FR')}
                         </p>
                       </div>
                     </div>
@@ -586,7 +586,7 @@ export default function FreightShipmentDetails() {
                 <div className="bg-gradient-to-r from-teal-500/70 to-teal-400/60 px-4 py-3">
                   <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
                     <User className="w-4 h-4" />
-                    Signatories
+                    Signataires
                   </h2>
                 </div>
                 <div className="p-4">
@@ -610,7 +610,7 @@ export default function FreightShipmentDetails() {
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
                     <FileText className="w-4 h-4" />
-                    Generated documents
+                    Documents générés
                   </h2>
 
                   {(!shipment.bullion_summary_pdf_path || !shipment.customs_invoice_pdf_path) && (
@@ -618,21 +618,21 @@ export default function FreightShipmentDetails() {
                       onClick={handleGenerateDocuments}
                       disabled={generatingDocs || !FREIGHT_LEGACY_DOCUMENTS_ENABLED}
                       title={!FREIGHT_LEGACY_DOCUMENTS_ENABLED
-                        ? "Document generation is disabled until the private storage gateway is available."
+                        ? "La génération des documents est désactivée tant que la passerelle de stockage privé est indisponible."
                         : undefined}
                       className="bg-white hover:bg-gray-100 text-amber-800 disabled:bg-gray-200 disabled:text-gray-500 text-xs px-2 py-1 shadow-sm"
                     >
                       {!FREIGHT_LEGACY_DOCUMENTS_ENABLED ? (
-                        "Generation unavailable"
+                        "Génération indisponible"
                       ) : generatingDocs ? (
                         <>
                           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                          Generating…
+                          Génération…
                         </>
                       ) : (
                         <>
                           <FileText className="w-3 h-3 mr-1" />
-                          Generate
+                          Générer
                         </>
                       )}
                     </Button>
@@ -650,15 +650,16 @@ export default function FreightShipmentDetails() {
                           <FileText className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Packing List</p>
-                          <p className="text-xs text-gray-500">PDF Document</p>
+                          <p className="text-sm font-medium text-gray-900">Liste de colisage</p>
+                          <p className="text-xs text-gray-500">Document PDF</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setViewingPdf(shipment.packing_list_pdf_path!)}
                           className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
-                           title="View"
+                           title="Consulter"
+                           aria-label="Consulter la liste de colisage"
                         >
                           <Eye className="w-4 h-4 text-blue-600" />
                         </button>
@@ -666,7 +667,8 @@ export default function FreightShipmentDetails() {
                           href={shipment.packing_list_pdf_path}
                           download
                           className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
-                          title="Download"
+                          title="Télécharger"
+                          aria-label="Télécharger la liste de colisage"
                         >
                           <Download className="w-4 h-4 text-emerald-600" />
                         </a>
@@ -684,15 +686,16 @@ export default function FreightShipmentDetails() {
                           <FileText className="w-5 h-5 text-slate-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Consignment Note</p>
-                          <p className="text-xs text-gray-500">PDF Document</p>
+                          <p className="text-sm font-medium text-gray-900">Lettre de transport aérien</p>
+                          <p className="text-xs text-gray-500">Document PDF</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setViewingPdf(shipment.consignment_note_pdf_path!)}
                           className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
-                           title="View"
+                           title="Consulter"
+                           aria-label="Consulter la lettre de transport aérien"
                         >
                           <Eye className="w-4 h-4 text-blue-600" />
                         </button>
@@ -700,7 +703,8 @@ export default function FreightShipmentDetails() {
                           href={shipment.consignment_note_pdf_path}
                           download
                           className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
-                          title="Download"
+                          title="Télécharger"
+                          aria-label="Télécharger la lettre de transport aérien"
                         >
                           <Download className="w-4 h-4 text-emerald-600" />
                         </a>
@@ -718,15 +722,16 @@ export default function FreightShipmentDetails() {
                           <FileText className="w-5 h-5 text-amber-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Bullion Summary</p>
-                          <p className="text-xs text-gray-500">PDF Document</p>
+                          <p className="text-sm font-medium text-gray-900">Bordereau récapitulatif des lingots</p>
+                          <p className="text-xs text-gray-500">Document PDF</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setViewingPdf(shipment.bullion_summary_pdf_path!)}
                           className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
-                           title="View"
+                           title="Consulter"
+                           aria-label="Consulter le bordereau récapitulatif des lingots"
                         >
                           <Eye className="w-4 h-4 text-blue-600" />
                         </button>
@@ -734,7 +739,8 @@ export default function FreightShipmentDetails() {
                           href={shipment.bullion_summary_pdf_path}
                           download
                           className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
-                          title="Download"
+                          title="Télécharger"
+                          aria-label="Télécharger le bordereau récapitulatif des lingots"
                         >
                           <Download className="w-4 h-4 text-emerald-600" />
                         </a>
@@ -752,15 +758,16 @@ export default function FreightShipmentDetails() {
                           <FileText className="w-5 h-5 text-emerald-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Invoice</p>
-                          <p className="text-xs text-gray-500">PDF Document</p>
+                          <p className="text-sm font-medium text-gray-900">Facture</p>
+                          <p className="text-xs text-gray-500">Document PDF</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setViewingPdf(shipment.customs_invoice_pdf_path!)}
                           className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
-                           title="View"
+                           title="Consulter"
+                           aria-label="Consulter la facture"
                         >
                           <Eye className="w-4 h-4 text-blue-600" />
                         </button>
@@ -768,7 +775,8 @@ export default function FreightShipmentDetails() {
                           href={shipment.customs_invoice_pdf_path}
                           download
                           className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
-                          title="Download"
+                          title="Télécharger"
+                          aria-label="Télécharger la facture"
                         >
                           <Download className="w-4 h-4 text-emerald-600" />
                         </a>
@@ -780,7 +788,7 @@ export default function FreightShipmentDetails() {
                 {!shipment.packing_list_pdf_path && !shipment.consignment_note_pdf_path && !shipment.bullion_summary_pdf_path && !shipment.customs_invoice_pdf_path && (
                   <div className="text-center py-6">
                     <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No documents generated</p>
+                    <p className="text-sm text-gray-500">Aucun document généré</p>
                   </div>
                 )}
                 </div>
@@ -793,13 +801,13 @@ export default function FreightShipmentDetails() {
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="text-sm font-semibold text-emerald-900">Dispatched to refinery</h3>
+                    <h3 className="text-sm font-semibold text-emerald-900">Envoyée à la raffinerie</h3>
                     <p className="text-xs text-emerald-700 mt-1">
-                      This shipment was dispatched to the refinery. Track receipt and processing in Refining.
+                      Cette expédition a été envoyée à la raffinerie. Suivez sa réception et son traitement dans le module Raffinage.
                     </p>
                     {shipment.shipped_at && (
                       <p className="text-xs text-emerald-600 mt-2">
-                         Dispatched on {new Date(shipment.shipped_at).toLocaleString('en-GB')}
+                         Envoyée le {new Date(shipment.shipped_at).toLocaleString('fr-FR')}
                       </p>
                     )}
                   </div>
@@ -814,9 +822,9 @@ export default function FreightShipmentDetails() {
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
               <div className="flex items-center justify-between p-4 border-b">
-                 <h3 className="text-lg font-semibold text-gray-900">Document preview</h3>
+                 <h3 className="text-lg font-semibold text-gray-900">Aperçu du document</h3>
                 <Button variant="secondary" onClick={() => setViewingPdf(null)}>
-                  Close
+                  Fermer
                 </Button>
               </div>
               <div className="flex-1 overflow-hidden">

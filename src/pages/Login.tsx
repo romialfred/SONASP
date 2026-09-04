@@ -15,6 +15,11 @@ import {
   UserRound,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  INTERFACE_LANGUAGES,
+  INTERFACE_LANGUAGE_STORAGE_KEY,
+  isInterfaceLanguageEnabled,
+} from '@/i18n/interfaceLanguages';
 import './Login.css';
 
 /**
@@ -69,11 +74,6 @@ function BouclierCadenas(proprietes: { className?: string }) {
 }
 
 type LoginErrors = Partial<Record<'username' | 'password' | 'general', string>>;
-
-const languages = [
-  { code: 'fr', label: 'Français' },
-  { code: 'en', label: 'English' },
-] as const;
 
 /**
  * GoTrue répond en anglais, et « Invalid login credentials » s'affichait tel
@@ -135,7 +135,9 @@ export function Login() {
   }, [i18n.language, i18n.resolvedLanguage]);
 
   const changeLanguage = (language: string) => {
+    if (!isInterfaceLanguageEnabled(language)) return;
     void i18n.changeLanguage(language);
+    window.localStorage.setItem(INTERFACE_LANGUAGE_STORAGE_KEY, language);
     setLangOpen(false);
     langTriggerRef.current?.focus();
   };
@@ -181,10 +183,7 @@ export function Login() {
     }
   };
 
-  const currentLanguage = (i18n.resolvedLanguage || i18n.language).startsWith('en')
-    ? 'English'
-    : 'Français';
-  const isEnglish = currentLanguage === 'English';
+  const currentLanguage = 'Français';
 
   const piliers = [
     {
@@ -228,15 +227,15 @@ export function Login() {
           </p>
 
           <h1 className="login-presentation__title">
-            <span>{t('login.heroTitleLine1', isEnglish ? 'Collection and sale of' : 'Collecte et vente des')}</span>
-            <span>{t('login.heroTitleLine2', isEnglish ? 'precious substances' : 'substances précieuses')}</span>
+            <span>{t('login.heroTitleLine1', 'Collecte et vente des')}</span>
+            <span>{t('login.heroTitleLine2', 'substances précieuses')}</span>
           </h1>
 
           <span className="login-presentation__rule" aria-hidden="true" />
 
           <p className="login-presentation__lead">
-            <span>{t('login.heroSubtitleLine1', isEnglish ? 'A secure platform for managing operations,' : 'Une plateforme sécurisée pour gérer les opérations,')}</span>
-            <span>{t('login.heroSubtitleLine2', isEnglish ? 'transactions and sector data.' : 'les transactions et les données du secteur.')}</span>
+            <span>{t('login.heroSubtitleLine1', 'Une plateforme sécurisée pour gérer les opérations,')}</span>
+            <span>{t('login.heroSubtitleLine2', 'les transactions et les données du secteur.')}</span>
           </p>
 
           <ul className="login-pillars">
@@ -285,16 +284,19 @@ export function Login() {
 
             {langOpen && (
               <div id="login-language-menu" className="login-language__menu" role="menu">
-                {languages.map((language) => (
+                {INTERFACE_LANGUAGES.map((language) => (
                   <button
                     key={language.code}
                     type="button"
                     role="menuitemradio"
-                    aria-checked={(i18n.resolvedLanguage || i18n.language).startsWith(language.code)}
+                    disabled={!language.enabled}
+                    aria-disabled={!language.enabled}
+                    aria-checked={language.code === 'fr'}
+                    title={language.enabled ? undefined : 'Disponible dans une prochaine version'}
                     onClick={() => changeLanguage(language.code)}
                   >
                     <span>{language.label}</span>
-                    {(i18n.resolvedLanguage || i18n.language).startsWith(language.code) && (
+                    {language.code === 'fr' && (
                       <Check aria-hidden="true" />
                     )}
                   </button>

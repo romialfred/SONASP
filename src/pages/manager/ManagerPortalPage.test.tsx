@@ -30,4 +30,11 @@ describe('ManagerPortalPage', () => {
     expect(screen.getByRole('link', { name: 'Production nationale' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /créer|modifier|valider/i })).not.toBeInTheDocument();
   });
+
+  it('présente les statuts persistés avec leur libellé français', async () => {
+    render(<MemoryRouter initialEntries={['/portail-direction/production']}><ManagerPortalPage /></MemoryRouter>);
+
+    expect(await screen.findByText('Préparé')).toBeInTheDocument();
+    expect(screen.queryByText('prepared')).not.toBeInTheDocument();
+  });
 });

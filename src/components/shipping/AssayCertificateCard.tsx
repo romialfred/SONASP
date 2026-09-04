@@ -27,21 +27,21 @@ export function AssayCertificateCard({
       case 'pending':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
-            Waiting for approval
+            En attente d’approbation
           </span>
         );
       case 'approved':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
             <CheckCircle className="w-3 h-3 mr-1" />
-            Approved
+            Approuvé
           </span>
         );
       case 'rejected':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
             <XCircle className="w-3 h-3 mr-1" />
-            Rejected
+            Rejeté
           </span>
         );
       default:
@@ -61,7 +61,7 @@ export function AssayCertificateCard({
               <p className="font-medium text-gray-900">
                 {certificate.parsed_data?.laboratory_name
                   ? certificate.parsed_data.laboratory_name.substring(0, 100) + (certificate.parsed_data.laboratory_name.length > 100 ? '...' : '')
-                  : 'Laboratory N/A'}
+                  : 'Laboratoire non renseigné'}
               </p>
               {getStatusBadge()}
             </div>
@@ -80,7 +80,7 @@ export function AssayCertificateCard({
               {certificate.certificate_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  {new Date(certificate.certificate_date).toLocaleDateString('en-GB')}
+                  {new Date(certificate.certificate_date).toLocaleDateString('fr-FR')}
                 </span>
               )}
             </div>
@@ -97,7 +97,7 @@ export function AssayCertificateCard({
             className="gap-2"
           >
             <Eye className="w-4 h-4" />
-            View
+            Consulter
           </Button>
         </div>
       )}

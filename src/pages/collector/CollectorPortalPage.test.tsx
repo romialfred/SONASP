@@ -57,6 +57,8 @@ describe('CollectorPortalPage', () => {
 
     await waitFor(() => expect(screen.getByText('REC-AFFECTE')).toBeInTheDocument());
     expect(screen.queryByText('REC-INTERDIT')).not.toBeInTheDocument();
+    expect(screen.getByText('En attente')).toBeInTheDocument();
+    expect(screen.queryByText('en_attente')).not.toBeInTheDocument();
     expect(screen.getByText(/aucune RPC dédiée à la création/)).toBeInTheDocument();
 
     const stats = within(screen.getByRole('region', { name: 'Indicateurs du Collecteur' }));

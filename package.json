@@ -10,7 +10,8 @@
     "dev:fresh": "node scripts/clean-build-cache.mjs && vite",
     "build": "vite build",
     "build:fresh": "node scripts/clean-build-cache.mjs && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && npm run lint:fr",
+    "lint:fr": "node scripts/check-french-ui.mjs",
     "preview": "vite preview",
     "preview:stable": "vite preview --host 127.0.0.1 --port 5190 --strictPort",
     "typecheck": "npm run typecheck:database && npm run typecheck:compiler",
@@ -71,6 +72,7 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "fflate": "^0.8.3"
   }
 }

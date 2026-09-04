@@ -441,7 +441,7 @@ export function calculateGoldValue(
 export function formatGoldPrice(
   price: number,
   currency: string = 'USD',
-  locale: string = 'en-US'
+  locale: string = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',

@@ -11,13 +11,15 @@ import {
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { CAPABILITIES, hasCapability } from '@/lib/capabilities';
+import { CAPABILITIES, hasCapability, OPERATIONAL_CAPABILITY_OPTIONS } from '@/lib/capabilities';
+import { ROLE_LABELS } from '@/lib/roleLabels';
 import {
   ComptoirSaleTransitionConflictError,
   comptoirPortalService,
   type ComptoirSaleHistoryEvent,
   type ComptoirSonaspSale,
 } from '@/services/comptoirPortalService';
+import { formatStatusFr } from '@/utils/statusFormatter';
 import './comptoir-portal.css';
 
 type Decision = 'accepted' | 'rejected' | 'paid';
@@ -45,6 +47,25 @@ function displayDate(value: string | null | undefined): string {
   if (!value) return '—';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fr-FR');
+}
+
+function auditTransitionLabel(item: ComptoirSaleHistoryEvent): string {
+  const before = item.statusBefore ? formatStatusFr(item.statusBefore) : 'Création';
+  const after = item.statusAfter
+    ? formatStatusFr(item.statusAfter)
+    : item.action === 'submitted' ? 'Soumission' : 'Action enregistrée';
+  return `${before} → ${after}`;
+}
+
+function auditActorLabel(item: ComptoirSaleHistoryEvent): string {
+  if (item.actorRole) {
+    return ROLE_LABELS[item.actorRole as keyof typeof ROLE_LABELS] || 'Acteur habilité';
+  }
+  if (item.capabilityCode) {
+    return OPERATIONAL_CAPABILITY_OPTIONS.find(({ code }) => code === item.capabilityCode)?.label
+      || 'Habilitation métier';
+  }
+  return 'Acteur habilité';
 }
 
 export default function SonaspComptoirSalesInboxPage() {
@@ -204,7 +225,7 @@ export default function SonaspComptoirSalesInboxPage() {
                       <td><button type="button" className="comptoir-history-toggle" aria-expanded={expanded} onClick={() => setExpandedSaleId(expanded ? null : sale.id)}><History aria-hidden="true" />Historique ({events.length}){expanded ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}</button></td>
                     </tr>,
                     expanded && <tr key={`${sale.id}-history`} className="comptoir-history-row"><td colSpan={7}>
-                      {events.length === 0 ? <p>Aucun événement visible.</p> : <ol>{events.map((item) => <li key={item.id}><strong>{item.statusBefore || 'création'} → {item.statusAfter || item.action}</strong><span>{displayDate(item.occurredAt)} · {item.actorRole || item.capabilityCode || 'acteur habilité'}</span>{item.reason && <p>{item.reason}</p>}</li>)}</ol>}
+                      {events.length === 0 ? <p>Aucun événement visible.</p> : <ol>{events.map((item) => <li key={item.id}><strong>{auditTransitionLabel(item)}</strong><span>{displayDate(item.occurredAt)} · {auditActorLabel(item)}</span>{item.reason && <p>{item.reason}</p>}</li>)}</ol>}
                     </td></tr>,
                   ];
                 })}

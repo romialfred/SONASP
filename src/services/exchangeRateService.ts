@@ -257,7 +257,7 @@ export async function calculateFXSpread(
 export function formatCurrency(
   amount: number,
   currency: string,
-  locale: string = 'en-US'
+  locale: string = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',

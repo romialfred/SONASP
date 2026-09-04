@@ -2260,6 +2260,26 @@
       "sha256": "ac7c859f4e93beb55837cfe7fc3bcae271671cf212e627aab216c6f413f30c46"
     },
     {
+      "path": "supabase/migrations/20260904120000_simulations_ventes_internationales.sql",
+      "version": "20260904120000",
+      "description": "simulations_ventes_internationales",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3976,
+      "sha256": "8bfee5012a9762ee48955c16b713748e08b0e8c41cc08c006c8976d71d1f7ccd"
+    },
+    {
+      "path": "supabase/migrations/20260904143000_refonte_creation_vente_internationale.sql",
+      "version": "20260904143000",
+      "description": "refonte_creation_vente_internationale",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 18258,
+      "sha256": "996236ede8df83f628a021a65a31b607dbcef7c077205127615e6e690e2d56af"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3253,10 +3273,10 @@
       },
       {
         "digits": 14,
-        "count": 129
+        "count": 131
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "e88084fd37e52b1896549fa45ea27fba85c6f7534e575b881dcd1329c392d01f"
+  "catalogueSha256": "636f3f05499482a07ba553f301eb803fa39d6529db80935c7feae78b25e1ba19"
 }

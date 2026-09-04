@@ -43,7 +43,7 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
       setFile(null);
       onClose();
     } catch (error) {
-      console.error('Error uploading document:', error);
+      console.error('Erreur lors du téléversement du document :', error);
       setErrorOpen(true);
     } finally {
       setUploading(false);
@@ -59,17 +59,17 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={handleClose} title="Add document">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Ajouter un document">
       <div className="space-y-4">
         {/* Title Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Document title *
+            Titre du document *
           </label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Example: Insurance certificate"
+            placeholder="Exemple : certificat d’assurance"
             className="text-sm"
           />
         </div>
@@ -77,7 +77,7 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
         {/* File Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            File *
+            Fichier *
           </label>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow-500 transition-colors">
             <input
@@ -103,10 +103,10 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
                 <>
                   <Upload className="w-12 h-12 text-gray-400" />
                   <div className="text-sm font-medium text-gray-700">
-                    Click to select a file
+                    Cliquez pour sélectionner un fichier
                   </div>
                   <div className="text-xs text-gray-500">
-                    PDF, Word, Image (Max 10MB)
+                    PDF, Word ou image (10 Mo maximum)
                   </div>
                 </>
               )}
@@ -123,7 +123,7 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
             className="text-sm"
           >
             <X className="w-4 h-4 mr-1" />
-            Cancel
+            Annuler
           </Button>
           <Button
             onClick={handleSubmit}
@@ -131,7 +131,7 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
             className="bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-sm"
           >
             <Upload className="w-4 h-4 mr-1" />
-            {uploading ? 'Uploading...' : 'Upload'}
+            {uploading ? 'Téléversement…' : 'Téléverser'}
           </Button>
         </div>
       </div>
@@ -139,11 +139,11 @@ export function DocumentUploadModal({ isOpen, onClose, onUpload }: DocumentUploa
     <ActionErrorDialog
       isOpen={errorOpen}
       onClose={() => setErrorOpen(false)}
-      title="Document upload failed"
+      title="Échec du téléversement du document"
       message={file && title.trim()
-        ? 'The document could not be uploaded.'
-        : 'Enter a document title and select a supported file.'}
-      recovery="Your entries remain available. Check the file, then try again."
+        ? 'Impossible de téléverser le document.'
+        : 'Saisissez un titre et sélectionnez un fichier pris en charge.'}
+      recovery="Vos informations sont conservées. Vérifiez le fichier, puis réessayez."
     />
     </>
   );

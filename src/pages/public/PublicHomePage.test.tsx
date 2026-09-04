@@ -28,7 +28,7 @@ function LocaleProbe() {
 describe('vitrine publique SONASP', () => {
   beforeEach(() => {
     window.localStorage.clear();
-    window.localStorage.setItem('sonasp-public-locale', 'fr');
+    window.localStorage.setItem('sonasp-language', 'fr');
     document.documentElement.lang = 'fr';
   });
 
@@ -93,7 +93,7 @@ describe('vitrine publique SONASP', () => {
     expect(screen.getByText('Flux financiers', { selector: '.public-ecosystem__active-link-route' })).toBeInTheDocument();
   });
 
-  it('mémorise le choix de langue et synchronise la langue du document', async () => {
+  it('maintient le français tant que le catalogue anglais privé est incomplet', async () => {
     render(
       <PublicLocaleProvider>
         <LocaleProbe />
@@ -103,9 +103,9 @@ describe('vitrine publique SONASP', () => {
     fireEvent.click(screen.getByRole('button', { name: 'English' }));
 
     await waitFor(() => {
-      expect(document.documentElement.lang).toBe('en');
-      expect(window.localStorage.getItem('sonasp-public-locale')).toBe('en');
+      expect(document.documentElement.lang).toBe('fr');
+      expect(window.localStorage.getItem('sonasp-language')).toBe('fr');
     });
-    expect(screen.getByText('Burkina Faso’s gold, collected and valued within a sovereign framework.')).toBeInTheDocument();
+    expect(screen.getByText("L’or du Burkina, collecté et valorisé dans un cadre souverain.")).toBeInTheDocument();
   });
 });

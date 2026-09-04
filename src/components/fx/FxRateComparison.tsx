@@ -47,9 +47,11 @@ export function FxRateComparison() {
   };
 
   const formatRate = (rate: number, pair: string) => {
-    if (pair === 'EUR/USD') return rate.toFixed(4);
-    if (pair === 'EUR/USD') return rate.toFixed(5);
-    return rate.toFixed(2);
+    const digits = pair === 'EUR/USD' ? 4 : 2;
+    return new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(rate);
   };
 
   const getBestRateBadge = (position: string) => {
@@ -57,7 +59,7 @@ export function FxRateComparison() {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
           <TrendingUp className="w-3 h-3 mr-1" />
-          Best Rate
+          Meilleur taux
         </span>
       );
     }
@@ -65,7 +67,7 @@ export function FxRateComparison() {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
           <TrendingDown className="w-3 h-3 mr-1" />
-          Lowest Rate
+          Taux le plus faible
         </span>
       );
     }
@@ -84,12 +86,12 @@ export function FxRateComparison() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-blue-600" />
-            FX Rate Comparison by Source
+            Comparaison des taux de change par source
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <FormField label="Currency Pair">
+            <FormField label="Paire de devises">
               <Select
                 value={currencyPair}
                 onChange={(e) => setCurrencyPair(e.target.value)}
@@ -108,7 +110,7 @@ export function FxRateComparison() {
               />
             </FormField>
 
-            <FormField label="Actions">
+            <FormField label="Action">
               <Button
                 variant="outline"
                 onClick={loadComparisons}
@@ -116,7 +118,7 @@ export function FxRateComparison() {
                 className="w-full"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
+                Actualiser
               </Button>
             </FormField>
           </div>
@@ -124,13 +126,13 @@ export function FxRateComparison() {
           {loading ? (
             <div className="py-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading comparison data...</p>
+              <p className="mt-4 text-gray-600">Chargement des données comparatives…</p>
             </div>
           ) : comparisons.length === 0 ? (
             <div className="py-12 text-center">
               <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No rates available for this date and currency pair</p>
-              <p className="text-sm text-gray-500 mt-2">Try selecting a different date or currency pair</p>
+              <p className="text-gray-600">Aucun taux n’est disponible pour cette date et cette paire de devises.</p>
+              <p className="text-sm text-gray-500 mt-2">Sélectionnez une autre date ou une autre paire de devises.</p>
             </div>
           ) : (
             <>
@@ -138,7 +140,7 @@ export function FxRateComparison() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                   <CardContent className="pt-6">
-                    <div className="text-sm text-blue-600 font-medium mb-1">Average Rate</div>
+                    <div className="text-sm text-blue-600 font-medium mb-1">Taux moyen</div>
                     <div className="text-2xl font-bold text-blue-900">
                       {formatRate(comparisons[0]?.avg_rate ?? 0, currencyPair)}
                     </div>
@@ -147,7 +149,7 @@ export function FxRateComparison() {
 
                 <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                   <CardContent className="pt-6">
-                    <div className="text-sm text-green-600 font-medium mb-1">Highest Rate</div>
+                    <div className="text-sm text-green-600 font-medium mb-1">Taux le plus élevé</div>
                     <div className="text-2xl font-bold text-green-900">
                       {formatRate(comparisons[0]?.max_rate ?? 0, currencyPair)}
                     </div>
@@ -156,7 +158,7 @@ export function FxRateComparison() {
 
                 <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
                   <CardContent className="pt-6">
-                    <div className="text-sm text-red-600 font-medium mb-1">Lowest Rate</div>
+                    <div className="text-sm text-red-600 font-medium mb-1">Taux le plus faible</div>
                     <div className="text-2xl font-bold text-red-900">
                       {formatRate(comparisons[0]?.min_rate ?? 0, currencyPair)}
                     </div>
@@ -165,7 +167,7 @@ export function FxRateComparison() {
 
                 <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
                   <CardContent className="pt-6">
-                    <div className="text-sm text-purple-600 font-medium mb-1">Market Spread</div>
+                    <div className="text-sm text-purple-600 font-medium mb-1">Écart de marché</div>
                     <div className="text-2xl font-bold text-purple-900">
                       {formatRate(comparisons[0]?.market_spread ?? 0, currencyPair)}
                     </div>
@@ -178,13 +180,13 @@ export function FxRateComparison() {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bank / Source</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Country</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Rate</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Deviation</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Bid</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ask</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spread</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Banque / source</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pays</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Taux</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Écart</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Achat</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Vente</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Écart achat-vente</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Position</th>
                     </tr>
                   </thead>
@@ -240,7 +242,7 @@ export function FxRateComparison() {
 
               {comparisons[0]?.source_count && (
                 <div className="mt-4 text-sm text-gray-600 text-center">
-                  Comparing {comparisons[0].source_count} sources for {currencyPair} on {new Date(selectedDate).toLocaleDateString()}
+                  Comparaison de {comparisons[0].source_count} sources pour {currencyPair} au {new Date(selectedDate).toLocaleDateString('fr-FR')}
                 </div>
               )}
             </>

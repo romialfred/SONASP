@@ -100,7 +100,7 @@ export function LiveFxRatePanel() {
             onClick={() => fetchFxData(true)}
             disabled={refreshing}
             className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg transition-colors disabled:opacity-50 border border-white/10"
-            title="Refresh now"
+            title="Actualiser maintenant"
           >
             <RefreshCw
               className={`w-4 h-4 text-white ${refreshing ? 'animate-spin' : ''}`}

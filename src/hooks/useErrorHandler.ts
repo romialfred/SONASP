@@ -35,36 +35,36 @@ export interface UseErrorHandlerReturn {
  */
 const ERROR_MESSAGES: Record<string, string> = {
   // PostgreSQL constraint errors
-  '23505': 'This record already exists in the database',
-  '23503': 'Cannot perform this action because it would break data relationships',
-  '23502': 'Required field is missing',
-  '23514': 'Data validation failed - please check your input values',
+  '23505': 'Cet enregistrement existe déjà.',
+  '23503': 'Cette action est impossible, car elle compromettrait l’intégrité des données liées.',
+  '23502': 'Un champ obligatoire n’a pas été renseigné.',
+  '23514': 'La validation des données a échoué. Vérifiez les valeurs saisies.',
 
   // Custom constraint errors
-  'check_weight_positive': 'Weight must be a positive number',
-  'check_airport_weight_positive': 'Airport weight must be a positive number',
-  'check_refinery_weight_positive': 'Refinery weight must be a positive number',
-  'check_melting_weights_positive': 'Melting weights must be positive and weight after melting must be less than weight before',
-  'check_fineness_range': 'Fineness must be between 0 and 100%',
-  'check_metal_retained_range': 'Metal retained must be between 0 and 100%',
+  'check_weight_positive': 'Le poids doit être un nombre positif.',
+  'check_airport_weight_positive': 'Le poids constaté à l’aéroport doit être positif.',
+  'check_refinery_weight_positive': 'Le poids constaté à la raffinerie doit être positif.',
+  'check_melting_weights_positive': 'Les poids de fonte doivent être positifs et le poids après fonte doit être inférieur au poids avant fonte.',
+  'check_fineness_range': 'La teneur doit être comprise entre 0 et 100 %.',
+  'check_metal_retained_range': 'Le métal retenu doit être compris entre 0 et 100 %.',
 
   // Status transition errors
-  'Invalid status transition': 'This status change is not allowed in the workflow',
-  'Permission denied': 'You do not have permission to perform this action',
-  'Shipping date cannot be in the future': 'Shipping date must be today or in the past',
-  'Airport receipt date cannot be before shipping date': 'Airport receipt must be after shipping date',
-  'Refinery receipt date cannot be before airport receipt date': 'Refinery receipt must be after airport receipt',
-  'Cannot set batch status to in_inventory': 'Use the Add Inventory Entry form to move batches to inventory',
+  'Invalid status transition': 'Ce changement de statut n’est pas autorisé dans le circuit de traitement.',
+  'Permission denied': 'Vous ne disposez pas des autorisations nécessaires pour effectuer cette action.',
+  'Shipping date cannot be in the future': 'La date d’expédition doit être égale ou antérieure à la date du jour.',
+  'Airport receipt date cannot be before shipping date': 'La réception à l’aéroport doit être postérieure à l’expédition.',
+  'Refinery receipt date cannot be before airport receipt date': 'La réception à la raffinerie doit être postérieure à la réception à l’aéroport.',
+  'Cannot set batch status to in_inventory': 'Utilisez le formulaire d’entrée en stock pour transférer les lots vers l’inventaire.',
 
   // Variance errors
-  'variance': 'Weight variance exceeds acceptable limits',
+  'variance': 'L’écart de poids dépasse les limites admissibles.',
 
   // Generic errors
-  'PGRST116': 'No data found matching your request',
-  'PGRST301': 'You do not have permission to access this resource',
-  'auth/user-not-found': 'Authentication failed - user not found',
-  'auth/invalid-credentials': 'Invalid email or password',
-  'network': 'Network error - please check your connection',
+  'PGRST116': 'Aucune donnée ne correspond à votre demande.',
+  'PGRST301': 'Vous ne disposez pas des autorisations nécessaires pour accéder à cette ressource.',
+  'auth/user-not-found': 'Échec de l’authentification : utilisateur introuvable.',
+  'auth/invalid-credentials': 'Adresse électronique ou mot de passe incorrect.',
+  'network': 'Erreur réseau. Vérifiez votre connexion, puis réessayez.',
 };
 
 /**
@@ -74,7 +74,7 @@ function parseSupabaseError(error: PostgrestError): ErrorDetails {
   const { message, code, details, hint } = error;
 
   // Look for custom error message
-  let userMessage = message;
+  let userMessage = 'Une erreur est survenue lors du traitement de votre demande.';
 
   // Check for PostgreSQL error codes
   if (code && ERROR_MESSAGES[code]) {
@@ -117,20 +117,22 @@ function parseGenericError(error: unknown): ErrorDetails {
     }
 
     return {
-      message: error.message,
+      message: 'Une erreur est survenue lors du traitement de votre demande.',
+      details: error.message,
       originalError: error
     };
   }
 
   if (typeof error === 'string') {
     return {
-      message: error,
+      message: 'Une erreur est survenue lors du traitement de votre demande.',
+      details: error,
       originalError: error
     };
   }
 
   return {
-    message: 'An unexpected error occurred',
+    message: 'Une erreur inattendue est survenue.',
     originalError: error
   };
 }

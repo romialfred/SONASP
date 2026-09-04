@@ -31,7 +31,7 @@ export function FileUpload({
 
     Array.from(files).forEach((file) => {
       if (file.size > maxSize) {
-        setError(`File ${file.name} exceeds maximum size of ${Math.round(maxSize / 1024 / 1024)}MB`);
+        setError(`Le fichier ${file.name} dépasse la taille maximale de ${Math.round(maxSize / 1024 / 1024)} Mo.`);
         hasError = true;
       } else {
         validFiles.push(file);
@@ -109,11 +109,11 @@ export function FileUpload({
         <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
 
         <p className="text-sm font-medium text-gray-700 mb-1">
-          {isDragging ? 'Drop files here' : 'Click to upload or drag and drop'}
+          {isDragging ? 'Déposez les fichiers ici' : 'Cliquez pour téléverser ou glissez-déposez vos fichiers'}
         </p>
 
         <p className="text-xs text-gray-500">
-          {accept === '*/*' ? 'Any file type' : accept} - Max {Math.round(maxSize / 1024 / 1024)}MB
+          {accept === '*/*' ? 'Tous les types de fichiers' : accept} — maximum {Math.round(maxSize / 1024 / 1024)} Mo
         </p>
       </div>
 
@@ -126,7 +126,7 @@ export function FileUpload({
 
       {selectedFiles.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700">Selected Files:</p>
+          <p className="text-sm font-medium text-gray-700">Fichiers sélectionnés :</p>
           {selectedFiles.map((file, index) => (
             <div
               key={index}
@@ -137,7 +137,7 @@ export function FileUpload({
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
                   <p className="text-xs text-gray-500">
-                    {(file.size / 1024).toFixed(2)} KB
+                    {(file.size / 1024).toFixed(2)} Ko
                   </p>
                 </div>
                 <CheckCircle className="h-5 w-5 text-accent-500 flex-shrink-0" />
@@ -150,6 +150,7 @@ export function FileUpload({
                   handleRemoveFile(index);
                 }}
                 className="ml-2"
+                aria-label={`Supprimer le fichier ${file.name}`}
               >
                 <X className="h-4 w-4" />
               </Button>

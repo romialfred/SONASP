@@ -58,10 +58,10 @@ class BaseErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
           <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-6">
             <AlertTriangle className="w-8 h-8 text-red-600" aria-hidden="true" />
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Something went wrong</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Une erreur est survenue</h1>
           <p className="text-gray-600 max-w-md">
-            An unexpected error occurred while rendering this part of the application. You can try reloading the page to
-            recover.
+            Une erreur inattendue s’est produite pendant l’affichage de cette partie de l’application. Vous pouvez
+            recharger cette section pour réessayer.
           </p>
           <button
             type="button"
@@ -69,7 +69,7 @@ class BaseErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
             className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
           >
             <RefreshCw className="w-4 h-4" aria-hidden="true" />
-            Reload section
+            Recharger cette section
           </button>
         </div>
       );

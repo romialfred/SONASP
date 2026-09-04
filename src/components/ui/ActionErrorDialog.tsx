@@ -15,8 +15,8 @@ export interface ActionErrorDialogProps {
   onAction?: () => void;
 }
 
-export function ActionErrorDialog({ isOpen, onClose, title = 'Unable to complete this action', message,
-  recovery, diagnosticCode, actionLabel = 'Try again', onAction }: ActionErrorDialogProps) {
+export function ActionErrorDialog({ isOpen, onClose, title = 'Impossible d’effectuer cette action', message,
+  recovery, diagnosticCode, actionLabel = 'Réessayer', onAction }: ActionErrorDialogProps) {
   const id = useId();
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
@@ -63,21 +63,21 @@ export function ActionErrorDialog({ isOpen, onClose, title = 'Unable to complete
         aria-labelledby={`${id}-title`} aria-describedby={`${id}-message`}>
         <header className="sn-error-dialog__head">
           <span className="sn-error-dialog__icon"><AlertTriangle aria-hidden="true" /></span>
-          <div><span className="sn-error-dialog__eyebrow">Action requires attention</span><h2 id={`${id}-title`}>{title}</h2></div>
-          <button type="button" className="sn-error-dialog__close" onClick={onClose} aria-label="Close error dialog"><X aria-hidden="true" /></button>
+          <div><span className="sn-error-dialog__eyebrow">Cette action nécessite votre attention</span><h2 id={`${id}-title`}>{title}</h2></div>
+          <button type="button" className="sn-error-dialog__close" onClick={onClose} aria-label="Fermer la boîte de dialogue d’erreur"><X aria-hidden="true" /></button>
         </header>
         <div className="sn-error-dialog__body">
           <p id={`${id}-message`}>{message}</p>
-          {recovery && <div className="sn-error-dialog__recovery"><h3>What you can do</h3><p>{recovery}</p></div>}
-          {diagnosticCode && <details className="sn-error-dialog__details"><summary>Diagnostic information</summary>
+          {recovery && <div className="sn-error-dialog__recovery"><h3>Mesures recommandées</h3><p>{recovery}</p></div>}
+          {diagnosticCode && <details className="sn-error-dialog__details"><summary>Informations de diagnostic</summary>
             <div><code>{diagnosticCode}</code><button type="button" onClick={async () => {
               try { await navigator.clipboard.writeText(diagnosticCode); setCopied(true); setCopyFailed(false); }
               catch { setCopyFailed(true); }
-            }}>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}{copied ? 'Copied' : 'Copy code'}</button></div>
-            {copyFailed && <p role="status">Copy is unavailable. Select and copy the code above.</p>}
+            }}>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}{copied ? 'Copié' : 'Copier le code'}</button></div>
+            {copyFailed && <p role="status">La copie est indisponible. Sélectionnez et copiez le code ci-dessus.</p>}
           </details>}
         </div>
-        <footer className="sn-error-dialog__actions"><Button type="button" variant="outline" onClick={onClose}>Close</Button>
+        <footer className="sn-error-dialog__actions"><Button type="button" variant="outline" onClick={onClose}>Fermer</Button>
           {onAction && <Button type="button" onClick={onAction}>{actionLabel}</Button>}
         </footer>
       </div>

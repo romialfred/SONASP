@@ -18,7 +18,7 @@ export interface ShippingStatusHistoryEntry {
 
 export class ShippingStatusConflictError extends Error {
   constructor() {
-    super('This shipment status changed in the meantime. Refresh the record before trying again.');
+    super('Le statut de cette expédition a été modifié entre-temps. Actualisez la fiche avant de réessayer.');
     this.name = 'ShippingStatusConflictError';
   }
 }
@@ -76,12 +76,12 @@ class ShippingStatusService {
       if (isOptimisticConflict(transitionError)) {
         throw new ShippingStatusConflictError();
       }
-      console.error('Error transitioning shipping status:', transitionError);
+      console.error('Erreur lors de la transition du statut d’expédition :', transitionError);
       throw transitionError;
     }
 
     if (!data?.status) {
-      throw new Error('The server did not confirm the new shipment status.');
+      throw new Error('Le serveur n’a pas confirmé le nouveau statut de l’expédition.');
     }
 
     return data.status;
@@ -95,7 +95,7 @@ class ShippingStatusService {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching current shipping status:', error);
+      console.error('Erreur lors de la récupération du statut actuel de l’expédition :', error);
       throw error;
     }
 

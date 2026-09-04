@@ -7,6 +7,12 @@ import {
   convertGramsToOunces,
   convertOuncesToGrams,
   calculateFXSpread,
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+  formatNumber,
+  formatPercentage,
+  formatWeight,
 } from './salesUtils';
 import { TROY_OZ_GRAMS, GOLD_ROYALTY_RATE } from '@/constants/goldConstants';
 
@@ -55,5 +61,22 @@ describe('salesUtils — FX spread', () => {
   it('calcule l\'écart en % et protège la division par zéro', () => {
     expect(calculateFXSpread(610, 600)).toBeCloseTo((10 / 600) * 100, 9);
     expect(calculateFXSpread(610, 0)).toBe(0);
+  });
+});
+
+describe('salesUtils — présentation française', () => {
+  it('formate les nombres, poids et pourcentages avec la virgule décimale', () => {
+    expect(formatNumber(1_234.5, 2)).toBe('1\u202f234,50');
+    expect(formatWeight(TROY_OZ_GRAMS)).toBe(`1,000 oz (${formatNumber(TROY_OZ_GRAMS, 2)} g)`);
+    expect(formatPercentage(99.5, 1)).toBe('99,5 %');
+  });
+
+  it('utilise les conventions françaises pour les devises et les dates', () => {
+    expect(formatCurrency(1_234, 'USD')).toBe(new Intl.NumberFormat('fr-FR', {
+      style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0,
+    }).format(1_234));
+    expect(formatDate('2026-01-15T12:00:00Z')).toContain('2026');
+    expect(formatDate('2026-01-15T12:00:00Z').toLocaleLowerCase('fr-FR')).toContain('janv');
+    expect(formatDateTime('2026-01-15T12:30:00Z')).toContain('12:30');
   });
 });

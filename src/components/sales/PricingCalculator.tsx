@@ -8,6 +8,22 @@ import { Calendar, TrendingUp, Clock, Factory, DollarSign, AlertCircle } from 'l
 import { calculatePricingComparison, type PricingComparison, type PricingMechanism } from '@/services/goldTradeSpaceService';
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 
+const formatNumber = (value: number, maximumFractionDigits = 2) =>
+  new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits }).format(value);
+
+const formatUsd = (value: number) =>
+  new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+  }).format(value);
+
+const trendLabel = (trend: PricingComparison['goldTrend']) => ({
+  bullish: 'Haussière',
+  bearish: 'Baissière',
+  neutral: 'Neutre',
+})[trend];
+
 interface PricingCalculatorProps {
   availableStockOz: number;
   onMechanismSelect?: (mechanism: PricingMechanism, comparison: PricingComparison) => void;
@@ -29,12 +45,12 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
 
   useEffect(() => {
     if (availableStockOz > 0) {
-      setQuantityOz(unit === 'oz' ? availableStockOz.toFixed(2) : (availableStockOz * GRAMS_PER_OZ).toFixed(2));
+      setQuantityOz((unit === 'oz' ? availableStockOz : availableStockOz * GRAMS_PER_OZ).toFixed(2).replace('.', ','));
     }
   }, [availableStockOz, unit]);
 
   const getQuantityInOz = (): number => {
-    const qty = parseFloat(quantityOz);
+    const qty = Number.parseFloat(quantityOz.replace(',', '.'));
     if (isNaN(qty)) return 0;
     return unit === 'oz' ? qty : qty / GRAMS_PER_OZ;
   };
@@ -55,7 +71,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
 
     if (qtyInOz > (availableStockOz + tolerance)) {
       showError(
-        `La quantité saisie (${qtyInOz.toFixed(2)} oz) dépasse le stock disponible (${availableStockOz.toFixed(2)} oz).`,
+        `La quantité saisie (${formatNumber(qtyInOz)} oz) dépasse le stock disponible (${formatNumber(availableStockOz)} oz).`,
         'Stock insuffisant'
       );
       return;
@@ -111,7 +127,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
     if (index === 0) {
       return (
         <span className="px-2 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded">
-          Best Option
+          Meilleure option
         </span>
       );
     }
@@ -132,17 +148,17 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
       <Card>
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Pricing Calculator</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Simulateur de tarification</h3>
             <div className="text-sm text-gray-500">
-              Available: <span className="font-semibold text-gray-900">{availableStockOz.toFixed(2)} oz</span>
-              <span className="text-gray-400"> ({(availableStockOz * GRAMS_PER_OZ).toFixed(2)} g)</span>
+              Disponible : <span className="font-semibold text-gray-900">{formatNumber(availableStockOz)} oz</span>
+              <span className="text-gray-400"> ({formatNumber(availableStockOz * GRAMS_PER_OZ)} g)</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quantity to Sell - 100% of Available Stock ({unit === 'oz' ? 'oz' : 'grams'})
+                Quantité à vendre — 100 % du stock disponible ({unit === 'oz' ? 'onces troy' : 'grammes'})
               </label>
               <div className="flex gap-2">
                 <div className="flex-1 relative">
@@ -163,7 +179,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                   onChange={(e) => {
                     const newUnit = e.target.value as 'oz' | 'g';
                     setUnit(newUnit);
-                    setQuantityOz(newUnit === 'oz' ? availableStockOz.toFixed(2) : (availableStockOz * GRAMS_PER_OZ).toFixed(2));
+                    setQuantityOz((newUnit === 'oz' ? availableStockOz : availableStockOz * GRAMS_PER_OZ).toFixed(2).replace('.', ','));
                   }}
                   className="w-20"
                 >
@@ -174,12 +190,12 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
               <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded-md border border-blue-200">
                 <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
                 <p className="text-xs text-blue-800">
-                  <strong>Policy:</strong> All mines must sell 100% of their available stock. Partial sales are not permitted.
+                  <strong>Règle de vente :</strong> les sociétés minières doivent céder 100 % de leur stock exportable. Les ventes partielles ne sont pas autorisées.
                 </p>
               </div>
               {quantityOz && getQuantityInOz() > 0 && (
                 <p className="text-xs text-gray-500 mt-1">
-                  = {unit === 'oz' ? `${(getQuantityInOz() * GRAMS_PER_OZ).toFixed(2)} grams` : `${getQuantityInOz().toFixed(2)} oz`}
+                  = {unit === 'oz' ? `${formatNumber(getQuantityInOz() * GRAMS_PER_OZ)} g` : `${formatNumber(getQuantityInOz())} oz`}
                 </p>
               )}
             </div>
@@ -190,7 +206,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                 disabled={loading || !quantityOz || getQuantityInOz() <= 0}
                 className="w-full"
               >
-                {loading ? 'Simulating...' : 'Simulate'}
+                {loading ? 'Simulation en cours…' : 'Simuler'}
               </Button>
             </div>
           </div>
@@ -208,12 +224,12 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                   'text-gray-600'
                 }`} />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">Market Analysis</h4>
+                  <h4 className="font-semibold text-gray-900">Analyse du marché</h4>
                   <p className="text-sm text-gray-700 mt-1">{comparison.recommendationReason}</p>
                   <div className="flex gap-4 mt-2 text-xs text-gray-600">
-                    <span>Trend: <span className="font-semibold capitalize">{comparison.goldTrend}</span></span>
-                    <span>Volatility: <span className="font-semibold">{comparison.marketVolatility.toFixed(2)}%</span></span>
-                    <span>Spot Price: <span className="font-semibold">${comparison.spotPrice.toFixed(2)}/oz</span></span>
+                    <span>Tendance : <span className="font-semibold">{trendLabel(comparison.goldTrend)}</span></span>
+                    <span>Volatilité : <span className="font-semibold">{formatNumber(comparison.marketVolatility)} %</span></span>
+                    <span>Prix au comptant : <span className="font-semibold">{formatUsd(comparison.spotPrice)}/oz</span></span>
                   </div>
                 </div>
               </div>
@@ -244,7 +260,7 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                         {getMechanismIcon(mechanism.mechanism)}
                         <div>
                           <h4 className="font-semibold text-sm text-gray-900">{mechanism.displayName}</h4>
-                          <p className="text-xs text-gray-500">{mechanism.settlementDays} days</p>
+                          <p className="text-xs text-gray-500">{mechanism.settlementDays} jours</p>
                         </div>
                       </div>
                       {getMechanismBadge(index)}
@@ -252,15 +268,15 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
 
                     <div className="space-y-1.5">
                       <div className="flex justify-between items-baseline">
-                        <span className="text-xs text-gray-600">Price per oz:</span>
+                        <span className="text-xs text-gray-600">Prix par once :</span>
                         <span className="text-base font-bold text-gray-900">
-                          ${mechanism.pricePerOz.toFixed(2)}
+                          {formatUsd(mechanism.pricePerOz)}
                         </span>
                       </div>
 
                       {mechanism.adjustmentPercentage !== 0 && (
                         <div className="flex justify-between items-baseline">
-                          <span className="text-xs text-gray-500">Adjustment:</span>
+                          <span className="text-xs text-gray-500">Ajustement :</span>
                           <span className={`text-xs font-semibold ${
                             mechanism.adjustmentPercentage > 0 ? 'text-green-600' : 'text-red-600'
                           }`}>
@@ -271,9 +287,9 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
 
                       <div className="border-t border-gray-200 pt-1.5 mt-1.5">
                         <div className="flex justify-between items-baseline">
-                          <span className="text-xs font-semibold text-gray-700">Total Value:</span>
+                          <span className="text-xs font-semibold text-gray-700">Valeur totale :</span>
                           <span className="text-base font-bold text-gray-900">
-                            ${mechanism.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            {formatUsd(mechanism.totalValue)}
                           </span>
                         </div>
                       </div>
@@ -284,14 +300,14 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {mechanism.benefit > 0 ? '+' : ''}${Math.abs(mechanism.benefit).toFixed(2)} vs Spot
+                          {mechanism.benefit > 0 ? '+' : '−'}{formatUsd(Math.abs(mechanism.benefit))} par rapport au comptant
                         </div>
                       )}
 
                       <div className="text-xs text-gray-500 pt-1 border-t border-gray-100">
                         <div className="flex justify-between">
-                          <span>Value Date:</span>
-                          <span className="font-medium">{new Date(mechanism.valueDate).toLocaleDateString()}</span>
+                          <span>Date de valeur :</span>
+                          <span className="font-medium">{new Date(mechanism.valueDate).toLocaleDateString('fr-FR')}</span>
                         </div>
                       </div>
                     </div>
@@ -315,12 +331,12 @@ export function PricingCalculator({ availableStockOz, onMechanismSelect }: Prici
             <div className="p-4 flex gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-amber-800">
-                <p className="font-semibold mb-1">Important Notes:</p>
+                <p className="font-semibold mb-1">Informations importantes :</p>
                 <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>Spot Basis: Settlement within 2 business days during NY trading hours (7:30 AM - 4:30 PM EST)</li>
-                  <li>Forward Basis: Requires buyer consent, adjustments based on current forward rates</li>
-                  <li>In-Process Basis: Pricing during refining, subject to 7-day notice requirement</li>
-                  <li>All prices are subject to final approval and market conditions</li>
+                  <li>Prix au comptant : règlement sous deux jours ouvrés, pendant les heures de négociation de New York (7 h 30 à 16 h 30, heure de l’Est).</li>
+                  <li>Prix à terme : accord préalable de l’acheteur et ajustement selon les taux à terme en vigueur.</li>
+                  <li>Prix en cours de raffinage : fixation pendant le traitement, sous réserve d’un préavis de sept jours.</li>
+                  <li>Tous les prix restent soumis à la validation finale et aux conditions du marché.</li>
                 </ul>
               </div>
             </div>

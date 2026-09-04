@@ -1,4 +1,5 @@
 import { cn } from '@/utils/cn';
+import { formatStatusFr } from '@/utils/statusFormatter';
 
 export type StatusType =
   | 'created'
@@ -22,30 +23,30 @@ export type StatusType =
 export interface StatusBadgeProps {
   /** Accepte tout statut (mappé en interne via Record<string, …>). */
   status?: StatusType | string;
-  label: string;
+  label?: string;
   variant?: 'success' | 'error' | 'warning' | 'info' | 'neutral';
   size?: 'sm' | 'md' | 'lg';
 }
 
 export function StatusBadge({ status, label, variant, size = 'md' }: StatusBadgeProps) {
-  const statusConfig: Record<string, { color: string; label: string }> = {
-    created: { color: 'bg-gray-100 text-gray-700', label: 'Created' },
-    prepared: { color: 'bg-blue-100 text-blue-700', label: 'Prepared' },
-    validated_for_refinery: { color: 'bg-green-100 text-green-700', label: 'Validated for Refinery' },
-    received: { color: 'bg-purple-100 text-purple-700', label: 'Received' },
-    received_airport: { color: 'bg-purple-100 text-purple-700', label: 'Received at Airport' },
-    shipped_refinery: { color: 'bg-blue-100 text-blue-700', label: 'Shipped to Refinery' },
-    received_refinery: { color: 'bg-purple-100 text-purple-700', label: 'Received at Refinery' },
-    processing: { color: 'bg-yellow-100 text-yellow-700', label: 'Processing' },
-    processed: { color: 'bg-accent-100 text-accent-700', label: 'Processed' },
-    completed: { color: 'bg-accent-100 text-accent-700', label: 'Completed' },
-    approved: { color: 'bg-green-100 text-green-700', label: 'Approved' },
-    ready_for_sale: { color: 'bg-green-100 text-green-700', label: 'Ready for Sale' },
-    sold: { color: 'bg-primary-100 text-primary-700', label: 'Sold' },
-    paid: { color: 'bg-green-100 text-green-700', label: 'Paid' },
-    pending: { color: 'bg-orange-100 text-orange-700', label: 'Pending' },
-    rejected: { color: 'bg-red-100 text-red-700', label: 'Rejected' },
-    alert: { color: 'bg-red-100 text-red-700', label: 'Alert' }
+  const statusConfig: Record<string, string> = {
+    created: 'bg-gray-100 text-gray-700',
+    prepared: 'bg-blue-100 text-blue-700',
+    validated_for_refinery: 'bg-green-100 text-green-700',
+    received: 'bg-purple-100 text-purple-700',
+    received_airport: 'bg-purple-100 text-purple-700',
+    shipped_refinery: 'bg-blue-100 text-blue-700',
+    received_refinery: 'bg-purple-100 text-purple-700',
+    processing: 'bg-yellow-100 text-yellow-700',
+    processed: 'bg-accent-100 text-accent-700',
+    completed: 'bg-accent-100 text-accent-700',
+    approved: 'bg-green-100 text-green-700',
+    ready_for_sale: 'bg-green-100 text-green-700',
+    sold: 'bg-primary-100 text-primary-700',
+    paid: 'bg-green-100 text-green-700',
+    pending: 'bg-orange-100 text-orange-700',
+    rejected: 'bg-red-100 text-red-700',
+    alert: 'bg-red-100 text-red-700'
   };
 
   const variantConfig = {
@@ -63,14 +64,12 @@ export function StatusBadge({ status, label, variant, size = 'md' }: StatusBadge
   };
 
   let colorClass = '';
-  let displayLabel = label;
+  const displayLabel = label || formatStatusFr(status);
 
   if (variant) {
     colorClass = variantConfig[variant];
   } else if (status && statusConfig[status]) {
-    const config = statusConfig[status];
-    colorClass = config.color;
-    displayLabel = label || config.label;
+    colorClass = statusConfig[status];
   } else {
     colorClass = 'bg-gray-100 text-gray-700';
   }

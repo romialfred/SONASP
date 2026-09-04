@@ -132,8 +132,8 @@ export function DialogProvider({ children }: DialogProviderProps) {
       type: 'warning',
       title,
       message,
-      confirmText: 'Confirm',
-      cancelText: 'Cancel',
+      confirmText: 'Confirmer',
+      cancelText: 'Annuler',
       showCancel: true,
       onConfirm
     });

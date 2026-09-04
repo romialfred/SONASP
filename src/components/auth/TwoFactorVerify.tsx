@@ -20,7 +20,7 @@ export function TwoFactorVerify({ onVerify, onCancel }: TwoFactorVerifyProps) {
     e.preventDefault();
 
     if (!code || (code.length !== 6 && !useBackupCode)) {
-      setError('Please enter a valid code');
+      setError('Veuillez saisir un code valide.');
       return;
     }
 
@@ -33,7 +33,7 @@ export function TwoFactorVerify({ onVerify, onCancel }: TwoFactorVerifyProps) {
         setError(result.error);
       }
     } catch (err: any) {
-      setError(err.message || 'Verification failed');
+      setError(err.message || 'La vérification a échoué.');
     } finally {
       setLoading(false);
     }
@@ -44,12 +44,12 @@ export function TwoFactorVerify({ onVerify, onCancel }: TwoFactorVerifyProps) {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Shield className="h-6 w-6 text-primary-500" />
-          <CardTitle>Two-Factor Authentication</CardTitle>
+          <CardTitle>Authentification à deux facteurs</CardTitle>
         </div>
         <CardDescription>
           {useBackupCode
-            ? 'Enter one of your backup codes'
-            : 'Enter the 6-digit code from your authenticator app'}
+            ? 'Saisissez l’un de vos codes de récupération.'
+            : 'Saisissez le code à 6 chiffres généré par votre application d’authentification.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -60,7 +60,7 @@ export function TwoFactorVerify({ onVerify, onCancel }: TwoFactorVerifyProps) {
             </div>
           )}
 
-          <FormField label={useBackupCode ? 'Backup Code' : 'Verification Code'} required>
+          <FormField label={useBackupCode ? 'Code de récupération' : 'Code de vérification'} required>
             <Input
               type="text"
               value={code}
@@ -79,7 +79,7 @@ export function TwoFactorVerify({ onVerify, onCancel }: TwoFactorVerifyProps) {
 
           <div className="flex gap-3">
             <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
-              Cancel
+              Annuler
             </Button>
             <Button
               type="submit"
@@ -88,7 +88,7 @@ export function TwoFactorVerify({ onVerify, onCancel }: TwoFactorVerifyProps) {
               disabled={!code || (code.length !== 6 && !useBackupCode)}
               className="flex-1"
             >
-              Verify
+              Vérifier
             </Button>
           </div>
 
@@ -101,7 +101,7 @@ export function TwoFactorVerify({ onVerify, onCancel }: TwoFactorVerifyProps) {
             }}
             className="w-full text-sm text-primary-600 hover:text-primary-700"
           >
-            {useBackupCode ? 'Use authenticator app' : 'Use backup code instead'}
+            {useBackupCode ? 'Utiliser l’application d’authentification' : 'Utiliser plutôt un code de récupération'}
           </button>
         </form>
       </CardContent>

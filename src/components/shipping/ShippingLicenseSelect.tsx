@@ -22,7 +22,7 @@ export function ShippingLicenseSelect({
   return (
     <div>
       <label htmlFor="shipping-export-license" className="mb-2 block text-xs font-semibold text-green-900">
-        Export licence *
+        Licence d’exportation *
       </label>
       <select
         id="shipping-export-license"
@@ -33,21 +33,21 @@ export function ShippingLicenseSelect({
       >
         <option value="">
           {!companyId
-            ? 'Select a company first'
+            ? 'Sélectionnez d’abord une société'
             : selectableLicenses.length === 0
-              ? 'No active licence with available quota'
-              : 'Select an export licence'}
+              ? 'Aucune licence active avec un quota disponible'
+              : 'Sélectionnez une licence d’exportation'}
         </option>
         {selectableLicenses.map((license) => (
           <option key={license.id} value={license.id}>
-            {license.license_number} — Available: {license.remaining_quantity_grams.toLocaleString('en-GB')} g
-            {' '}(Expires: {new Date(license.end_date).toLocaleDateString('en-GB')})
+            {license.license_number} — Disponible : {license.remaining_quantity_grams.toLocaleString('fr-FR')} g
+            {' '}(expire le {new Date(license.end_date).toLocaleDateString('fr-FR')})
           </option>
         ))}
       </select>
       {companyId && selectableLicenses.length === 0 && (
         <div className="mt-2 rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800" role="status">
-          No active licence with available quota was found for this company.
+          Aucune licence active disposant d’un quota n’a été trouvée pour cette société.
         </div>
       )}
     </div>

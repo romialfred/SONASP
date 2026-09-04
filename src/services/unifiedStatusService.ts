@@ -82,9 +82,9 @@ export const PRODUCTION_STATUS_LABELS: Record<ProductionStatus, string> = {
 };
 
 export const SHIPPING_STATUS_LABELS: Record<ShippingStatus, string> = {
-  waiting_for_customs_approval: 'Awaiting customs approval',
-  approved_by_customs: 'Approved by customs',
-  ready_for_expedition: 'Ready for expedition',
+  waiting_for_customs_approval: 'En attente de l’approbation douanière',
+  approved_by_customs: 'Approuvé par la douane',
+  ready_for_expedition: 'Prêt pour l’expédition',
 };
 
 export const FREIGHT_CUSTOMS_STATUS_LABELS: Record<FreightCustomsStatus, string> = {

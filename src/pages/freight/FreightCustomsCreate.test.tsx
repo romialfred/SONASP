@@ -42,9 +42,9 @@ describe('FreightCustomsCreate', () => {
   it('reste fail-closed sans capacité freight.prepare autoritative', async () => {
     render(<FreightCustomsCreate />);
 
-    expect(await screen.findByText('Creation not authorised')).toBeInTheDocument();
+    expect(await screen.findByText('Création non autorisée')).toBeInTheDocument();
     expect(mocks.getAvailableShipments).not.toHaveBeenCalled();
-    expect(screen.queryByRole('button', { name: /Create operation/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Créer l’opération/i })).not.toBeInTheDocument();
   });
 
   it('crée par RPC puis enregistre la note avec la version composite reçue', async () => {
@@ -70,10 +70,10 @@ describe('FreightCustomsCreate', () => {
     render(<FreightCustomsCreate />);
     await screen.findByText(/SHIP-42/);
     fireEvent.change(screen.getByRole('combobox'), { target: { value: created.shipping_preparation_id } });
-    fireEvent.change(screen.getByPlaceholderText('Instructions or observations for this customs operation…'), {
+    fireEvent.change(screen.getByPlaceholderText('Instructions ou observations relatives à cette opération douanière…'), {
       target: { value: ' Dossier complet ' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Create operation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Créer l’opération/i }));
 
     await waitFor(() => expect(mocks.createOperation).toHaveBeenCalledWith(created.shipping_preparation_id));
     expect(mocks.updateOperation).toHaveBeenCalledWith(

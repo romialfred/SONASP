@@ -19,6 +19,6 @@ export function BusinessErrorDialog({ isOpen, onClose, title, message, technical
   return <ActionErrorDialog isOpen={isOpen} onClose={onClose}
     title={technical ? error.title : title}
     message={technical ? error.message : message}
-    recovery={technical ? error.recovery : 'Review the highlighted information, then try again. Your entries remain in the form.'}
+    recovery={technical ? error.recovery : 'Vérifiez les informations signalées, puis réessayez. Les données saisies restent dans le formulaire.'}
     diagnosticCode={error.code} actionLabel={actionLabel} onAction={onAction} />;
 }

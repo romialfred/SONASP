@@ -105,7 +105,7 @@ describe('GoldShippingWorkflow', () => {
     expect(detail.getByText(/Aucune : c’est un point d’entrée/)).toBeInTheDocument();
 
     // On peut suivre la chaîne depuis le volet.
-    fireEvent.click(detail.getByRole('button', { name: /Prêt pour Douane/ }));
+    fireEvent.click(detail.getByRole('button', { name: /Prêt pour la douane/ }));
     expect(
       within(screen.getByRole('complementary', { name: 'Détail de l’étape' })).getByText('ready_for_customs')
     ).toBeInTheDocument();

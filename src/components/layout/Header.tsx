@@ -5,6 +5,12 @@ import { Bell, LogOut, User, Globe, HelpCircle } from 'lucide-react';
 import { NotificationPanel, Notification } from '@/components/ui/NotificationPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import {
+  INTERFACE_LANGUAGES,
+  INTERFACE_LANGUAGE_STORAGE_KEY,
+  isInterfaceLanguageEnabled,
+  type InterfaceLanguage,
+} from '@/i18n/interfaceLanguages';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -70,7 +76,7 @@ export function Header() {
       const formattedNotifications: Notification[] = salesData?.map((sale: any, index: number) => {
         const timeAgo = getTimeAgo(new Date(sale.created_at));
         const customerName = sale.customers?.name || 'N/A';
-        const amount = new Intl.NumberFormat('en-US', {
+        const amount = new Intl.NumberFormat('fr-FR', {
           style: 'currency',
           currency: 'USD',
           minimumFractionDigits: 0,
@@ -115,14 +121,10 @@ export function Header() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const toggleLanguage = () => {
-    const currentLang = i18n.language || 'en';
-    const newLang = currentLang.startsWith('en') ? 'fr' : 'en';
-    console.log('Changing language from', currentLang, 'to', newLang);
-    i18n.changeLanguage(newLang).then(() => {
-      console.log('Language changed successfully to:', i18n.language);
-      localStorage.setItem('i18nextLng', newLang);
-    });
+  const changeLanguage = async (language: InterfaceLanguage) => {
+    if (!isInterfaceLanguageEnabled(language)) return;
+    await i18n.changeLanguage(language);
+    localStorage.setItem(INTERFACE_LANGUAGE_STORAGE_KEY, language);
     setShowLanguageMenu(false);
   };
 
@@ -140,11 +142,11 @@ export function Header() {
             <button
               onClick={() => setShowLanguageMenu(!showLanguageMenu)}
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg relative"
-              aria-label="Change language"
+              aria-label="Choisir la langue (FR)"
             >
               <Globe className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                {(i18n.language || 'en').startsWith('en') ? 'En' : 'Fr'}
+                FR
               </span>
             </button>
             {showLanguageMenu && (
@@ -154,15 +156,23 @@ export function Header() {
                   onClick={() => setShowLanguageMenu(false)}
                 />
                 <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                  <button
-                    onClick={toggleLanguage}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <Globe className="h-4 w-4" />
-                    <span>{(i18n.language || 'en').startsWith('en') ? 'Français' : 'English'}</span>
-                  </button>
+                  {INTERFACE_LANGUAGES.map((option) => (
+                    <button
+                      key={option.code}
+                      type="button"
+                      disabled={!option.enabled}
+                      aria-disabled={!option.enabled}
+                      aria-current={option.code === 'fr' ? 'true' : undefined}
+                      title={option.enabled ? undefined : 'Disponible dans une prochaine version'}
+                      onClick={() => void changeLanguage(option.code)}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400 flex items-center gap-2"
+                    >
+                      <Globe className="h-4 w-4" />
+                      <span>{option.label}</span>
+                    </button>
+                  ))}
                   <div className="px-4 py-2 text-xs text-gray-500 border-t border-gray-100 mt-1">
-                    {t('header.currentLanguage', { language: (i18n.language || 'en').startsWith('en') ? 'English' : 'Français' })}
+                    {t('header.currentLanguage', { language: 'Français' })}
                   </div>
                 </div>
               </>

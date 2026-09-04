@@ -18,7 +18,7 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
   const getCompanyName = (companyId: string | null) => {
     if (!companyId) return 'N/A';
     const company = miningCompanies.find(c => c.id === companyId);
-    return company?.name || 'Unknown';
+    return company?.name || 'Société inconnue';
   };
 
   const COLORS = PALETTE_PRODUCTION;
@@ -158,7 +158,7 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
           {/* Stats en bas */}
           <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
             <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">Total Production</p>
+              <p className="text-xs text-gray-600 mb-1">Production totale</p>
               <p className="text-lg font-bold text-blue-600">{totalOz.toFixed(2)} oz</p>
             </div>
             <div className="text-center">
@@ -166,7 +166,7 @@ export function ProductionPieChart({ productions, miningCompanies }: ProductionP
               <p className="text-lg font-bold text-emerald-600">{chartData.length}</p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">Plus Productive</p>
+              <p className="text-xs text-gray-600 mb-1">Société la plus productive</p>
               <p className="text-sm font-bold text-purple-600">
                 {chartData[0]?.name}
                 <span className="block text-xs text-gray-600 font-normal mt-0.5">

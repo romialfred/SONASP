@@ -14,7 +14,7 @@ export function ProfileGuard({ children }: ProfileGuardProps) {
       <div className="min-h-[50vh] flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
           <Loading size="lg" />
-          <p className="text-gray-600">Loading profile...</p>
+          <p className="text-gray-600">Chargement du profil…</p>
         </div>
       </div>
     );
@@ -24,16 +24,16 @@ export function ProfileGuard({ children }: ProfileGuardProps) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
-          <h2 className="text-2xl font-bold text-gray-900">Profile required</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Profil requis</h2>
           <p className="text-gray-600">
-            {profileError || 'We could not load your profile information. Please try again to continue.'}
+            {profileError || 'Impossible de charger les informations de votre profil. Veuillez réessayer pour continuer.'}
           </p>
           <div className="flex justify-center">
             <button
               onClick={refreshProfile}
               className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
             >
-              Retry loading profile
+              Réessayer le chargement du profil
             </button>
           </div>
         </div>
@@ -45,16 +45,16 @@ export function ProfileGuard({ children }: ProfileGuardProps) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
-          <h2 className="text-2xl font-bold text-gray-900">Profile required</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Profil requis</h2>
           <p className="text-gray-600">
-            We could not load your profile information. Please try again to continue.
+            Impossible de charger les informations de votre profil. Veuillez réessayer pour continuer.
           </p>
           <div className="flex justify-center">
             <button
               onClick={refreshProfile}
               className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
             >
-              Retry loading profile
+              Réessayer le chargement du profil
             </button>
           </div>
         </div>
@@ -69,7 +69,7 @@ export function ProfileGuard({ children }: ProfileGuardProps) {
           className="pointer-events-auto fixed right-6 top-24 z-[60] max-w-sm rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-800 shadow-lg"
           role="alert"
         >
-          <p className="font-semibold">Limited profile information</p>
+          <p className="font-semibold">Informations de profil partielles</p>
           <p className="text-sm">{profileError}</p>
         </div>
       )}

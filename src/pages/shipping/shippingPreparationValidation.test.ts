@@ -58,6 +58,6 @@ describe('shipping preparation physical validation', () => {
   it('rejects duplicate productions and provides a concise user-facing summary', () => {
     const issues = validateShippingProductionSelection([validProduction, validProduction], 'mine-a');
     expect(issues.map((issue) => issue.code)).toContain('duplicate-production');
-    expect(summarizeShippingProductionIssues(issues)).toMatch(/selected more than once/i);
+    expect(summarizeShippingProductionIssues(issues)).toMatch(/sélectionnée plusieurs fois/i);
   });
 });

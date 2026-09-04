@@ -65,8 +65,8 @@ export const FUSEAUX = [
 ];
 
 export const LANGUES = [
-  { value: 'fr', label: 'Français' },
-  { value: 'en', label: 'English' },
+  { value: 'fr', label: 'Français', disabled: false },
+  { value: 'en', label: 'Anglais — bientôt disponible', disabled: true },
 ];
 
 export interface PreferencesNotification {
@@ -151,7 +151,9 @@ export function ParametersPage() {
         .maybeSingle();
       if (error) throw error;
       if (data) {
-        setLangue(data.language_preference || 'fr');
+        // L'ancienne préférence anglaise est conservée en base pour la future
+        // phase bilingue, mais la version privée courante reste en français.
+        setLangue('fr');
         setFuseau(data.timezone || 'Africa/Ouagadougou');
       }
       setPrefsChargees(true);
@@ -367,7 +369,7 @@ export function ParametersPage() {
                   <Field label="Langue de l’interface" htmlFor="langue">
                     <select id="langue" value={langue} onChange={(event) => setLangue(event.target.value)}>
                       {LANGUES.map((option) => (
-                        <option key={option.value} value={option.value}>
+                        <option key={option.value} value={option.value} disabled={option.disabled}>
                           {option.label}
                         </option>
                       ))}

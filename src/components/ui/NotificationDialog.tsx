@@ -24,7 +24,7 @@ export function NotificationDialog({
   message,
   confirmText = 'OK',
   onConfirm,
-  cancelText = 'Cancel',
+  cancelText = 'Annuler',
   showCancel = false,
 }: NotificationDialogProps) {
   if (!isOpen) return null;
@@ -33,7 +33,7 @@ export function NotificationDialog({
     const technical = /PGRST|SQLSTATE|constraint|could not embed|foreign key|row.level security|fetch|network/i.test(message);
     const error = presentError(message);
     return <ActionErrorDialog isOpen onClose={onClose}
-      title={technical ? error.title : title === 'Erreur' ? 'Unable to complete this action' : title}
+      title={technical ? error.title : title === 'Erreur' ? 'Impossible d’effectuer cette action' : title}
       message={technical ? error.message : message} recovery={technical ? error.recovery : undefined}
       diagnosticCode={error.code} onAction={onConfirm ? () => { onConfirm(); onClose(); } : undefined}
       actionLabel={confirmText} />;
@@ -96,7 +96,7 @@ export function NotificationDialog({
             <button
               onClick={onClose}
               className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/50 transition-colors"
-              aria-label="Close"
+              aria-label="Fermer"
             >
               <X className="h-5 w-5 text-gray-500" />
             </button>

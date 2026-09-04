@@ -182,7 +182,7 @@ export default function FreightShipmentsRefining() {
               <div>
                 <p className="text-sm text-gray-600">Valeur Totale</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  {totalValue.toLocaleString('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
                 </p>
               </div>
             </div>
@@ -340,7 +340,7 @@ export default function FreightShipmentsRefining() {
                                   {shipment.reference_number}
                                 </span>
                                 <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                  Waiting for Approval
+                                  En attente d’approbation
                                 </span>
                               </div>
                             </td>
@@ -359,7 +359,7 @@ export default function FreightShipmentsRefining() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-green-700">
-                               ${(shipment.total_value_usd ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                               {(shipment.total_value_usd ?? 0).toLocaleString('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
                             </td>
                             <td className="px-4 py-3 text-center text-sm text-gray-600">
                               {shipment.production_count}
@@ -457,7 +457,7 @@ export default function FreightShipmentsRefining() {
                               {formatWeightOunces(shipment.total_pure_gold_oz)} oz
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-green-700">
-                               ${(shipment.total_value_usd ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                               {(shipment.total_value_usd ?? 0).toLocaleString('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
                             </td>
                             <td className="px-4 py-3 text-center">
                               <Button

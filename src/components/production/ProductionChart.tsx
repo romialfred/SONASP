@@ -79,17 +79,17 @@ export function ProductionChart({ productions, groupByCompany = false, miningCom
         <div>
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-bold text-gray-900">Production Trends</h3>
+            <h3 className="text-lg font-bold text-gray-900">Évolution de la production</h3>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Daily Production (Ounces)</p>
+          <p className="text-sm text-gray-600 mt-1">Production journalière (onces troy)</p>
         </div>
         <div className="text-right">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="w-4 h-4" />
-            <span>{chartData.length} days</span>
+            <span>{chartData.length} jours</span>
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Avg: <span className="font-semibold text-blue-600">{avgDaily.toFixed(2)} oz/day</span>
+            Moyenne : <span className="font-semibold text-blue-600">{avgDaily.toFixed(2)} oz/jour</span>
           </div>
         </div>
       </div>

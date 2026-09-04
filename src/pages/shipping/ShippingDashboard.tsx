@@ -11,9 +11,9 @@ async function loadRows(): Promise<LogisticsRow[]> {
   }));
 }
 export default function ShippingDashboard() {
-  return <LogisticsRegister title="Shipment preparations" subtitle="Manage gold shipments efficiently from preparation through dispatch."
-    loadRows={loadRows} createPath="/shipping/preparation/new" createLabel="New shipment"
+  return <LogisticsRegister title="Préparations d’expédition" subtitle="Pilotez les expéditions d’or, de leur préparation jusqu’à leur départ."
+    loadRows={loadRows} createPath="/shipping/preparation/new" createLabel="Nouvelle expédition"
     pendingStatus="waiting_for_customs_approval" readyStatus="ready_for_expedition"
-    statuses={{ waiting_for_customs_approval: 'Awaiting customs approval', approved_by_customs: 'Customs approved', ready_for_expedition: 'Ready for shipment' }}
+    statuses={{ waiting_for_customs_approval: 'En attente d’approbation douanière', approved_by_customs: 'Approuvée par la douane', ready_for_expedition: 'Prête pour l’expédition' }}
     presentation="shipment-preparations" />;
 }

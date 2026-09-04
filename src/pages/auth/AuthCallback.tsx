@@ -46,7 +46,7 @@ export function AuthCallback() {
         }
       } catch (error: any) {
         console.error('Auth callback error:', error);
-        setError(error.message || 'Authentication failed');
+        setError(error.message || 'Échec de l’authentification.');
 
         // Redirect to login after showing error
         setTimeout(() => {
@@ -67,9 +67,9 @@ export function AuthCallback() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Authentication Error</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Erreur d’authentification</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <p className="text-sm text-gray-500">Redirecting to login...</p>
+          <p className="text-sm text-gray-500">Redirection vers la page de connexion…</p>
         </div>
       </div>
     );
@@ -79,7 +79,7 @@ export function AuthCallback() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
         <Loading />
-        <p className="mt-4 text-gray-600">Completing authentication...</p>
+        <p className="mt-4 text-gray-600">Finalisation de l’authentification…</p>
       </div>
     </div>
   );

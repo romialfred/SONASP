@@ -4,31 +4,31 @@ export function presentError(error: unknown) {
   const message = typeof error === 'string' ? error : typeof value.message === 'string' ? value.message : '';
   const code = typeof value.code === 'string' && /^[A-Z0-9_]{3,24}$/.test(value.code) ? value.code : undefined;
   if (code === 'PGRST201' || /more than one relationship|could not embed/i.test(message)) {
-    return { category: 'configuration', code: code || 'PGRST201', title: 'Data connection unavailable',
-      message: 'The application could not link the records needed for this page.',
-      recovery: 'Try loading the data again. If the problem persists, share the diagnostic code with your administrator.' };
+    return { category: 'configuration', code: code || 'PGRST201', title: 'Connexion aux données indisponible',
+      message: 'L’application n’a pas pu relier les données nécessaires à cette page.',
+      recovery: 'Rechargez les données. Si le problème persiste, communiquez le code de diagnostic à votre administrateur.' };
   }
   if (code === '42501' || /permission|row.level security|not authorized|non autoris|capacit|AAL2/i.test(message)) {
-    return { category: 'access', code, title: 'Action not authorised',
-      message: 'Your current session cannot perform this operation.',
-      recovery: 'Check your access with an administrator. Do not create another record to bypass this restriction.' };
+    return { category: 'access', code, title: 'Action non autorisée',
+      message: 'Votre session actuelle ne permet pas d’effectuer cette opération.',
+      recovery: 'Faites vérifier vos droits d’accès par un administrateur. Ne créez pas un autre enregistrement pour contourner cette restriction.' };
   }
   if (code === '40001' || /conflict|conflit|changé entre/i.test(message)) {
-    return { category: 'conflict', code, title: 'This record has changed',
-      message: 'Another operation updated this record before your request was completed.',
-      recovery: 'Reload the record and review its current state before submitting again.' };
+    return { category: 'conflict', code, title: 'Cet enregistrement a été modifié',
+      message: 'Une autre opération a modifié cet enregistrement avant la fin de votre demande.',
+      recovery: 'Rechargez l’enregistrement et vérifiez son état actuel avant de soumettre de nouveau la demande.' };
   }
   if (code === '23505' || /duplicate|already exists|existe déjà/i.test(message)) {
-    return { category: 'duplicate', code, title: 'Record already exists',
-      message: 'A record with the same reference or shipment already exists.',
-      recovery: 'Open the existing record before trying to create another one.' };
+    return { category: 'duplicate', code, title: 'Enregistrement déjà existant',
+      message: 'Un enregistrement portant la même référence ou la même expédition existe déjà.',
+      recovery: 'Ouvrez l’enregistrement existant avant d’essayer d’en créer un autre.' };
   }
   if (/fetch|network|timeout|connection|réseau/i.test(message)) {
-    return { category: 'network', code, title: 'Connection interrupted',
-      message: 'The server response could not be confirmed.',
-      recovery: 'Check your connection. For a save request, check the record before retrying to avoid duplicate entries.' };
+    return { category: 'network', code, title: 'Connexion interrompue',
+      message: 'La réponse du serveur n’a pas pu être confirmée.',
+      recovery: 'Vérifiez votre connexion. Après une demande d’enregistrement, contrôlez l’enregistrement avant de réessayer afin d’éviter un doublon.' };
   }
-  return { category: 'operation', code, title: 'Operation could not be completed',
-    message: 'The request was not confirmed by the server.',
-    recovery: 'Review the information you entered. If this was a save request, check the record before trying again.' };
+  return { category: 'operation', code, title: 'Opération non aboutie',
+    message: 'La demande n’a pas été confirmée par le serveur.',
+    recovery: 'Vérifiez les informations saisies. Après une demande d’enregistrement, contrôlez l’enregistrement avant de réessayer.' };
 }

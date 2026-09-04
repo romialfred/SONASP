@@ -72,6 +72,8 @@ const SalesDashboard = lazyNamed(() => import('./pages/sales/SalesDashboard'), '
 const SaleCreate = lazyNamed(() => import('./pages/sales/SaleCreate'), 'SaleCreate');
 const SaleDetails = lazyNamed(() => import('./pages/sales/SaleDetails'), 'SaleDetails');
 const GoldTradeSpace = lazyNamed(() => import('./pages/sales/GoldTradeSpace'), 'GoldTradeSpace');
+const InternationalSaleSimulator = lazyNamed(() => import('./pages/sales/InternationalSaleSimulator'), 'InternationalSaleSimulator');
+const SaleSimulationHistory = lazyNamed(() => import('./pages/sales/SaleSimulationHistory'), 'SaleSimulationHistory');
 const CustomerSaleApproval = lazyNamed(() => import('./pages/sales/CustomerSaleApproval'), 'CustomerSaleApproval');
 const HelpCenter = lazy(() => import('./pages/HelpCenter'));
 const CustomerListing = lazyNamed(() => import('./pages/customers/CustomerListing'), 'CustomerListing');
@@ -1414,6 +1416,24 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
                   <SaleCreate />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/sales/simulator"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
+                  <InternationalSaleSimulator />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/sales/simulations"
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.SALES_CREATE}>
+                  <SaleSimulationHistory />
                 </ProtectedRoute>
               }
             />

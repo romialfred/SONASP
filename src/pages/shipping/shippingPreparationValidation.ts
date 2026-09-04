@@ -36,7 +36,7 @@ function isPositiveFinite(value: number | null | undefined): value is number {
 }
 
 function productionLabel(candidate: ShippingProductionCandidate) {
-  return candidate.reference?.trim() || candidate.id.trim() || 'Unknown production';
+  return candidate.reference?.trim() || candidate.id.trim() || 'Production inconnue';
 }
 
 export function validateShippingProduction(
@@ -49,15 +49,15 @@ export function validateShippingProduction(
     issues.push({ code, productionId: candidate.id, message: `${label}: ${message}` });
   };
 
-  if (!candidate.id.trim()) add('missing-id', 'the production identifier is missing.');
+  if (!candidate.id.trim()) add('missing-id', 'l’identifiant de la production est manquant.');
   if (!expectedCompanyId || candidate.miningCompanyId !== expectedCompanyId) {
-    add('wrong-company', 'the production does not belong to the selected mining company.');
+    add('wrong-company', 'la production n’appartient pas à la société minière sélectionnée.');
   }
   if (candidate.status !== SHIPPING_ELIGIBLE_PRODUCTION_STATUS) {
-    add('invalid-status', 'the production is not ready for customs preparation.');
+    add('invalid-status', 'la production n’est pas prête pour la préparation douanière.');
   }
   if (candidate.alreadyAssigned) {
-    add('already-assigned', 'the production is already assigned to another shipment.');
+    add('already-assigned', 'la production est déjà affectée à une autre expédition.');
   }
 
   const grossWeight = candidate.grossWeightGrams;
@@ -67,10 +67,10 @@ export function validateShippingProduction(
   const netIsValid = isPositiveFinite(netWeight);
   const pureGoldIsValid = isPositiveFinite(pureGoldWeight);
 
-  if (!grossIsValid) add('invalid-gross-weight', 'gross weight must be a finite value greater than zero.');
-  if (!netIsValid) add('invalid-net-weight', 'net weight must be a finite value greater than zero.');
+  if (!grossIsValid) add('invalid-gross-weight', 'le poids brut doit être un nombre fini supérieur à zéro.');
+  if (!netIsValid) add('invalid-net-weight', 'le poids net doit être un nombre fini supérieur à zéro.');
   if (grossIsValid && netIsValid && netWeight > grossWeight) {
-    add('net-exceeds-gross', 'net weight cannot exceed gross weight.');
+    add('net-exceeds-gross', 'le poids net ne peut pas dépasser le poids brut.');
   }
 
   if (
@@ -79,12 +79,12 @@ export function validateShippingProduction(
     || candidate.finenessPercent < 0
     || candidate.finenessPercent > 100
   ) {
-    add('invalid-fineness', 'gold purity must be between 0% and 100%.');
+    add('invalid-fineness', 'la pureté de l’or doit être comprise entre 0 % et 100 %.');
   }
 
-  if (!pureGoldIsValid) add('invalid-pure-gold', 'fine gold weight must be a finite value greater than zero.');
+  if (!pureGoldIsValid) add('invalid-pure-gold', 'le poids d’or fin doit être un nombre fini supérieur à zéro.');
   if (pureGoldIsValid && netIsValid && pureGoldWeight > netWeight) {
-    add('pure-gold-exceeds-net', 'fine gold weight cannot exceed net weight.');
+    add('pure-gold-exceeds-net', 'le poids d’or fin ne peut pas dépasser le poids net.');
   }
 
   return issues;
@@ -104,7 +104,7 @@ export function validateShippingProductionSelection(
         issues.push({
           code: 'duplicate-production',
           productionId: candidate.id,
-          message: `${productionLabel(candidate)}: the production is selected more than once.`,
+          message: `${productionLabel(candidate)} : la production est sélectionnée plusieurs fois.`,
         });
       }
       return;
@@ -120,6 +120,6 @@ export function summarizeShippingProductionIssues(issues: ShippingProductionIssu
   const [firstIssue] = issues;
   const remaining = issues.length - 1;
   return remaining > 0
-    ? `${firstIssue.message} ${remaining} additional issue${remaining > 1 ? 's' : ''} must be corrected.`
+    ? `${firstIssue.message} ${remaining} autre${remaining > 1 ? 's' : ''} anomalie${remaining > 1 ? 's' : ''} doi${remaining > 1 ? 'vent' : 't'} être corrigée${remaining > 1 ? 's' : ''}.`
     : firstIssue.message;
 }

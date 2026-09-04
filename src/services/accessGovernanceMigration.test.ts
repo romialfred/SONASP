@@ -29,6 +29,7 @@ describe('migration de gouvernance des accès', () => {
     expect(migration).toMatch(/snp_access_portal_archive[\s\S]*snp_access_admin_authorized\(true,true\)/);
     expect(migration).toContain('Un Administrateur standard ne peut pas gérer ce niveau de compte.');
     expect(migration).toContain("Une restriction est invalide ou tenterait d’accorder un droit.");
+    expect(migration).toContain("AND (CASE v_category.resource_kind");
   });
 
   it('rend l’audit immuable et refuse tout accès direct aux tables depuis le navigateur', () => {

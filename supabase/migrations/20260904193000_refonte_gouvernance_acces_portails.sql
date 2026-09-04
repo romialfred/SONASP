@@ -1722,13 +1722,13 @@ BEGIN
     OR (v_category.resource_kind<>'identity' AND (
       p_resource_type IS DISTINCT FROM v_category.resource_kind OR p_resource_id IS NULL
     )) THEN RAISE EXCEPTION 'La ressource sélectionnée est incompatible avec la catégorie.' USING ERRCODE='23503'; END IF;
-  IF p_resource_id IS NOT NULL AND CASE v_category.resource_kind
+  IF p_resource_id IS NOT NULL AND (CASE v_category.resource_kind
     WHEN 'mining_company' THEN NOT EXISTS(SELECT 1 FROM public.mining_companies resource WHERE resource.id=p_resource_id)
     WHEN 'organization' THEN NOT EXISTS(SELECT 1 FROM public.snp_organizations resource WHERE resource.id=p_resource_id AND resource.is_active)
     WHEN 'artisan' THEN NOT EXISTS(SELECT 1 FROM public.snp_artisans_miniers resource WHERE resource.id=p_resource_id AND resource.actif AND resource.type_artisan<>'collecteur')
     WHEN 'collector' THEN NOT EXISTS(SELECT 1 FROM public.snp_artisans_miniers resource WHERE resource.id=p_resource_id AND resource.actif AND resource.type_artisan='collecteur')
     WHEN 'artisanal_site' THEN NOT EXISTS(SELECT 1 FROM public.artisanal_sites resource WHERE resource.id=p_resource_id)
-    ELSE false END THEN
+    ELSE false END) THEN
     RAISE EXCEPTION 'La ressource métier n’existe plus ou n’est plus active.' USING ERRCODE='23503';
   END IF;
   IF EXISTS(

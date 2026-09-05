@@ -2360,6 +2360,16 @@
       "sha256": "718d238ae5f30b1a837b20946816d157c6b95644b52d233674824755046a7a6c"
     },
     {
+      "path": "supabase/migrations/20260905010000_durcir_rls_certificats_analyse.sql",
+      "version": "20260905010000",
+      "description": "durcir_rls_certificats_analyse",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 3652,
+      "sha256": "6120bc67078960c17e2668bd8305b0e11749b89410ac0ae35c30163dd7a98a14"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3353,10 +3363,10 @@
       },
       {
         "digits": 14,
-        "count": 139
+        "count": 140
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "92d41f9c1999a57e3b94cd5f92a6adff94bdc89144c35e3df8890a09115bde50"
+  "catalogueSha256": "652b3d83ca7d7b3098252382bd18cb585a91d3b136b6466b6976eac251cc90a6"
 }

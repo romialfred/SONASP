@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   alertesContractuellesService,
   cheminAlerte,
@@ -77,7 +77,7 @@ export function PilotageContrats() {
       setContrats(listeContrats);
       setRequisitions(listeRequisitions);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger le pilotage.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger le pilotage.'));
     } finally {
       setChargement(false);
     }
@@ -95,7 +95,7 @@ export function PilotageContrats() {
       setMessage('Seuil enregistré. Les alertes suivent immédiatement.');
       await charger();
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Le seuil n’a pas pu être réglé.'));
+      setErreur(messageErreurUtilisateur(raison, 'Le seuil n’a pas pu être réglé.'));
     }
   };
 

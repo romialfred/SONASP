@@ -6,7 +6,7 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { achatsIndustrielsService, type Societe } from '@/services/achatsIndustrielsService';
 import {
   contratsService,
@@ -83,7 +83,7 @@ export function ContratsPage() {
       setTous(ensemble);
       setSocietes(societesChargees);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les contrats.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les contrats.'));
       setContrats([]);
       setTous([]);
     } finally {

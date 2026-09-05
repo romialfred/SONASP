@@ -3,7 +3,7 @@ import {
   AlertTriangle, CheckCircle2, Download, Eye, FileUp, Paperclip, Trash2,
 } from 'lucide-react';
 import { Badge, EmptyState, Note, Section } from '@/components/ui/sn';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { supabase } from '@/lib/supabase';
 import { LIBELLES_CATEGORIE_DOC, type CategorieDocument } from '@/services/contratsService';
 import {
@@ -118,7 +118,7 @@ export function PiecesContractuelles({
       if (error) throw error;
       setPieces((data || []) as PieceAffichee[]);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les pièces du dossier.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les pièces du dossier.'));
     } finally {
       setChargement(false);
     }
@@ -136,7 +136,7 @@ export function PiecesContractuelles({
       setMessage(await operation());
       await charger();
     } catch (raison) {
-      setErreur(errorMessage(raison, 'L’opération a échoué.'));
+      setErreur(messageErreurUtilisateur(raison, 'L’opération a échoué.'));
     } finally {
       setAction(null);
     }

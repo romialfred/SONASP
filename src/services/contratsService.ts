@@ -501,8 +501,13 @@ export const contratsService = {
   },
 
   async modifier(id: string, champs: TablesUpdate<'snp_contrats'>): Promise<Contrat> {
+    // Le numero de contrat est attribue par declencheur a la creation et reste
+    // immuable ensuite. Le formulaire le transmet a '' (champ non saisi) ; sans ce
+    // retrait, l'UPDATE l'effacerait, car le garde en base ne fige pas cette colonne.
+    const champsModifiables = { ...champs };
+    delete champsModifiables.numero_contrat;
     const reponse = await supabase
-      .from('snp_contrats').update(champs).eq('id', id).select().single();
+      .from('snp_contrats').update(champsModifiables).eq('id', id).select().single();
     return lancerSiErreur(reponse) as Contrat;
   },
 

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { achatsIndustrielsService, type Societe } from '@/services/achatsIndustrielsService';
 import type { TablesInsert } from '@/types/database';
 import {
@@ -338,7 +338,7 @@ export function ContratForm() {
         });
       }
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger ce contrat.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger ce contrat.'));
     } finally {
       setChargement(false);
     }
@@ -482,7 +482,7 @@ export function ContratForm() {
         if (!id) navigate(`/contrats/${enregistre.id}/modifier`, { replace: true });
       }
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Le contrat n’a pas pu être enregistré.'));
+      setErreur(messageErreurUtilisateur(raison, 'Le contrat n’a pas pu être enregistré.'));
     } finally {
       setEnregistrement(false);
     }

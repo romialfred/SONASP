@@ -103,24 +103,15 @@ export async function addInventoryEntry(entry: GoldInventoryEntry) {
     );
 
     if (error) {
-      // Customize error messages for common database errors
-      let userMessage = 'Une erreur est survenue lors de l\'ajout de l\'entrée d\'inventaire.';
-
-      if (error.message.includes('foreign key')) {
-        userMessage = 'L\'expédition sélectionnée n\'existe pas ou a été supprimée. Veuillez actualiser la page et réessayer.';
-      } else if (error.message.includes('duplicate')) {
-        userMessage = 'Cette entrée d\'inventaire existe déjà dans le système.';
-      } else if (error.message.includes('not null')) {
-        userMessage = 'Certains champs obligatoires sont manquants. Veuillez vérifier le formulaire.';
-      }
-
-      return {
-        success: false,
-        error: {
-          message: userMessage,
-          technicalDetails: `Code: ${error.code}\nMessage: ${error.message}\nDétails: ${error.details || 'N/A'}\nHint: ${error.hint || 'N/A'}`
-        }
-      };
+      console.error('Error adding inventory entry (RPC):', error);
+      // La RPC snp_register_gold_inventory_entry leve des messages metier cures
+      // (« Seule une expedition traitee peut entrer en stock », « Habilitation et
+      // authentification forte requises »...). On les relaie tels quels au lieu de
+      // les ecraser par un generique ; aucun detail technique brut n'est expose.
+      const message = typeof error.message === 'string' && error.message.trim()
+        ? error.message
+        : 'Une erreur est survenue lors de l\'ajout de l\'entrée d\'inventaire.';
+      return { success: false, error: { message } };
     }
 
     return { success: true, data };

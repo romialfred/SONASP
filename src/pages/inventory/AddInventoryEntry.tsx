@@ -157,7 +157,10 @@ export function AddInventoryEntry() {
           .select(
             'id, reference_number, shipment_date, total_bullion_grams, total_pure_gold_grams, total_pure_gold_oz, production_count, mining_company_id, destination_refinery:refineries(name)'
           )
-          .in('status', ['received_at_refinery', 'processing', 'processed'])
+          // La RPC snp_register_gold_inventory_entry n'accepte QUE le statut
+          // « processed » : proposer les statuts anterieurs conduisait a une
+          // selection complete puis un rejet systematique a la soumission.
+          .eq('status', 'processed')
           .order('shipment_date', { ascending: false }),
         supabase.from('refineries').select('id, name, location, country').eq('is_active', true).order('name'),
       ]);

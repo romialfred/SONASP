@@ -4,7 +4,7 @@ import {
   AlertTriangle, ArrowLeft, Building2, CircleDollarSign, Gavel, Loader2, Save, Scale, Truck,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { achatsIndustrielsService, type Societe } from '@/services/achatsIndustrielsService';
 import { contratsService, formaterQuantite, type Contrat } from '@/services/contratsService';
 import {
@@ -177,7 +177,7 @@ export function RequisitionForm() {
         });
       }
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger cette réquisition.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger cette réquisition.'));
     } finally {
       setChargement(false);
     }
@@ -291,7 +291,7 @@ export function RequisitionForm() {
         if (!id) navigate(`/requisitions/${enregistree.id}/modifier`, { replace: true });
       }
     } catch (raison) {
-      setErreur(errorMessage(raison, 'La réquisition n’a pas pu être enregistrée.'));
+      setErreur(messageErreurUtilisateur(raison, 'La réquisition n’a pas pu être enregistrée.'));
     } finally {
       setEnregistrement(false);
     }

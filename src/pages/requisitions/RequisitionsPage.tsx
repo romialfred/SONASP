@@ -6,7 +6,7 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { achatsIndustrielsService, type Societe } from '@/services/achatsIndustrielsService';
 import {
   LIBELLES_REGIME,
@@ -73,7 +73,7 @@ export function RequisitionsPage() {
       setToutes(ensemble);
       setSocietes(societesChargees);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les réquisitions.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les réquisitions.'));
       setRequisitions([]);
       setToutes([]);
     } finally {

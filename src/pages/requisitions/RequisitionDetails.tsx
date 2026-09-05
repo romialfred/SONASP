@@ -9,7 +9,7 @@ import { PiecesContractuelles } from '@/components/contrats/PiecesContractuelles
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { contratsService, formaterFcfa, formaterQuantite, type Contrat } from '@/services/contratsService';
 import {
   LIBELLES_CANAL,
@@ -118,7 +118,7 @@ export function RequisitionDetails() {
         (contrat) => contrat.mining_company_id === fiche.mining_company_id
       ));
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger cette réquisition.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger cette réquisition.'));
     } finally {
       setChargement(false);
     }
@@ -136,7 +136,7 @@ export function RequisitionDetails() {
       setMessage(await operation());
       await charger();
     } catch (raison) {
-      setErreur(errorMessage(raison, 'L’opération a échoué.'));
+      setErreur(messageErreurUtilisateur(raison, 'L’opération a échoué.'));
     } finally {
       setAction(null);
     }

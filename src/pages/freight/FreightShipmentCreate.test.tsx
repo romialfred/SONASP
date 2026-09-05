@@ -22,6 +22,11 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
 vi.mock('@/contexts/NotificationContext', () => ({
   useNotification: () => ({ showSuccess: mocks.showSuccess, showWarning: mocks.showWarning }),
 }));
+// La creation de fret exige desormais la capacite freight.prepare (garde UI) :
+// le compte de test la detient pour que le formulaire reste actif.
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'op-1', is_active: true, capabilities: ['freight.prepare'] } }),
+}));
 vi.mock('@/lib/supabase', () => ({ supabase: { from: mocks.from } }));
 vi.mock('@/services/freightShipmentService', () => {
   class PartialSaveError extends Error {

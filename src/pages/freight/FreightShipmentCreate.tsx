@@ -9,12 +9,18 @@ import { logisticsNumber } from '@/components/shipping/LogisticsRegister';
 import { presentError } from '@/lib/presentError';
 import { FreightShipmentPartialSaveError, freightShipmentService, type AvailableShippingPreparation } from '@/services/freightShipmentService';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { FREIGHT_CAPABILITIES, hasFreightCapability } from '@/lib/freightCustomsAccess';
 import { supabase } from '@/lib/supabase';
 
 interface Signatory { position: string; full_name: string; display_order: number }
 export default function FreightShipmentCreate() {
   const navigate = useNavigate();
   const { showSuccess, showWarning } = useNotification();
+  const { user } = useAuth();
+  // Meme garde de capacite que l'ecran douane : sans la preparation du fret, le
+  // formulaire etait pleinement utilisable puis rejete par la RPC (UX trompeuse).
+  const canPrepare = hasFreightCapability(user, FREIGHT_CAPABILITIES.PREPARE);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -83,7 +89,7 @@ export default function FreightShipmentCreate() {
   };
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (lock.current || loading || loadFailed || signatoriesLoading || signatoriesFailed) return;
+    if (!canPrepare || lock.current || loading || loadFailed || signatoriesLoading || signatoriesFailed) return;
     const validNumber = (value: string) => Number.isFinite(Number(value)) && Number(value) > 0;
     if (!selected.length || selected.length !== selectedIds.length || !refineries.some(row => row.id === refineryId)
       || !validNumber(price) || !validNumber(rate) || !validNumber(boxes) || !Number.isInteger(Number(boxes))
@@ -127,9 +133,10 @@ export default function FreightShipmentCreate() {
     <PageHeader title="Nouvelle expédition de fret" subtitle="Regroupez les préparations dédouanées destinées à la raffinerie." icon={Package}
       breadcrumb={[{ label: 'Expéditions', to: '/shipping/preparation' }, { label: 'Expéditions de fret', to: '/freight' }, { label: 'Nouvelle expédition' }]}
       actions={<Button type="button" variant="outline" disabled={submitting} onClick={() => navigate('/freight')}><ArrowLeft size={16} />Retour aux expéditions de fret</Button>} />
-    {loadFailed && <Note tone="danger">Impossible de charger les données des préparations. <Button type="button" variant="outline" onClick={() => void load()}>Recharger les données</Button></Note>}
-    {!loading && !loadFailed && !shipments.length && <Note tone="info">Aucune préparation admissible n’est disponible. Les préparations doivent être prêtes pour l’expédition et leurs lots ne doivent pas être déjà affectés à un fret.</Note>}
-    <form onSubmit={submit}><div className="logistics-form-grid"><fieldset className="logistics-form-main" disabled={loading || loadFailed || submitting}>
+    {!canPrepare && <Note tone="danger">Une session vérifiée disposant de l’accès à la préparation du fret est obligatoire pour créer une expédition.</Note>}
+    {canPrepare && loadFailed && <Note tone="danger">Impossible de charger les données des préparations. <Button type="button" variant="outline" onClick={() => void load()}>Recharger les données</Button></Note>}
+    {canPrepare && !loading && !loadFailed && !shipments.length && <Note tone="info">Aucune préparation admissible n’est disponible. Les préparations doivent être prêtes pour l’expédition et leurs lots ne doivent pas être déjà affectés à un fret.</Note>}
+    <form onSubmit={submit}><div className="logistics-form-grid"><fieldset className="logistics-form-main" disabled={!canPrepare || loading || loadFailed || submitting}>
       <Section id="freight-selection" title="Sélectionner les préparations d’expédition" description="Recherchez et sélectionnez les préparations autorisées. Chaque lot de production est inclus une seule fois." icon={Package}>
         <Field label="Rechercher une préparation"><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Référence ou société minière…" /></Field>
         <div className="my-4 flex gap-3"><Button type="button" variant="outline" onClick={() => selectIds(shipments.filter(row => `${row.expedition_lot_number} ${companyName(row)}`.toLowerCase().includes(search.toLowerCase())).map(row => row.id))}>Sélectionner les résultats</Button><Button type="button" variant="outline" onClick={() => selectIds([])}>Effacer la sélection</Button></div>

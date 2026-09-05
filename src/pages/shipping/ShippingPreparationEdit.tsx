@@ -11,6 +11,7 @@ import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { ShippingStatusBadge } from '@/components/shipping/ShippingStatusBadge';
 import { shippingPreparationService, type ShippingPreparation } from '@/services/shippingPreparationService';
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { shippingPreparationDetailsPath } from '@/lib/shippingRoutes';
 
 interface Refinery {
@@ -126,9 +127,9 @@ export default function ShippingPreparationEdit() {
       setShowSuccess(true);
 
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur lors de la mise à jour de la préparation :', error);
-      setErrorMessage('Impossible d’enregistrer les modifications : ' + (error.message || 'aucune confirmation reçue'));
+      setErrorMessage(messageErreurUtilisateur(error, 'Impossible d’enregistrer les modifications.'));
       setShowError(true);
     } finally {
       saveLock.current = false;

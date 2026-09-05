@@ -10,6 +10,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Alert } from '@/components/ui/Alert';
 import { Loading } from '@/components/ui/Loading';
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { useAlert } from '@/hooks/useAlert';
 import { navigateWithAutoRefresh } from '@/hooks/useAutoRefresh';
 import { BankAccountForm, type BankAccount } from '@/components/customers/BankAccountForm';
@@ -167,6 +168,10 @@ export function CustomerForm() {
       newErrors.address = 'L’adresse est obligatoire.';
     }
 
+    if (!formData.country.trim()) {
+      newErrors.country = 'Le pays est obligatoire.';
+    }
+
     const creditLimit = parseFloat(formData.creditLimit);
     if (isNaN(creditLimit) || creditLimit < 0) {
       newErrors.creditLimit = 'Une limite de crédit valide est obligatoire.';
@@ -199,82 +204,67 @@ export function CustomerForm() {
         status: formData.status,
       };
 
+      // Les comptes bancaires sont valides et prepares AVANT toute ecriture :
+      // auparavant, le delete des banques existantes s'executait avant la
+      // validation, si bien qu'un echec ulterieur (validation ou insert) perdait
+      // irremediablement les comptes deja supprimes.
+      const banquesSaisies = formData.banks ?? [];
+      const invalidBanks = banquesSaisies.filter(
+        bank => !bank.bankName || !bank.bankName.trim() ||
+                !bank.country || !bank.country.trim() ||
+                !bank.city || !bank.city.trim() ||
+                !bank.currency || !bank.currency.trim()
+      );
+      if (invalidBanks.length > 0) {
+        throw new Error('Chaque compte bancaire doit comporter un nom de banque, un pays, une ville et une devise. Renseignez tous les champs obligatoires.');
+      }
+      const banquesAInserer = banquesSaisies
+        .filter(bank => bank.bankName && bank.bankName.trim() && bank.bankName !== '__other__')
+        .map(bank => ({
+          bank_name: bank.bankName.trim(),
+          account_number: bank.accountNumber?.trim() || null,
+          swift_code: bank.swiftCode?.trim() || null,
+          iban: bank.iban?.trim() || null,
+          currency: bank.currency,
+          country: bank.country,
+          city: bank.city.trim(),
+          is_primary: bank.isPrimary || false,
+          is_active: bank.isActive !== false,
+        }));
+
       let customerId = id;
 
       if (isEditMode && id) {
-        // Update existing customer
         const { error } = await supabase
           .from('customers')
-          .update({
-            ...baseCustomerData,
-            updated_at: new Date().toISOString(),
-          })
+          .update({ ...baseCustomerData, updated_at: new Date().toISOString() })
           .eq('id', id);
-
         if (error) throw error;
 
-        // Delete existing banks and recreate them
+        // Remplacement des banques (apres validation). Un echec de suppression
+        // (ex. compte reference par un paiement) est remonte, jamais avale.
         const { error: deleteError } = await supabase
           .from('customer_banks')
           .delete()
           .eq('customer_id', id);
-
-        if (deleteError) {
-          console.error('Error deleting old banks:', deleteError);
-        }
+        if (deleteError) throw deleteError;
       } else {
-        // Create new customer
         const { data: newCustomer, error } = await supabase
           .from('customers')
           .insert([baseCustomerData])
           .select()
           .single();
-
         if (error) throw error;
         if (!newCustomer) throw new Error('Le client n’a pas pu être créé.');
-
         customerId = newCustomer.id;
       }
 
-      // Save bank accounts
-      if (formData.banks && formData.banks.length > 0 && customerId) {
-        // Validate banks before inserting
-        const invalidBanks = formData.banks.filter(
-          bank => !bank.bankName || !bank.bankName.trim() ||
-                  !bank.country || !bank.country.trim() ||
-                  !bank.city || !bank.city.trim() ||
-                  !bank.currency || !bank.currency.trim()
-        );
-
-        if (invalidBanks.length > 0) {
-          throw new Error('Chaque compte bancaire doit comporter un nom de banque, un pays, une ville et une devise. Renseignez tous les champs obligatoires.');
-        }
-
-        const banksToInsert = formData.banks
-          .filter(bank => bank.bankName && bank.bankName.trim() && bank.bankName !== '__other__')
-          .map(bank => ({
-            customer_id: customerId,
-            bank_name: bank.bankName.trim(),
-            account_number: bank.accountNumber?.trim() || null,
-            swift_code: bank.swiftCode?.trim() || null,
-            iban: bank.iban?.trim() || null,
-            currency: bank.currency,
-            country: bank.country,
-            city: bank.city.trim(),
-            is_primary: bank.isPrimary || false,
-            is_active: bank.isActive !== false,
-          }));
-
-        if (banksToInsert.length > 0) {
-          const { error: banksError } = await supabase
-            .from('customer_banks')
-            .insert(banksToInsert);
-
-          if (banksError) {
-            console.error('Error saving banks:', banksError);
-            throw new Error('Impossible d’enregistrer les comptes bancaires.');
-          }
-        }
+      if (banquesAInserer.length > 0 && customerId) {
+        const lignes = banquesAInserer.map(banque => ({ ...banque, customer_id: customerId }));
+        const { error: banksError } = await supabase
+          .from('customer_banks')
+          .insert(lignes);
+        if (banksError) throw banksError;
       }
 
       // Show success message after everything is saved
@@ -284,9 +274,9 @@ export function CustomerForm() {
       setTimeout(() => {
         navigateWithAutoRefresh(navigate, '/customers');
       }, 1000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving customer:', error);
-      alert.error(error.message || 'Impossible d’enregistrer le client.');
+      alert.error(messageErreurUtilisateur(error, 'Impossible d’enregistrer le client.'));
     } finally {
       setIsSubmitting(false);
     }

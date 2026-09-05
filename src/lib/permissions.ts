@@ -97,6 +97,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   management: [
     PERMISSIONS.SALES_VIEW,
     PERMISSIONS.CUSTOMERS_VIEW,
+    // Le registre de routes designe management (compte sonasp, capacite
+    // SONASP_PREPARE) comme gestionnaire des clients export ; la matrice ne lui
+    // accordait que la lecture, si bien que seul l'owner pouvait creer/modifier
+    // un client. On aligne la matrice sur l'intention du registre.
+    PERMISSIONS.CUSTOMERS_CREATE,
+    PERMISSIONS.CUSTOMERS_EDIT,
     PERMISSIONS.LICENSES_VIEW,
     PERMISSIONS.REPORTS_VIEW,
     PERMISSIONS.SETTINGS_VIEW,

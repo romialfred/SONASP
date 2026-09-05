@@ -12,6 +12,7 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { CAPABILITIES, hasCapability, OPERATIONAL_CAPABILITY_OPTIONS } from '@/lib/capabilities';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { ROLE_LABELS } from '@/lib/roleLabels';
 import {
   ComptoirSaleTransitionConflictError,
@@ -40,7 +41,9 @@ const decisionLabels: Record<Decision, string> = {
 };
 
 function readableError(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback;
+  // Relaie les conflits typés (Error) et classe les erreurs PostgREST sans
+  // exposer d'internes système ; le repli sert aux cas non reconnus.
+  return messageErreurUtilisateur(error, fallback);
 }
 
 function displayDate(value: string | null | undefined): string {

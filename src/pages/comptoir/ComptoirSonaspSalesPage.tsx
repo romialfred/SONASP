@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { useComptoirWorkspace } from '@/hooks/useComptoirWorkspace';
 import {
   ComptoirStockConflictError,
@@ -89,8 +90,10 @@ export default function ComptoirSonaspSalesPage() {
       await comptoirPortalService.submitSaleToSonasp({ quantityGrams, unitPriceFcfa, notes });
       setDialogOpen(false); setQuantity(''); setUnitPrice(''); setNotes('');
       await load();
-    } catch (submitError: any) {
-      setError(submitError?.message || 'La cession n’a pas pu être enregistrée.');
+    } catch (submitError) {
+      // Les conflits typés (Error) sont relayés ; les objets PostgREST bruts sont
+      // classés au lieu d'exposer un message technique système.
+      setError(messageErreurUtilisateur(submitError, 'La cession n’a pas pu être enregistrée.'));
       if (submitError instanceof ComptoirStockConflictError) await load();
     } finally { setSaving(false); }
   };

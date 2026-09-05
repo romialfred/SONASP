@@ -390,41 +390,34 @@ export const reglementsAchatService = {
     banque_emettrice?: string | null;
     commentaire?: string | null;
   }): Promise<PreuveReglement> {
-    const { data: session } = await supabase.auth.getUser();
-    const reponse = await supabase
-      .from('snp_reglements_preuves')
-      .insert([{
-        reglement_id: entree.reglement_id,
-        type_document: entree.type_document,
-        fichier_url: entree.fichier_url,
-        nom_origine: entree.nom_origine,
-        type_mime: entree.type_mime,
-        taille_octets: entree.taille_octets,
-        empreinte_sha256: entree.empreinte_sha256 ?? null,
-        reference_document: entree.reference_document ?? null,
-        date_emission: entree.date_emission ?? null,
-        banque_emettrice: entree.banque_emettrice ?? null,
-        commentaire: entree.commentaire ?? null,
-        ajoute_par: session?.user?.id ?? null,
-      }])
-      .select('*')
-      .single();
+    // Ecriture directe interdite depuis le lot 4b (REVOKE + trigger snp_4b_rpc_only) :
+    // on passe par la RPC transactionnelle, seule habilitee a poser une preuve.
+    const reponse = await supabase.rpc('snp_ajouter_preuve_reglement', {
+      p_reglement_id: entree.reglement_id,
+      p_type_document: entree.type_document,
+      p_fichier_url: entree.fichier_url,
+      p_nom_origine: entree.nom_origine,
+      p_type_mime: entree.type_mime,
+      p_taille_octets: entree.taille_octets,
+      p_empreinte_sha256: entree.empreinte_sha256 ?? null,
+      p_reference_document: entree.reference_document ?? null,
+      p_date_emission: entree.date_emission ?? null,
+      p_banque_emettrice: entree.banque_emettrice ?? null,
+      p_commentaire: entree.commentaire ?? null,
+    });
     return lancerSiErreur(reponse) as PreuveReglement;
   },
 
   async verifierPreuve(preuveId: string, verifiee: boolean, motif?: string): Promise<PreuveReglement> {
-    const { data: session } = await supabase.auth.getUser();
-    const reponse = await supabase
-      .from('snp_reglements_preuves')
-      .update({
-        statut_verification: verifiee ? 'verifiee' : 'rejetee',
-        motif_rejet: verifiee ? null : (motif ?? null),
-        verifiee_par: session?.user?.id ?? null,
-        verifiee_le: new Date().toISOString(),
-      })
-      .eq('id', preuveId)
-      .select('*')
-      .single();
+    // La verification passe par la RPC qui impose la separation des taches
+    // (l'ajout et la verification ont des acteurs distincts), la capacite
+    // sonasp.finance.reconcile et un motif de rejet d'au moins dix caracteres.
+    // L'ancien UPDATE direct fixait verifiee_par = self sans aucun controle.
+    const reponse = await supabase.rpc('snp_verifier_preuve_reglement', {
+      p_preuve_id: preuveId,
+      p_decision: verifiee ? 'verifiee' : 'rejetee',
+      p_motif: motif,
+    });
     return lancerSiErreur(reponse) as PreuveReglement;
   },
 };

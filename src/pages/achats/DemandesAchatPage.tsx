@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileSignature, RefreshCw, Send, XCircle } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   achatsIndustrielsService,
   LIBELLES_STATUT_DEMANDE,
@@ -81,7 +81,7 @@ export function DemandesAchatPage() {
       setToutesDemandes(toutes);
       setSocietes(societesChargees);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les demandes d’achat.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les demandes d’achat.'));
       setDemandes([]);
       setToutesDemandes([]);
     } finally {
@@ -121,7 +121,7 @@ export function DemandesAchatPage() {
       setReponse(null);
       await charger();
     } catch (raison) {
-      setErreur(errorMessage(raison, 'La réponse n’a pas pu être enregistrée.'));
+      setErreur(messageErreurUtilisateur(raison, 'La réponse n’a pas pu être enregistrée.'));
     } finally {
       setAction(null);
     }

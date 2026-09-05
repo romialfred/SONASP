@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, BookOpen, Building2, Clock, RefreshCw, Scale } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   achatsIndustrielsService,
   LIBELLES_STATUT_FACTURE,
@@ -67,7 +67,7 @@ export function ComptesMinesPage() {
         setFactures([]);
       }
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les comptes des sociétés minières.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les comptes des sociétés minières.'));
     } finally {
       setChargement(false);
     }

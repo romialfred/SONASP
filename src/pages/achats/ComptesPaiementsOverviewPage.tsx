@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section, StatGrid, type BadgeTone } from '@/components/ui/sn';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   achatsIndustrielsService,
   LIBELLES_STATUT_FACTURE,
@@ -76,7 +76,7 @@ export function ComptesPaiementsOverviewPage() {
       ]);
       setOverview(buildAchatsFinancialOverview({ invoices, payments, balances, companies }));
     } catch (reason) {
-      setFailure(errorMessage(reason, 'Impossible de charger le pilotage des comptes et paiements.'));
+      setFailure(messageErreurUtilisateur(reason, 'Impossible de charger le pilotage des comptes et paiements.'));
     } finally {
       setLoading(false);
     }

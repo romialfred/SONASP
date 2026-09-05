@@ -1,7 +1,7 @@
 import { AlertTriangle, Loader2, Printer, ShieldCheck, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { achatsIndustrielsService } from '@/services/achatsIndustrielsService';
 import '@/pages/artisan-minier/facture-vente.css';
 import './facture-achat.css';
@@ -168,7 +168,7 @@ export function FactureAchatApercu({ factureId, onFermer }: {
         setFacture(detail as unknown as DetailFacture);
         setLignes((lignesChargees || []) as LigneFacture[]);
       } catch (raison) {
-        if (vivant) setErreur(errorMessage(raison, 'Impossible de composer la facture.'));
+        if (vivant) setErreur(messageErreurUtilisateur(raison, 'Impossible de composer la facture.'));
       } finally {
         if (vivant) setChargement(false);
       }

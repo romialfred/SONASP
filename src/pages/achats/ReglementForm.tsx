@@ -5,7 +5,7 @@ import {
   Landmark, Loader2, Lock, Save, Search, ShieldCheck, Wallet, X,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { achatsIndustrielsService, type ReglementAchat } from '@/services/achatsIndustrielsService';
 import {
   formaterFcfa,
@@ -100,7 +100,7 @@ export function ReglementForm() {
     try {
       setSocietes(await reglementsAchatService.societesEligibles());
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les bénéficiaires éligibles.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les bénéficiaires éligibles.'));
     } finally {
       setChargement(false);
     }
@@ -133,7 +133,7 @@ export function ReglementForm() {
       const principal = comptesCharges.find((compte) => compte.is_primary) ?? comptesCharges[0];
       if (principal) setCompteChoisi(principal.id);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger la situation de cette société.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger la situation de cette société.'));
     } finally {
       setChargementSociete(false);
     }
@@ -253,7 +253,7 @@ export function ReglementForm() {
       });
       navigate(`/achats/reglements?prepare=${resultat?.r_reference ?? ''}`);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Le règlement n’a pas pu être préparé.'));
+      setErreur(messageErreurUtilisateur(raison, 'Le règlement n’a pas pu être préparé.'));
       setEtape('saisie');
     } finally {
       setEnregistrement(false);

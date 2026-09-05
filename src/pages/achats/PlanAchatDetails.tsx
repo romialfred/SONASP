@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Note, PageHeader, Section } from '@/components/ui/sn';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   achatsIndustrielsService,
   LIBELLES_STATUT_PLAN,
@@ -148,7 +148,7 @@ export function PlanAchatDetails() {
         prix: planCharge?.prix_once_global_fcfa ? String(planCharge.prix_once_global_fcfa) : '',
       });
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger ce plan.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger ce plan.'));
     } finally {
       setChargement(false);
     }
@@ -210,7 +210,7 @@ export function PlanAchatDetails() {
       setMessage(await operation());
       await charger();
     } catch (raison) {
-      setErreur(errorMessage(raison, 'L’opération a échoué.'));
+      setErreur(messageErreurUtilisateur(raison, 'L’opération a échoué.'));
     } finally {
       setAction(null);
     }

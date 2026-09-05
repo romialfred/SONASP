@@ -6,7 +6,7 @@ import {
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Field, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
 import { useMineWorkspace } from '@/hooks/useMineWorkspace';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   achatsIndustrielsService,
   LIBELLES_STATUT_FACTURE,
@@ -93,7 +93,7 @@ export function ReglementsAchatPage() {
       setFactures(listeFactures);
       setSocietes(listeSocietes);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les règlements.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les règlements.'));
     } finally {
       setChargement(false);
     }
@@ -107,7 +107,7 @@ export function ReglementsAchatPage() {
     try {
       setAffectations(await achatsIndustrielsService.affectationsDuReglement(reglement.id));
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de lire les affectations.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de lire les affectations.'));
     }
   }, []);
 
@@ -167,7 +167,7 @@ export function ReglementsAchatPage() {
         }
       }
     } catch (raison) {
-      setErreur(errorMessage(raison, 'L’opération a échoué.'));
+      setErreur(messageErreurUtilisateur(raison, 'L’opération a échoué.'));
     } finally {
       setAction(null);
     }

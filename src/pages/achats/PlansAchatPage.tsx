@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, CalendarRange, Plus, RefreshCw, Target, X } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, EmptyState, Field, Note, PageHeader, Section, StatGrid } from '@/components/ui/sn';
-import { errorMessage } from '@/lib/errorMessage';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   achatsIndustrielsService,
   LIBELLES_STATUT_PLAN,
@@ -76,7 +76,7 @@ export function PlansAchatPage() {
     try {
       setPlans(await achatsIndustrielsService.listerPlans());
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Impossible de charger les plans d’achat.'));
+      setErreur(messageErreurUtilisateur(raison, 'Impossible de charger les plans d’achat.'));
       setPlans([]);
     } finally {
       setChargement(false);
@@ -141,7 +141,7 @@ export function PlansAchatPage() {
       setFormulaireOuvert(false);
       navigate(`/achats/plans/${plan.id}`);
     } catch (raison) {
-      setErreur(errorMessage(raison, 'Le plan n’a pas pu être créé.'));
+      setErreur(messageErreurUtilisateur(raison, 'Le plan n’a pas pu être créé.'));
     } finally {
       setEnregistrement(false);
     }

@@ -27,6 +27,9 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('@/lib/capabilities', () => ({
   CAPABILITIES: { TAX_RULES_MANAGE: 'tax.rules.manage' },
   hasCapability: () => true,
+  // La gestion des barèmes est désormais gouvernée par la capacité SENSIBLE
+  // (session AAL2) : le compte de test la détient.
+  hasSensitiveCapability: () => true,
 }));
 
 vi.mock('@/services/reglesFiscalesService', async (importOriginal) => {

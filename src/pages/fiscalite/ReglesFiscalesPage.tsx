@@ -11,7 +11,7 @@ import {
   FormActions, SelectControl, Tabs, TabPanel,
 } from '@/components/ui/sn';
 import { useAuth } from '@/contexts/AuthContext';
-import { hasCapability, CAPABILITIES } from '@/lib/capabilities';
+import { hasSensitiveCapability, CAPABILITIES } from '@/lib/capabilities';
 import { errorMessage } from '@/lib/errorMessage';
 import {
   reglesFiscalesService, LIBELLES_TAXES, LIBELLES_ASSIETTES, LIBELLES_MODES,
@@ -197,7 +197,11 @@ export function ReglesFiscalesPage() {
   const [saisies, setSaisies] = useState<SaisiesNumeriques>(SAISIES_INITIALES);
   const [enregistrement, setEnregistrement] = useState(false);
 
-  const peutAdministrer = hasCapability(user, CAPABILITIES.TAX_RULES_MANAGE);
+  // Capacité SENSIBLE : la gestion des barèmes fiscaux (créer/approuver/abroger)
+  // exige une session AAL2 et la capacité dans la liste autoritative serveur, comme
+  // les écrans Paiement/Rapprochement/Conciliation. hasCapability accordait ces
+  // actions à l'Owner sans AAL2 (fausse affordance ; le serveur rejetait ensuite).
+  const peutAdministrer = hasSensitiveCapability(user, CAPABILITIES.TAX_RULES_MANAGE);
 
   const charger = useCallback(async () => {
     try {

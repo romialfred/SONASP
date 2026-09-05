@@ -409,7 +409,7 @@ export function CustomerSaleApproval() {
                   </div>
 
                   <div className="flex justify-between items-center px-4">
-                    <span className="text-sm text-gray-700">Redevances (3 %)</span>
+                    <span className="text-sm text-gray-700">Redevances</span>
                     <span className="text-base font-semibold text-red-600">
                       -{formatCurrency(sale.royalty_amount)}
                     </span>

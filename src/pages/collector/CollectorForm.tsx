@@ -403,7 +403,6 @@ export function CollectorDossierForm({
                     <option value="">Sélectionner</option>
                     <option value="M">Masculin</option>
                     <option value="F">Féminin</option>
-                    <option value="Autre">Autre</option>
                   </select>
                 </Field>
                 {text("nationalite", "Nationalité")}

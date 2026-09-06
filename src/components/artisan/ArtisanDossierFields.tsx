@@ -461,7 +461,6 @@ export function ArtisanDossierFields(p: Props) {
               ["", "Sélectionner"],
               ["M", "Masculin"],
               ["F", "Féminin"],
-              ["Autre", "Autre"],
             ])}
             {text("nationalite", "Nationalité")}
           </div>

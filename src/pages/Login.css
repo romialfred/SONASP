@@ -855,10 +855,10 @@
   .faso-login {
     --login-left: 24px;
     --login-right: 24px;
-    grid-template-rows: 4px minmax(0, 1fr) 92px 42px;
+    grid-template-rows: 4px minmax(0, 1fr) clamp(92px, 18dvh, 120px) 42px;
   }
   .faso-login .login-scene {
-    grid-template-rows: 76px minmax(0, 1fr);
+    grid-template-rows: clamp(76px, 20dvh, 130px) minmax(0, 1fr);
   }
   .faso-login .login-brand {
     height: 100%;
@@ -873,7 +873,7 @@
     padding: 0;
   }
   .faso-login .login-presentation__title {
-    font-size: 28px;
+    font-size: clamp(28px, 2.6vw, 40px);
   }
   .faso-login .login-presentation__lead {
     font-size: 16px;

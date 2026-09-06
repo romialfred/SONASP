@@ -250,6 +250,7 @@ export default function CollectionSalesPage({
   const collector = isCollectorScopedUser(user);
   const navigate = useNavigate();
   const location = useLocation();
+  const collectorFilter = new URLSearchParams(location.search).get('collecteur');
   const [rows, setRows] = useState<CollectorSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -509,6 +510,7 @@ export default function CollectionSalesPage({
                 Vente enregistrée et soumise à l’organisme de rattachement.
               </Note>
             )}
+            {collectorFilter && <Note>Ventes du collecteur sélectionné. <Link to="/collecte/ventes">Voir toutes les ventes autorisées</Link></Note>}
             {decision && (
               <Section
                 id="collection-decision"
@@ -569,7 +571,7 @@ export default function CollectionSalesPage({
               <DataTable
                 columns={columns}
                 rows={rows.filter(
-                  (s) => filter === "all" || s.status === filter,
+                  (s) => (!collectorFilter || s.collector_id === collectorFilter) && (filter === "all" || s.status === filter),
                 )}
                 caption="Ventes de collecte"
                 empty="Aucune vente dans ce périmètre."

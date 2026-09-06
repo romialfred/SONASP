@@ -5,7 +5,6 @@ import {
   CreditCard,
   Plus,
   RefreshCw,
-  ShieldCheck,
   UserRound,
   Users,
 } from "lucide-react";
@@ -16,7 +15,6 @@ import {
   Field,
   Note,
   PageHeader,
-  Section,
   StatGrid,
   type Column,
 } from "@/components/ui/sn";
@@ -29,6 +27,7 @@ import {
 import { artisanFullName } from "@/utils/artisanIdentity";
 import { CAPABILITIES, hasSensitiveCapability } from "@/lib/capabilities";
 import "./collector.css";
+import { CollectorDetails } from "./CollectorDetails";
 
 export default function CollectorsPage() {
   const { id } = useParams();
@@ -167,51 +166,53 @@ export default function CollectorsPage() {
   return (
     <NationalDashboardLayout>
       <main className="sn-page collector-page">
-        <PageHeader
-          icon={Users}
-          title={
-            id
-              ? selected
-                ? artisanFullName(selected.identity)
-                : "Dossier collecteur"
-              : "Collecteurs"
-          }
-          subtitle="Dossiers, sites de collecte et organismes de rattachement."
-          breadcrumb={[
-            { label: "Artisans miniers", to: "/artisan-minier" },
-            {
-              label: "Collecteurs",
-              to: id ? "/artisan-minier/collecteurs" : undefined,
-            },
-          ]}
-          actions={
-            <>
-              <button
-                className="sn-btn sn-btn--secondary"
-                type="button"
-                disabled={loading}
-                onClick={() => void load()}
-              >
-                <RefreshCw size={16} />
-                Actualiser
-              </button>
-              {manage &&
-                (!id || selected?.identity.type_personne === "physique") && (
-                  <Link
-                    className="sn-btn sn-btn--primary"
-                    to={
-                      id
-                        ? `/artisan-minier/collecteurs/${id}/modifier`
-                        : "/artisan-minier/collecteurs/nouveau"
-                    }
-                  >
-                    <Plus size={16} />
-                    {id ? "Modifier le dossier" : "Nouveau collecteur"}
-                  </Link>
-                )}
-            </>
-          }
-        />
+        {(!id || !selected) && (
+          <PageHeader
+            icon={Users}
+            title={
+              id
+                ? selected
+                  ? artisanFullName(selected.identity)
+                  : "Dossier collecteur"
+                : "Collecteurs"
+            }
+            subtitle="Dossiers, sites de collecte et organismes de rattachement."
+            breadcrumb={[
+              { label: "Artisans miniers", to: "/artisan-minier" },
+              {
+                label: "Collecteurs",
+                to: id ? "/artisan-minier/collecteurs" : undefined,
+              },
+            ]}
+            actions={
+              <>
+                <button
+                  className="sn-btn sn-btn--secondary"
+                  type="button"
+                  disabled={loading}
+                  onClick={() => void load()}
+                >
+                  <RefreshCw size={16} />
+                  Actualiser
+                </button>
+                {manage &&
+                  (!id || selected?.identity.type_personne === "physique") && (
+                    <Link
+                      className="sn-btn sn-btn--primary"
+                      to={
+                        id
+                          ? `/artisan-minier/collecteurs/${id}/modifier`
+                          : "/artisan-minier/collecteurs/nouveau"
+                      }
+                    >
+                      <Plus size={16} />
+                      {id ? "Modifier le dossier" : "Nouveau collecteur"}
+                    </Link>
+                  )}
+              </>
+            }
+          />
+        )}
         {error && (
           <div role="alert">
             <Note tone="danger">{error}</Note>
@@ -229,147 +230,55 @@ export default function CollectorsPage() {
           <p role="status">Chargement des collecteurs…</p>
         ) : id ? (
           selected ? (
-            <>
-              <div className="collector-detail-grid">
-                <Section
-                  id="collector-identity"
-                  title="Identité et coordonnées"
-                  icon={UserRound}
-                >
-                  <dl>
-                    <dt>Qualité</dt>
-                    <dd>
-                      {selected.identity.type_personne === "physique"
-                        ? "Personne physique"
-                        : "Personne morale — dossier historique"}
-                    </dd>
-                    <dt>Téléphone</dt>
-                    <dd>{selected.identity.telephone}</dd>
-                    <dt>WhatsApp</dt>
-                    <dd>{selected.identity.whatsapp || "Non renseigné"}</dd>
-                    <dt>E-mail</dt>
-                    <dd>{selected.identity.email || "Non renseigné"}</dd>
-                    <dt>Localisation</dt>
-                    <dd>
-                      {[
-                        selected.identity.commune,
-                        selected.identity.region,
-                        selected.identity.pays,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </dd>
-                  </dl>
-                </Section>
-                <Section
-                  id="collector-scope"
-                  title="Rattachements et accès"
-                  icon={Building2}
-                >
-                  <p>
-                    <strong>{selected.organization_name}</strong>
-                  </p>
-                  <p>{selected.site_ids.length} site(s) affecté(s)</p>
-                  {selected.is_legacy && (
-                    <Note tone="warning">
-                      {selected.identity.type_personne === "physique"
-                        ? "Complétez l’organisme et les sites avant d’utiliser le nouveau circuit de vente."
-                        : "L’activité de collecte doit être confiée à une personne physique. Créez son dossier ; les données historiques restent conservées."}
-                    </Note>
-                  )}
-                  {selected.sites?.map((site) => (
-                    <p key={site.id}>
-                      <strong>{site.name}</strong> · {site.locality}
-                    </p>
-                  ))}
-                  <Badge
-                    tone={selected.account_user_id ? "success" : "warning"}
+            <CollectorDetails
+              record={selected}
+              manage={manage}
+              canDelegate={canDelegate && !!selected.can_delegate_payment}
+              onRefresh={() => void load()}
+              paymentForm={
+                <div className="collector-payment-form">
+                  <Field label="Autoriser jusqu’au" htmlFor="delegation-until">
+                    <input
+                      type="date"
+                      id="delegation-until"
+                      value={until}
+                      onChange={(e) => setUntil(e.target.value)}
+                    />
+                  </Field>
+                  <Field
+                    label="Justification"
+                    htmlFor="delegation-reason"
+                    required
                   >
-                    {selected.account_user_id
-                      ? "Compte utilisateur associé"
-                      : "Compte utilisateur à associer"}
-                  </Badge>
-                  <p>
-                    La création du dossier et l’ouverture d’un accès sont deux
-                    étapes distinctes.
-                  </p>
-                  {manage && (
-                    <Link to="/users" className="sn-btn sn-btn--secondary">
-                      Gérer le compte du collecteur
-                    </Link>
-                  )}
-                  <Link
-                    to="/collecte/ventes"
-                    className="sn-btn sn-btn--secondary"
-                  >
-                    Consulter les ventes de collecte
-                  </Link>
-                </Section>
-              </div>
-              <Section
-                id="collector-payments"
-                title="Autorisation de paiement"
-                icon={ShieldCheck}
-              >
-                <p>
-                  {selected.payment_authorized_until
-                    ? `Échéance de la délégation : ${new Date(selected.payment_authorized_until).toLocaleString("fr-FR")}`
-                    : "Aucune délégation de paiement."}
-                </p>
-                <Note>
-                  Le collecteur doit disposer d’une délégation en cours et de
-                  l’habilitation « Collecteur — exécuter un paiement ». Le
-                  contrôle du paiement reste effectué par un autre agent de
-                  l’organisme.
-                </Note>
-                {canDelegate && selected.can_delegate_payment && (
-                  <div className="collector-payment-form">
-                    <Field
-                      label="Autoriser jusqu’au"
-                      htmlFor="delegation-until"
+                    <textarea
+                      id="delegation-reason"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      minLength={10}
+                      maxLength={1000}
+                    />
+                  </Field>
+                  <div>
+                    <button
+                      type="button"
+                      className="sn-btn sn-btn--primary"
+                      disabled={busy}
+                      onClick={() => void authorize(false)}
                     >
-                      <input
-                        type="date"
-                        id="delegation-until"
-                        value={until}
-                        onChange={(e) => setUntil(e.target.value)}
-                      />
-                    </Field>
-                    <Field
-                      label="Justification"
-                      htmlFor="delegation-reason"
-                      required
+                      Autoriser le paiement
+                    </button>
+                    <button
+                      type="button"
+                      className="sn-btn sn-btn--secondary"
+                      disabled={busy || !selected.payment_authorized_until}
+                      onClick={() => void authorize(true)}
                     >
-                      <textarea
-                        id="delegation-reason"
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        minLength={10}
-                        maxLength={1000}
-                      />
-                    </Field>
-                    <div>
-                      <button
-                        type="button"
-                        className="sn-btn sn-btn--primary"
-                        disabled={busy}
-                        onClick={() => void authorize(false)}
-                      >
-                        Autoriser le paiement
-                      </button>
-                      <button
-                        type="button"
-                        className="sn-btn sn-btn--secondary"
-                        disabled={busy || !selected.payment_authorized_until}
-                        onClick={() => void authorize(true)}
-                      >
-                        Révoquer
-                      </button>
-                    </div>
+                      Révoquer
+                    </button>
                   </div>
-                )}
-              </Section>
-            </>
+                </div>
+              }
+            />
           ) : (
             <Note tone="warning">
               Collecteur introuvable dans votre périmètre.

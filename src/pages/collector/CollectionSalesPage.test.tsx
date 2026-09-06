@@ -39,6 +39,13 @@ beforeEach(() => {
   mocks.decide.mockResolvedValue(undefined);
 });
 describe("Ventes de collecte", () => {
+  it('ouvre uniquement les ventes du collecteur demandé depuis sa fiche', async () => {
+    mocks.sales.mockResolvedValue([{ ...sale, collector_id: 'collector-a' }, { ...sale, id: 'sale-2', artisan_name: 'Autre artisan', collector_id: 'collector-b' }]);
+    render(<MemoryRouter initialEntries={['/collecte/ventes?collecteur=collector-a']}><CollectionSalesPage /></MemoryRouter>);
+    expect(await screen.findByText('Artisan Test')).toBeInTheDocument();
+    expect(screen.queryByText('Autre artisan')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Voir toutes les ventes autorisées' })).toHaveAttribute('href', '/collecte/ventes');
+  });
   it("ouvre le paiement existant dans son écran de suivi", async () => {
     mocks.sales.mockResolvedValue([{ ...sale, status: "approved", can_approve: false, can_pay: true, invoice_id: "invoice-1", payment_id: "payment-1" }]);
     render(<MemoryRouter><CollectionSalesPage /></MemoryRouter>);

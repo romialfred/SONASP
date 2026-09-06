@@ -14,7 +14,8 @@ L’en-tête, le pied de page, l’assistance, les informations institutionnelle
 
 - Tests Vitest de la zone publique et de la connexion : 44 tests réussis ; nouveau contrôle du retour en haut de page ajouté au test du layout et repassé après correction.
 - ESLint et contrôle des libellés français réussis.
-- Vérification TypeScript réussie avant les derniers ajustements de navigation ; la compilation de publication vérifie à nouveau les types.
+- Compilation `build:release` réussie après les ajustements de navigation : provenance Git, contrôles des registres, vérification TypeScript et bundle de production.
+- Entrée vers les portails : 36 tests d’intégration réussis après adaptation du sélecteur au bouton « Connexion ». Les redirections par profil et les protections de tenant sont conservées.
 - Chrome : sélection des huit acteurs, lecture du panneau correspondant et présence de l’accès sécurisé.
 - Chrome : activation des huit étapes de traçabilité et vérification de leurs explications.
 - Chrome : menu mobile, fermeture avec Échap, restitution du focus, retour à l’accueil par le logo, liens vers les informations institutionnelles et l’assistance.

@@ -45,7 +45,7 @@ const scenarios = [
   { name: 'Client', user: profile('customer'), home: '/dashboard/customer' },
 ];
 const homes = [...new Set(scenarios.map(({ home }) => home))];
-const portalLinkName = /^(Portail SONASP|SONASP Portal)$/;
+const portalLinkName = /^Connexion$/;
 
 function Workspace({ path }: { path: string }) {
   return <div data-testid="workspace">{path}</div>;
@@ -108,9 +108,10 @@ describe('entrée publique → authentification → portail autorisé', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
   });
 
-  it.each(scenarios)('ouvre le bon espace depuis le bouton Portail SONASP : $name', ({ user, home }) => {
+  it.each(scenarios)('ouvre le bon espace depuis le bouton Connexion : $name', ({ user, home }) => {
     render(<MemoryRouter initialEntries={['/']}><Journey user={user} /></MemoryRouter>);
     fireEvent.click(within(screen.getByRole('banner')).getByRole('link', { name: portalLinkName }));
     expectWorkspace(user, home);

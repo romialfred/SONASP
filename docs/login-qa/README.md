@@ -8,7 +8,9 @@ Le logo provient du fichier utilisateur `F:/Data Universe/Gouvernement Burkina/L
 
 Depuis le 6 septembre 2026, le bandeau défile de manière continue, linéaire et en boucle (45 secondes par cycle). Il ne propose plus de commande de lecture, pause ou navigation et continue pendant la lecture d’une définition. La préférence de réduction des animations ralentit le cycle à 120 secondes. Deux groupes visuels identiques assurent la continuité ; le second est exclu de l’arbre d’accessibilité et de la tabulation. Les définitions restent fixes au-dessus du bandeau et s’ouvrent au survol, au focus ou au toucher ; Échap ou un clic extérieur les ferme.
 
-Les armoiries en 500 × 587 pixels précèdent le logo Faso SANAMA dans l’en-tête et remplacent la version de 400 pixels dans le bandeau. Les proportions des images originales sont conservées. La devise bénéficie d’un fond ivoire contrasté et reste présente sur mobile. Le pied de page identifie la Présidence du Burkina Faso et Quantix Solutions Burkina Faso.
+Les armoiries en 500 × 587 pixels restent dans l’en-tête et le logo Faso SANAMA se trouve désormais dans la carte de connexion. Les proportions des images originales sont conservées. La devise bénéficie d’un fond ivoire contrasté et reste présente sur mobile. Le pied de page identifie la Présidence du Burkina Faso et Quantix Solutions Burkina Faso.
+
+La correction du 6 septembre limite la carte à 400 px : la règle qui lui attribuait 55 % de la largeur sur les écrans peu hauts a été supprimée. Les champs sont disposés verticalement ; seul le paysage très bas (480 px de hauteur au maximum) utilise deux colonnes dans une carte limitée à 360 px. Les boutons de navigation mesurent 32 px de haut sur ordinateur et 30 px sur mobile. Les messages conservent leur emplacement réservé pour éviter tout déplacement du bouton de connexion.
 
 ## Vérification reproductible sans données métier
 
@@ -20,7 +22,7 @@ Ouvrir `http://127.0.0.1:5184/` pour un refus d’identifiants, ou `http://127.0
 
 Contrôler les états initial, champs requis, identifiants refusés et erreur réseau. Pour chaque format, vérifier que la hauteur/largeur défilante du document ne dépasse pas le viewport, que le formulaire se termine avant le bandeau, et que le logo ne recouvre pas le titre. Comparer la position du bouton avant/après l’erreur. Vérifier ensuite les cinq logos, la continuité du mouvement pendant la lecture d’une fiche, son accès clavier/tactile et sa fermeture.
 
-Formats contrôlés : 320×568, 360×600, 360×640, 390×844, 667×375, 768×1024, 844×390, 960×540, 1024×768, 1280×720, 1366×650, 1366×768, 1440×675, 1440×900 et 1920×1080. Les nouvelles mesures avec erreur réseau et captures sont dans [20260906](./20260906/viewport-checks.json). Les fichiers à la racine et dans `captures/` correspondent à la version précédente.
+Formats contrôlés : 320×568, 360×600, 360×640, 390×844, 667×375, 768×1024, 844×390, 960×540, 1024×768, 1280×720, 1366×650, 1366×768, 1440×675, 1440×900 et 1920×1080. Les mesures avec erreur réseau et captures de la carte compacte sont dans [20260906-compact](./20260906-compact/viewport-checks.json). Les captures des autres dossiers correspondent aux versions précédentes. Sur le plus petit format, les deux erreurs de champs obligatoires ne déplacent pas le bouton de connexion et n’ajoutent aucun défilement.
 
 Les 22 tests ciblés couvrent les contrats de connexion, les nouveaux crédits et l’ordre des logos, les cinq institutions accessibles sans commandes de défilement, les définitions (y compris depuis la copie visuelle), le clic extérieur et Échap. La continuité de l’animation et la géométrie sont vérifiées dans Chrome, car JSDOM ne calcule pas les animations CSS. La suite complète de CI inclut ces tests. Une connexion réelle et son challenge MFA nécessitent un compte autorisé ; les contrôles de présentation ne créent aucune session métier.
 

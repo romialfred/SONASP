@@ -45,7 +45,8 @@ describe('page de connexion Faso SANAMA', () => {
     expect(screen.getByRole('img', { name: 'Faso SANAMA' })).toHaveAttribute('src', '/login-faso/faso-sanama.png');
     expect(screen.getByRole('img', { name: 'SONASP' })).toHaveAttribute('src', '/sonasp_logo.png');
     const identity = screen.getByRole('banner');
-    expect(within(identity).getAllByRole('img').map((image) => image.getAttribute('alt'))).toEqual(['Armoiries du Burkina Faso', 'Faso SANAMA']);
+    expect(within(identity).getAllByRole('img').map((image) => image.getAttribute('alt'))).toEqual(['Armoiries du Burkina Faso']);
+    expect(within(screen.getByRole('form', { name: 'Connexion' })).getByRole('img', { name: 'Faso SANAMA' })).toBeInTheDocument();
   });
 
   it('annonce les deux champs requis et place le focus sur le premier', async () => {

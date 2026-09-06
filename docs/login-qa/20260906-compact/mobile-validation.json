@@ -1,0 +1,395 @@
+{
+  "initial": {
+    "band": {
+      "bottom": 522,
+      "height": 68,
+      "left": 0,
+      "right": 320,
+      "top": 454,
+      "width": 320,
+      "x": 0,
+      "y": 454
+    },
+    "brand": {
+      "bottom": 177.375,
+      "height": 50,
+      "left": 67.0703125,
+      "right": 142.0703125,
+      "top": 127.375,
+      "width": 75,
+      "x": 67.0703125,
+      "y": 127.375
+    },
+    "brandInForm": true,
+    "footer": {
+      "bottom": 568,
+      "height": 46,
+      "left": 0,
+      "right": 320,
+      "top": 522,
+      "width": 320,
+      "x": 0,
+      "y": 522
+    },
+    "form": {
+      "bottom": 443.0625,
+      "height": 323.6875,
+      "left": 16,
+      "right": 304,
+      "top": 119.375,
+      "width": 288,
+      "x": 16,
+      "y": 119.375
+    },
+    "header": {
+      "bottom": 47,
+      "height": 44,
+      "left": 16,
+      "right": 304,
+      "top": 3,
+      "width": 288,
+      "x": 16,
+      "y": 3
+    },
+    "languageButton": {
+      "bottom": 40,
+      "height": 30,
+      "left": 204.109375,
+      "right": 304,
+      "top": 10,
+      "width": 99.890625,
+      "x": 204.109375,
+      "y": 10
+    },
+    "password": {
+      "bottom": 344.5625,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 304.5625,
+      "width": 258,
+      "x": 31,
+      "y": 304.5625
+    },
+    "returnButton": {
+      "bottom": 40,
+      "height": 30,
+      "left": 69.5,
+      "right": 196.109375,
+      "top": 10,
+      "width": 126.609375,
+      "x": 69.5,
+      "y": 10
+    },
+    "scroll": [
+      320,
+      568
+    ],
+    "slogan": {
+      "bottom": 113.375,
+      "height": 22.25,
+      "left": 16,
+      "right": 285,
+      "top": 91.125,
+      "width": 269,
+      "x": 16,
+      "y": 91.125
+    },
+    "submit": {
+      "bottom": 413.0625,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 373.0625,
+      "width": 258,
+      "x": 31,
+      "y": 373.0625
+    },
+    "title": {
+      "bottom": 87.125,
+      "height": 35.1875,
+      "left": 16,
+      "right": 304,
+      "top": 51.9375,
+      "width": 288,
+      "x": 16,
+      "y": 51.9375
+    },
+    "username": {
+      "bottom": 278.96875,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 238.96875,
+      "width": 258,
+      "x": 31,
+      "y": 238.96875
+    },
+    "viewport": [
+      320,
+      568
+    ]
+  },
+  "required": {
+    "band": {
+      "bottom": 522,
+      "height": 68,
+      "left": 0,
+      "right": 320,
+      "top": 454,
+      "width": 320,
+      "x": 0,
+      "y": 454
+    },
+    "brand": {
+      "bottom": 177.375,
+      "height": 50,
+      "left": 67.0703125,
+      "right": 142.0703125,
+      "top": 127.375,
+      "width": 75,
+      "x": 67.0703125,
+      "y": 127.375
+    },
+    "brandInForm": true,
+    "footer": {
+      "bottom": 568,
+      "height": 46,
+      "left": 0,
+      "right": 320,
+      "top": 522,
+      "width": 320,
+      "x": 0,
+      "y": 522
+    },
+    "form": {
+      "bottom": 443.0625,
+      "height": 323.6875,
+      "left": 16,
+      "right": 304,
+      "top": 119.375,
+      "width": 288,
+      "x": 16,
+      "y": 119.375
+    },
+    "header": {
+      "bottom": 47,
+      "height": 44,
+      "left": 16,
+      "right": 304,
+      "top": 3,
+      "width": 288,
+      "x": 16,
+      "y": 3
+    },
+    "languageButton": {
+      "bottom": 40,
+      "height": 30,
+      "left": 204.109375,
+      "right": 304,
+      "top": 10,
+      "width": 99.890625,
+      "x": 204.109375,
+      "y": 10
+    },
+    "password": {
+      "bottom": 344.5625,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 304.5625,
+      "width": 258,
+      "x": 31,
+      "y": 304.5625
+    },
+    "returnButton": {
+      "bottom": 40,
+      "height": 30,
+      "left": 69.5,
+      "right": 196.109375,
+      "top": 10,
+      "width": 126.609375,
+      "x": 69.5,
+      "y": 10
+    },
+    "scroll": [
+      320,
+      568
+    ],
+    "slogan": {
+      "bottom": 113.375,
+      "height": 22.25,
+      "left": 16,
+      "right": 285,
+      "top": 91.125,
+      "width": 269,
+      "x": 16,
+      "y": 91.125
+    },
+    "submit": {
+      "bottom": 413.0625,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 373.0625,
+      "width": 258,
+      "x": 31,
+      "y": 373.0625
+    },
+    "title": {
+      "bottom": 87.125,
+      "height": 35.1875,
+      "left": 16,
+      "right": 304,
+      "top": 51.9375,
+      "width": 288,
+      "x": 16,
+      "y": 51.9375
+    },
+    "username": {
+      "bottom": 278.96875,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 238.96875,
+      "width": 258,
+      "x": 31,
+      "y": 238.96875
+    },
+    "viewport": [
+      320,
+      568
+    ]
+  },
+  "rejected": {
+    "band": {
+      "bottom": 522,
+      "height": 68,
+      "left": 0,
+      "right": 320,
+      "top": 454,
+      "width": 320,
+      "x": 0,
+      "y": 454
+    },
+    "brand": {
+      "bottom": 177.375,
+      "height": 50,
+      "left": 67.0703125,
+      "right": 142.0703125,
+      "top": 127.375,
+      "width": 75,
+      "x": 67.0703125,
+      "y": 127.375
+    },
+    "brandInForm": true,
+    "footer": {
+      "bottom": 568,
+      "height": 46,
+      "left": 0,
+      "right": 320,
+      "top": 522,
+      "width": 320,
+      "x": 0,
+      "y": 522
+    },
+    "form": {
+      "bottom": 443.0625,
+      "height": 323.6875,
+      "left": 16,
+      "right": 304,
+      "top": 119.375,
+      "width": 288,
+      "x": 16,
+      "y": 119.375
+    },
+    "header": {
+      "bottom": 47,
+      "height": 44,
+      "left": 16,
+      "right": 304,
+      "top": 3,
+      "width": 288,
+      "x": 16,
+      "y": 3
+    },
+    "languageButton": {
+      "bottom": 40,
+      "height": 30,
+      "left": 204.109375,
+      "right": 304,
+      "top": 10,
+      "width": 99.890625,
+      "x": 204.109375,
+      "y": 10
+    },
+    "password": {
+      "bottom": 344.5625,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 304.5625,
+      "width": 258,
+      "x": 31,
+      "y": 304.5625
+    },
+    "returnButton": {
+      "bottom": 40,
+      "height": 30,
+      "left": 69.5,
+      "right": 196.109375,
+      "top": 10,
+      "width": 126.609375,
+      "x": 69.5,
+      "y": 10
+    },
+    "scroll": [
+      320,
+      568
+    ],
+    "slogan": {
+      "bottom": 113.375,
+      "height": 22.25,
+      "left": 16,
+      "right": 285,
+      "top": 91.125,
+      "width": 269,
+      "x": 16,
+      "y": 91.125
+    },
+    "submit": {
+      "bottom": 413.0625,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 373.0625,
+      "width": 258,
+      "x": 31,
+      "y": 373.0625
+    },
+    "title": {
+      "bottom": 87.125,
+      "height": 35.1875,
+      "left": 16,
+      "right": 304,
+      "top": 51.9375,
+      "width": 288,
+      "x": 16,
+      "y": 51.9375
+    },
+    "username": {
+      "bottom": 278.96875,
+      "height": 40,
+      "left": 31,
+      "right": 289,
+      "top": 238.96875,
+      "width": 258,
+      "x": 31,
+      "y": 238.96875
+    },
+    "viewport": [
+      320,
+      568
+    ]
+  }
+}

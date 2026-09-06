@@ -28,33 +28,6 @@ import './Login.css';
  * Le champ « Nom d’utilisateur » correspond toujours à l’e-mail côté GoTrue.
  */
 
-/**
- * Bouclier au cadenas.
- *
- * La maquette pose cet emblème au sommet de la carte. La bibliothèque d'icônes
- * n'a que le bouclier à la coche — un autre signe, qui dit « vérifié » là où
- * celui-ci dit « fermé ». On le compose donc, au même gabarit et à la même
- * épaisseur de trait que le reste, pour qu'il ne détonne pas.
- */
-function BouclierCadenas(proprietes: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      {...proprietes}
-    >
-      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-      <rect x="9.4" y="11.3" width="5.2" height="4.4" rx="0.8" />
-      <path d="M10.6 11.3v-1.35a1.4 1.4 0 0 1 2.8 0v1.35" />
-    </svg>
-  );
-}
-
 type LoginErrors = Partial<Record<'username' | 'password' | 'general', string>>;
 
 /**
@@ -192,19 +165,6 @@ export function Login() {
               width={500}
               height={587}
             />
-            <span className="login-identity__separator" aria-hidden="true" />
-            {brandUnavailable ? (
-              <p className="login-brand login-brand--text">Faso SANAMA</p>
-            ) : (
-              <img
-                className="login-brand"
-                src="/login-faso/faso-sanama.png"
-                alt="Faso SANAMA"
-                width={1536}
-                height={1024}
-                onError={() => setBrandUnavailable(true)}
-              />
-            )}
           </div>
           <nav className="login-navigation" aria-label={t('login.navigation', 'Navigation de connexion')}>
             <Link className="login-return" to="/">
@@ -284,17 +244,26 @@ export function Login() {
               aria-labelledby="login-card-title"
               aria-busy={loading}
             >
-              <span className="login-card__emblem" aria-hidden="true">
-                <BouclierCadenas />
-              </span>
-
-              <p className="login-card__eyebrow">
-                {t('login.securedSpace', 'ESPACE PROFESSIONNEL SÉCURISÉ')}
-              </p>
-              <h2 id="login-card-title" className="login-card__title">{t('auth.login')}</h2>
-              <p className="login-card__subtitle">
-                {t('login.cardSubtitle', 'Accédez à votre espace Faso SANAMA')}
-              </p>
+              <div className="login-card__heading">
+                {brandUnavailable ? (
+                  <p className="login-brand login-brand--text">Faso SANAMA</p>
+                ) : (
+                  <img
+                    className="login-brand"
+                    src="/login-faso/faso-sanama.png"
+                    alt="Faso SANAMA"
+                    width={1536}
+                    height={1024}
+                    onError={() => setBrandUnavailable(true)}
+                  />
+                )}
+                <div>
+                  <h2 id="login-card-title" className="login-card__title">{t('auth.login')}</h2>
+                  <p className="login-card__subtitle">
+                    {t('login.cardSubtitle', 'Accédez à votre espace Faso SANAMA')}
+                  </p>
+                </div>
+              </div>
 
               <div className="login-feedback" data-error={Object.values(errors).some(Boolean)}>
                 {Object.values(errors).some(Boolean) && (

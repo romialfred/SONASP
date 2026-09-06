@@ -1,0 +1,159 @@
+{
+  "scenario": "Erreur réseau simulée, composant Login réel, aucune requête Supabase",
+  "viewports": [
+    {
+      "bandTop": 468,
+      "cardBottom": 449.734375,
+      "cardTop": 126.453125,
+      "clientWidth": 320,
+      "height": 568,
+      "pass": true,
+      "scrollHeight": 568,
+      "scrollWidth": 320,
+      "width": 320
+    },
+    {
+      "bandTop": 500,
+      "cardBottom": 465.734375,
+      "cardTop": 142.453125,
+      "clientWidth": 360,
+      "height": 600,
+      "pass": true,
+      "scrollHeight": 600,
+      "scrollWidth": 360,
+      "width": 360
+    },
+    {
+      "bandTop": 523.203125,
+      "cardBottom": 504.1328125,
+      "cardTop": 154.453125,
+      "clientWidth": 360,
+      "height": 640,
+      "pass": true,
+      "scrollHeight": 640,
+      "scrollWidth": 360,
+      "width": 360
+    },
+    {
+      "bandTop": 702.7265625,
+      "cardBottom": 608.1796875,
+      "cardTop": 258.5,
+      "clientWidth": 390,
+      "height": 844,
+      "pass": true,
+      "scrollHeight": 844,
+      "scrollWidth": 390,
+      "width": 390
+    },
+    {
+      "bandTop": 293,
+      "cardBottom": 289.890625,
+      "cardTop": 57,
+      "clientWidth": 667,
+      "height": 375,
+      "pass": true,
+      "scrollHeight": 375,
+      "scrollWidth": 667,
+      "width": 667
+    },
+    {
+      "bandTop": 828.1640625,
+      "cardBottom": 779.90625,
+      "cardTop": 196.609375,
+      "clientWidth": 768,
+      "height": 1024,
+      "pass": true,
+      "scrollHeight": 1024,
+      "scrollWidth": 768,
+      "width": 768
+    },
+    {
+      "bandTop": 308,
+      "cardBottom": 295.9453125,
+      "cardTop": 63.0546875,
+      "clientWidth": 844,
+      "height": 390,
+      "pass": true,
+      "scrollHeight": 390,
+      "scrollWidth": 844,
+      "width": 844
+    },
+    {
+      "bandTop": 430,
+      "cardBottom": 386.6953125,
+      "cardTop": 115.3046875,
+      "clientWidth": 960,
+      "height": 540,
+      "pass": true,
+      "scrollHeight": 540,
+      "scrollWidth": 960,
+      "width": 960
+    },
+    {
+      "bandTop": 613.125,
+      "cardBottom": 585.3828125,
+      "cardTop": 140.25,
+      "clientWidth": 1024,
+      "height": 768,
+      "pass": true,
+      "scrollHeight": 768,
+      "scrollWidth": 1024,
+      "width": 1024
+    },
+    {
+      "bandTop": 572.8046875,
+      "cardBottom": 563.59375,
+      "cardTop": 120.1953125,
+      "clientWidth": 1280,
+      "height": 720,
+      "pass": true,
+      "scrollHeight": 720,
+      "scrollWidth": 1280,
+      "width": 1280
+    },
+    {
+      "bandTop": 540,
+      "cardBottom": 441.6953125,
+      "cardTop": 170.3046875,
+      "clientWidth": 1366,
+      "height": 650,
+      "pass": true,
+      "scrollHeight": 650,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "bandTop": 613.125,
+      "cardBottom": 585.3828125,
+      "cardTop": 140.25,
+      "clientWidth": 1366,
+      "height": 768,
+      "pass": true,
+      "scrollHeight": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "bandTop": 724,
+      "cardBottom": 700.1328125,
+      "cardTop": 154.859375,
+      "clientWidth": 1440,
+      "height": 900,
+      "pass": true,
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "width": 1440
+    },
+    {
+      "bandTop": 882,
+      "cardBottom": 840.421875,
+      "cardTop": 197.78125,
+      "clientWidth": 1920,
+      "height": 1080,
+      "pass": true,
+      "scrollHeight": 1080,
+      "scrollWidth": 1920,
+      "width": 1920
+    }
+  ]
+}

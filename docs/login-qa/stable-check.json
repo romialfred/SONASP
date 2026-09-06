@@ -1,0 +1,15 @@
+{
+  "beforeLoginError": {
+    "height": 445.1328125,
+    "scroll": 768,
+    "submitY": 461.765625,
+    "viewport": 768
+  },
+  "afterLoginError": {
+    "height": 445.1328125,
+    "logos": true,
+    "scroll": 768,
+    "submitY": 461.765625,
+    "viewport": 768
+  }
+}

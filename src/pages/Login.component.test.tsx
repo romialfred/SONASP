@@ -34,6 +34,7 @@ function renderLogin() {
 describe('page de connexion Faso SANAMA', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
     signIn.mockResolvedValue({});
     mockedUseAuth.mockReturnValue({ signIn } as unknown as ReturnType<typeof useAuth>);
   });

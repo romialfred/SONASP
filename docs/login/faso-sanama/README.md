@@ -2,9 +2,11 @@
 
 ## État de livraison
 
-Refonte intégrée et vérifiée localement sur `/login`. **La fidélité graphique finale reste en attente du logo original Faso SANAMA** cité dans le document de conception (`23cfbf74-46af-45dc-8a5c-385739c94e11.png`). Ce fichier n'a pas été retrouvé dans le projet ni parmi les ressources locales consultées. Le PDF des cartes contient une image de carte aplatie, pas le logo séparé. Le PNG « Faso SANAM » des téléchargements correspond à une autre identité (« Faso Sanem Digital ») et n'a pas été utilisé.
+La refonte initiale a été publiée avec le commit `c315271d`, puis incluse dans la livraison `f306db9a`. Le logo original fourni le 6 septembre est désormais intégré sans modification dans `public/login-faso/faso-sanama.png` (RGBA, 1536 × 1024). Le repli textuel reste disponible en cas d’erreur de chargement.
 
-Le composant attend `public/login-faso/faso-sanama.png`. En cas d'image indisponible, un simple texte « Faso SANAMA » préserve la lisibilité de la marque. Ce texte constitue un repli explicite, pas une reproduction du logo. Il faut intégrer l'original, vérifier son cadrage et reprendre les captures avant de déclarer la livraison graphique achevée. Aucune publication de ce lot ni aucun commit/push n'a été effectué.
+La nouvelle demande remplace le comportement initial de défilement vertical : le formulaire réserve la place des erreurs et la page adapte ses dispositions à la largeur et à la hauteur de l’écran. Les institutions défilent horizontalement, avec pause, navigation manuelle et fiches descriptives au survol, au focus ou au toucher. Voir [la vérification complémentaire](../../login-qa/README.md).
+
+Les mesures et captures plus bas documentent la première refonte ; celles du nouveau comportement sont conservées séparément dans `docs/login-qa/`.
 
 ## Périmètre
 
@@ -29,7 +31,7 @@ Les liens utilisent `/`, `/recuperer-acces`, `/assistance#incident`, `/assistanc
 | Ressource | Origine et traitement |
 | --- | --- |
 | `reference.png` | Copie de la maquette jointe par l'utilisateur, réservée à la comparaison. Jamais utilisée comme fond de l'application. |
-| Logo Faso SANAMA | **Original manquant** ; emplacement attendu indiqué ci-dessus. Aucun logo redessiné ou généré. |
+| Logo Faso SANAMA | Fichier utilisateur `Faso Sanama 2.png`, copié sans altération. Aucun logo redessiné ou généré. |
 | Logo SONASP | Fichier existant `public/sonasp_logo.png`, proportions préservées. |
 | `armoiries.png` | [Armoiries publiées par la Présidence du Faso](https://www.presidencedufaso.bf/les-armoiries/), [fichier source](https://www.presidencedufaso.bf/wp-content/uploads/2025/05/armoiries-1.png). Réduction proportionnelle à 400 × 470 pixels maximum. |
 | `bumigeb.png` | [Site officiel du BUMIGEB](https://www.bumigeb.bf/), [fichier de logo](https://www.bumigeb.bf/storage/images/logo.png), fichier conservé sans déformation. |
@@ -45,7 +47,7 @@ Outil intégré `image_gen`, sans API externe ni génération de logo. Original 
 
 > Use case: photorealistic-natural. Asset type: standalone decorative photographic background for the left side of a national mining portal login page. Input reference: supplied complete UI image, ONLY its lower-left mining landscape is the visual reference. Generate JUST the photographic backdrop, no interface, no lettering, no logos, no institutions, no ornament lines, no borders. Landscape ratio 3:2. Recreate reference composition closely: sweeping terraced open pit gold mine across the lower half and left, pale dusty Burkina Faso hills, small yellow mining truck at extreme lower left, warm sunrise at the right horizon near 70% image height, impressive realistically textured shining irregular GOLD NUGGETS in the immediate lower right foreground (occupying rightmost 25% and bottom 30%). Upper half is very pale ivory sky with delicate warm clouds, ample nearly white negative space to overlay live text later. Horizon and golden landscape softly fade into the ivory upper sky, left middle stays pale enough for dark title overlay. Elegant, realistic, sharp terraced geology, photographic detail, premium natural sunrise light. The final image must extend edge to edge as a complete landscape, no framing or website elements.
 
-## Contrôles
+## Contrôles historiques de la première refonte
 
 - Suite complète Vitest : **330 fichiers, 2 401 tests réussis**. Après ajout du repli en cas de logo indisponible, les **18 tests ciblés de connexion** passent également.
 - `npm run typecheck`, `npm run lint`, `npm run build` et `git diff --check` : réussis.

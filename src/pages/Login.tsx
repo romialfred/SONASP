@@ -19,6 +19,7 @@ import {
   isInterfaceLanguageEnabled,
 } from '@/i18n/interfaceLanguages';
 import { usePageMetadata } from '@/components/seo/PageMetadata';
+import { LoginInstitutions } from '@/components/auth/LoginInstitutions';
 import './Login.css';
 
 /**
@@ -175,14 +176,6 @@ export function Login() {
 
   const currentLanguage = 'Français';
 
-  const institutions = [
-    { key: 'presidency', name: t('login.institutions.presidency', 'Présidence du Faso'), image: '/login-faso/armoiries.png', kind: 'arms' },
-    { key: 'sonasp', name: 'SONASP', image: '/sonasp_logo.png', kind: 'sonasp' },
-    { key: 'finance', name: t('login.institutions.finance', 'Ministère des Finances'), image: '/login-faso/armoiries.png', kind: 'arms' },
-    { key: 'mines', name: t('login.institutions.mines', 'Ministère des Mines et de l’Énergie'), image: '/login-faso/armoiries.png', kind: 'arms' },
-    { key: 'bumigeb', name: 'BUMIGEB', image: '/login-faso/bumigeb.png', kind: 'bumigeb' },
-  ];
-
   return (
     <div className="faso-login">
       <div className="login-national-line" aria-hidden="true"><span /></div>
@@ -198,8 +191,8 @@ export function Login() {
               className="login-brand"
               src="/login-faso/faso-sanama.png"
               alt="Faso SANAMA"
-              width={1000}
-              height={240}
+              width={1536}
+              height={1024}
               onError={() => setBrandUnavailable(true)}
             />
           )}
@@ -293,11 +286,15 @@ export function Login() {
                 {t('login.cardSubtitle', 'Accédez à votre espace Faso SANAMA')}
               </p>
 
-              {errors.general && (
-                <p className="login-card__alert" role="alert">
-                  {errors.general}
-                </p>
-              )}
+              <div className="login-feedback" data-error={Object.values(errors).some(Boolean)}>
+                {Object.values(errors).some(Boolean) && (
+                  <div className="login-card__alert" role="alert">
+                    {errors.general && <p>{errors.general}</p>}
+                    {errors.username && <p id="login-username-error">{errors.username}</p>}
+                    {errors.password && <p id="login-password-error">{errors.password}</p>}
+                  </div>
+                )}
+              </div>
 
               <div className="login-field">
                 <label htmlFor="login-username">{t('login.usernameLabel')}</label>
@@ -323,11 +320,6 @@ export function Login() {
                     aria-describedby={errors.username ? 'login-username-error' : undefined}
                   />
                 </div>
-                {errors.username && (
-                  <p id="login-username-error" className="login-field__error" role="alert">
-                    {errors.username}
-                  </p>
-                )}
               </div>
 
               <div className="login-field">
@@ -361,11 +353,6 @@ export function Login() {
                     {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
                   </button>
                 </div>
-                {errors.password && (
-                  <p id="login-password-error" className="login-field__error" role="alert">
-                    {errors.password}
-                  </p>
-                )}
               </div>
 
               <div className="login-options">
@@ -402,22 +389,7 @@ export function Login() {
         </main>
       </div>
 
-      <section className="login-institutions" aria-labelledby="login-institutions-title">
-        <h2 id="login-institutions-title">{t('login.institutionsTitle', 'Institutions du secteur minier')}</h2>
-        <ul className="login-institutions__grid">
-          {institutions.map((institution) => (
-            <li key={institution.key} className={`login-institution login-institution--${institution.kind}`}>
-              <div className="login-institution__logo">
-                <img src={institution.image} alt={institution.name} width={institution.kind === 'sonasp' ? 621 : 200} height={institution.kind === 'sonasp' ? 211 : 200} />
-              </div>
-              <p>{institution.key === 'mines' ? <>
-                <span>{t('login.institutions.minesLine1', 'Ministère des Mines')}</span>
-                <span>{t('login.institutions.minesLine2', 'et de l’Énergie')}</span>
-              </> : institution.name}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <LoginInstitutions />
       <footer className="login-footer">
         <p>{t('login.copyright', { year: 2026 })}</p>
         <nav aria-label={t('login.footerNavigation', 'Informations et assistance')}>

@@ -20,7 +20,7 @@ vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin', is_active: true } }) }));
 
 vi.mock('@/components/artisan/ArtisanMinierForm', () => ({
   ArtisanMinierForm: () => <div>Formulaire artisan</div>,

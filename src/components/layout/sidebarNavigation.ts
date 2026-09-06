@@ -121,12 +121,12 @@ export const ACCESS_GOVERNANCE_NAVIGATION_ITEMS: NavigationItem[] =
 export const NAVIGATION_SECTIONS: NavigationSection[] = [
   {
     id: 'semi-mecanise',
-    title: 'Mine semi-mécanisée',
+    title: 'Sites artisanaux & Artisans',
     groups: [
       {
         id: 'sites-miniers',
         moduleCode: 'mining_sites',
-        label: 'Sites miniers',
+        label: 'Sites artisanaux',
         path: '/artisan-sites',
         icon: Mountain,
         color: '#21c995',
@@ -610,6 +610,8 @@ export const DGMG_NAVIGATION_SECTIONS: NavigationSection[] = [{
     { id: 'dgmg-overview', moduleCode: 'dashboard', label: 'Vue d’ensemble', path: '/portail-dgmg', icon: Grid2X2, color: '#e5fbfa' },
     { id: 'dgmg-sites', moduleCode: 'mining_sites', label: 'Registre des sites', path: '/artisan-sites', icon: Mountain, color: '#e5fbfa' },
     { id: 'dgmg-artisans', moduleCode: 'artisan-minier', label: 'Artisans et opérateurs', path: '/artisan-minier/liste', icon: Users, color: '#e5fbfa' },
+    { id: 'dgmg-industrial-sites', moduleCode: 'mining_sites', label: 'Sociétés minières', path: '/stakeholders/mining-companies', icon: Building2, color: '#e5fbfa' },
+    { id: 'dgmg-comptoirs', moduleCode: 'mining_sites', label: 'Comptoirs', path: '/stakeholders/organizations', icon: Landmark, color: '#e5fbfa' },
     { id: 'dgmg-productions', moduleCode: 'production', label: 'Déclarations de production', path: '/production/daily', icon: TrendingUp, color: '#e5fbfa' },
     { id: 'dgmg-reserve-validations', moduleCode: 'national_reserve', label: 'Validations Réserve', path: '/portail-dgmg/reserve-validations', icon: ShieldCheck, color: '#e5fbfa' },
   ],

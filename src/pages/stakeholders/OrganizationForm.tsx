@@ -11,6 +11,8 @@ import {
   Shapes,
 } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Field, FormActions, Note, PageHeader, Section, Segmented } from '@/components/ui/sn';
 import { BURKINA_REGIONS } from '@/data/burkinaRegions';
@@ -36,9 +38,12 @@ const ORGANIZATION_TYPES = new Set(ORGANIZATION_TYPE_OPTIONS.map((option) => opt
 
 export function OrganizationForm() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isDgmg = user?.role === 'dgmg';
+  const canCreateComptoir = canManageMiningRegistry(user);
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const requestedType = searchParams.get('type') as OrganizationType | null;
+  const requestedType = (isDgmg ? 'comptoir' : searchParams.get('type')) as OrganizationType | null;
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState<OrganizationFormValues>(() => ({
@@ -47,30 +52,34 @@ export function OrganizationForm() {
       ? requestedType
       : EMPTY_ORGANIZATION_FORM.organizationType,
   }));
+  const allowedTypes = ORGANIZATION_TYPE_OPTIONS.filter(option => isDgmg ? option.value === 'comptoir' : isEdit || canCreateComptoir || option.value !== 'comptoir');
   const [organizations, setOrganizations] = useState<OrganizationSummary[]>([]);
   const [ministries, setMinistries] = useState<Ministry[]>([]);
   const [miningCompanies, setMiningCompanies] = useState<OrganizationReferenceOption[]>([]);
   const [collectors, setCollectors] = useState<CollectorOption[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadFailed(false);
     setFailure(null);
     try {
       const [organizationRows, ministryRows, miningRows, collectorRows, current] = await Promise.all([
         organizationService.list(),
         organizationService.listMinistries(),
-        organizationService.listMiningCompanies(),
-        organizationService.listCollectors(),
+        isDgmg ? Promise.resolve([]) : organizationService.listMiningCompanies(),
+        isDgmg ? Promise.resolve([]) : organizationService.listCollectors(),
         id ? organizationService.get(id) : Promise.resolve(null),
       ]);
       setOrganizations(organizationRows);
       setMinistries(ministryRows);
       setMiningCompanies(miningRows);
       setCollectors(collectorRows);
+      if (id && (!current || (isDgmg && current.organization_type !== 'comptoir'))) throw new Error('Comptoir introuvable ou inaccessible.');
       if (current) setForm(formFromOrganization(current));
       else {
         setForm((previous) => {
@@ -84,11 +93,12 @@ export function OrganizationForm() {
         });
       }
     } catch (reason) {
+      setLoadFailed(true);
       setFailure(messageErreurUtilisateur(reason, 'Impossible de charger le formulaire d’organisation.'));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, isDgmg]);
 
   useEffect(() => {
     void load();
@@ -122,11 +132,14 @@ export function OrganizationForm() {
   const institutional = ['sonasp', 'dgi', 'dgmg', 'public_institution'].includes(form.organizationType);
   const parentOptions = organizations.filter((organization) => organization.id !== id && organization.is_active);
 
-  const formTitle = isEdit ? 'Modifier une organisation' : 'Créer une organisation';
+  const formTitle = isDgmg ? (isEdit ? 'Modifier un comptoir' : 'Créer un comptoir') : isEdit ? 'Modifier une organisation' : 'Créer une organisation';
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (saving) return;
+    if (saving || loading || loadFailed) return;
+    if ((isDgmg && form.organizationType !== 'comptoir') || (!isEdit && form.organizationType === 'comptoir' && !canCreateComptoir)) {
+      setFailure('La création des comptoirs est réservée à la DGMG et à l’administrateur.'); return;
+    }
     const nextErrors = validateOrganization(form, id);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -232,7 +245,7 @@ export function OrganizationForm() {
               <div className="admin-form__row is-trois">
                 <Field label="Type d’organisation" required htmlFor="organization-type">
                   <select id="organization-type" value={form.organizationType} onChange={(event) => changeType(event.target.value as OrganizationType)}>
-                    {ORGANIZATION_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    {allowedTypes.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                   <span className="organisation-form__type-help">{typeDescription}</span>
                 </Field>
@@ -362,9 +375,9 @@ export function OrganizationForm() {
               <button type="button" className="sn-btn" onClick={() => navigate('/stakeholders/organizations')} disabled={saving}>
                 Annuler
               </button>
-              <button type="submit" className="sn-btn sn-btn--primary" disabled={saving}>
+              <button type="submit" className="sn-btn sn-btn--primary" disabled={saving || loadFailed}>
                 {saving ? <Loader2 className="sn-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
-                {isEdit ? 'Enregistrer les modifications' : 'Créer l’organisation'}
+                {isEdit ? 'Enregistrer les modifications' : isDgmg ? 'Créer le comptoir' : 'Créer l’organisation'}
               </button>
             </FormActions>
           </form>

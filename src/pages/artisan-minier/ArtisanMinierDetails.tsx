@@ -1,3 +1,5 @@
+import { ArtisanDossierSummary } from '@/components/artisan/ArtisanDossierSummary';
+import '@/components/artisan/artisan-form.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -11,10 +13,7 @@ import {
   Eye,
   Contact,
   Loader2,
-  Mail,
-  MapPin,
   Pencil,
-  Phone,
   Plus,
   Scale,
   ShieldAlert,
@@ -369,77 +368,7 @@ export default function ArtisanMinierDetails() {
           ))}
         </nav>
 
-        {onglet === 'informations' && (
-          <div className="artisan-detail__grid">
-            <Section
-              id="identite"
-              icon={UserRound}
-              tone="emerald"
-              title="Identité"
-              description="État civil ou raison sociale du titulaire."
-            >
-              <dl className="artisan-detail__facts">
-                <div>
-                  <dt>Type de personne</dt>
-                  <dd>{artisan.type_personne === 'morale' ? 'Personne morale' : 'Personne physique'}</dd>
-                </div>
-                <div>
-                  <dt>Type d’artisan</dt>
-                  <dd>{artisan.type_artisan || '—'}</dd>
-                </div>
-                {artisan.type_personne === 'morale' ? (
-                  <div>
-                    <dt>Registre du commerce</dt>
-                    <dd>{artisan.numero_registre_commerce || '—'}</dd>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <dt>Date de naissance</dt>
-                      <dd>{formatDate(artisan.date_naissance)}</dd>
-                    </div>
-                    <div>
-                      <dt>Lieu de naissance</dt>
-                      <dd>{artisan.lieu_naissance || '—'}</dd>
-                    </div>
-                    <div>
-                      <dt>Sexe</dt>
-                      <dd>{artisan.sexe || '—'}</dd>
-                    </div>
-                  </>
-                )}
-                <div>
-                  <dt>Nationalité</dt>
-                  <dd>{artisan.nationalite || '—'}</dd>
-                </div>
-                <div>
-                  <dt>Pièce d’identité</dt>
-                  <dd>{[artisan.type_piece_identite, artisan.numero_piece_identite].filter(Boolean).join(' · ') || '—'}</dd>
-                </div>
-              </dl>
-            </Section>
-
-            <Section
-              id="contact"
-              icon={Phone}
-              tone="blue"
-              title="Contact et localisation"
-              description="Coordonnées utilisées pour les convocations et notifications."
-            >
-              <ul className="artisan-detail__contact">
-                <li><Phone aria-hidden="true" /> {artisan.telephone || 'Téléphone non renseigné'}</li>
-                {artisan.telephone_secondaire && (
-                  <li><Phone aria-hidden="true" /> {artisan.telephone_secondaire} (secondaire)</li>
-                )}
-                <li><Mail aria-hidden="true" /> {artisan.email || 'E-mail non renseigné'}</li>
-                <li><MapPin aria-hidden="true" /> {[artisan.adresse, artisan.commune, artisan.region].filter(Boolean).join(', ') || 'Adresse non renseignée'}</li>
-              </ul>
-              {artisan.observations && (
-                <p className="artisan-detail__notes">{artisan.observations}</p>
-              )}
-            </Section>
-          </div>
-        )}
+        {onglet === 'informations' && <ArtisanDossierSummary artisan={artisan} />}
 
         {onglet === 'carte' && (
           <Section

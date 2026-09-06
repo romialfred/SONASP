@@ -96,6 +96,9 @@ export const POLITIQUE_DOCUMENT_RESERVE: PolitiqueUploadServeur = {
   formats: [PDF, JPEG, PNG],
 };
 
+export const POLITIQUE_DOCUMENT_ARTISAN: PolitiqueUploadServeur = { maxBytes: 5 * 1024 * 1024, formats: [PDF, JPEG, PNG] };
+export const POLITIQUE_PHOTO_ARTISAN: PolitiqueUploadServeur = { maxBytes: 2 * 1024 * 1024, formats: [JPEG, PNG] };
+
 function commencePar(octets: Uint8Array, signature: readonly number[], position = 0): boolean {
   return signature.every((octet, index) => octets[position + index] === octet);
 }

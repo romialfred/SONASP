@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
+import { artisanDocumentAccess, parseArtisanDocument, persistArtisanDocument, removeArtisanDocument, type ArtisanDocumentMetadata } from '../_shared/artisan-document-upload.ts';
 import { niveauAssurance } from '../_shared/assurance.ts';
 import { supprimerObjetAvecCompensation } from '../_shared/compensated-storage-delete.ts';
 import {
@@ -34,6 +35,7 @@ import {
   POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
   POLITIQUE_PREUVE_PAIEMENT,
   POLITIQUE_DOCUMENT_RESERVE,
+  POLITIQUE_DOCUMENT_ARTISAN,
   validerUploadServeur,
 } from '../_shared/secure-upload.ts';
 import {
@@ -68,6 +70,7 @@ const PROFILE_DOCUMENT_FRET = 'freight-customs-document';
 const PROFILE_PREUVE_PAIEMENT = 'international-payment-proof';
 const PROFILE_DOCUMENT_RESERVE = 'reserve-allocation-document';
 const PROFILS_SUPPRESSION_DOCUMENTAIRE = new Set([
+  'artisan-document',
   PROFILE_DOCUMENT_SOCIETE,
   PROFILE_CERTIFICAT_ANALYSE,
   PROFILE_DOCUMENT_EXPEDITION,
@@ -77,6 +80,7 @@ const PROFILS_SUPPRESSION_DOCUMENTAIRE = new Set([
 ]);
 
 const profiles: Record<string, ProfilGatewayUpload> = {
+  'artisan-document': { policy: POLITIQUE_DOCUMENT_ARTISAN, parseMetadata: parseArtisanDocument },
   [PROFILE_DOCUMENT_SOCIETE]: {
     policy: POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
     parseMetadata: parseMetadonneesDocumentSociete,
@@ -149,7 +153,7 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
 
       if (profileId === PROFILE_DOCUMENT_SOCIETE) {
         const document = metadata as MetadonneesDocumentSociete;
-        const [session, profil, cible, capaciteReferentiels, capacitePreparation] = await Promise.all([
+        const [session, profil, cible, capaciteReferentiels, capacitePreparation, registreMinier] = await Promise.all([
           clientActeur.rpc('snp_session_signaler_activite'),
           admin
             .from('user_profiles')
@@ -167,10 +171,11 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
           clientActeur.rpc('snp_actor_has_capability', {
             p_capability_code: 'sonasp.prepare',
           }),
+          clientActeur.rpc('snp_peut_gerer_sites_artisanaux'),
         ]);
         if (
           session.error || profil.error || cible.error
-          || capaciteReferentiels.error || capacitePreparation.error
+          || capaciteReferentiels.error || capacitePreparation.error || registreMinier.error
         ) return { allowed: false, status: 503 };
         if (
           (session.data as { is_active?: unknown } | null)?.is_active !== true
@@ -186,11 +191,19 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
           actorActive: profil.data.is_active === true,
           actorMiningCompanyId: profil.data.mining_company_id,
           capabilities,
+          canManageMiningRegistry: registreMinier.data === true,
           targetCompanyId: cible.data.id,
           targetCompanyActive: cible.data.is_active === true,
         });
         return autorisation
           ? { allowed: true, ...autorisation }
+          : { allowed: false, status: 403 };
+      }
+
+      if (profileId === 'artisan-document') {
+        const m = metadata as ArtisanDocumentMetadata;
+        return await artisanDocumentAccess(clientActeur, token, m.artisanId)
+          ? { allowed: true, actorId: utilisateur.id, tenantId: m.artisanId }
           : { allowed: false, status: 403 };
       }
 
@@ -409,6 +422,10 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
     },
 
     async persist(input: ContextePersistanceUpload) {
+      if (input.profileId === 'artisan-document') {
+        const client = createClient(urlSupabase, cleAnonyme, { auth: { autoRefreshToken: false, persistSession: false }, global: { headers: { Authorization: `Bearer ${input.token}` } } });
+        return persistArtisanDocument(admin, client, input);
+      }
       const maintenant = new Date();
       const annee = maintenant.getUTCFullYear();
       const mois = String(maintenant.getUTCMonth() + 1).padStart(2, '0');
@@ -829,6 +846,10 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         auth: { autoRefreshToken: false, persistSession: false },
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
+      if (profileId === 'artisan-document') {
+        await removeArtisanDocument(admin, clientActeur, token, utilisateur.id, resourceId);
+        return;
+      }
       if (profileId === PROFILE_DOCUMENT_RESERVE) {
         const document = await admin.from('reserve_allocation_documents')
           .select('id,allocation_id,storage_path,file_name,size_bytes,mime_type,deleted_at')
@@ -1170,7 +1191,8 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         const permission = await clientActeur.rpc('snp_sec_can_prepare_company', {
           p_mining_company_id: document.data.mining_company_id,
         });
-        if (parent.error || permission.error || !parent.data) throw new Error('delete_not_allowed');
+        const registryPermission = await clientActeur.rpc('snp_peut_gerer_sites_artisanaux');
+        if (parent.error || permission.error || registryPermission.error || !parent.data) throw new Error('delete_not_allowed');
         table = 'mining_company_documents';
         bucket = BUCKET_DOCUMENT_SOCIETE;
         parentField = 'mining_company_id';
@@ -1183,8 +1205,8 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         mimeType = document.data.mime_type;
         uploadedBy = document.data.uploaded_by;
         parentExists = parent.data.id === parentId;
-        parentPermission = permission.data === true;
-        hasWriteCapability = permission.data === true;
+        parentPermission = permission.data === true || registryPermission.data === true;
+        hasWriteCapability = parentPermission;
         mayDeleteAnyUploader = true;
         mutable = parent.data.is_active === true;
         politique = POLITIQUE_DOCUMENT_SOCIETE_MINIERE;

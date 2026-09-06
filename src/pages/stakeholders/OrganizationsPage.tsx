@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Building2, Landmark, Loader2, PencilLine, Plus, ShieldCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, DataTable, Field, Note, PageHeader, StatGrid, type Column } from '@/components/ui/sn';
 import { errorMessage } from '@/lib/errorMessage';
@@ -18,6 +19,9 @@ type StateFilter = 'all' | 'active' | 'inactive';
 
 export function OrganizationsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const isDgmg = user?.role === 'dgmg';
   const [organizations, setOrganizations] = useState<OrganizationSummary[]>([]);
   const [ministries, setMinistries] = useState<Ministry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +39,7 @@ export function OrganizationsPage() {
         organizationService.list(),
         organizationService.listMinistries(),
       ]);
-      setOrganizations(organizationRows);
+      setOrganizations(isDgmg ? organizationRows.filter(item => item.organization_type === 'comptoir') : organizationRows);
       setMinistries(ministryRows);
     } catch (reason) {
       setError(errorMessage(reason, 'Impossible de charger le référentiel des organisations.'));
@@ -43,11 +47,11 @@ export function OrganizationsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isDgmg]);
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, location.key]);
 
   const visible = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -131,12 +135,12 @@ export function OrganizationsPage() {
       <main className="sn-page admin-page organisations">
         <PageHeader
           icon={Landmark}
-          title="Organisations"
+          title={isDgmg ? 'Comptoirs' : 'Organisations'}
           subtitle="Référentiel institutionnel, rattachements métier et ministères de tutelle."
           breadcrumb={[{ label: 'Parties prenantes' }, { label: 'Organisations' }]}
           actions={(
-            <button className="sn-btn sn-btn--primary" type="button" onClick={() => navigate('/stakeholders/organizations/new')}>
-              <Plus aria-hidden="true" /> Nouvelle organisation
+            <button className="sn-btn sn-btn--primary" type="button" onClick={() => navigate(isDgmg ? '/stakeholders/organizations/new?type=comptoir' : '/stakeholders/organizations/new')}>
+              <Plus aria-hidden="true" /> {isDgmg ? 'Nouveau comptoir' : 'Nouvelle organisation'}
             </button>
           )}
         />
@@ -167,7 +171,7 @@ export function OrganizationsPage() {
           <Field label="Type" htmlFor="organization-type">
             <select id="organization-type" value={type} onChange={(event) => setType(event.target.value)}>
               <option value="all">Tous les types</option>
-              {ORGANIZATION_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              {ORGANIZATION_TYPE_OPTIONS.filter(option => !isDgmg || option.value === 'comptoir').map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </Field>
           <Field label="Ministère" htmlFor="organization-ministry">

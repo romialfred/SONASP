@@ -2380,6 +2380,26 @@
       "sha256": "2ff4fc615845b6380757407256cc0556412b117f6dbe22a0c55fd97838ebd9f5"
     },
     {
+      "path": "supabase/migrations/20260906093115_sites_artisanaux_formalisation_aea.sql",
+      "version": "20260906093115",
+      "description": "sites_artisanaux_formalisation_aea",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 21638,
+      "sha256": "2de381766387d56a66a49e10067476810f043d916085d02ba9ef63c11573b60c"
+    },
+    {
+      "path": "supabase/migrations/20260906111030_refonte_dossier_artisan.sql",
+      "version": "20260906111030",
+      "description": "refonte_dossier_artisan",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 35738,
+      "sha256": "29e774d4d48084f48bff8e9c14932d11ad6595040b87f76bbcc1934e0024f954"
+    },
+    {
       "path": "supabase/migrations/20260906120000_creer_preparation_expedition_atomiquement.sql",
       "version": "20260906120000",
       "description": "creer_preparation_expedition_atomiquement",
@@ -3383,10 +3403,10 @@
       },
       {
         "digits": 14,
-        "count": 142
+        "count": 144
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "d2b10bc1087055770ae064ab9a528eca45144da4be1b5e06a33d78668249fc19"
+  "catalogueSha256": "c80804feeb352ea0ba3fac5b7a9a42a5e7339fe151e0c8f29fea6941b954268b"
 }

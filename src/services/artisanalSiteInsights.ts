@@ -38,27 +38,42 @@ const daysSince = (date: string | null, reference: Date) => {
  * Pénalise le dépassement de capacité autorisée, la sous-activité, le retard de
  * déclaration et la suspension administrative. Un site planifié n'est pas noté.
  */
-export function computeSiteCompliance(
-  site: ArtisanalSite,
-  lastDeclaration: string | null,
-  reference: Date
-): number | null {
-  if (site.status === 'planned') return null;
+export interface ComplianceRule {
+  key: string;
+  label: string;
+  rule: string;
+  observed: string;
+  deduction: number;
+}
 
-  let score = 100;
+/** Même source de vérité pour le score et son explication dans la fiche. */
+export function explainSiteCompliance(site: ArtisanalSite, lastDeclaration: string | null, reference: Date) {
   const occupancy = site.authorizedMiners > 0 ? site.activeMiners / site.authorizedMiners : 0;
-
-  if (occupancy > 1) score -= Math.min(25, (occupancy - 1) * 100);
-  else if (occupancy < 0.5) score -= 8;
-
   const delay = daysSince(lastDeclaration, reference);
-  if (delay > DECLARATION_GRACE_DAYS) {
-    score -= Math.min(30, (delay - DECLARATION_GRACE_DAYS) / 3);
-  }
+  const rules: ComplianceRule[] = [
+    { key: 'capacity', label: 'Capacité autorisée',
+      rule: 'Au-delà de 100 % d’occupation : 1 point par point de dépassement, au maximum 25 points.',
+      observed: site.authorizedMiners > 0 ? Math.round(occupancy * 100) + ' % d’occupation' : 'Capacité non renseignée',
+      deduction: occupancy > 1 ? Math.min(25, (occupancy - 1) * 100) : 0 },
+    { key: 'activity', label: 'Niveau d’activité',
+      rule: 'Une occupation inférieure à 50 % retire 8 points.',
+      observed: site.activeMiners + ' artisan(s) actif(s) sur ' + site.authorizedMiners,
+      deduction: occupancy < 0.5 ? 8 : 0 },
+    { key: 'declaration', label: 'Régularité des déclarations',
+      rule: 'Après 30 jours : un tiers de point par jour supplémentaire, au maximum 30 points. Sans déclaration : 30 points.',
+      observed: Number.isFinite(delay) ? Math.floor(delay) + ' jour(s) depuis la dernière déclaration' : 'Aucune déclaration disponible',
+      deduction: delay > DECLARATION_GRACE_DAYS ? Math.min(30, (delay - DECLARATION_GRACE_DAYS) / 3) : 0 },
+    { key: 'status', label: 'Situation administrative',
+      rule: 'Une suspension administrative retire 45 points. Un site planifié n’est pas évalué.',
+      observed: site.status === 'suspended' ? 'Site suspendu' : site.status === 'planned' ? 'Site planifié' : 'Site actif',
+      deduction: site.status === 'suspended' ? 45 : 0 },
+  ];
+  const totalDeduction = rules.reduce((sum, rule) => sum + rule.deduction, 0);
+  return { rules, totalDeduction, score: site.status === 'planned' ? null : Math.max(0, Math.min(100, Math.round(100 - totalDeduction))) };
+}
 
-  if (site.status === 'suspended') score -= 45;
-
-  return Math.max(0, Math.min(100, Math.round(score)));
+export function computeSiteCompliance(site: ArtisanalSite, lastDeclaration: string | null, reference: Date): number | null {
+  return explainSiteCompliance(site, lastDeclaration, reference).score;
 }
 
 /** Statut cartographique dérivé du statut administratif et de l'indice de conformité. */
@@ -130,9 +145,9 @@ export function buildProductionFromArtisanSales(
   });
 
   return sales
-    .filter((sale) => sale.statut !== 'annulee' && siteByArtisan.has(sale.artisan_id))
+    .filter((sale) => sale.statut !== 'annulee' && (sale.attribution_site_id !== undefined ? !!sale.attribution_site_id && siteById.has(sale.attribution_site_id) : siteByArtisan.has(sale.artisan_id)))
     .map((sale) => {
-      const site = siteByArtisan.get(sale.artisan_id)!;
+      const site = sale.attribution_site_id !== undefined ? siteById.get(sale.attribution_site_id!)! : siteByArtisan.get(sale.artisan_id)!;
       const taxes =
         Number(sale.tva_montant_fcfa || 0) + Number(sale.taxe_dev_comm_montant_fcfa || 0);
       return {

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25",
+  "generatedAt": "2026-09-06",
   "scope": "src services/pages containing Supabase Storage uploads, public URL generation or sensitive deletion",
   "remediated": [
     {
@@ -109,6 +109,36 @@
       "directClientUpload": false,
       "directClientDelete": false,
       "getPublicUrl": false
+    },
+    {
+      "file": "src/services/artisanMinierService.ts",
+      "bucket": "artisan-dossiers",
+      "callers": [],
+      "profile": "artisan-document",
+      "gatewayCall": "artisanDocumentService.upload(",
+      "deleteGatewayCall": "artisanDocumentService.remove(",
+      "status": "gateway-delegated-private-signed-compensated-delete",
+      "deployed": false,
+      "directClientUpload": false,
+      "directClientDelete": false,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/services/artisanDocumentService.ts",
+      "bucket": "artisan-dossiers",
+      "callers": [
+        "src/components/artisan/ArtisanMinierForm.tsx",
+        "src/components/artisan/ArtisanDocuments.tsx",
+        "src/components/artisan/ArtisanDossierSummary.tsx"
+      ],
+      "profile": "artisan-document",
+      "gatewayCall": "uploadSensitiveFile(",
+      "deleteGatewayCall": "deleteSensitiveResource(",
+      "status": "gateway-enforced-private-signed-compensated-delete",
+      "deployed": false,
+      "directClientUpload": false,
+      "directClientDelete": false,
+      "getPublicUrl": false
     }
   ],
   "residual": [
@@ -124,18 +154,6 @@
       "directClientUpload": false,
       "directClientDelete": false,
       "getPublicUrl": false
-    },
-    {
-      "file": "src/services/artisanMinierService.ts",
-      "bucket": "artisan-documents",
-      "callers": [
-        "src/components/artisan/ArtisanMinierForm.tsx"
-      ],
-      "priority": "P1",
-      "status": "public-url-schema-and-all-image-consumers-require-atomic-signed-url-migration",
-      "directClientUpload": true,
-      "directClientDelete": false,
-      "getPublicUrl": true
     },
     {
       "file": "src/services/artisanInfractionsService.ts",
@@ -201,6 +219,18 @@
       "status": "browser-reencoded-jpeg-private-signed-read-but-upload-still-direct",
       "directClientUpload": true,
       "directClientDelete": false,
+      "getPublicUrl": false
+    },
+    {
+      "file": "src/services/siteAeaDocumentService.ts",
+      "bucket": "artisanal-site-aea",
+      "callers": [
+        "src/pages/artisanal-sites/ArtisanalSiteForm.tsx"
+      ],
+      "priority": "P1",
+      "status": "client-validated-private-signed-read-registry-rls-upload-and-delete-still-direct",
+      "directClientUpload": true,
+      "directClientDelete": true,
       "getPublicUrl": false
     }
   ]

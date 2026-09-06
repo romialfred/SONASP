@@ -314,6 +314,8 @@ Déployer uniquement sur autorisation explicite.
 
 Le push peut déclencher Vercel. Vérifier déploiement Ready, alias et :
 
+Depuis l'incident du 6 septembre 2026 : publier les fichiers applicatifs committés via l'intégration Git de `SONASP_2026`. Ne jamais publier une copie locale contenant des améliorations absentes de Git : le push suivant les remplacerait. `npm run build:release` vérifie la provenance, les tests des sites/artisans et le typage avant compilation. Installer d'abord les migrations et Edge Functions requises. Voir `docs/publication-sites-artisans.md`.
+
 ```powershell
 Invoke-WebRequest https://sonasp.data-univers.com/build-version.json
 ```

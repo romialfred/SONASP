@@ -38,6 +38,7 @@ export interface ContexteAutorisationDocumentSociete {
   actorActive: boolean;
   actorMiningCompanyId: string | null;
   capabilities: ReadonlySet<string>;
+  canManageMiningRegistry?: boolean;
   targetCompanyId: string;
   targetCompanyActive: boolean;
 }
@@ -50,7 +51,8 @@ export interface ContexteAutorisationDocumentSociete {
 export function autoriserDocumentSociete(
   contexte: ContexteAutorisationDocumentSociete,
 ): { actorId: string; tenantId: string } | null {
-  const capacite = contexte.capabilities.has('referentials.manage')
+  const capacite = contexte.canManageMiningRegistry === true
+    || contexte.capabilities.has('referentials.manage')
     || contexte.capabilities.has('sonasp.prepare');
   if (
     !contexte.actorActive

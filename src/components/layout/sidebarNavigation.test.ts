@@ -235,7 +235,7 @@ describe('navigation', () => {
   );
 
   it.each([
-    ['dgmg', 'dgmg.supervise', 'dgmg-organization', 'dgmg', ['dashboard', 'mining_sites'], ['/portail-dgmg', '/artisan-sites']],
+    ['dgmg', 'dgmg.supervise', 'dgmg-organization', 'dgmg', ['dashboard', 'mining_sites'], ['/portail-dgmg', '/artisan-sites', '/stakeholders/mining-companies', '/stakeholders/organizations']],
     ['dgi', 'dgi.fiscal.control', 'dgi-organization', 'dgi', ['dashboard', 'conciliation'], ['/portail-dgi', '/conciliation', '/conciliation/regles-fiscales']],
   ] as const)(
     'projette pour %s uniquement les modules institutionnels attribués',

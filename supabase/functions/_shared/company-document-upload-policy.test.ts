@@ -31,6 +31,13 @@ describe('autoriserDocumentSociete', () => {
     expect(autoriserDocumentSociete({ ...base, ...override })).toBeNull();
   });
 
+  it('accepte la DGMG autorisée par le registre sans accorder un accès à une mine ou à AAL1', () => {
+    const context = { ...base, capabilities: new Set<string>(), canManageMiningRegistry: true };
+    expect(autoriserDocumentSociete(context)).not.toBeNull();
+    expect(autoriserDocumentSociete({ ...context, assurance: 'aal1' })).toBeNull();
+    expect(autoriserDocumentSociete({ ...context, actorMiningCompanyId: 'mine' })).toBeNull();
+  });
+
   it('accepte aussi la capacité dédiée aux référentiels', () => {
     expect(autoriserDocumentSociete({
       ...base,

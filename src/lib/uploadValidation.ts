@@ -62,6 +62,7 @@ const DANGEROUS_EXTENSIONS = new Set([
 ]);
 
 export const UPLOAD_POLICIES = {
+  siteAea: { maxBytes: 10 * MEBIBYTE, formats: [PDF, JPEG, PNG], acceptedLabel: 'un PDF ou une image JPEG/PNG' },
   assayCertificate: {
     maxBytes: 10 * MEBIBYTE,
     formats: [PDF],
@@ -89,12 +90,12 @@ export const UPLOAD_POLICIES = {
     acceptedLabel: 'un PDF ou une image JPEG/PNG',
   },
   artisanPhoto: {
-    maxBytes: 5 * MEBIBYTE,
+    maxBytes: 2 * MEBIBYTE,
     formats: [JPEG, PNG],
     acceptedLabel: 'une image JPEG ou PNG',
   },
   artisanDocument: {
-    maxBytes: 10 * MEBIBYTE,
+    maxBytes: 5 * MEBIBYTE,
     formats: [PDF, JPEG, PNG],
     acceptedLabel: 'un PDF ou une image JPEG/PNG',
   },

@@ -29,6 +29,7 @@ import {
   X,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
 import { useAuth } from '@/contexts/AuthContext';
 import { isComptoirScopedUser } from '@/lib/comptoirAccess';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
@@ -42,7 +43,7 @@ import { BURKINA_PROVINCES } from '@/data/burkinaProvinces';
 import { normaliserArtisan } from './artisanRow';
 import './artisan-minier-liste.css';
 
-type TypeArtisan = 'collecteur' | 'fournisseur' | 'exploitant' | 'intermediaire';
+type TypeArtisan = 'collecteur' | 'fournisseur' | 'exploitant' | 'intermediaire' | 'aide_exploitant';
 type SortKey = 'recent' | 'name' | 'gold' | 'revenue';
 type ViewMode = 'grid' | 'list';
 
@@ -62,6 +63,7 @@ const TYPE_LABELS: Record<TypeArtisan, string> = {
   fournisseur: 'Fournisseurs',
   exploitant: 'Exploitants',
   intermediaire: 'Intermédiaires',
+  aide_exploitant: 'Aides exploitants',
 };
 
 const TYPE_SINGULAR: Record<TypeArtisan, string> = {
@@ -69,6 +71,7 @@ const TYPE_SINGULAR: Record<TypeArtisan, string> = {
   fournisseur: 'Fournisseur',
   exploitant: 'Exploitant',
   intermediaire: 'Intermédiaire',
+  aide_exploitant: 'Aide exploitant',
 };
 
 const TYPE_ICONS: Record<TypeArtisan, typeof Users> = {
@@ -76,9 +79,10 @@ const TYPE_ICONS: Record<TypeArtisan, typeof Users> = {
   fournisseur: Package,
   exploitant: Pickaxe,
   intermediaire: Handshake,
+  aide_exploitant: Handshake,
 };
 
-const TYPE_ORDER: TypeArtisan[] = ['collecteur', 'fournisseur', 'exploitant', 'intermediaire'];
+const TYPE_ORDER: TypeArtisan[] = ['exploitant', 'fournisseur', 'aide_exploitant', 'intermediaire', 'collecteur'];
 
 const SORT_LABELS: Record<SortKey, string> = {
   recent: 'Plus récent',
@@ -296,7 +300,7 @@ export default function ArtisanMinierListe() {
     setApplied((current) => ({ ...current, type }));
   };
 
-  if (showForm && !isScopedPartner) {
+  if (showForm && canManageMiningRegistry(user)) {
     return (
       <NationalDashboardLayout>
         <div className="sn-page artisan-list">
@@ -310,7 +314,7 @@ export default function ArtisanMinierListe() {
               { label: 'Nouvel artisan' },
             ]}
             actions={
-              <button type="button" className="sn-btn" onClick={() => setShowForm(false)}>
+              <button type="button" className="sn-btn" onClick={() => { if(document.dispatchEvent(new Event('sonasp:artisan-before-leave',{cancelable:true}))) setShowForm(false); }}>
                 <ArrowLeft aria-hidden="true" /> Retour à la liste
               </button>
             }
@@ -346,7 +350,7 @@ export default function ArtisanMinierListe() {
               {integer.format(visibleArtisans.length)} {isCollector ? 'orpailleurs assignés' : isComptoir ? 'orpailleurs rattachés' : 'artisans enregistrés'}
             </p>
           </div>
-          {!isScopedPartner && <div className="artisan-list__actions">
+          {canManageMiningRegistry(user) && <div className="artisan-list__actions">
             <button type="button" className="artisan-list__button is-primary" onClick={() => setShowForm(true)}>
               <Plus aria-hidden="true" /> Nouvel artisan
             </button>

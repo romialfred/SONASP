@@ -116,7 +116,7 @@ describe('NationalDashboardLayout', () => {
     expect(screen.getByRole('contentinfo')).toHaveTextContent(/Société Nationale des Substances Précieuses/i);
     expect(screen.getByText('Direction SONASP')).toBeInTheDocument();
     // Les sections métier autorisées structurent la navigation Direction.
-    ['Mine semi-mécanisée', 'Mine industrielle', 'Vente & achat d’or', 'Raffinage & stocks',
+    ['Sites artisanaux & Artisans', 'Mine industrielle', 'Vente & achat d’or', 'Raffinage & stocks',
       'Réserve d’or du Burkina Faso', 'Vente internationale', 'Paramètres et configuration', 'Rapports et analyses'].forEach(
       (titre) => expect(screen.getByRole('region', { name: titre })).toBeInTheDocument()
     );
@@ -176,7 +176,7 @@ describe('NationalDashboardLayout', () => {
       </MemoryRouter>
     );
 
-    const sites = screen.getByRole('button', { name: 'Sites miniers' });
+    const sites = screen.getByRole('button', { name: 'Sites artisanaux' });
     const conciliation = screen.getByRole('button', { name: 'Ventes d’or internationales' });
     expect(sites).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument();
@@ -276,11 +276,11 @@ describe('NationalDashboardLayout', () => {
     );
 
     expect(screen.getByRole('link', { name: 'Tableau de bord' })).toBeInTheDocument();
-    ['Mine semi-mécanisée', 'Mine industrielle', 'Vente & achat d’or', 'Raffinage & stocks',
+    ['Sites artisanaux & Artisans', 'Mine industrielle', 'Vente & achat d’or', 'Raffinage & stocks',
       'Réserve d’or du Burkina Faso', 'Vente internationale', 'Paramètres et configuration', 'Rapports et analyses'].forEach(
       (titre) => expect(screen.getByRole('region', { name: titre })).toBeInTheDocument()
     );
-    expect(screen.getByRole('button', { name: 'Sites miniers' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sites artisanaux' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ventes d’or internationales' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Administration' })).toBeInTheDocument();
   });

@@ -100,7 +100,7 @@ export default function ArtisanMinierEdit() {
             { label: 'Modification' },
           ]}
           actions={
-            <button type="button" className="sn-btn" onClick={() => navigate(retour)}>
+            <button type="button" className="sn-btn" onClick={() => { if(document.dispatchEvent(new Event('sonasp:artisan-before-leave',{cancelable:true}))) navigate(retour); }}>
               <ArrowLeft aria-hidden="true" /> Retour au dossier
             </button>
           }

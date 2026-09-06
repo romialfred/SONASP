@@ -147,6 +147,7 @@ const TYPE_LABELS: Record<string, string> = {
   collecteur: 'Collecteurs',
   fournisseur: 'Fournisseurs',
   intermediaire: 'Intermédiaires',
+  aide_exploitant: 'Aides exploitants',
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -154,6 +155,7 @@ const TYPE_COLORS: Record<string, string> = {
   collecteur: '#2fae7c',
   fournisseur: '#e2a000',
   intermediaire: '#94a3b8',
+  aide_exploitant: '#4884a2',
 };
 
 /** Répartition des artisans par type (anneau du bas de page). */

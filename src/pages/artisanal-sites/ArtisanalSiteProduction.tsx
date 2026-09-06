@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -13,11 +13,12 @@ import {
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from '@/lib/recharts';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import {
-  artisanalSiteService,
   calculateSiteMetrics,
   summarizeSiteProduction,
 } from '@/services/artisanalSiteService';
-import type { ArtisanalSite, SiteProduction } from '@/types/artisanalSite';
+import { useArtisanalSiteData } from '@/hooks/useArtisanalSiteData';
+import { useAuth } from '@/contexts/AuthContext';
+import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
 import './artisanal-sites-dashboard.css';
 
 const compact = new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 });
@@ -27,32 +28,8 @@ const decimal = (value: number, digits = 1) =>
 
 export default function ArtisanalSiteProduction() {
   const navigate = useNavigate();
-  const [sites, setSites] = useState<ArtisanalSite[]>([]);
-  const [productions, setProductions] = useState<SiteProduction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    setError(null);
-    artisanalSiteService
-      .loadSiteData()
-      .then(({ sites: siteData, productions: productionData }) => {
-        if (!mounted) return;
-        setSites(siteData);
-        setProductions(productionData);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setError('Les données de production sont momentanément indisponibles.');
-      })
-      .finally(() => mounted && setLoading(false));
-    return () => {
-      mounted = false;
-    };
-  }, [reloadKey]);
+  const { sites, productions, loading, error, refresh } = useArtisanalSiteData('Les données de production sont momentanément indisponibles.');
+  const { user } = useAuth();
 
   const metrics = useMemo(() => calculateSiteMetrics(sites, productions), [productions, sites]);
   const summaries = useMemo(() => summarizeSiteProduction(sites, productions), [productions, sites]);
@@ -82,16 +59,16 @@ export default function ArtisanalSiteProduction() {
             </p>
           </div>
           <div className="sites-dashboard__actions">
-            <button type="button" className="sites-button sites-button--gold" onClick={() => navigate('/artisan-sites/nouveau')}>
+            {canManageMiningRegistry(user) && <button type="button" className="sites-button sites-button--gold" onClick={() => navigate('/artisan-sites/nouveau')}>
               <Plus aria-hidden="true" /> Ajouter un site
-            </button>
+            </button>}
           </div>
         </header>
 
         {error ? (
           <div className="sites-dashboard__error" role="alert">
             <span>{error}</span>
-            <button type="button" className="sites-button" onClick={() => setReloadKey((current) => current + 1)}>
+            <button type="button" className="sites-button" onClick={refresh}>
               <RotateCw aria-hidden="true" /> Réessayer
             </button>
           </div>

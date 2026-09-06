@@ -5,6 +5,8 @@ import { genererNumeroRecu } from './venteRecuNumberService';
 export interface ArtisanGoldSale {
   id: string;
   artisan_id: string;
+  /** Site captured at declaration time; null explicitly means no site. */
+  attribution_site_id?: string | null;
   date_vente: string;
   quantite_grammes: number;
   type_or: 'poudre' | 'lingot' | 'pepites' | 'bijoux' | 'autre';
@@ -39,7 +41,7 @@ export interface ArtisanStatistics {
   montant_ce_mois: number;
 }
 
-type ArtisanGoldSaleRow = Database['public']['Tables']['snp_artisan_ventes_or']['Row'];
+type ArtisanGoldSaleRow = Database['public']['Tables']['snp_artisan_ventes_or']['Row'] & { attribution_site?: { site_id: string | null } | null };
 type ArtisanGoldSaleInsert = Database['public']['Tables']['snp_artisan_ventes_or']['Insert'];
 
 const SALE_STATUSES: ArtisanGoldSale['statut'][] = ['en_attente', 'validee', 'payee', 'annulee'];
@@ -57,6 +59,7 @@ function normalizeSale(row: ArtisanGoldSaleRow): ArtisanGoldSale {
   return {
     id: row.id,
     artisan_id: row.artisan_id,
+    attribution_site_id: row.attribution_site?.site_id,
     date_vente: row.date_vente,
     quantite_grammes: row.quantite_grammes,
     type_or: row.type_or,
@@ -84,7 +87,7 @@ export const artisanGoldSalesService = {
     try {
       const { data, error } = await supabase
         .from('snp_artisan_ventes_or')
-        .select('*')
+        .select('*, attribution_site:snp_artisan_vente_site_origins(site_id)')
         .order('date_vente', { ascending: false });
 
       if (error) throw error;
@@ -99,7 +102,7 @@ export const artisanGoldSalesService = {
     try {
       const { data, error } = await supabase
         .from('snp_artisan_ventes_or')
-        .select('*')
+        .select('*, attribution_site:snp_artisan_vente_site_origins(site_id)')
         .eq('artisan_id', artisanId)
         .order('date_vente', { ascending: false });
 
@@ -115,7 +118,7 @@ export const artisanGoldSalesService = {
     try {
       const { data, error } = await supabase
         .from('snp_artisan_ventes_or')
-        .select('*')
+        .select('*, attribution_site:snp_artisan_vente_site_origins(site_id)')
         .eq('id', id)
         .maybeSingle();
 

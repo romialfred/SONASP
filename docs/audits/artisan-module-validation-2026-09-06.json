@@ -1,0 +1,60 @@
+{
+  "recordedAtUtc": "2026-09-06 12:16:22 UTC",
+  "scope": "Refonte du module artisans — validation locale",
+  "deployment": {
+    "database": false,
+    "edgeFunction": false,
+    "frontend": false
+  },
+  "migration": {
+    "file": "supabase/migrations/20260906111030_refonte_dossier_artisan.sql",
+    "sha256Normalized": "29e774d4d48084f48bff8e9c14932d11ad6595040b87f76bbcc1934e0024f954",
+    "catalogueVerified": true
+  },
+  "validation": {
+    "globalVitest": {
+      "passed": 2393,
+      "failed": 0,
+      "files": 329,
+      "expectedFiles": 329,
+      "missingFiles": 0,
+      "command": "npx vitest run --pool=forks --maxWorkers=6 --reporter=dot --reporter=json"
+    },
+    "additionalCardPreview": {
+      "passed": 3,
+      "failed": 0,
+      "files": 1
+    },
+    "isolatedPostgres": {
+      "checks": 50,
+      "environment": "PGlite; schéma de départ observé, fonctions d’identité et de périmètre simulées",
+      "command": "node scripts/test-artisan-dossier-migration.mjs"
+    },
+    "migrationIntegrity": {
+      "passed": 10
+    },
+    "typecheck": true,
+    "fullLint": true,
+    "finalChangedFilesLint": true,
+    "frenchUiLint": true,
+    "finalProductionBuild": true,
+    "denoGatewayCheck": true,
+    "whitespaceCheck": true
+  },
+  "visualChecks": {
+    "formDesktop": true,
+    "formMobileCssWidth": 360,
+    "legalBranches": [
+      "physique",
+      "morale"
+    ],
+    "realPdfCardPreview": true,
+    "productionRecordsCreated": 0,
+    "temporaryHarnessesRemoved": true
+  },
+  "limitations": [
+    "Aucun parcours Auth/PostgREST/Storage complet exécuté en production pour ce lot.",
+    "La migration, le gateway et le frontend doivent être installés ensemble avant utilisation en ligne.",
+    "La qualité juridique des dossiers existants reste verrouillée afin de préserver leurs dépendances."
+  ]
+}

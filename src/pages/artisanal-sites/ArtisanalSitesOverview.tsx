@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -30,7 +30,10 @@ import {
   STATUS_LABELS,
   type TerritoryStatus,
 } from '@/components/artisanal-sites/BurkinaTerritoryMap';
-import { artisanalSiteService } from '@/services/artisanalSiteService';
+import { useArtisanalSiteData } from '@/hooks/useArtisanalSiteData';
+import { useAuth } from '@/contexts/AuthContext';
+import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
+import { FORMALIZATION_LABELS } from '@/lib/siteFormalization';
 import {
   ANNUAL_PRODUCTION_TARGET_KG,
   buildMonthlyProduction,
@@ -39,17 +42,18 @@ import {
   computeRegionContributions,
   computeVigilance,
 } from '@/services/artisanalSiteInsights';
-import type { ArtisanalSite, ExploitationType, SiteProduction } from '@/types/artisanalSite';
+import type { SiteFormalization } from '@/types/artisanalSite';
 import './artisanal-sites-dashboard.css';
 
-type TableScope = 'all' | 'watch' | 'suspended';
+const TABLE_SCOPES = [
+  { value: 'all', label: 'Tous' },
+  { value: 'formalized', label: 'Formalisés' },
+  { value: 'non_formalized', label: 'Non formalisés' },
+  { value: 'watch', label: 'À surveiller' },
+  { value: 'suspended', label: 'Suspendus' },
+] as const;
+type TableScope = (typeof TABLE_SCOPES)[number]['value'];
 type MapTab = 'map' | 'regions';
-
-const EXPLOITATION_LABELS: Record<ExploitationType, string> = {
-  artisanale: 'Artisanale',
-  semi_mecanisee: 'Semi-mécanisée',
-  mixte: 'Mixte',
-};
 
 const REFERENCE_DATE = new Date();
 const YEAR = REFERENCE_DATE.getFullYear();
@@ -65,9 +69,9 @@ function formatFcfa(value: number) {
 }
 
 function formatDeclaration(date: string | null) {
-  if (!date) return 'Non démarré';
+  if (!date) return 'Aucune déclaration';
   const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return 'Non démarré';
+  if (Number.isNaN(parsed.getTime())) return 'Date indisponible';
 
   const startOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
   const days = Math.round((startOfDay(REFERENCE_DATE) - startOfDay(parsed)) / 86_400_000);
@@ -133,17 +137,16 @@ function ComplianceGauge({ score }: { score: number }) {
 
 export default function ArtisanalSitesOverview() {
   const navigate = useNavigate();
-  const [sites, setSites] = useState<ArtisanalSite[]>([]);
-  const [productions, setProductions] = useState<SiteProduction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { sites, productions, loading, error, refresh } = useArtisanalSiteData();
+  const { user } = useAuth();
+  const canManage = canManageMiningRegistry(user);
 
   const [startDate, setStartDate] = useState(`${YEAR}-01-01`);
   const [endDate, setEndDate] = useState(`${YEAR}-12-31`);
   const [datePanelOpen, setDatePanelOpen] = useState(false);
   const [region, setRegion] = useState('all');
   const [status, setStatus] = useState<'all' | TerritoryStatus>('all');
-  const [exploitation, setExploitation] = useState<'all' | ExploitationType>('all');
+  const [exploitation, setExploitation] = useState<'all' | 'unknown' | SiteFormalization>('all');
   const [search, setSearch] = useState('');
 
   const [mapTab, setMapTab] = useState<MapTab>('map');
@@ -151,33 +154,20 @@ export default function ArtisanalSitesOverview() {
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    let mounted = true;
-    artisanalSiteService
-      .loadSiteData()
-      .then(({ sites: siteData, productions: productionData }) => {
-        if (!mounted) return;
-        setSites(siteData);
-        setProductions(productionData);
-      })
-      .catch((reason: unknown) => {
-        if (!mounted) return;
-        setError(reason instanceof Error ? reason.message : 'Impossible de charger les sites artisanaux.');
-      })
-      .finally(() => mounted && setLoading(false));
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
   const periodProductions = useMemo(
     () => productions.filter((item) => item.productionDate >= startDate && item.productionDate <= endDate),
     [endDate, productions, startDate]
   );
 
   const allInsights = useMemo(
-    () => buildSiteInsights(sites, periodProductions, REFERENCE_DATE),
-    [periodProductions, sites]
+    () => {
+      const current = new Map(buildSiteInsights(sites, productions, new Date()).map(item => [item.site.id, item]));
+      return buildSiteInsights(sites, periodProductions, new Date()).map(item => ({
+        ...item, compliance: current.get(item.site.id)!.compliance,
+        status: current.get(item.site.id)!.status, lastDeclaration: current.get(item.site.id)!.lastDeclaration,
+      }));
+    },
+    [periodProductions, productions, sites]
   );
 
   const insights = useMemo(() => {
@@ -185,7 +175,7 @@ export default function ArtisanalSitesOverview() {
     return allInsights.filter(({ site, status: siteStatus }) => {
       const matchesRegion = region === 'all' || site.region === region;
       const matchesStatus = status === 'all' || siteStatus === status;
-      const matchesType = exploitation === 'all' || site.exploitationType === exploitation;
+      const matchesType = exploitation === 'all' || (site.formalization || 'unknown') === exploitation;
       const matchesSearch =
         !query ||
         [site.name, site.code, site.region, site.province, site.locality]
@@ -239,9 +229,9 @@ export default function ArtisanalSitesOverview() {
   );
 
   const exploitationCounts = useMemo(() => {
-    const counters = { artisanale: 0, semi_mecanisee: 0, mixte: 0 } as Record<ExploitationType, number>;
+    const counters = { formalized: 0, non_formalized: 0, unknown: 0 };
     insights.forEach((item) => {
-      counters[item.site.exploitationType] += 1;
+      counters[item.site.formalization || 'unknown'] += 1;
     });
     return counters;
   }, [insights]);
@@ -252,6 +242,9 @@ export default function ArtisanalSitesOverview() {
   );
 
   const scopedSites = useMemo(() => {
+    if (scope === 'formalized' || scope === 'non_formalized') {
+      return insights.filter((item) => item.site.formalization === scope);
+    }
     if (scope === 'watch') return insights.filter((item) => item.status === 'watch');
     if (scope === 'suspended') return insights.filter((item) => item.status === 'suspended');
     return insights;
@@ -265,7 +258,7 @@ export default function ArtisanalSitesOverview() {
     () =>
       insights.map((item) => ({
         id: item.site.id,
-        name: item.site.locality,
+        name: item.site.name,
         region: item.site.region,
         longitude: item.site.longitude,
         latitude: item.site.latitude,
@@ -286,32 +279,8 @@ export default function ArtisanalSitesOverview() {
     setSearch('');
     setStartDate(`${YEAR}-01-01`);
     setEndDate(`${YEAR}-12-31`);
+    setScope('all');
     setPage(1);
-  };
-
-  const exportReport = () => {
-    const rows = [
-      ['Site', 'Code', 'Région', 'Statut', 'Artisans', 'Capacité', 'Production (kg)', 'Conformité (%)', 'Taxes (FCFA)', 'Dernière déclaration'],
-      ...scopedSites.map((item) => [
-        item.site.name,
-        item.site.code,
-        item.site.region,
-        STATUS_LABELS[item.status],
-        String(item.site.activeMiners),
-        String(item.site.authorizedMiners),
-        decimal(item.productionKg),
-        item.compliance === null ? 'En attente' : String(item.compliance),
-        String(Math.round(item.taxesFcfa)),
-        item.lastDeclaration || '',
-      ]),
-    ];
-    const csv = rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(';')).join('\n');
-    const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `sites-artisanaux-${endDate}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   const periodLabel = `${new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(new Date(startDate))} – ${new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(endDate))}`;
@@ -328,12 +297,12 @@ export default function ArtisanalSitesOverview() {
             </p>
           </div>
           <div className="sites-dashboard__actions">
-            <button type="button" className="sites-button" onClick={exportReport}>
-              <FileSpreadsheet aria-hidden="true" /> Exporter le rapport
+            <button type="button" className="sites-button" onClick={refresh} disabled={loading}>
+              <RotateCcw aria-hidden="true" /> Actualiser
             </button>
-            <button type="button" className="sites-button sites-button--gold" onClick={() => navigate('/artisan-sites/nouveau')}>
+            {canManage && <button type="button" className="sites-button sites-button--gold" onClick={() => navigate('/artisan-sites/nouveau')}>
               <Plus aria-hidden="true" /> Enregistrer un site
-            </button>
+            </button>}
           </div>
         </header>
 
@@ -381,11 +350,11 @@ export default function ArtisanalSitesOverview() {
           </label>
 
           <label className="sites-filter sites-filter--select">
-            <span>Type d’exploitation</span>
-            <select value={exploitation} onChange={(event) => { setExploitation(event.target.value as 'all' | ExploitationType); setPage(1); }}>
+            <span>Catégorie du site</span>
+            <select value={exploitation} onChange={(event) => { setExploitation(event.target.value as 'all' | 'unknown' | SiteFormalization); setPage(1); }}>
               <option value="all">Tous</option>
-              {(Object.keys(EXPLOITATION_LABELS) as ExploitationType[]).map((item) => (
-                <option key={item} value={item}>{EXPLOITATION_LABELS[item]}</option>
+              {(Object.keys(FORMALIZATION_LABELS) as (keyof typeof FORMALIZATION_LABELS)[]).map((item) => (
+                <option key={item} value={item}>{FORMALIZATION_LABELS[item]}</option>
               ))}
             </select>
             <ChevronDown aria-hidden="true" />
@@ -506,7 +475,7 @@ export default function ArtisanalSitesOverview() {
                     <li key={item.site.id}>
                       <span className="sites-top__rank">{index + 1}</span>
                       <span className="sites-top__label">
-                        <strong>{item.site.locality}</strong>
+                        <strong title={item.site.name}>{item.site.name}</strong>
                         <small>{item.site.region}</small>
                       </span>
                       <b>{integer.format(item.site.activeMiners)}</b>
@@ -591,15 +560,15 @@ export default function ArtisanalSitesOverview() {
           <article className="sites-panel">
             <div className="sites-panel__header"><h3>Répartition des sites</h3></div>
             <div className="sites-split">
-              <p className="sites-split__title">Par type d’exploitation</p>
+              <p className="sites-split__title">Par catégorie de site</p>
               <ul className="sites-bars">
-                {(Object.keys(EXPLOITATION_LABELS) as ExploitationType[]).map((type) => {
+                {(Object.keys(FORMALIZATION_LABELS) as (keyof typeof FORMALIZATION_LABELS)[]).map((type) => {
                   const value = exploitationCounts[type];
                   const max = Math.max(1, ...Object.values(exploitationCounts));
                   return (
                     <li key={type}>
-                      <span>{EXPLOITATION_LABELS[type]}</span>
-                      <i><b style={{ width: `${(value / max) * 100}%`, background: type === 'mixte' ? '#e2a000' : '#149a6b' }} /></i>
+                      <span>{FORMALIZATION_LABELS[type]}</span>
+                      <i><b style={{ width: `${(value / max) * 100}%`, background: type === 'non_formalized' ? '#e2a000' : '#149a6b' }} /></i>
                       <strong>{value}</strong>
                     </li>
                   );
@@ -642,14 +611,28 @@ export default function ArtisanalSitesOverview() {
         <section className="sites-panel sites-table-panel" aria-labelledby="sites-table-title">
           <div className="sites-panel__header">
             <h3 id="sites-table-title">Suivi opérationnel des sites <span className="sites-badge">{integer.format(insights.length)} sites</span></h3>
-            <div className="sites-tabs sites-tabs--scope">
-              <button type="button" className={scope === 'all' ? 'is-active' : ''} onClick={() => { setScope('all'); setPage(1); }}>Tous</button>
-              <button type="button" className={scope === 'watch' ? 'is-active' : ''} onClick={() => { setScope('watch'); setPage(1); }}>À surveiller</button>
-              <button type="button" className={scope === 'suspended' ? 'is-active' : ''} onClick={() => { setScope('suspended'); setPage(1); }}>Suspendus</button>
+            <div className="sites-tabs sites-tabs--scope" role="tablist" aria-label="Filtrer la liste des sites">
+              {TABLE_SCOPES.map((tab, index) => (
+                <button key={tab.value} type="button" role="tab" id={`site-scope-${tab.value}`}
+                  aria-selected={scope === tab.value} aria-controls="site-scope-panel"
+                  tabIndex={scope === tab.value ? 0 : -1}
+                  className={scope === tab.value ? 'is-active' : ''}
+                  onClick={() => { setScope(tab.value); setPage(1); }}
+                  onKeyDown={(event) => {
+                    const next = event.key === 'ArrowRight' ? (index + 1) % TABLE_SCOPES.length
+                      : event.key === 'ArrowLeft' ? (index - 1 + TABLE_SCOPES.length) % TABLE_SCOPES.length
+                        : event.key === 'Home' ? 0 : event.key === 'End' ? TABLE_SCOPES.length - 1 : null;
+                    if (next === null) return;
+                    event.preventDefault();
+                    setScope(TABLE_SCOPES[next].value); setPage(1);
+                    event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+                  }}
+                >{tab.label}</button>
+              ))}
             </div>
           </div>
 
-          <div className="sites-table-wrap">
+          <div className="sites-table-wrap" role="tabpanel" id="site-scope-panel" aria-labelledby={`site-scope-${scope}`} tabIndex={0}>
             <table className="sites-table">
               <thead>
                 <tr>
@@ -658,16 +641,19 @@ export default function ArtisanalSitesOverview() {
                   <th>Statut</th>
                   <th>Artisans / Capacité</th>
                   <th>Production</th>
-                  <th>Conformité</th>
-                  <th>Taxes recouvrées</th>
-                  <th>Dernière déclaration</th>
+                  <th title="Indice opérationnel calculé automatiquement. Ouvrez la fiche pour consulter les règles.">Conformité</th>
+                  <th title="Somme de la TVA et de la taxe de développement communautaire des ventes rattachées sur la période.">Taxes déclarées</th>
+                  <th title="Date de la dernière vente d’or non annulée rattachée au site, toutes périodes confondues.">Dernière déclaration</th>
                   <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
                 {visibleSites.map((item) => (
                   <tr key={item.site.id}>
-                    <td><strong>{item.site.locality}</strong></td>
+                    <td className="sites-table__identity">
+                      <Link to={`/artisan-sites/${item.site.id}`}><strong>{item.site.name}</strong></Link>
+                      <small>{item.site.code} · {FORMALIZATION_LABELS[item.site.formalization || 'unknown']}</small>
+                    </td>
                     <td>{item.site.region}</td>
                     <td>
                       <span className={`sites-status sites-status--${item.status}`}>
@@ -683,9 +669,9 @@ export default function ArtisanalSitesOverview() {
                     <td>{decimal(item.productionKg)} kg</td>
                     <td>
                       {item.compliance === null ? (
-                        <span className="sites-compliance is-pending">En attente</span>
+                        <span className="sites-compliance is-pending">Non évalué</span>
                       ) : (
-                        <span className={`sites-compliance ${item.compliance >= 85 ? 'is-good' : item.compliance >= 70 ? 'is-warning' : 'is-bad'}`}>
+                        <span className={`sites-compliance ${item.compliance >= 80 ? 'is-good' : item.compliance >= 70 ? 'is-warning' : 'is-bad'}`}>
                           {item.compliance} %
                         </span>
                       )}
@@ -693,7 +679,7 @@ export default function ArtisanalSitesOverview() {
                     <td>{formatFcfa(item.taxesFcfa)}</td>
                     <td>{formatDeclaration(item.lastDeclaration)}</td>
                     <td className="sites-table__action">
-                      <Link to={`/artisan-sites/${item.site.id}/modifier`} aria-label={`Ouvrir la fiche de ${item.site.name}`}>
+                      <Link to={`/artisan-sites/${item.site.id}`} aria-label={`Ouvrir la fiche de ${item.site.name}`}>
                         <MoreVertical aria-hidden="true" />
                       </Link>
                     </td>

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Factory, Plus, Search, Edit, Eye, Globe, MapPin } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
 import { supabase } from '@/lib/supabase';
 
 interface MiningCompany {
@@ -28,13 +30,16 @@ interface MiningCompany {
 
 export function MiningCompaniesPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const canCreate = canManageMiningRegistry(user);
   const [companies, setCompanies] = useState<MiningCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadCompanies();
-  }, []);
+  }, [location.key]);
 
   const loadCompanies = async () => {
     try {
@@ -80,10 +85,10 @@ export function MiningCompaniesPage() {
               Gérez les informations des sociétés minières et suivez leurs activités.
             </p>
           </div>
-          <Button onClick={() => navigate('/stakeholders/mining-companies/new')}>
+          {canCreate && <Button onClick={() => navigate('/stakeholders/mining-companies/new')}>
             <Plus className="w-4 h-4 mr-2" />
             Ajouter une société minière
-          </Button>
+          </Button>}
         </div>
 
         <Card>
@@ -114,14 +119,14 @@ export function MiningCompaniesPage() {
               <div className="py-12 text-center">
                 <Factory className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">Aucune société minière trouvée.</p>
-                <Button
+                {canCreate && <Button
                   variant="outline"
                   onClick={() => navigate('/stakeholders/mining-companies/new')}
                   className="mt-4"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Ajouter la première société minière
-                </Button>
+                </Button>}
               </div>
             ) : (
               <div className="overflow-x-auto">

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
 import { useNotification } from '@/contexts/NotificationContext';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -86,6 +88,7 @@ export function MiningCompanyForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = !!id;
+  const { user } = useAuth();
   const { showError } = useNotification();
 
   const [loading, setLoading] = useState(false);
@@ -216,6 +219,11 @@ export function MiningCompanyForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    if (!isEdit && !canManageMiningRegistry(user)) {
+      showError('Accès refusé', 'La création des sociétés minières est réservée à la DGMG et à l’administrateur.');
+      return;
+    }
     if (isEdit && chargementEchoue) {
       showError('Chargement', 'La fiche n’a pas pu être chargée. Rechargez la page avant d’enregistrer pour éviter d’écraser les données existantes.');
       return;

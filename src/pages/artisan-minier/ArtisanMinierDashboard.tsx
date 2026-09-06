@@ -314,6 +314,7 @@ export default function ArtisanMinierDashboard() {
                   <select value={type} onChange={(event) => setType(event.target.value)}>
                     <option value="all">Tous</option>
                     <option value="exploitant">Exploitant</option>
+                    <option value="aide_exploitant">Aide exploitant</option>
                     <option value="collecteur">Collecteur</option>
                     <option value="fournisseur">Fournisseur</option>
                     <option value="intermediaire">Intermédiaire</option>

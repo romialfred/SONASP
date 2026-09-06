@@ -1,6 +1,16 @@
 export type ArtisanalSiteStatus = 'active' | 'suspended' | 'planned';
 
-export type ExploitationType = 'artisanale' | 'semi_mecanisee' | 'mixte';
+export type ExploitationType = 'artisanale';
+
+export type SiteFormalization = 'formalized' | 'non_formalized';
+
+export interface SiteAea {
+  number: string;
+  issuedOn: string;
+  durationMonths: number;
+  documentPath: string;
+  documentName: string;
+}
 
 export type SiteAssignmentRole = 'site_manager' | 'collection_officer';
 
@@ -23,6 +33,8 @@ export interface ArtisanalSite {
   locality: string;
   areaHectares: number;
   exploitationType: ExploitationType;
+  formalization?: SiteFormalization | null;
+  aea?: SiteAea | null;
   authorizedMiners: number;
   activeMiners: number;
   averageHoleDepthMeters: number;
@@ -48,6 +60,8 @@ export interface ArtisanalSiteInput {
   locality: string;
   areaHectares: number;
   exploitationType: ExploitationType;
+  formalization?: SiteFormalization | null;
+  aea?: SiteAea | null;
   authorizedMiners: number;
   activeMiners: number;
   averageHoleDepthMeters: number;

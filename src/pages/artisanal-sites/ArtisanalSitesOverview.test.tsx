@@ -11,16 +11,20 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mocks.navigate,
+  useLocation: () => ({ key: 'test' }),
   Link: ({ children, to, ...rest }: { children: ReactNode; to: string }) => (
     <a href={to} {...rest}>{children}</a>
   ),
 }));
+
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin', is_active: true } }) }));
 
 vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/services/artisanalSiteService', () => ({
+  SITE_DATA_CHANGED: 'sonasp:artisanal-site-changed',
   artisanalSiteService: { loadSiteData: mocks.loadSiteData },
 }));
 
@@ -53,7 +57,8 @@ describe('ArtisanalSitesOverview', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Pilotage territorial')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Enregistrer un site/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Exporter le rapport/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Exporter le rapport/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Actualiser' })).toBeInTheDocument();
 
     ['Sites recensés', 'Artisans autorisés', 'Production déclarée', 'Valeur des transactions', 'Taxes et redevances']
       .forEach((label) => expect(screen.getByText(label)).toBeInTheDocument());
@@ -66,20 +71,71 @@ describe('ArtisanalSitesOverview', () => {
     expect(screen.getByText('Contribution régionale')).toBeInTheDocument();
     expect(screen.getByText('Artisans / Capacité')).toBeInTheDocument();
 
-    await waitFor(() => expect(within(screen.getByRole('table')).getByText('Poura')).toBeInTheDocument());
+    await waitFor(() => expect(within(screen.getByRole('table')).getByText(DEMO_ARTISANAL_SITES.find(site => site.locality === 'Poura')!.name)).toBeInTheDocument());
     expect(screen.getByText('6 sites')).toBeInTheDocument();
   });
 
   it('filtre le tableau via les onglets de périmètre', async () => {
     render(<ArtisanalSitesOverview />);
-    await waitFor(() => expect(within(screen.getByRole('table')).getByText('Gorom-Gorom')).toBeInTheDocument());
+    await waitFor(() => expect(within(screen.getByRole('table')).getByText(DEMO_ARTISANAL_SITES.find(site => site.locality === 'Gorom-Gorom')!.name)).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Suspendus' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Suspendus' }));
 
     const table = within(screen.getByRole('table'));
-    expect(table.getByText('Gorom-Gorom')).toBeInTheDocument();
-    expect(table.queryByText('Poura')).not.toBeInTheDocument();
+    expect(table.getByText(DEMO_ARTISANAL_SITES.find(site => site.locality === 'Gorom-Gorom')!.name)).toBeInTheDocument();
+    expect(table.queryByText(DEMO_ARTISANAL_SITES.find(site => site.locality === 'Poura')!.name)).not.toBeInTheDocument();
     expect(screen.getByText(/1 – 1 sur 1/)).toBeInTheDocument();
+  });
+
+  it('distingue deux sites de la même localité par leur nom et ouvre la bonne fiche', async () => {
+    const sites = [
+      { ...DEMO_ARTISANAL_SITES[0], id: 'gorom-n1', name: 'Kan-ŋe Gorom N1', locality: 'Gorom-Gorom', region: 'Sahel', code: 'SA-001' },
+      { ...DEMO_ARTISANAL_SITES[0], id: 'gorom-n2', name: 'Kan-ŋe Gorom N2', locality: 'Gorom-Gorom', region: 'Sahel', code: 'SA-002' },
+    ];
+    mocks.loadSiteData.mockResolvedValue({ sites, productions: [] });
+    const { container } = render(<ArtisanalSitesOverview />);
+    const table = within(screen.getByRole('table'));
+
+    await waitFor(() => expect(table.getByRole('link', { name: sites[0].name })).toBeInTheDocument());
+    for (const site of sites) {
+      expect(table.getByRole('link', { name: site.name })).toHaveAttribute('href', `/artisan-sites/${site.id}`);
+      expect(table.getByText(new RegExp(site.code))).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: `${site.name}, ${site.region}` })).toBeInTheDocument();
+      expect(within(container.querySelector('.sites-top') as HTMLElement).getByText(site.name)).toBeInTheDocument();
+    }
+    expect(table.queryByText('Gorom-Gorom')).not.toBeInTheDocument();
+    expect(table.getAllByText('Aucune déclaration')).toHaveLength(2);
+    expect(table.queryByText('Non démarré')).not.toBeInTheDocument();
+  });
+
+  it('filtre les catégories sans assimiler les dossiers historiques aux sites non formalisés', async () => {
+    const sites = [
+      { ...DEMO_ARTISANAL_SITES[0], id: 'formalise', name: 'Site avec AEA', formalization: 'formalized' as const },
+      { ...DEMO_ARTISANAL_SITES[1], id: 'non-formalise', name: 'Site sans AEA', formalization: 'non_formalized' as const },
+      { ...DEMO_ARTISANAL_SITES[2], id: 'historique', name: 'Dossier historique', formalization: null },
+    ];
+    mocks.loadSiteData.mockResolvedValue({ sites, productions: [] });
+    render(<ArtisanalSitesOverview />);
+    const table = within(screen.getByRole('table'));
+    await waitFor(() => expect(table.getByText('Dossier historique')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('tab', { name: /^Formalisés$/ }));
+    expect(screen.getByRole('tab', { name: 'Formalisés', selected: true })).toBeInTheDocument();
+    expect(table.getByText('Site avec AEA')).toBeInTheDocument();
+    expect(table.queryByText('Site sans AEA')).not.toBeInTheDocument();
+    expect(table.queryByText('Dossier historique')).not.toBeInTheDocument();
+    expect(screen.getByText(/1 – 1 sur 1/)).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByRole('tab', { name: /^Formalisés$/ }), { key: 'ArrowRight' });
+    expect(screen.getByRole('tab', { name: 'Non formalisés', selected: true })).toHaveFocus();
+    expect(table.getByText('Site sans AEA')).toBeInTheDocument();
+    expect(table.queryByText('Site avec AEA')).not.toBeInTheDocument();
+    expect(table.queryByText('Dossier historique')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser' }));
+    expect(screen.getByRole('tab', { name: 'Tous', selected: true })).toBeInTheDocument();
+    expect(table.getByText('Dossier historique')).toBeInTheDocument();
+    expect(screen.getByText(/1 – 3 sur 3/)).toBeInTheDocument();
   });
 
   it('trace la jauge de conformité en demi-cercle (large-arc-flag à 0)', async () => {

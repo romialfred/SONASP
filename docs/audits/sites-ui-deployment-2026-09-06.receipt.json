@@ -1,0 +1,25 @@
+{
+  "at": "2026-09-06T10:40:54.842Z",
+  "site": "https://sonasp.data-univers.com",
+  "deploymentId": "dpl_9ntxM2R98NzdkZDnRREf54AGzr4P",
+  "previousDeploymentId": "dpl_DdFQnecVdQdJpXf3iiiGKxN25vDZ",
+  "buildId": "local-mtpogc52",
+  "sourceHash": "3f2d1af4d4f9348e82f8061cf3ff031e30ebc94a9aa2780093f5e68083fa31c7",
+  "overviewAsset": "/assets/ArtisanalSitesOverview-BtBflfYZ.js",
+  "overviewHash": "2d1156a63971c9657ee8358db42b34436a379795b8877465677d8545d2a2e0d2",
+  "checks": {
+    "versionMatches": true,
+    "pageReady": true,
+    "tabsPresent": true,
+    "exportRemoved": true,
+    "iconImportValid": true
+  },
+  "validation": {
+    "targetedTests": 6,
+    "typecheck": "passed",
+    "lint": "passed",
+    "vercelBuild": "passed",
+    "visual": "Actual overview component rendered in an isolated browser preview; aligned header actions and both category tabs checked with local fixture data."
+  },
+  "databaseChanges": false
+}

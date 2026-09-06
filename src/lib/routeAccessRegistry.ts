@@ -155,11 +155,14 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     '/artisan-minier/cartes/suivi',
     '/artisan-minier/cartes/validation',
     '/artisan-minier/cartes/expirations',
-    '/artisan-minier/:id/edit',
     '/artisan-minier/:artisanId/infractions/nouvelle',
     '/artisan-minier/:artisanId/infractions/:infractionId',
     '/artisan-minier/:artisanId/infractions/:infractionId/modifier',
   ], SONASP),
+  ...policies(['/artisan-minier/:id/edit'], {
+    roles: ['management', 'admin', 'dgmg'], accountTypes: ['sonasp', 'admin', 'dgmg'],
+    capabilities: [], readOnly: false, national: false,
+  }),
   ...policies(['/artisan-minier/liste', '/artisan-minier/:id'], {
     roles: ['management', 'customer', 'dgmg'], accountTypes: ['sonasp', 'comptoir', 'collector', 'dgmg'],
     capabilities: [], readOnly: true, national: false,
@@ -196,11 +199,13 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     roles: ['management', 'customer'], accountTypes: ['sonasp', 'comptoir'],
     capabilities: [], readOnly: true, national: false,
   }),
-  ...policies(['/artisan-sites', '/artisan-sites/production'], {
+  ...policies(['/artisan-sites', '/artisan-sites/production', '/artisan-sites/:siteId'], {
     roles: ['management', 'dgmg'], accountTypes: ['sonasp', 'dgmg'],
     capabilities: [], readOnly: true, national: false,
   }),
-  ...policies(['/artisan-sites/nouveau', '/artisan-sites/:siteId/modifier'], SONASP),
+  ...policies(['/artisan-sites/nouveau', '/artisan-sites/:siteId/modifier'], {
+    roles: ['owner', 'admin', 'dgmg'], accountTypes: ['owner', 'admin', 'dgmg'], capabilities: [], readOnly: false, national: false,
+  }),
 
   ...policies([
     '/production/achats-mines', '/achats/plans', '/achats/plans/:id',
@@ -437,17 +442,21 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
     '/stakeholders/organizations', '/stakeholders/organizations/new',
     '/stakeholders/organizations/:id/edit',
   ], {
-    roles: ['owner', 'admin', 'management'], accountTypes: ['owner', 'admin', 'sonasp'],
-    capabilities: [CAPABILITIES.REFERENTIALS_MANAGE],
-    readOnly: false, national: true,
+    roles: ['owner', 'admin', 'management', 'dgmg'], accountTypes: ['owner', 'admin', 'sonasp', 'dgmg'],
+    capabilities: [CAPABILITIES.REFERENTIALS_MANAGE, CAPABILITIES.DGMG_SUPERVISE],
+    readOnly: false, national: false,
   }),
   ...policies([
-    '/stakeholders/mining-companies', '/stakeholders/mining-companies/new',
+    '/stakeholders/mining-companies',
     '/stakeholders/mining-companies/:id', '/stakeholders/mining-companies/:id/edit',
   ], {
-    roles: ['management', 'admin'], accountTypes: ['sonasp', 'admin'],
-    capabilities: [CAPABILITIES.REFERENTIALS_MANAGE, CAPABILITIES.SONASP_PREPARE],
-    readOnly: false, national: true,
+    roles: ['management', 'admin', 'dgmg'], accountTypes: ['sonasp', 'admin', 'dgmg'],
+    capabilities: [CAPABILITIES.REFERENTIALS_MANAGE, CAPABILITIES.SONASP_PREPARE, CAPABILITIES.DGMG_SUPERVISE],
+    readOnly: false, national: false,
+  }),
+  ...policies(['/stakeholders/mining-companies/new'], {
+    roles: ['owner', 'admin', 'dgmg'], accountTypes: ['owner', 'admin', 'dgmg'],
+    capabilities: [], readOnly: false, national: false,
   }),
   ...policies(['/stakeholders/approvers'], {
     roles: ['owner', 'admin'], accountTypes: ['owner', 'admin'],
@@ -626,7 +635,10 @@ export function evaluatePrivateRouteAccess(
   if (accountType === 'owner') {
     return { allowed: true, accountType, policy };
   }
-  const moduleCode = platformModuleCodeForPath(pathname);
+  // Les écrans du référentiel DGMG héritent du module Sites déjà attribué.
+  // Les autres comptes conservent le module Parties prenantes.
+  const moduleCode = accountType === 'dgmg' && /^\/stakeholders\/(organizations|mining-companies)(\/|$)/u.test(pathname)
+    ? 'mining_sites' : platformModuleCodeForPath(pathname);
   const isModuleScopedAccount = accountType === 'admin'
     || accountType === 'sonasp'
     || accountType === 'dgmg'

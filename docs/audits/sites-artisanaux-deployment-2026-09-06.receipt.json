@@ -1,0 +1,108 @@
+{
+  "at": "2026-09-06T10:29:20.575Z",
+  "site": "https://sonasp.data-univers.com",
+  "deploymentId": "dpl_DdFQnecVdQdJpXf3iiiGKxN25vDZ",
+  "deploymentUrl": "https://sonasp-7eo70qkz7-business-tech-services.vercel.app",
+  "buildId": "local-mtpnxi2f",
+  "sourceHash": "8338f0d7e00ecb474bb365a6e027c8ab432e2f3df6731642565c7939a123b6e0",
+  "sourceState": "Working tree snapshot; no Git commit or push performed",
+  "previousDeploymentId": "dpl_4J4uo56HJDJ7T6gRZExHMTSUPN4L",
+  "backup": "C:/Users/romia/.codex/backups/sonasp/sites-artisanaux-20260906",
+  "database": {
+    "project": "yyverzuhkdonjjuficor",
+    "migration": "20260906093115_sites_artisanaux_formalisation_aea.sql",
+    "checksum": "2de381766387d56a66a49e10067476810f043d916085d02ba9ef63c11573b60c",
+    "rehearsalRolledBack": true,
+    "unchangedBusinessTables": 10,
+    "verification": {
+      "anon_denied": true,
+      "artisanal_type": true,
+      "migration_recorded": true,
+      "private_aea_bucket": true,
+      "save_rpc": true,
+      "site_count": 7
+    }
+  },
+  "edge": {
+    "slug": "sensitive-upload",
+    "version": 5,
+    "status": "ACTIVE",
+    "verifiedSourceFiles": 12,
+    "checks": [
+      {
+        "name": "CORS autorisé",
+        "status": 204,
+        "passed": true,
+        "response": ""
+      },
+      {
+        "name": "Origine étrangère refusée",
+        "status": 403,
+        "passed": true,
+        "response": "{\"success\":false,\"error\":\"Requête non autorisée.\"}"
+      },
+      {
+        "name": "Requête de dépôt vide refusée",
+        "status": 400,
+        "passed": true,
+        "response": "{\"success\":false,\"error\":\"Fichier invalide.\"}"
+      },
+      {
+        "name": "Jeton non valide refusé",
+        "status": 401,
+        "passed": true,
+        "response": "{\"success\":false,\"error\":\"Ce dépôt n’est pas autorisé.\"}"
+      }
+    ]
+  },
+  "frontend": {
+    "state": "READY",
+    "httpChecks": [
+      {
+        "path": "/assets/ArtisanalSitesOverview-Bnb68SML.js",
+        "status": 200,
+        "passed": true
+      },
+      {
+        "path": "/assets/ArtisanalSiteForm-D_UKxe1h.js",
+        "status": 200,
+        "passed": true
+      },
+      {
+        "path": "/assets/ArtisanalSiteDetails-DRCDb_K1.js",
+        "status": 200,
+        "passed": true
+      },
+      {
+        "path": "/",
+        "status": 200,
+        "passed": true
+      },
+      {
+        "path": "/artisan-sites",
+        "status": 200,
+        "passed": true
+      },
+      {
+        "path": "/build-version.json",
+        "status": 200,
+        "passed": true
+      }
+    ],
+    "browserObserved": [
+      "Site names in operational table",
+      "Sites artisanaux & Artisans navigation",
+      "Formalization category",
+      "Conditional AEA fields"
+    ],
+    "session": "Existing Owner session; no test records created"
+  },
+  "validation": {
+    "typecheck": "passed",
+    "build": "passed locally and on Vercel",
+    "targetedFrontendTests": 11,
+    "isolatedPostgresChecks": 36,
+    "migrationIntegrityTests": 10
+  },
+  "deploymentMethod": "Single migration and history entry applied atomically via authenticated Management API after a verified rollback rehearsal; global direct-connection dry-run could not authenticate its temporary role."
+}

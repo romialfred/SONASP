@@ -12,10 +12,13 @@
 
 .sites-dashboard__intro {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 16px 24px;
 }
+
+.sites-dashboard__intro > div:first-child { flex: 1 1 420px; min-width: 0; }
 
 .sites-dashboard__eyebrow {
   margin: 0;
@@ -42,12 +45,18 @@
 .sites-dashboard__actions {
   display: flex;
   flex: 0 0 auto;
-  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
+  gap: 10px;
 }
+
+.sites-dashboard__actions .sites-button { flex: 0 0 auto; width: auto; height: 40px; margin: 0; }
 
 .sites-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 38px;
   padding: 0 15px;
   gap: 9px;
@@ -58,6 +67,8 @@
   font: inherit;
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.2;
   box-shadow: 0 1px 2px rgb(16 36 62 / 4%);
   transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
@@ -70,7 +81,12 @@
 .sites-button svg {
   width: 17px;
   height: 17px;
+  flex: 0 0 auto;
 }
+
+.sites-button:disabled { opacity: 0.55; cursor: wait; }
+.sites-button:focus-visible,
+.sites-tabs--scope button:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
 
 .sites-button--gold {
   border-color: #e0a200;
@@ -500,6 +516,10 @@
   box-shadow: 0 1px 3px rgb(16 36 62 / 12%);
 }
 
+.sites-table-panel > .sites-panel__header { flex-wrap: wrap; padding-bottom: 10px; }
+.sites-tabs--scope { max-width: 100%; flex-wrap: wrap; }
+.sites-tabs--scope button { flex: 0 0 auto; min-height: 34px; height: auto; padding: 7px 13px; white-space: nowrap; }
+
 /* Onglets soulignés de la carte (maquette « Carte / Régions »). */
 .sites-tabs--underline {
   padding: 0;
@@ -828,6 +848,10 @@
 
 .sites-table td { height: 36px; padding: 0 12px; border-top: 1px solid #eef2f6; }
 .sites-table td strong { font-size: 12px; font-weight: 700; }
+.sites-table td.sites-table__identity { min-width: 200px; max-width: 320px; padding-top: 9px; padding-bottom: 9px; white-space: normal; overflow-wrap: anywhere; }
+.sites-table__identity a { display: block; color: inherit; }
+.sites-table__identity a:hover { color: var(--green); text-decoration: underline; }
+.sites-table__identity small { display: block; margin-top: 3px; color: #64788d; font-size: 10px; }
 .sites-table tbody tr:hover { background: #fafcfd; }
 
 .sites-table__action a {
@@ -933,7 +957,8 @@
 }
 
 @media (max-width: 900px) {
-  .sites-dashboard__intro { flex-direction: column; }
+  .sites-dashboard__intro { flex-direction: column; align-items: flex-start; }
+  .sites-dashboard__intro > div:first-child { flex-basis: auto; }
   .sites-dashboard__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sites-map-panel__body,
   .sites-vigilance__body { grid-template-columns: minmax(0, 1fr); }

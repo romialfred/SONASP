@@ -6,6 +6,13 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+type ArtisanResponsableDbRow = {
+  id: string; artisan_id: string; nom: string; prenoms: string; date_naissance: string;
+  telephone: string; whatsapp: string | null; whatsapp_identique: boolean; email: string | null;
+  fonction: string; type_piece_identite: string; numero_piece_identite: string;
+  date_delivrance_piece: string | null; date_expiration_piece: string | null; lieu_delivrance_piece: string | null;
+}
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -279,6 +286,13 @@ export type Database = {
       }
       artisanal_sites: {
         Row: {
+          formalization: string | null
+          aea_number: string | null
+          aea_issued_on: string | null
+          aea_duration_months: number | null
+          aea_document_path: string | null
+          aea_document_name: string | null
+          legacy_exploitation_type: string | null
           active_miners: number
           area_hectares: number
           authorized_chemicals: string[]
@@ -302,6 +316,13 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          formalization?: string | null
+          aea_number?: string | null
+          aea_issued_on?: string | null
+          aea_duration_months?: number | null
+          aea_document_path?: string | null
+          aea_document_name?: string | null
+          legacy_exploitation_type?: string | null
           active_miners?: number
           area_hectares: number
           authorized_chemicals?: string[]
@@ -325,6 +346,13 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          formalization?: string | null
+          aea_number?: string | null
+          aea_issued_on?: string | null
+          aea_duration_months?: number | null
+          aea_document_path?: string | null
+          aea_document_name?: string | null
+          legacy_exploitation_type?: string | null
           active_miners?: number
           area_hectares?: number
           authorized_chemicals?: string[]
@@ -6769,6 +6797,12 @@ export type Database = {
       }
       snp_artisan_documents: {
         Row: {
+          owner_kind: string
+          responsable_id: string | null
+          titre: string | null
+          storage_bucket: string
+          sha256: string | null
+          deleted_at: string | null
           artisan_id: string
           chemin_fichier: string
           description: string | null
@@ -6781,6 +6815,12 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          owner_kind?: string
+          responsable_id?: string | null
+          titre?: string | null
+          storage_bucket?: string
+          sha256?: string | null
+          deleted_at?: string | null
           artisan_id: string
           chemin_fichier: string
           description?: string | null
@@ -6793,6 +6833,12 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          owner_kind?: string
+          responsable_id?: string | null
+          titre?: string | null
+          storage_bucket?: string
+          sha256?: string | null
+          deleted_at?: string | null
           artisan_id?: string
           chemin_fichier?: string
           description?: string | null
@@ -7829,8 +7875,36 @@ export type Database = {
           },
         ]
       }
+      snp_artisan_dossier_audit: {
+        Row: { id: number; artisan_id: string; actor_id: string | null; action: string; ancien_role: string | null; nouveau_role: string | null; ancien_exploitant_id: string | null; nouvel_exploitant_id: string | null; created_at: string }
+        Insert: { id?: never; artisan_id: string; actor_id?: string | null; action: string; ancien_role?: string | null; nouveau_role?: string | null; ancien_exploitant_id?: string | null; nouvel_exploitant_id?: string | null; created_at?: string }
+        Update: { id?: never; artisan_id?: string; actor_id?: string | null; action?: string; ancien_role?: string | null; nouveau_role?: string | null; ancien_exploitant_id?: string | null; nouvel_exploitant_id?: string | null; created_at?: string }
+        Relationships: [{ foreignKeyName: 'snp_artisan_dossier_audit_artisan_id_fkey'; columns: ['artisan_id']; isOneToOne: false; referencedRelation: 'snp_artisans_miniers'; referencedColumns: ['id'] }]
+      }
+      snp_artisan_vente_site_origins: {
+        Row: { vente_id: string; site_id: string | null; recorded_at: string }
+        Insert: { vente_id: string; site_id?: string | null; recorded_at?: string }
+        Update: { vente_id?: string; site_id?: string | null; recorded_at?: string }
+        Relationships: [{ foreignKeyName: 'snp_artisan_vente_site_origins_vente_id_fkey'; columns: ['vente_id']; isOneToOne: true; referencedRelation: 'snp_artisan_ventes_or'; referencedColumns: ['id'] }]
+      }
+      snp_artisan_responsables: {
+        Row: ArtisanResponsableDbRow
+        Insert: Partial<ArtisanResponsableDbRow> & Pick<ArtisanResponsableDbRow, 'artisan_id' | 'nom' | 'prenoms' | 'date_naissance' | 'telephone' | 'fonction' | 'type_piece_identite' | 'numero_piece_identite'>
+        Update: Partial<ArtisanResponsableDbRow>
+        Relationships: []
+      }
       snp_artisans_miniers: {
         Row: {
+          numero_ifu: string | null
+          whatsapp: string | null
+          whatsapp_identique: boolean
+          siege_pays: string | null
+          siege_region: string | null
+          siege_commune: string | null
+          siege_adresse: string | null
+          exploitant_id: string | null
+          dossier_version: number
+          creation_fingerprint: string | null
           actif: boolean
           adresse: string | null
           artisanal_site_id: string | null
@@ -7867,13 +7941,23 @@ export type Database = {
           sexe: string | null
           telephone: string
           telephone_secondaire: string | null
-          type_artisan: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur'
+          type_artisan: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur' | 'aide_exploitant'
           type_personne: 'physique' | 'morale'
           type_piece_identite: string | null
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
+          numero_ifu?: string | null
+          whatsapp?: string | null
+          whatsapp_identique?: boolean
+          siege_pays?: string | null
+          siege_region?: string | null
+          siege_commune?: string | null
+          siege_adresse?: string | null
+          exploitant_id?: string | null
+          dossier_version?: number
+          creation_fingerprint?: string | null
           actif?: boolean
           adresse?: string | null
           artisanal_site_id?: string | null
@@ -7910,13 +7994,23 @@ export type Database = {
           sexe?: string | null
           telephone: string
           telephone_secondaire?: string | null
-          type_artisan: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur'
+          type_artisan: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur' | 'aide_exploitant'
           type_personne: 'physique' | 'morale'
           type_piece_identite?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
+          numero_ifu?: string | null
+          whatsapp?: string | null
+          whatsapp_identique?: boolean
+          siege_pays?: string | null
+          siege_region?: string | null
+          siege_commune?: string | null
+          siege_adresse?: string | null
+          exploitant_id?: string | null
+          dossier_version?: number
+          creation_fingerprint?: string | null
           actif?: boolean
           adresse?: string | null
           artisanal_site_id?: string | null
@@ -7953,7 +8047,7 @@ export type Database = {
           sexe?: string | null
           telephone?: string
           telephone_secondaire?: string | null
-          type_artisan?: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur'
+          type_artisan?: 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur' | 'aide_exploitant'
           type_personne?: 'physique' | 'morale'
           type_piece_identite?: string | null
           updated_at?: string | null
@@ -14580,6 +14674,12 @@ export type Database = {
       }
     }
     Functions: {
+      snp_save_artisanal_site: { Args: { p_site: Json; p_assignments: Json }; Returns: Json }
+      snp_save_artisan_dossier: { Args: { p_id: string | null; p_creation_id: string; p_expected_updated_at: string | null; p_dossier: Json; p_confirm_transition?: boolean }; Returns: Json }
+      snp_search_exploitants: { Args: { p_query: string; p_exclude_id?: string | null }; Returns: { id: string; nom: string | null; prenoms: string | null; raison_sociale: string | null; type_personne: string; numero_carte: string | null; artisanal_site_id: string | null; site_name: string | null }[] }
+      snp_artisan_document_allowed: { Args: { p_artisan_id: string }; Returns: boolean }
+      snp_register_artisan_document: { Args: { p_document: Json }; Returns: Json }
+      snp_delete_artisan_document_gateway: { Args: { p_document_id: string; p_actor_id: string }; Returns: string }
       analyze_audit_fields: {
         Args: never
         Returns: {

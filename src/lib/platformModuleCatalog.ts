@@ -44,8 +44,8 @@ export const PLATFORM_MODULE_CATALOG = [
   {
     navigationGroupId: 'sites-miniers',
     code: 'mining_sites',
-    label: 'Sites miniers',
-    description: 'Référentiel et suivi des sites miniers semi-mécanisés.',
+    label: 'Sites artisanaux',
+    description: 'Référentiel, formalisation et suivi des sites artisanaux.',
     category: 'mines_semi_mecanisees',
     accessDomain: 'sites',
     route: '/artisan-sites',

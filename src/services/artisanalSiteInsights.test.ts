@@ -79,6 +79,16 @@ describe('production reconstituée depuis les ventes des artisans', () => {
     expect(productions).toHaveLength(0);
   });
 
+  it('préserve le site d’origine et les déclarations initialement non rattachées', () => {
+    const changed = [{ ...artisans[0], artisanal_site_id: 'site-poura' }];
+    const production = buildProductionFromArtisanSales(DEMO_ARTISANAL_SITES, changed, [
+      sale({ attribution_site_id: 'site-kalsaka' }),
+      sale({ id: 'sans-site', attribution_site_id: null }),
+    ]);
+    expect(production).toHaveLength(1);
+    expect(production[0].siteId).toBe('site-kalsaka');
+  });
+
   it('alimente les agrégats du tableau de bord', () => {
     const productions = buildProductionFromArtisanSales(DEMO_ARTISANAL_SITES, artisans, [sale({})]);
     const insights = buildSiteInsights(DEMO_ARTISANAL_SITES, productions, REFERENCE);

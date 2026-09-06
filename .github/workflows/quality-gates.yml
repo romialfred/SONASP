@@ -82,4 +82,4 @@ jobs:
 
             sleep $((attempt * 10))
           done
-      - run: npm run build
+      - run: npm run build:release

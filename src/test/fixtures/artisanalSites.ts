@@ -47,7 +47,7 @@ export const DEMO_ARTISANAL_SITES: ArtisanalSite[] = [
   {
     id: 'site-poura', code: 'SA-BOU-2026-0002', name: 'Site artisanal de Poura', status: 'active',
     region: 'Boucle du Mouhoun', province: 'Balé', locality: 'Poura', areaHectares: 61,
-    exploitationType: 'semi_mecanisee', authorizedMiners: 240, activeMiners: 211,
+    exploitationType: 'artisanale', authorizedMiners: 240, activeMiners: 211,
     averageHoleDepthMeters: 31, authorizedChemicals: ['Borax'], latitude: 11.586, longitude: -2.753, photos: [],
     manager: { role: 'site_manager', fullName: 'Moussa Traoré', phone: '+226 71 03 19 47', email: 'moussa.traore@sonasp.bf' },
     collectionOfficer: { role: 'collection_officer', fullName: 'Aminata Sanou', phone: '+226 75 14 09 38' },
@@ -56,7 +56,7 @@ export const DEMO_ARTISANAL_SITES: ArtisanalSite[] = [
   {
     id: 'site-gaoua', code: 'SA-SUD-2026-0003', name: 'Site artisanal de Gaoua', status: 'active',
     region: 'Sud-Ouest', province: 'Poni', locality: 'Gaoua', areaHectares: 37.8,
-    exploitationType: 'mixte', authorizedMiners: 160, activeMiners: 128,
+    exploitationType: 'artisanale', authorizedMiners: 160, activeMiners: 128,
     averageHoleDepthMeters: 18, authorizedChemicals: ['Borax', 'Charbon actif'], latitude: 10.325, longitude: -3.174, photos: [],
     manager: { role: 'site_manager', fullName: 'Jean Kambou', phone: '+226 70 38 15 42' },
     collectionOfficer: { role: 'collection_officer', fullName: 'Fatou Somé', phone: '+226 74 11 60 28', email: 'fatou.some@sonasp.bf' },
@@ -74,7 +74,7 @@ export const DEMO_ARTISANAL_SITES: ArtisanalSite[] = [
   {
     id: 'site-hounde', code: 'SA-HAU-2026-0005', name: 'Site artisanal de Houndé', status: 'planned',
     region: 'Hauts-Bassins', province: 'Tuy', locality: 'Houndé', areaHectares: 48,
-    exploitationType: 'semi_mecanisee', authorizedMiners: 190, activeMiners: 0,
+    exploitationType: 'artisanale', authorizedMiners: 190, activeMiners: 0,
     averageHoleDepthMeters: 25, authorizedChemicals: ['Borax', 'Charbon actif'], latitude: 11.5, longitude: -3.516, photos: [],
     manager: { role: 'site_manager', fullName: 'Clarisse Zongo', phone: '+226 77 04 31 82' },
     collectionOfficer: { role: 'collection_officer', fullName: 'Poste à pourvoir', phone: '' },

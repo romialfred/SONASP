@@ -130,7 +130,7 @@ describe('ArtisanMinierDetails', () => {
     render(<ArtisanMinierDetails />);
     await waitFor(() => expect(screen.getByRole('tab', { name: /Informations/ })).toBeInTheDocument());
 
-    expect(screen.getByText('Contact et localisation')).toBeInTheDocument();
+    expect(screen.getByText('Coordonnées et rattachement')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Ventes déclarées/ }));
     expect(screen.getByText('REC-001')).toBeInTheDocument();

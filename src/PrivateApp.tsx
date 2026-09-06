@@ -4,6 +4,7 @@ import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { DialogProvider } from './contexts/DialogContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MinePortalGuard } from './components/auth/MinePortalGuard';
 import { ComptoirPortalGuard } from './components/auth/ComptoirPortalGuard';
@@ -115,6 +116,11 @@ const ReservePhysicalPage = lazyNamed(() => import('./pages/inventory/NationalRe
 const ReserveControlsPage = lazyNamed(() => import('./pages/inventory/NationalReserveWorkspace'), 'ReserveControlsPage');
 const ReserveValuationPage = lazyNamed(() => import('./pages/inventory/NationalReserveWorkspace'), 'ReserveValuationPage');
 const ReserveAuditPage = lazyNamed(() => import('./pages/inventory/NationalReserveWorkspace'), 'ReserveAuditPage');
+function OrganizationRegistryRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  return <ProtectedRoute allowedRoles={['owner', 'admin', 'management', 'dgmg']} requiredSensitiveCapability={user?.role === 'dgmg' ? CAPABILITIES.DGMG_SUPERVISE : CAPABILITIES.REFERENTIALS_MANAGE}>{children}</ProtectedRoute>;
+}
+
 const OrganizationsPage = lazyNamed(() => import('./pages/stakeholders/OrganizationsPage'), 'OrganizationsPage');
 const OrganizationForm = lazyNamed(() => import('./pages/stakeholders/OrganizationForm'), 'OrganizationForm');
 const MiningCompaniesPage = lazyNamed(() => import('./pages/stakeholders/MiningCompaniesPage'), 'MiningCompaniesPage');
@@ -185,6 +191,7 @@ const RequisitionForm = lazy(() => import('./pages/requisitions/RequisitionForm'
 const RequisitionDetails = lazy(() => import('./pages/requisitions/RequisitionDetails'));
 const FactureVente = lazy(() => import('./pages/artisan-minier/FactureVente'));
 const ArtisanalSitesOverview = lazy(() => import('./pages/artisanal-sites/ArtisanalSitesOverview'));
+const ArtisanalSiteDetails = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteDetails'));
 const ArtisanalSiteForm = lazy(() => import('./pages/artisanal-sites/ArtisanalSiteForm'));
 const MinePortalPage = lazy(() => import('./pages/mine/MinePortalPage'));
 const ComptoirPortalPage = lazy(() => import('./pages/comptoir/ComptoirPortalPage'));
@@ -686,7 +693,7 @@ function AppRoutes() {
             <Route
               path="/national-reserve/allocations/new"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['management', 'dgmg']}>
                   <ReserveAllocationForm />
                 </ProtectedRoute>
               }
@@ -728,10 +735,11 @@ function AppRoutes() {
               }
             />
 
+            <Route path="/artisan-sites/:siteId" element={<ProtectedRoute><ArtisanalSiteDetails /></ProtectedRoute>} />
             <Route
               path="/artisan-sites/nouveau"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['admin', 'dgmg']}>
                   <ArtisanalSiteForm />
                 </ProtectedRoute>
               }
@@ -740,7 +748,7 @@ function AppRoutes() {
             <Route
               path="/artisan-sites/:siteId/modifier"
               element={
-                <ProtectedRoute allowedRoles={['management']}>
+                <ProtectedRoute allowedRoles={['admin', 'dgmg']}>
                   <ArtisanalSiteForm />
                 </ProtectedRoute>
               }
@@ -1666,34 +1674,34 @@ function AppRoutes() {
             <Route
               path="/stakeholders/organizations"
               element={
-                <ProtectedRoute allowedRoles={['owner', 'admin', 'management']} requiredSensitiveCapability={CAPABILITIES.REFERENTIALS_MANAGE}>
+                <OrganizationRegistryRoute>
                   <OrganizationsPage />
-                </ProtectedRoute>
+                </OrganizationRegistryRoute>
               }
             />
 
             <Route
               path="/stakeholders/organizations/new"
               element={
-                <ProtectedRoute allowedRoles={['owner', 'admin', 'management']} requiredSensitiveCapability={CAPABILITIES.REFERENTIALS_MANAGE}>
+                <OrganizationRegistryRoute>
                   <OrganizationForm />
-                </ProtectedRoute>
+                </OrganizationRegistryRoute>
               }
             />
 
             <Route
               path="/stakeholders/organizations/:id/edit"
               element={
-                <ProtectedRoute allowedRoles={['owner', 'admin', 'management']} requiredSensitiveCapability={CAPABILITIES.REFERENTIALS_MANAGE}>
+                <OrganizationRegistryRoute>
                   <OrganizationForm />
-                </ProtectedRoute>
+                </OrganizationRegistryRoute>
               }
             />
 
             <Route
               path="/stakeholders/mining-companies"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['management', 'admin', 'dgmg']}>
                   <MiningCompaniesPage />
                 </ProtectedRoute>
               }
@@ -1702,7 +1710,7 @@ function AppRoutes() {
             <Route
               path="/stakeholders/mining-companies/new"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['admin', 'dgmg']}>
                   <MiningCompanyForm />
                 </ProtectedRoute>
               }
@@ -1711,7 +1719,7 @@ function AppRoutes() {
             <Route
               path="/stakeholders/mining-companies/:id"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['management', 'admin', 'dgmg']}>
                   <MiningCompanyDetails />
                 </ProtectedRoute>
               }
@@ -1720,7 +1728,7 @@ function AppRoutes() {
             <Route
               path="/stakeholders/mining-companies/:id/edit"
               element={
-                <ProtectedRoute allowedRoles={['management', 'admin']}>
+                <ProtectedRoute allowedRoles={['management', 'admin', 'dgmg']}>
                   <MiningCompanyForm />
                 </ProtectedRoute>
               }

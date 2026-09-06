@@ -155,6 +155,17 @@ describe('registre contractuel des routes privées', () => {
     expect(evaluatePrivateRouteAccess({ ...administrator, is_active: false }, '/refining').allowed).toBe(false);
   });
 
+  it('rattache les créations DGMG au registre minier attribué, sans ouvrir les autres parties prenantes', () => {
+    const dgmg = { ...profiles.dgmg, module_codes: ['mining_sites'] };
+    for (const path of ['/artisan-sites/nouveau', '/stakeholders/mining-companies/new', '/stakeholders/organizations/new']) {
+      expect(evaluatePrivateRouteAccess(dgmg, path).allowed).toBe(true);
+      expect(evaluatePrivateRouteAccess({ ...dgmg, module_codes: [] }, path).allowed).toBe(false);
+    }
+    expect(evaluatePrivateRouteAccess(dgmg, '/customers').allowed).toBe(false);
+    expect(evaluatePrivateRouteAccess(profiles.sonasp, '/artisan-sites/nouveau').allowed).toBe(false);
+    expect(evaluatePrivateRouteAccess(profiles.sonasp, '/stakeholders/mining-companies/new').allowed).toBe(false);
+  });
+
   it('refuse aussi une URL directe lorsque le module canonique n’est pas attribué', () => {
     const agent = {
       ...profiles.sonasp,

@@ -1,5 +1,8 @@
 /** Presentation only: never translate identifiers, business references or tenant data. */
 export const ENGLISH_NAVIGATION_LABELS: Readonly<Record<string, string>> = {
+  "comptoirs": "Gold buying offices",
+  "sites artisanaux & artisans": "Artisanal sites & miners",
+  "sites artisanaux": "Artisanal sites",
   "mines semi-mécanisées": "Semi-mechanised mines",
   "mine semi-mécanisée": "Semi-mechanised mine",
   "sites miniers": "Mining sites",

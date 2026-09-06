@@ -10,16 +10,20 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mocks.navigate,
+  useLocation: () => ({ key: 'test' }),
   Link: ({ children, to, ...rest }: { children: ReactNode; to: string }) => (
     <a href={to} {...rest}>{children}</a>
   ),
 }));
+
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin', is_active: true } }) }));
 
 vi.mock('@/components/layout/NationalDashboardLayout', () => ({
   NationalDashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/services/artisanalSiteService', () => ({
+  SITE_DATA_CHANGED: 'sonasp:artisanal-site-changed',
   artisanalSiteService: { loadSiteData: mocks.loadSiteData },
   calculateSiteMetrics: () => ({
     activeMinerCount: 0,

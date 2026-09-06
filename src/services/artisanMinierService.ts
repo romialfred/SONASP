@@ -1,8 +1,9 @@
 import { supabase } from '@/lib/supabase';
-import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
+import { artisanDocumentService } from './artisanDocumentService';
 import { genererNumeroCarte } from './carteNumberService';
+import type { ResponsableArtisan } from '@/lib/artisanDossier';
 
-export type TypeArtisan = 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur';
+export type TypeArtisan = 'exploitant' | 'collecteur' | 'intermediaire' | 'fournisseur' | 'aide_exploitant';
 export type TypePersonne = 'physique' | 'morale';
 
 /**
@@ -28,6 +29,16 @@ const normaliserChampsVidesArtisan = <T extends Record<string, unknown>>(valeurs
 };
 
 export interface ArtisanMinier {
+  responsable?: ResponsableArtisan | null;
+  numero_ifu?: string | null;
+  whatsapp?: string | null;
+  whatsapp_identique?: boolean;
+  siege_pays?: string | null;
+  siege_region?: string | null;
+  siege_commune?: string | null;
+  siege_adresse?: string | null;
+  exploitant_id?: string | null;
+  dossier_version?: number;
   id: string;
   /** Nullable en base : la carte est attribuée après enregistrement. */
   numero_carte: string | null;
@@ -119,7 +130,15 @@ export const artisanMinierService = {
       .single();
 
     if (error) throw error;
-    return data;
+    const responsible = await supabase.from('snp_artisan_responsables').select('*').eq('artisan_id', id).maybeSingle();
+    if (responsible.error) throw responsible.error;
+    const responsable = responsible.data ? {
+      ...responsible.data,
+      whatsapp: responsible.data.whatsapp || '', email: responsible.data.email || '',
+      date_delivrance_piece: responsible.data.date_delivrance_piece || '', date_expiration_piece: responsible.data.date_expiration_piece || '',
+      lieu_delivrance_piece: responsible.data.lieu_delivrance_piece || '',
+    } : null;
+    return { ...data, responsable };
   },
 
   async getByNumeroCarte(numeroCarte: string) {
@@ -217,80 +236,27 @@ export const artisanMinierService = {
   },
 
   async uploadPhoto(artisanId: string, file: File) {
-    const validatedFile = validateUploadFile(file, UPLOAD_POLICIES.artisanPhoto);
-    const fileName = `${artisanId}-${crypto.randomUUID()}.${validatedFile.extension}`;
-    const filePath = `artisans-photos/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('artisan-documents')
-      .upload(filePath, file, { contentType: validatedFile.mimeType, upsert: false });
-
-    if (uploadError) throw uploadError;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('artisan-documents')
-      .getPublicUrl(filePath);
-
-    await this.update(artisanId, { photo_url: publicUrl });
-
-    return publicUrl;
+    const document = await artisanDocumentService.upload(artisanId, {
+      id: crypto.randomUUID(), owner: 'artisan', type: 'photo',
+      title: 'Photo d’identité', file, status: 'pending',
+    });
+    return document.storage_bucket + '/' + document.chemin_fichier;
   },
 
   async uploadDocument(artisanId: string, file: File, documentType: string) {
-    const policy = documentType === 'photo'
-      ? UPLOAD_POLICIES.artisanPhoto
-      : UPLOAD_POLICIES.artisanDocument;
-    const validatedFile = validateUploadFile(file, policy);
-    const fileName = `${artisanId}-${crypto.randomUUID()}.${validatedFile.extension}`;
-    const filePath = `artisans-documents/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('artisan-documents')
-      .upload(filePath, file, { contentType: validatedFile.mimeType, upsert: false });
-
-    if (uploadError) throw uploadError;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('artisan-documents')
-      .getPublicUrl(filePath);
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { error: docError } = await supabase
-      .from('snp_artisan_documents')
-      .insert({
-          artisan_id: artisanId,
-          type_document: documentType,
-          nom_fichier: file.name,
-          chemin_fichier: publicUrl,
-          type_mime: validatedFile.mimeType,
-          taille_fichier: file.size,
-          uploaded_by: user?.id
-        });
-
-    if (docError) throw docError;
-
-    return publicUrl;
+    const document = await artisanDocumentService.upload(artisanId, {
+      id: crypto.randomUUID(), owner: 'artisan', type: documentType,
+      title: file.name, file, status: 'pending',
+    });
+    return document.storage_bucket + '/' + document.chemin_fichier;
   },
 
   async getDocuments(artisanId: string) {
-    const { data, error } = await supabase
-      .from('snp_artisan_documents')
-      .select('*')
-      .eq('artisan_id', artisanId)
-      .order('uploaded_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
+    return artisanDocumentService.list(artisanId);
   },
 
   async deleteDocument(documentId: string) {
-    const { error } = await supabase
-      .from('snp_artisan_documents')
-      .delete()
-      .eq('id', documentId);
-
-    if (error) throw error;
+    await artisanDocumentService.remove(documentId);
   },
 
   async getActivities(artisanId: string) {

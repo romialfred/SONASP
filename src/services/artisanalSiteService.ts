@@ -1,3 +1,6 @@
+import { validateSiteAea } from '@/lib/siteFormalization';
+import { secureRandomId } from '@/lib/secureRandom';
+import { siteAeaDocumentService } from '@/services/siteAeaDocumentService';
 import { supabase } from '@/lib/supabase';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { artisanGoldSalesService } from '@/services/artisanGoldSalesService';
@@ -10,6 +13,8 @@ import type {
   SiteProduction,
   SiteProductionSummary,
 } from '@/types/artisanalSite';
+
+export const SITE_DATA_CHANGED = 'sonasp:artisanal-site-changed';
 
 type SiteRow = Record<string, unknown>;
 
@@ -39,7 +44,13 @@ const mapSiteRow = (row: SiteRow, assignments: SiteRow[] = []): ArtisanalSite =>
     province: row.province as string,
     locality: row.locality as string,
     areaHectares: Number(row.area_hectares || 0),
-    exploitationType: row.exploitation_type as ArtisanalSite['exploitationType'],
+    exploitationType: 'artisanale',
+    formalization: (row.formalization as ArtisanalSite['formalization']) || null,
+    aea: row.aea_number ? {
+      number: String(row.aea_number), issuedOn: String(row.aea_issued_on || ''),
+      durationMonths: Number(row.aea_duration_months || 0),
+      documentPath: String(row.aea_document_path || ''), documentName: String(row.aea_document_name || ''),
+    } : null,
     authorizedMiners: Number(row.authorized_miners || 0),
     activeMiners: Number(row.active_miners || 0),
     averageHoleDepthMeters: Number(row.average_hole_depth_m || 0),
@@ -122,59 +133,58 @@ const loadSiteData = async (): Promise<{ sites: ArtisanalSite[]; productions: Si
   return { sites, productions };
 };
 
-const saveSite = async (input: ArtisanalSiteInput): Promise<ArtisanalSite> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  const payload = {
-      ...(input.id ? { id: input.id } : {}),
-      code: input.code,
-      name: input.name,
-      status: input.status,
-      region: input.region,
-      province: input.province,
-      locality: input.locality,
-      area_hectares: input.areaHectares,
-      exploitation_type: input.exploitationType,
-      authorized_miners: input.authorizedMiners,
-      active_miners: input.activeMiners,
-      average_hole_depth_m: input.averageHoleDepthMeters,
-      authorized_chemicals: input.authorizedChemicals,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      photos: input.photos || [],
-      notes: input.notes || null,
-      // Tracabilite d'auteur : created_by seulement a la creation pour ne pas
-      // ecraser l'auteur d'origine lors d'une modification.
-      ...(input.id ? {} : { created_by: user?.id ?? null }),
-      updated_by: user?.id ?? null,
-  };
-  const { data, error } = await supabase
-    .from('artisanal_sites')
-    .upsert(payload)
-    .select()
-    .single();
-  if (error) throw error;
-
-    const siteId = data.id as string;
-    // Les deux roles (site_manager, collection_officer) sont toujours fournis et
-    // la table porte une contrainte UNIQUE(site_id, role) : un upsert sur ce
-    // conflit remplace les responsables sans jamais laisser le site sans contact.
-    // L'ancien delete-puis-insert ouvrait une fenetre ou un echec de reinsertion
-    // laissait le site sans aucun responsable.
+const saveSite = async (input: ArtisanalSiteInput, aeaFile?: File | null): Promise<ArtisanalSite> => {
+  if (!input.formalization) throw new Error('Choisissez la catégorie du site.');
+  if (input.formalization === 'formalized') {
+    const error = validateSiteAea(input.aea, Boolean(aeaFile));
+    if (error) throw new Error(error);
+  }
+  const siteId = input.id || secureRandomId();
+  let uploadedPath: string | null = null;
+  let aea = input.formalization === 'formalized' ? input.aea : null;
+  try {
+    if (aea && aeaFile) {
+      const uploaded = await siteAeaDocumentService.upload(siteId, aeaFile);
+      uploadedPath = uploaded.documentPath;
+      aea = { ...aea, ...uploaded };
+    }
+    const payload = {
+      id: siteId, code: input.code, name: input.name, status: input.status,
+      region: input.region, province: input.province, locality: input.locality,
+      area_hectares: input.areaHectares, exploitation_type: 'artisanale',
+      formalization: input.formalization,
+      aea_number: aea?.number.trim() || null, aea_issued_on: aea?.issuedOn || null,
+      aea_duration_months: aea?.durationMonths || null,
+      aea_document_path: aea?.documentPath || null, aea_document_name: aea?.documentName || null,
+      authorized_miners: input.authorizedMiners, active_miners: input.activeMiners,
+      average_hole_depth_m: input.averageHoleDepthMeters, authorized_chemicals: input.authorizedChemicals,
+      latitude: input.latitude, longitude: input.longitude, photos: input.photos || [], notes: input.notes || null,
+    };
     const assignments = [
-      { ...input.manager, site_id: siteId, role: 'site_manager' },
-      { ...input.collectionOfficer, site_id: siteId, role: 'collection_officer' },
-    ].map(({ fullName, userId, ...item }) => ({
-      ...item,
-      full_name: fullName,
-      user_id: userId || null,
-      email: item.email || null,
+      { ...input.manager, role: 'site_manager' },
+      { ...input.collectionOfficer, role: 'collection_officer' },
+    ].map(({ fullName, userId, ...contact }) => ({
+      role: contact.role, full_name: fullName, phone: contact.phone, email: contact.email || null, user_id: userId || null,
     }));
-    const { data: savedAssignments, error: assignmentError } = await supabase
-      .from('artisanal_site_assignments')
-      .upsert(assignments, { onConflict: 'site_id,role' })
-      .select();
-    if (assignmentError) throw assignmentError;
-  return mapSiteRow(data as SiteRow, (savedAssignments || []) as SiteRow[]);
+    const { data, error } = await supabase.rpc('snp_save_artisanal_site', {
+      p_site: payload, p_assignments: assignments,
+    });
+    if (error) throw error;
+    const result = data as unknown as { site: SiteRow; assignments: SiteRow[] };
+    if (!result?.site || result.site.id !== siteId || !Array.isArray(result.assignments)) {
+      throw new Error('La confirmation d’enregistrement est invalide. Actualisez la liste avant de réessayer.');
+    }
+    const saved = mapSiteRow(result.site, result.assignments);
+    window.dispatchEvent(new Event(SITE_DATA_CHANGED));
+    return saved;
+  } catch (reason) {
+    if (uploadedPath) {
+      // La base refuse la suppression d'un justificatif déjà rattaché : même en cas
+      // de réponse réseau perdue, le document d'un enregistrement réussi est conservé.
+      await siteAeaDocumentService.remove(uploadedPath).catch(() => undefined);
+    }
+    throw reason;
+  }
 };
 
 export const artisanalSiteService = {

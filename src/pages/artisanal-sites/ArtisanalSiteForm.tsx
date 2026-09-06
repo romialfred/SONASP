@@ -5,8 +5,9 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock3,
-  Cog,
-  Layers,
+  FileCheck2,
+  Upload,
+  ExternalLink,
   Pickaxe,
   Compass,
   HardHat,
@@ -31,7 +32,12 @@ import { generateSiteCode } from '@/services/artisanalSiteCode';
 import { messageErreurUtilisateur } from '@/lib/presentError';
 import { MAX_SITE_PHOTOS, resolvePhotoUrl, uploadSitePhoto } from '@/services/sitePhotoService';
 import type { ArtisanalSite, ArtisanalSiteInput, ArtisanalSiteStatus } from '@/types/artisanalSite';
+import { useAuth } from '@/contexts/AuthContext';
+import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
+import { aeaExpiryDate, emptyAea, validateSiteAea } from '@/lib/siteFormalization';
+import { siteAeaDocumentService, validateAeaFile } from '@/services/siteAeaDocumentService';
 import './artisanal-site-form.css';
+import './artisanal-site-details.css';
 
 const CHEMICAL_OPTIONS = ['Borax', 'Charbon actif', 'Cyanure', 'Mercure', 'Aucun produit chimique'];
 
@@ -48,28 +54,6 @@ const STATUS_OPTIONS = [
   { value: 'suspended' as const, label: 'Suspendu', icon: Ban },
 ];
 
-/** Régimes d'exploitation présentés en cartes : le choix se lit sans ouvrir de menu. */
-const EXPLOITATION_OPTIONS = [
-  {
-    value: 'artisanale' as const,
-    label: 'Artisanale',
-    description: 'Extraction manuelle, outillage léger',
-    icon: Pickaxe,
-  },
-  {
-    value: 'semi_mecanisee' as const,
-    label: 'Semi-mécanisée',
-    description: 'Engins légers et groupe électrogène',
-    icon: Cog,
-  },
-  {
-    value: 'mixte' as const,
-    label: 'Mixte',
-    description: 'Manuelle et mécanisée sur le même périmètre',
-    icon: Layers,
-  },
-];
-
 /** Champs obligatoires, base du taux de complétude affiché en en-tête. */
 const REQUIRED_FIELDS: Array<(form: ArtisanalSiteInput) => boolean> = [
   (form) => form.name.trim() !== '',
@@ -77,9 +61,9 @@ const REQUIRED_FIELDS: Array<(form: ArtisanalSiteInput) => boolean> = [
   (form) => form.province !== '',
   (form) => form.locality.trim() !== '',
   (form) => form.areaHectares > 0,
-  (form) => form.authorizedMiners > 0,
-  (form) => form.activeMiners >= 0 && form.authorizedMiners > 0,
-  (form) => form.averageHoleDepthMeters > 0,
+  (form) => form.authorizedMiners >= 0,
+  (form) => form.activeMiners >= 0 && form.activeMiners <= form.authorizedMiners,
+  (form) => Boolean(form.formalization),
   (form) => form.manager.fullName.trim() !== '',
   (form) => form.manager.phone.trim() !== '',
   (form) => form.collectionOfficer.fullName.trim() !== '',
@@ -149,6 +133,8 @@ const createDefaultForm = (): ArtisanalSiteInput => ({
   locality: '',
   areaHectares: 0,
   exploitationType: 'artisanale',
+  formalization: null,
+  aea: null,
   authorizedMiners: 0,
   activeMiners: 0,
   averageHoleDepthMeters: 0,
@@ -164,12 +150,16 @@ const createDefaultForm = (): ArtisanalSiteInput => ({
 export default function ArtisanalSiteForm() {
   const { siteId } = useParams<{ siteId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [aeaFile, setAeaFile] = useState<File | null>(null);
+  const [aeaUrl, setAeaUrl] = useState<string | null>(null);
   const [form, setForm] = useState<ArtisanalSiteInput>(createDefaultForm);
   const [sites, setSites] = useState<ArtisanalSite[]>([]);
   const [siteSearch, setSiteSearch] = useState('');
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(Boolean(siteId));
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -185,6 +175,9 @@ export default function ArtisanalSiteForm() {
   }, []);
 
   useEffect(() => {
+    setAeaFile(null);
+    setLoadFailed(false);
+    setError(null);
     if (!siteId) {
       setForm(createDefaultForm());
       setLoading(false);
@@ -197,6 +190,7 @@ export default function ArtisanalSiteForm() {
       .then((site) => {
         if (!mounted) return;
         if (!site) {
+          setLoadFailed(true);
           setError('Ce site artisanal est introuvable.');
           return;
         }
@@ -209,7 +203,9 @@ export default function ArtisanalSiteForm() {
           province: site.province,
           locality: site.locality,
           areaHectares: site.areaHectares,
-          exploitationType: site.exploitationType,
+          exploitationType: 'artisanale',
+          formalization: site.formalization || null,
+          aea: site.aea || null,
           authorizedMiners: site.authorizedMiners,
           activeMiners: site.activeMiners,
           averageHoleDepthMeters: site.averageHoleDepthMeters,
@@ -223,6 +219,8 @@ export default function ArtisanalSiteForm() {
         });
       })
       .catch((reason: unknown) => {
+        if (!mounted) return;
+        setLoadFailed(true);
         setError(messageErreurUtilisateur(reason));
       })
       .finally(() => mounted && setLoading(false));
@@ -247,6 +245,14 @@ export default function ArtisanalSiteForm() {
     };
   }, [form.photos]);
 
+  useEffect(() => {
+    let current = true;
+    setAeaUrl(null);
+    if (form.aea?.documentPath) siteAeaDocumentService.url(form.aea.documentPath)
+      .then(url => { if (current) setAeaUrl(url); }).catch(() => undefined);
+    return () => { current = false; };
+  }, [form.aea?.documentPath]);
+
   const selectedRegion = useMemo(
     () => BURKINA_FASO_REGIONS.find((region) => region.name === form.region),
     [form.region]
@@ -266,13 +272,14 @@ export default function ArtisanalSiteForm() {
   const occupancy =
     form.authorizedMiners > 0 ? Math.round((form.activeMiners / form.authorizedMiners) * 100) : 0;
 
-  const completion = useMemo(
-    () =>
-      Math.round(
-        (REQUIRED_FIELDS.filter((isFilled) => isFilled(form)).length / REQUIRED_FIELDS.length) * 100
-      ),
-    [form]
-  );
+  const completion = useMemo(() => {
+    const fields = REQUIRED_FIELDS.map(isFilled => isFilled(form));
+    if (form.formalization === 'formalized') fields.push(
+      Boolean(form.aea?.number.trim()), Boolean(form.aea && aeaExpiryDate(form.aea.issuedOn, form.aea.durationMonths)),
+      Boolean(aeaFile || form.aea?.documentPath),
+    );
+    return Math.round(fields.filter(Boolean).length / fields.length * 100);
+  }, [form, aeaFile]);
 
   const setValue = <K extends keyof ArtisanalSiteInput>(key: K, value: ArtisanalSiteInput[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -324,6 +331,11 @@ export default function ArtisanalSiteForm() {
   };
 
   const validate = () => {
+    if (!form.formalization) return 'Choisissez la catégorie du site.';
+    if (form.formalization === 'formalized') {
+      const aeaError = validateSiteAea(form.aea, Boolean(aeaFile));
+      if (aeaError) return aeaError;
+    }
     if (!form.name.trim()) return 'Le nom du site est obligatoire.';
     if (!form.region || !form.province || !form.locality.trim())
       return 'La région, la province et la localité sont obligatoires.';
@@ -343,6 +355,7 @@ export default function ArtisanalSiteForm() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    if (saving || uploading || loading || loadFailed || !canManageMiningRegistry(user)) return;
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -352,8 +365,8 @@ export default function ArtisanalSiteForm() {
     setSaving(true);
     setError(null);
     try {
-      await artisanalSiteService.saveSite(form);
-      navigate('/artisan-sites');
+      const saved = await artisanalSiteService.saveSite(form, aeaFile);
+      navigate(`/artisan-sites/${saved.id}`, { state: { saved: true } });
     } catch (reason) {
       setError(messageErreurUtilisateur(reason));
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -378,6 +391,8 @@ export default function ArtisanalSiteForm() {
       contact: form.collectionOfficer,
     },
   ];
+
+  if (!canManageMiningRegistry(user)) return <NationalDashboardLayout><div className="site-form__error" role="alert">La création et la modification des sites sont réservées à la DGMG et à l’administrateur.</div></NationalDashboardLayout>;
 
   return (
     <NationalDashboardLayout>
@@ -463,28 +478,61 @@ export default function ArtisanalSiteForm() {
                     </div>
                   </div>
 
-                  <fieldset className="site-form__choices">
-                    <legend>Type d’exploitation <i aria-hidden="true">*</i></legend>
+                  <div className="site-fixed-type"><Pickaxe aria-hidden="true" /><span><small>Type d’exploitation</small><strong>Site artisanal</strong></span></div>
+                  <fieldset className="site-form__choices site-category-choices">
+                    <legend>Catégorie du site <i aria-hidden="true">*</i></legend>
                     <div>
-                      {EXPLOITATION_OPTIONS.map(({ value, label, description, icon: Icon }) => (
-                        <label key={value} className={form.exploitationType === value ? 'is-checked' : ''}>
-                          <input
-                            type="radio"
-                            name="exploitation-type"
-                            value={value}
-                            checked={form.exploitationType === value}
-                            onChange={() => setValue('exploitationType', value)}
-                          />
-                          <span className="site-form__choice-icon"><Icon aria-hidden="true" /></span>
-                          <span>
-                            <strong>{label}</strong>
-                            <small>{description}</small>
-                          </span>
+                      {([
+                        ['formalized', 'Site formalisé', 'Dispose d’une attestation d’exploitation artisanale (AEA).'],
+                        ['non_formalized', 'Site non formalisé', 'Ne dispose pas d’une AEA.'],
+                      ] as const).map(([value, label, description]) => (
+                        <label key={value} className={form.formalization === value ? 'is-checked' : ''}>
+                          <input type="radio" name="formalization" value={value} required checked={form.formalization === value}
+                            onChange={() => setForm(current => ({ ...current, formalization: value, aea: current.aea || emptyAea() }))} />
+                          <span className="site-form__choice-icon">{value === 'formalized' ? <FileCheck2 aria-hidden="true" /> : <Pickaxe aria-hidden="true" />}</span>
+                          <span><strong>{label}</strong><small>{description}</small></span>
                         </label>
                       ))}
                     </div>
                   </fieldset>
                 </Section>
+
+                {form.formalization === 'formalized' && (
+                  <Section id="aea" title="Attestation d’exploitation artisanale" description="Références et justificatif de l’AEA du site." icon={FileCheck2} tone="emerald">
+                    <div className="site-aea-fields">
+                      <Field label="Numéro de l’AEA" required>
+                        <input value={form.aea?.number || ''} maxLength={120} required placeholder="Référence de l’attestation"
+                          onChange={event => setValue('aea', { ...(form.aea || emptyAea()), number: event.target.value })} />
+                      </Field>
+                      <Field label="Date d’émission" required>
+                        <input type="date" required value={form.aea?.issuedOn || ''}
+                          onChange={event => setValue('aea', { ...(form.aea || emptyAea()), issuedOn: event.target.value })} />
+                      </Field>
+                      <Field label="Durée de validité (mois)" required>
+                        <input type="number" min={1} max={1200} step={1} required value={form.aea?.durationMonths || ''}
+                          onChange={event => setValue('aea', { ...(form.aea || emptyAea()), durationMonths: Number(event.target.value) })} />
+                      </Field>
+                    </div>
+                    <p className="site-aea-expiry">Date d’expiration calculée : <strong>{form.aea && aeaExpiryDate(form.aea.issuedOn, form.aea.durationMonths)
+                      ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(aeaExpiryDate(form.aea.issuedOn, form.aea.durationMonths)!)) : 'À renseigner'}</strong></p>
+                    <div className="site-aea-upload">
+                      <Upload aria-hidden="true" />
+                      <div><label htmlFor="aea-file"><strong>{aeaFile || form.aea?.documentPath ? 'Remplacer le justificatif AEA' : 'Joindre le justificatif AEA'}</strong></label>
+                        <p>PDF, JPEG ou PNG · 10 Mo maximum</p>
+                        <input id="aea-file" type="file" accept="application/pdf,image/jpeg,image/png" disabled={saving}
+                          onChange={event => {
+                            const file = event.target.files?.[0]; event.target.value = '';
+                            if (!file) return;
+                            try { validateAeaFile(file); setAeaFile(file); setError(null); }
+                            catch (reason) { setError(messageErreurUtilisateur(reason)); }
+                          }} />
+                        {(aeaFile || form.aea?.documentName) && <p className="site-aea-filename">{aeaFile?.name || form.aea?.documentName}</p>}
+                        {aeaFile && <button type="button" className="site-text-button" onClick={() => setAeaFile(null)}>Annuler le remplacement</button>}
+                        {aeaUrl && <a href={aeaUrl} target="_blank" rel="noreferrer"><ExternalLink size={16} aria-hidden="true" /> Consulter le document enregistré</a>}
+                      </div>
+                    </div>
+                  </Section>
+                )}
 
                 <Section
                   id="location"
@@ -592,7 +640,7 @@ export default function ArtisanalSiteForm() {
                   <p className="site-form__note">
                     <Info aria-hidden="true" />
                     La production du site n’est pas saisie ici : elle est consolidée automatiquement à
-                    partir des ventes d’or déclarées par les artisans rattachés à la localité.
+                    partir des ventes d’or déclarées par les artisans rattachés au site.
                   </p>
                 </Section>
 
@@ -674,7 +722,7 @@ export default function ArtisanalSiteForm() {
 
                 <footer className="site-form__actions">
                   <button type="button" onClick={() => navigate('/artisan-sites')}>Annuler</button>
-                  <button type="submit" className="is-primary" disabled={saving || uploading}>
+                  <button type="submit" className="is-primary" disabled={saving || uploading || loading || loadFailed}>
                     {saving ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Save aria-hidden="true" />}
                     {saving ? 'Enregistrement…' : 'Enregistrer le site'}
                   </button>
@@ -708,10 +756,10 @@ export default function ArtisanalSiteForm() {
                     <button
                       type="button"
                       className={site.id === siteId ? 'is-current' : ''}
-                      onClick={() => navigate(`/artisan-sites/${site.id}/modifier`)}
+                      onClick={() => navigate(`/artisan-sites/${site.id}`)}
                     >
                       <span className="site-form__site-head">
-                        <strong>{site.locality}</strong>
+                        <strong>{site.name}</strong>
                         <em className={`site-form__chip is-${site.status}`}>{STATUS_LABELS[site.status]}</em>
                       </span>
                       <span className="site-form__site-meta">{site.code} · {site.region}</span>

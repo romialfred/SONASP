@@ -66,41 +66,48 @@ function show(initial?: ComptoirRecord, readOnly = false) {
   return saved;
 }
 describe("Dossier entreprise du comptoir", () => {
-  it("relit le dossier lors du passage de la modification aux détails", async () => {
-    let server = record;
-    mocks.get.mockImplementation(async () => server);
-    mocks.save.mockImplementation(async (values) => {
-      server = { ...record, version: 2, values };
-      return server;
-    });
-    render(
-      <MemoryRouter
-        initialEntries={[`/artisan-minier/comptoirs/${record.id}/modifier`]}
-      >
-        <Routes>
-          <Route
-            path="/artisan-minier/comptoirs/:id/modifier"
-            element={<ComptoirForm />}
-          />
-          <Route
-            path="/artisan-minier/comptoirs/:id"
-            element={<ComptoirForm readOnly />}
-          />
-        </Routes>
-      </MemoryRouter>,
-    );
-    fireEvent.change(await screen.findByLabelText("Nom du responsable"), {
-      target: { value: "Responsable actualisé" },
-    });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Enregistrer le dossier" }),
-    );
-    await screen.findByRole("link", { name: "Modifier le dossier" });
-    expect(
-      await screen.findByText("Responsable actualisé", { selector: "p" }),
-    ).toBeInTheDocument();
-    expect(mocks.get.mock.calls.length).toBeGreaterThanOrEqual(3);
-  });
+  it.each(["immédiate", "différée"])(
+    "relit le dossier après modification avec une réponse %s",
+    async (response) => {
+      let server = record;
+      mocks.get.mockImplementation(() =>
+        response === "immédiate"
+          ? Promise.resolve(server)
+          : new Promise((resolve) => setTimeout(() => resolve(server), 0)),
+      );
+      mocks.save.mockImplementation(async (values) => {
+        server = { ...record, version: 2, values };
+        return server;
+      });
+      render(
+        <MemoryRouter
+          initialEntries={[`/artisan-minier/comptoirs/${record.id}/modifier`]}
+        >
+          <Routes>
+            <Route
+              path="/artisan-minier/comptoirs/:id/modifier"
+              element={<ComptoirForm />}
+            />
+            <Route
+              path="/artisan-minier/comptoirs/:id"
+              element={<ComptoirForm readOnly />}
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
+      fireEvent.change(await screen.findByLabelText("Nom du responsable"), {
+        target: { value: "Responsable actualisé" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Enregistrer le dossier" }),
+      );
+      await screen.findByRole("link", { name: "Modifier le dossier" });
+      expect(
+        await screen.findByText("Responsable actualisé", { selector: "p" }),
+      ).toBeInTheDocument();
+      expect(mocks.get.mock.calls.length).toBeGreaterThanOrEqual(3);
+    },
+  );
   it("recalcule la validité lorsque les deux dates sont renseignées", () => {
     show(record);
     fireEvent.change(

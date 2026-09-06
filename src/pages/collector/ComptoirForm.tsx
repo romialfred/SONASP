@@ -891,6 +891,11 @@ export default function ComptoirForm({
   const [loading, setLoading] = useState(!!id);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
+  const requestKey = `${id ?? "new"}:${readOnly}:${reload}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  // Une réponse immédiate peut regrouper loading=true/false dans le même rendu.
+  // La clé interdit de monter le formulaire avec le dossier du mode précédent.
+  const awaitingRecord = loading || loadedKey !== requestKey;
   useEffect(() => {
     let live = true;
     setError("");
@@ -911,18 +916,25 @@ export default function ComptoirForm({
             );
         })
         .finally(() => {
-          if (live) setLoading(false);
+          if (live) {
+            setLoadedKey(requestKey);
+            setLoading(false);
+          }
         });
+    else {
+      setRecord(undefined);
+      setLoadedKey(requestKey);
+    }
     return () => {
       live = false;
     };
-  }, [id, reload, readOnly]);
+  }, [id, requestKey]);
   useEffect(() => {
-    if (!loading)
+    if (!awaitingRecord)
       document
         .querySelector("main.comptoir-page")
         ?.scrollIntoView({ block: "start" });
-  }, [loading, id, readOnly]);
+  }, [awaitingRecord, id, readOnly]);
   if (!canManageMiningRegistry(user))
     return (
       <NationalDashboardLayout>
@@ -977,7 +989,7 @@ export default function ComptoirForm({
             </>
           }
         />
-        {loading ? (
+        {awaitingRecord ? (
           <p className="comptoir-loading">
             <Loader2 className="sn-spin" /> Chargement du dossier…
           </p>

@@ -79,6 +79,18 @@ const relationReadCapabilities: readonly CapabilityCode[] = [
  * Les RLS/RPC restent l'autorité de sécurité sur les données.
  */
 export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.freeze([
+  ...policies(['/artisan-minier/collecteurs', '/artisan-minier/collecteurs/:id'], {
+    roles: ['owner', 'admin', 'dgmg', 'management', 'comptoir', 'collector', 'customer'], accountTypes: ['owner', 'admin', 'dgmg', 'sonasp', 'comptoir', 'collector'], capabilities: [], readOnly: true, national: false,
+  }),
+  ...policies(['/artisan-minier/collecteurs/nouveau', '/artisan-minier/collecteurs/:id/modifier', '/artisan-minier/comptoirs'], {
+    roles: ['owner', 'admin', 'dgmg'], accountTypes: ['owner', 'admin', 'dgmg'], capabilities: [], readOnly: false, national: false,
+  }),
+  ...policies(['/collecte/ventes'], {
+    roles: ['owner', 'admin', 'dgmg', 'management', 'comptoir', 'collector', 'customer'], accountTypes: ['owner', 'admin', 'dgmg', 'sonasp', 'comptoir', 'collector'], capabilities: [], readOnly: false, national: false,
+  }),
+  ...policies(['/collecte/ventes/nouvelle'], {
+    roles: ['collector', 'customer'], accountTypes: ['collector'], capabilities: [CAPABILITIES.COLLECTOR_OPERATE], readOnly: false, national: false,
+  }),
   ...policies(['/help', '/profile'], {
     roles: ALL_ROLES, accountTypes: ALL_ACCOUNT_TYPES, capabilities: [], readOnly: true, national: false,
   }),
@@ -174,10 +186,13 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   ...policies([
     '/artisan-minier/ventes-or/nouvelle',
     '/artisan-minier/ventes-or/:id/modifier',
-    '/artisan-minier/paiements/:venteId/nouveau',
   ], {
     roles: ['management', 'customer'], accountTypes: ['sonasp', 'comptoir'],
     capabilities: [], readOnly: false, national: false,
+  }),
+  ...policies(['/artisan-minier/paiements/:venteId/nouveau'], {
+    roles: ['management', 'customer', 'comptoir', 'collector'], accountTypes: ['sonasp', 'comptoir', 'collector'],
+    capabilities: [CAPABILITIES.FINANCE_EXECUTE, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE, CAPABILITIES.COLLECTOR_PAYMENTS_EXECUTE], readOnly: false, national: false,
   }),
   ...policies(['/artisan-minier/ventes-or/:id/facture'], {
     roles: ['management', 'customer'], accountTypes: ['sonasp', 'comptoir'],
@@ -679,6 +694,10 @@ export function evaluatePrivateRouteAccess(
   }
   if (accountType === 'direction' && !policy.readOnly) {
     return { allowed: false, accountType, policy, reason: 'read-only', redirectTo };
+  }
+  if (accountType === 'collector' && policy.route === '/artisan-minier/paiements/:venteId/nouveau'
+    && !hasAnyCapability(user as UserProfile, [CAPABILITIES.COLLECTOR_PAYMENTS_EXECUTE])) {
+    return { allowed: false, accountType, policy, reason: 'capability', redirectTo };
   }
   if (
     policy.capabilities.length > 0

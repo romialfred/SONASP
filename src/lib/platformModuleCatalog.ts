@@ -311,6 +311,7 @@ export type ModuleAvailabilityMap = Record<string, ModuleAvailability>;
  * artisanal, par exemple, ne doit pas hériter du module « Artisans miniers ».
  */
 const ROUTE_MODULE_PREFIXES: readonly [string, PlatformModuleCode][] = [
+  ['/collecte/ventes', 'artisan_gold_market'],
   ['/portail-dgmg/reserve-validations', 'national_reserve'],
   ['/portail-dgi/paiements', 'artisan_gold_market'],
   ['/artisan-minier/ventes-or', 'artisan_gold_market'],

@@ -252,6 +252,7 @@ export const BUSINESS_RESPONSIBILITIES: readonly BusinessResponsibilityOption[] 
     roles: ['collector'],
     requiredFor: ['collector'],
   },
+  { code: CAPABILITIES.COLLECTOR_PAYMENTS_EXECUTE, label: 'Collecteur — exécuter un paiement', description: 'Paie ses ventes approuvées lorsqu’une délégation de son organisme est en cours.', roles: ['collector'], requiredFor: [] },
 ] as const;
 
 /** Séparations de fonctions qui ne peuvent jamais être cumulées sur un compte. */
@@ -325,6 +326,8 @@ export type ModuleDomain =
 
 /** Domaine fonctionnel autoritatif d'une route de la navigation nationale. */
 export function moduleDomainForPath(path: string): ModuleDomain | null {
+  if (/^\/artisan-minier\/(collecteurs|comptoirs)(\/|$)/u.test(path)) return 'artisans';
+  if (/^\/collecte\/ventes(\/|$)/u.test(path)) return 'sales';
   if (/^\/admin\/audit(?:\/|$)|^\/audit(?:\/|$)/u.test(path)) return 'audit';
   if (/^\/users(?:\/|$)|^\/admin\/(?:users|permissions)(?:\/|$)/u.test(path)) return 'users';
   if (/^\/parameters(?:\/|$)|^\/admin\/(?:settings|modules|messagerie|status-manager|gold-sales-settings|workflow)(?:\/|$)/u.test(path)) return 'settings';
@@ -421,7 +424,7 @@ const ROLE_DOMAINS: Readonly<Record<AccountCreationRole, readonly ModuleDomain[]
   mine: ['production', 'purchases', 'sales', 'payments', 'shipping', 'refining', 'inventory', 'contracts', 'customers', 'documents', 'reports'],
   comptoir: ['sites', 'artisans', 'production', 'sales', 'payments', 'inventory', 'tax', 'documents', 'reports'],
   dgi: ['production', 'sales', 'payments', 'reconciliation', 'tax', 'documents', 'reports', 'audit'],
-  collector: ['sites', 'artisans', 'production', 'documents', 'reports'],
+  collector: ['sites', 'artisans', 'production', 'documents', 'reports', 'sales', 'payments'],
   customer: ['sales', 'payments', 'documents', 'reports'],
 };
 
@@ -544,7 +547,8 @@ export function permissionCeilingFor(
   }
 
   if (role === 'collector' && hasResponsibility(responsibilities, CAPABILITIES.COLLECTOR_OPERATE)) {
-    ceiling.can_create = ['artisans', 'production', 'documents'].includes(domain);
+    ceiling.can_create = ['artisans', 'production', 'documents', 'sales'].includes(domain)
+      || (domain === 'payments' && hasResponsibility(responsibilities, CAPABILITIES.COLLECTOR_PAYMENTS_EXECUTE));
     ceiling.can_edit = ceiling.can_create;
   }
   return ceiling;

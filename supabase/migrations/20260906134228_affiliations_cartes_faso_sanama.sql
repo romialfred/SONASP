@@ -45,13 +45,25 @@ ALTER TABLE public.snp_cartes_professionnelles
 
 -- Adding metadata must not fire legacy expiry side effects on existing dossiers.
 ALTER TABLE public.snp_cartes_professionnelles DISABLE TRIGGER trigger_carte_expiration_desactivation;
-WITH numbered AS (
- SELECT c.id,coalesce(a.numero_carte,c.numero_carte) AS affiliation,
- row_number() OVER(PARTITION BY c.artisan_id ORDER BY c.created_at NULLS FIRST,c.id)::integer AS version
- FROM public.snp_cartes_professionnelles c JOIN public.snp_artisans_miniers a ON a.id=c.artisan_id
-)
-UPDATE public.snp_cartes_professionnelles c SET numero_affiliation=n.affiliation,affiliation_version=n.version
-FROM numbered n WHERE c.id=n.id AND c.affiliation_version IS NULL;
+DO $backfill$ DECLARE timestamp_trigger_state "char"; BEGIN
+ SELECT tgenabled INTO timestamp_trigger_state FROM pg_trigger
+ WHERE tgrelid='public.snp_cartes_professionnelles'::regclass AND tgname='update_cartes_updated_at';
+ IF timestamp_trigger_state IN ('O','A','R') THEN
+  ALTER TABLE public.snp_cartes_professionnelles DISABLE TRIGGER update_cartes_updated_at;
+ END IF;
+ WITH numbered AS (
+  SELECT c.id,coalesce(a.numero_carte,c.numero_carte) AS affiliation,
+  row_number() OVER(PARTITION BY c.artisan_id ORDER BY c.created_at NULLS FIRST,c.id)::integer AS version
+  FROM public.snp_cartes_professionnelles c JOIN public.snp_artisans_miniers a ON a.id=c.artisan_id
+ )
+ UPDATE public.snp_cartes_professionnelles c SET numero_affiliation=n.affiliation,affiliation_version=n.version
+ FROM numbered n WHERE c.id=n.id AND c.affiliation_version IS NULL;
+ -- Restore the exact prior trigger mode; new operational updates keep their timestamps.
+ IF timestamp_trigger_state='O' THEN ALTER TABLE public.snp_cartes_professionnelles ENABLE TRIGGER update_cartes_updated_at;
+ ELSIF timestamp_trigger_state='A' THEN ALTER TABLE public.snp_cartes_professionnelles ENABLE ALWAYS TRIGGER update_cartes_updated_at;
+ ELSIF timestamp_trigger_state='R' THEN ALTER TABLE public.snp_cartes_professionnelles ENABLE REPLICA TRIGGER update_cartes_updated_at;
+ END IF;
+END $backfill$;
 ALTER TABLE public.snp_cartes_professionnelles ENABLE TRIGGER trigger_carte_expiration_desactivation;
 ALTER TABLE public.snp_cartes_professionnelles
  ADD CONSTRAINT affiliation_card_period CHECK(valid_from IS NULL AND valid_until IS NULL OR valid_from IS NOT NULL AND valid_until>=valid_from),

@@ -28,6 +28,7 @@ import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { CAPABILITIES, hasSensitiveCapability } from '@/lib/capabilities';
+import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { messageErreurUtilisateur } from '@/lib/presentError';
 import {
   BankTransferLogo,
@@ -238,8 +239,9 @@ export default function PaiementForm() {
   const navigate = useNavigate();
   const { venteId } = useParams();
   const { user } = useAuth();
-  const canExecutePayment = hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE)
-    || hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
+  const canExecutePayment = isCollectorScopedUser(user)
+    ? hasSensitiveCapability(user, CAPABILITIES.COLLECTOR_PAYMENTS_EXECUTE)
+    : hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE) || hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
 
   const [vente, setVente] = useState<ArtisanGoldSale | null>(null);
   const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);

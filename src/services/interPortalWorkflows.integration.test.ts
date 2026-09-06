@@ -281,7 +281,7 @@ describe('recette inter-portails', () => {
     expect(supabaseMock.from).not.toHaveBeenCalled();
   });
 
-  it('maintient le Collecteur strictement consultatif même avec des capabilities injectées', () => {
+  it('limite les mutations du Collecteur au circuit de collecte malgré des capabilities étrangères injectées', () => {
     const collector = profile('customer', [
       CAPABILITIES.COLLECTOR_OPERATE,
       CAPABILITIES.COMPTOIR_MANAGE,
@@ -293,7 +293,8 @@ describe('recette inter-portails', () => {
     const allowedPolicies = PRIVATE_ROUTE_REGISTRY.filter((policy) =>
       evaluatePrivateRouteAccess(collector, materialize(policy.route)).allowed);
     expect(allowedPolicies.length).toBeGreaterThan(0);
-    expect(allowedPolicies.every((policy) => policy.readOnly)).toBe(true);
+    expect(allowedPolicies.filter((policy) => !policy.readOnly).map(policy => policy.route).sort()).toEqual(['/collecte/ventes', '/collecte/ventes/nouvelle']);
+    expect(evaluatePrivateRouteAccess(collector, '/artisan-minier/paiements/123e4567-e89b-42d3-a456-426614174000/nouveau').allowed).toBe(false);
     expect(evaluatePrivateRouteAccess(collector, '/portail-collecteur').allowed).toBe(true);
     [
       '/portail-comptoir/ventes-sonasp', '/sonasp/cessions-comptoirs',

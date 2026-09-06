@@ -497,7 +497,7 @@ export function UserManagementModern() {
   const organizationOptions = useMemo(() => {
     if (!policy?.organizationType) return [];
     if (form.role === 'collector') {
-      return organizations.filter(({ organization_type }) => organization_type === 'comptoir');
+      return organizations.filter(({ organization_type }) => ['comptoir', 'sonasp'].includes(organization_type));
     }
     return organizations.filter(({ organization_type }) => organization_type === policy.organizationType);
   }, [form.role, organizations, policy?.organizationType]);

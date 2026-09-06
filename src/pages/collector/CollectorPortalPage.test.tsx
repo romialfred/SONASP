@@ -59,7 +59,8 @@ describe('CollectorPortalPage', () => {
     expect(screen.queryByText('REC-INTERDIT')).not.toBeInTheDocument();
     expect(screen.getByText('En attente')).toBeInTheDocument();
     expect(screen.queryByText('en_attente')).not.toBeInTheDocument();
-    expect(screen.getByText(/aucune RPC dédiée à la création/)).toBeInTheDocument();
+    expect(screen.getByText(/Vos ventes sont soumises à l’approbation/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Enregistrer une vente' })).toHaveAttribute('href', '/collecte/ventes/nouvelle');
 
     const stats = within(screen.getByRole('region', { name: 'Indicateurs du Collecteur' }));
     expect(stats.getByText('Orpailleurs assignés')).toBeInTheDocument();

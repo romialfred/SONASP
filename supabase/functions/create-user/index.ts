@@ -103,6 +103,7 @@ const CAPACITES_OPERATIONNELLES = new Set([
   'comptoir.manage',
   'comptoir.invoices.issue',
   'comptoir.payments.execute',
+  'collector.payments.execute',
   'comptoir.payments.reconcile',
   'comptoir.tax.execute',
   'collectors.manage',
@@ -123,7 +124,7 @@ const RESPONSABILITES_PAR_ROLE: Readonly<Record<string, readonly string[]>> = {
   dgi: ['dgi.fiscal.control','dgi.fiscal.reconcile'],
   mine: ['mine.production.manage','refining.supervise'],
   comptoir: ['comptoir.manage','refining.supervise','comptoir.invoices.issue','comptoir.payments.execute','comptoir.payments.reconcile','comptoir.tax.execute'],
-  collector: ['collector.operate'],
+  collector: ['collector.operate', 'collector.payments.execute'],
   customer: [],
 };
 const RESPONSABILITES_OBLIGATOIRES: Readonly<Record<string, readonly string[]>> = {
@@ -505,6 +506,7 @@ Deno.serve(async (req: Request) => {
         .select('id, actif, type_artisan')
         .eq('id', collecteurId)
         .eq('type_artisan', 'collecteur')
+        .eq('type_personne', 'physique')
         .eq('actif', true)
         .maybeSingle();
       if (erreurCollecteur || !collecteur) {
@@ -568,7 +570,7 @@ Deno.serve(async (req: Request) => {
         .from('snp_organizations')
         .select('id')
         .eq('id', organisationDemandee)
-        .eq('organization_type', typeOrganisationAttendu)
+        .in('organization_type', role === 'collector' ? ['comptoir', 'sonasp'] : [typeOrganisationAttendu])
         .eq('is_active', true)
         .maybeSingle();
       if (erreurOrganisation) throw new Error(`comptoir: ${erreurOrganisation.message}`);

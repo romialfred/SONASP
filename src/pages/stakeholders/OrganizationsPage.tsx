@@ -17,11 +17,11 @@ import './organizations.css';
 
 type StateFilter = 'all' | 'active' | 'inactive';
 
-export function OrganizationsPage() {
+export function OrganizationsPage({ comptoirsOnly = false }: { comptoirsOnly?: boolean } = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const isDgmg = user?.role === 'dgmg';
+  const isDgmg = user?.role === 'dgmg' || comptoirsOnly;
   const [organizations, setOrganizations] = useState<OrganizationSummary[]>([]);
   const [ministries, setMinistries] = useState<Ministry[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,0 +1,1 @@
+export const artisanDocumentService={list:async()=>[],url:async()=>'',upload:async(_id:string,doc:{id:string;file:File;type:string})=>({id:doc.id,nom_fichier:doc.file.name,type_document:doc.type}),photoUrl:async()=>''};

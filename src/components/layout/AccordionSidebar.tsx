@@ -64,6 +64,8 @@ const useMenuGroups = (): MenuGroup[] => {
       groupIconColor: 'text-emerald-700',
       groupIcon: Users,
       items: [
+        { label: 'Collecteurs', path: '/artisan-minier/collecteurs', icon: Users, iconColor: 'text-emerald-600' },
+        { label: 'Comptoirs', path: '/artisan-minier/comptoirs', icon: Store, iconColor: 'text-blue-600' },
         { label: t('nav.artisanDashboard'), path: '/artisan-minier', icon: LayoutDashboard, iconColor: 'text-emerald-700' },
         { label: t('nav.listeArtisans'), path: '/artisan-minier/liste', icon: Users, iconColor: 'text-blue-600' },
         { label: t('nav.suiviCartes'), path: '/artisan-minier/cartes/suivi', icon: TrendingUp, iconColor: 'text-purple-600' },

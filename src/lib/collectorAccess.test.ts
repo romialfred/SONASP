@@ -34,7 +34,6 @@ describe('matrice d’accès du portail Collecteur', () => {
     '/artisan-minier', '/artisan-minier/ventes-or/nouvelle',
     '/artisan-minier/ventes-or/123e4567-e89b-12d3-a456-426614174000/modifier',
     '/artisan-minier/paiements',
-    '/artisan-minier/paiements/123e4567-e89b-12d3-a456-426614174000/nouveau',
     '/artisan-minier/123e4567-e89b-12d3-a456-426614174000/infractions/nouvelle',
   ])('refuse l’opération hors périmètre %s', (route) => {
     expect(isCollectorRouteAllowed(route)).toBe(false);

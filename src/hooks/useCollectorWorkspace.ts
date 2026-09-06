@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { isCollectorScopedUser } from '@/lib/collectorAccess';
 import { supabase } from '@/lib/supabase';
+import { collectorService } from '@/services/collectorService';
 
 export interface CollectorWorkspace {
   collectorId: string;
@@ -47,7 +48,7 @@ export function useCollectorWorkspace() {
           supabase.from('snp_organizations')
             .select('id, code, name, organization_type')
             .eq('id', organizationId)
-            .eq('organization_type', 'comptoir')
+            .in('organization_type', ['comptoir', 'sonasp'])
             .single(),
           supabase.from('snp_collector_artisan_assignments')
             .select('artisan_id')
@@ -58,6 +59,7 @@ export function useCollectorWorkspace() {
         if (profileError) throw profileError;
         if (scopeError) throw scopeError;
         if (assignmentsError) throw assignmentsError;
+        const siteAndHistoryArtisans = await collectorService.workspaceArtisanIds();
 
         if (active) {
           setWorkspace({
@@ -69,7 +71,7 @@ export function useCollectorWorkspace() {
             organizationId,
             organizationName: organization.name,
             organizationCode: organization.code,
-            assignedArtisanIds: [...new Set((assignments || []).map((row) => row.artisan_id))],
+            assignedArtisanIds: [...new Set([...(assignments || []).map((row) => row.artisan_id), ...siteAndHistoryArtisans])],
           });
         }
       } catch (error) {

@@ -2416,8 +2416,18 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 49532,
-      "sha256": "63a3d54481db8ee969adf815cd4c96210c259b182de8257a0916bf491ae86db3"
+      "normalizedBytes": 50423,
+      "sha256": "30ef1db74c94c75d328bd30aeb8cdfe633da7295cbf8a3d674cca2a07c78ceb3"
+    },
+    {
+      "path": "supabase/migrations/20260906145430_collecteurs_comptoirs_ventes.sql",
+      "version": "20260906145430",
+      "description": "collecteurs_comptoirs_ventes",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 86440,
+      "sha256": "2787fff0ea6f9fdd044090a309a72eabf34565b2f8d2d9b35f28df9fb6955302"
     },
     {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
@@ -3413,10 +3423,10 @@
       },
       {
         "digits": 14,
-        "count": 145
+        "count": 146
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "e81442af18e9b4996fd433f4d55ced2629402ca2f0c932d926855e2763dba5c1"
+  "catalogueSha256": "ca7f6905ffa902c8a94c0a7fba4133791979abfd851325a3c122e4a625fa35a8"
 }

@@ -93,15 +93,15 @@ export default function CollectorPortalPage() {
         <PageHeader
           icon={Users}
           title={workspace?.collectorName || 'Portail Collecteur'}
-          subtitle={`Orpailleurs assignés · comptoir ${workspace?.organizationCode || 'de rattachement'}`}
+          subtitle={`Artisans et sites assignés · ${workspace?.organizationName || 'organisme de rattachement'}`}
           breadcrumb={[{ label: 'Collecteur' }]}
-          actions={<button type="button" className="sn-btn" onClick={() => void load()} disabled={loading}><RefreshCw className={loading ? 'sn-spin' : ''} aria-hidden="true" />Actualiser</button>}
+          actions={<><Link to="/collecte/ventes/nouvelle" className="sn-btn sn-btn--primary">Enregistrer une vente</Link><button type="button" className="sn-btn" onClick={() => void load()} disabled={loading}><RefreshCw className={loading ? 'sn-spin' : ''} aria-hidden="true" />Actualiser</button></>}
         />
 
         {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800" role="alert">{error}</div>}
         <div className="mt-4">
           <Note tone="warning" icon={ShieldAlert}>
-            Consultation sécurisée uniquement : le schéma actuel ne fournit aucune RPC dédiée à la création d’un achat artisanal par un Collecteur. Aucune écriture directe n’est donc exposée ; l’enregistrement et les décisions restent traités par le Comptoir habilité.
+            Vos ventes sont soumises à l’approbation de votre comptoir ou de la SONASP. Le paiement par le collecteur nécessite une habilitation et une délégation en cours.
           </Note>
         </div>
 

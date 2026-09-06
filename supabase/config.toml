@@ -58,3 +58,7 @@ verify_jwt = false
 [functions.affiliation-card-render]
 verify_jwt = false
 static_files = ["./functions/affiliation-card-render/assets/*"]
+
+# Autorisation forte et périmètre de vente vérifiés par le RPC du handler.
+[functions.collection-notifications]
+verify_jwt = false

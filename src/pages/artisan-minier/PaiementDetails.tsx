@@ -179,8 +179,9 @@ export default function PaiementDetails() {
   const { paiementId } = useParams();
   const { user } = useAuth();
   const isCollector = isCollectorScopedUser(user);
-  const canExecute = hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE)
-    || hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
+  const canExecute = isCollector
+    ? hasSensitiveCapability(user, CAPABILITIES.COLLECTOR_PAYMENTS_EXECUTE)
+    : hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE) || hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
   const canReconcile = hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_RECONCILE)
     || hasSensitiveCapability(user, CAPABILITIES.FINANCE_RECONCILE);
   const [dossier, setDossier] = useState<ArtisanPaymentDossier | null>(null);
@@ -520,7 +521,7 @@ export default function PaiementDetails() {
               <small>ÉTAPE ACTUELLE</small>
               <h2>{statusStep.title}</h2>
               <p>{statusStep.description}</p>
-              {statusStep.targetStatus && !isCollector && canRunCurrentAction && (
+              {statusStep.targetStatus && (!isCollector || canExecute) && canRunCurrentAction && (
                 <button type="button" className="sn-btn sn-btn--primary" disabled={transitioning || !validVersion} onClick={() => void submitNextStep()}>
                   {transitioning ? <Loader2 className="sn-spin" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />}
                   {statusStep.actionLabel}
@@ -529,7 +530,7 @@ export default function PaiementDetails() {
               {dossier.statut === 'en_traitement' && submitterMustNotValidate && (
                 <div className="payment-next-action__constraint"><ShieldAlert aria-hidden="true" /><span>Le préparateur ne peut pas valider son propre paiement. Un second agent doit intervenir.</span></div>
               )}
-              {statusStep.targetStatus && !isCollector && !canRunCurrentAction && !submitterMustNotValidate && (
+              {statusStep.targetStatus && (!isCollector || canExecute) && !canRunCurrentAction && !submitterMustNotValidate && (
                 <div className="payment-next-action__constraint"><ShieldAlert aria-hidden="true" /><span>Cette décision requiert une habilitation financière renforcée.</span></div>
               )}
               {dossier.statut === 'valide' && (

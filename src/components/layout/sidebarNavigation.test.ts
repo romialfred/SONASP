@@ -440,7 +440,7 @@ describe('navigation', () => {
     expect(routes).not.toContain('/production/licenses');
   });
 
-  it('projette un menu Collecteur local, consultatif et sans vente internationale', () => {
+  it('projette un menu Collecteur local avec circuit de collecte et sans vente internationale', () => {
     const collector = {
       id: 'collector-user', email: 'collector@example.bf', full_name: 'Collecteur Exemple', phone: null,
       role: 'customer', mining_company_id: null, site_ids: [], is_active: true,
@@ -456,7 +456,7 @@ describe('navigation', () => {
 
     expect(sections.map((section) => section.id)).toEqual(['collecteur-collecte', 'collecteur-suivi']);
     expect(routes).toEqual(expect.arrayContaining([
-      '/portail-collecteur', '/artisan-minier/liste', '/artisan-minier/ventes-or',
+      '/portail-collecteur', '/artisan-minier/liste', '/collecte/ventes',
       '/portail-collecteur/stock', '/artisan-minier/paiements/historique',
       '/artisan-minier/rapports/taxes', '/portail-collecteur/documents',
     ]));

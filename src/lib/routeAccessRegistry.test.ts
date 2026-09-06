@@ -62,6 +62,11 @@ function materialize(pattern: string): string {
 }
 
 describe('registre contractuel des routes privées', () => {
+  it('exige l’habilitation de paiement pour le collecteur', () => {
+    const route='/artisan-minier/paiements/123e4567-e89b-12d3-a456-426614174000/nouveau';
+    expect(evaluatePrivateRouteAccess(profile('collector',[CAPABILITIES.COLLECTOR_OPERATE]),route).allowed).toBe(false);
+    expect(evaluatePrivateRouteAccess(profile('collector',[CAPABILITIES.COLLECTOR_OPERATE,CAPABILITIES.COLLECTOR_PAYMENTS_EXECUTE]),route).allowed).toBe(true);
+  });
   it('déclare une politique complète et unique pour chaque pattern', () => {
     const routes = PRIVATE_ROUTE_REGISTRY.map(({ route }) => route);
     expect(new Set(routes).size).toBe(routes.length);

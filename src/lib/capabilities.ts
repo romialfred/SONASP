@@ -21,6 +21,7 @@ export const CAPABILITIES = {
   COMPTOIR_TAX_EXECUTE: 'comptoir.tax.execute',
   COLLECTORS_MANAGE: 'collectors.manage',
   COLLECTOR_OPERATE: 'collector.operate',
+  COLLECTOR_PAYMENTS_EXECUTE: 'collector.payments.execute',
   DGMG_SUPERVISE: 'dgmg.supervise',
   DGMG_PRODUCTION_VALIDATE: 'dgmg.production.validate',
   RESERVE_ALLOCATIONS_VALIDATE_LEVEL_1: 'reserve.allocations.validate_level_1',
@@ -86,6 +87,7 @@ export const OPERATIONAL_CAPABILITY_OPTIONS = [
   { code: CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE, label: 'Comptoir — exécution des paiements', description: 'Exécute les règlements et joint leurs justificatifs.' },
   { code: CAPABILITIES.COMPTOIR_PAYMENTS_RECONCILE, label: 'Comptoir — contrôle des paiements', description: 'Contrôle les paiements préparés par un autre acteur.' },
   { code: CAPABILITIES.COMPTOIR_TAX_EXECUTE, label: 'Comptoir — reversements fiscaux', description: 'Prépare et transmet les reversements fiscaux.' },
+  { code: CAPABILITIES.COLLECTOR_PAYMENTS_EXECUTE, label: 'Collecteur — paiements délégués', description: 'Exécute les paiements de ses ventes approuvées avec délégation de son organisme.' },
   {
     code: CAPABILITIES.COLLECTORS_MANAGE,
     label: 'Gestion des collecteurs',

@@ -9,7 +9,16 @@ const reject = async (sql,args,pattern) => { await assert.rejects(() => query(sq
 const actor = async (id,role='authenticated') => { await db.exec('RESET ROLE'); await query("SELECT set_config('test.uid',$1,false),set_config('test.session','active',false),set_config('test.aal','aal2',false)",[id]); await db.exec(`SET ROLE ${role}`); };
 try {
  await db.exec(await fs.readFile(new URL('../supabase/tests/fixtures/affiliation-baseline.sql',import.meta.url),'utf8'));
+ // Match the live timestamp trigger: metadata backfill must preserve historical dates.
+ await db.exec(`CREATE FUNCTION public.update_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=now(); RETURN NEW; END $$;
+ CREATE TRIGGER update_cartes_updated_at BEFORE UPDATE ON public.snp_cartes_professionnelles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();`);
+ const historicalMember=randomUUID(), historicalCard=randomUUID();
+ await query("INSERT INTO snp_artisans_miniers(id,numero_carte,type_personne,type_artisan,nom) VALUES($1,'FS-HISTORIQUE','physique','exploitant','Historique')",[historicalMember]);
+ await query("INSERT INTO snp_cartes_professionnelles(id,artisan_id,numero_carte,date_emission,date_expiration,statut,updated_at) VALUES($1,$2,'FS-HISTORIQUE','2025-01-01','2027-01-01','validee','2025-02-03T12:00:00Z')",[historicalCard,historicalMember]);
+ const historicalBefore=await one('SELECT date_emission,date_expiration,statut,updated_at FROM snp_cartes_professionnelles WHERE id=$1',[historicalCard]);
  await db.exec(await fs.readFile(new URL('../supabase/migrations/20260906134228_affiliations_cartes_faso_sanama.sql',import.meta.url),'utf8'));
+ assert.deepEqual(await one('SELECT date_emission,date_expiration,statut,updated_at FROM snp_cartes_professionnelles WHERE id=$1',[historicalCard]),historicalBefore);checks++;
+ assert.equal((await one("SELECT tgenabled FROM pg_trigger WHERE tgname='update_cartes_updated_at'")).tgenabled,'O');checks++;
  const maker=randomUUID(),checker=randomUUID(),outsider=randomUUID(),member=randomUUID(),otherMember=randomUUID(),card=randomUUID(),price=randomUUID(),dues=randomUUID();
  const caps=['artisan.cards.manage','artisan.membership.manage','artisan.membership.confirm','artisan.cards.activate','platform.settings.manage'];
  for(const id of [maker,checker,outsider]) { await query('INSERT INTO auth.users VALUES($1)',[id]); await query('INSERT INTO test_profiles(id,capabilities,scope) VALUES($1,$2,$3)',[id,caps,id===outsider?otherMember:null]); }

@@ -145,6 +145,9 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         children: [
           { label: "Vue d'ensemble", path: '/artisan-minier', icon: Grid2X2, color: '#10976b' },
           { label: 'Liste des artisans', path: '/artisan-minier/liste', icon: Users, color: '#2f6fec' },
+          { label: 'Collecteurs', path: '/artisan-minier/collecteurs', icon: Users, color: '#10976b' },
+          { label: 'Comptoirs', path: '/artisan-minier/comptoirs', icon: Building2, color: '#2f6fec' },
+          { label: 'Ventes de collecte', path: '/collecte/ventes', icon: CircleDollarSign, color: '#10976b' },
           { label: 'Affiliations & Cartes', path: '/artisan-minier/cartes/suivi', icon: TrendingUp, color: '#8b5cf6' },
           { label: 'Validation des cartes', path: '/artisan-minier/cartes/validation', icon: CheckCircle2, color: '#635bff' },
           { label: 'Expirations', path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, color: '#f36b21' },
@@ -452,17 +455,19 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
         color: '#c47a3b',
         children: [
           { label: 'Registre des achats', path: '/artisan-minier/ventes-or', icon: FileText, color: '#c47a3b' },
+          { label: 'Ventes des collecteurs', path: '/collecte/ventes', icon: CheckCircle2, color: '#10976b' },
           { label: 'Nouvel achat', path: '/artisan-minier/ventes-or/nouvelle', icon: CircleDollarSign, color: '#7b3f61' },
         ],
       },
-      {
-        id: 'comptoir-orpailleurs',
+        {
+          id: 'comptoir-orpailleurs',
         moduleCode: 'artisan-minier',
         label: 'Orpailleurs rattachés',
         path: '/artisan-minier/liste',
         icon: Users,
-        color: '#2f7d6d',
-      },
+          color: '#2f7d6d',
+        },
+        { id: 'comptoir-collecteurs', moduleCode: 'artisan-minier', label: 'Collecteurs', path: '/artisan-minier/collecteurs', icon: Users, color: '#2f7d6d' },
     ],
   },
   {
@@ -529,8 +534,8 @@ export const COMPTOIR_NAVIGATION_SECTIONS: NavigationSection[] = [
 
 /**
  * Le collecteur ne gère que la collecte locale auprès des orpailleurs qui lui
- * sont assignés. Aucune création n'est proposée tant qu'un RPC transactionnel
- * dédié n'existe pas, et aucune route de cession/export n'entre dans ce menu.
+   * sont assignés. Le registre utilise le RPC de soumission et l’approbation
+   * distincte de l’organisme ; aucune route d’export n’entre dans ce menu.
  */
 export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
   {
@@ -557,7 +562,7 @@ export const COLLECTOR_NAVIGATION_SECTIONS: NavigationSection[] = [
         id: 'collecteur-registre',
         moduleCode: 'artisan_gold_market',
         label: 'Registre des collectes',
-        path: '/artisan-minier/ventes-or',
+        path: '/collecte/ventes',
         icon: CircleDollarSign,
         color: '#c47a3b',
       },
@@ -610,6 +615,7 @@ export const DGMG_NAVIGATION_SECTIONS: NavigationSection[] = [{
     { id: 'dgmg-overview', moduleCode: 'dashboard', label: 'Vue d’ensemble', path: '/portail-dgmg', icon: Grid2X2, color: '#e5fbfa' },
     { id: 'dgmg-sites', moduleCode: 'mining_sites', label: 'Registre des sites', path: '/artisan-sites', icon: Mountain, color: '#e5fbfa' },
     { id: 'dgmg-artisans', moduleCode: 'artisan-minier', label: 'Artisans et opérateurs', path: '/artisan-minier/liste', icon: Users, color: '#e5fbfa' },
+    { id: 'dgmg-collecteurs', moduleCode: 'artisan-minier', label: 'Collecteurs', path: '/artisan-minier/collecteurs', icon: Users, color: '#e5fbfa' },
     { id: 'dgmg-industrial-sites', moduleCode: 'mining_sites', label: 'Sociétés minières', path: '/stakeholders/mining-companies', icon: Building2, color: '#e5fbfa' },
     { id: 'dgmg-comptoirs', moduleCode: 'mining_sites', label: 'Comptoirs', path: '/stakeholders/organizations', icon: Landmark, color: '#e5fbfa' },
     { id: 'dgmg-productions', moduleCode: 'production', label: 'Déclarations de production', path: '/production/daily', icon: TrendingUp, color: '#e5fbfa' },

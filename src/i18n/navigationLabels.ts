@@ -199,7 +199,10 @@ export const ENGLISH_NAVIGATION_LABELS: Readonly<Record<string, string>> = {
   "position nationale": "National position",
   "stock d'argent": "Silver stock",
   "nouvelle vente": "New sale",
-  "vue d'ensemble des mines": "Mining overview"
+  "vue d'ensemble des mines": "Mining overview",
+  "collecteurs": "Collectors",
+  "ventes de collecte": "Collected gold sales",
+  "ventes des collecteurs": "Collector sales"
 };
 
 export function navigationLabel(label: string, language = 'fr'): string {

@@ -198,6 +198,10 @@ const ComptoirPortalPage = lazy(() => import('./pages/comptoir/ComptoirPortalPag
 const ComptoirStockPage = lazy(() => import('./pages/comptoir/ComptoirStockPage'));
 const ComptoirSonaspSalesPage = lazy(() => import('./pages/comptoir/ComptoirSonaspSalesPage'));
 const CollectorPortalPage = lazy(() => import('./pages/collector/CollectorPortalPage'));
+const CollectorFormPage = lazy(() => import('./pages/collector/CollectorForm'));
+const CollectorsPage = lazy(() => import('./pages/collector/CollectorsPage'));
+const ComptoirsPage = lazy(() => import('./pages/collector/ComptoirsPage'));
+const CollectionSalesPage = lazy(() => import('./pages/collector/CollectionSalesPage'));
 const CollectorStockPage = lazy(() => import('./pages/collector/CollectorStockPage'));
 const CollectorDocumentsPage = lazy(() => import('./pages/collector/CollectorDocumentsPage'));
 const SonaspComptoirSalesInboxPage = lazy(() => import('./pages/comptoir/SonaspComptoirSalesInboxPage'));
@@ -314,6 +318,13 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+            <Route path={privateRoutePath('/artisan-minier/collecteurs')} element={<ProtectedRoute><CollectorsPage /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/artisan-minier/collecteurs/:id')} element={<ProtectedRoute><CollectorsPage /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/artisan-minier/collecteurs/nouveau')} element={<ProtectedRoute><CollectorFormPage /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/artisan-minier/collecteurs/:id/modifier')} element={<ProtectedRoute><CollectorFormPage /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/artisan-minier/comptoirs')} element={<ProtectedRoute><ComptoirsPage /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/collecte/ventes')} element={<ProtectedRoute><CollectionSalesPage /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/collecte/ventes/nouvelle')} element={<ProtectedRoute><CollectorPortalGuard><CollectionSalesPage create /></CollectorPortalGuard></ProtectedRoute>} />
             <Route
               path={privateRoutePath('/portail-collecteur')}
               element={

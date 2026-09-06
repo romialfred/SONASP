@@ -198,6 +198,60 @@ class ShippingPreparationService {
     return data;
   }
 
+  /**
+   * Crée une préparation d'expédition de façon ATOMIQUE : parent, lignes de
+   * production, signataires et réservation de quota sont validés dans une seule
+   * transaction serveur (RPC `snp_create_shipping_preparation_atomic`). Soit tout
+   * est enregistré, soit rien ne l'est — plus de préparation « fantôme » tenant
+   * un quota réservé après une coupure réseau entre deux requêtes REST.
+   *
+   * La clé d'idempotence rend un rejeu sûr : le serveur renvoie la préparation
+   * déjà créée au lieu d'en produire une seconde. La référence d'expédition est
+   * générée côté serveur dans la transaction (compteur atomique).
+   */
+  async createPreparationAtomic(input: {
+    idempotencyKey: string;
+    miningCompanyId: string;
+    exportLicenseId: string;
+    freightCompanyId: string;
+    refineryId: string;
+    preparedAt: string;
+    items: Array<{
+      daily_production_id: string;
+      ingot_box_number: string;
+      net_weight_grams: number;
+      gross_weight_grams: number;
+      fineness_pct: number;
+      pure_gold_grams: number;
+      seal_number_1: string;
+      seal_number_2: string | null;
+      order_index: number;
+    }>;
+    signatories: Array<{ position: string; name: string; order_index: number }>;
+  }): Promise<ShippingPreparation> {
+    if (!UUID.test(input.idempotencyKey)) {
+      throw new Error('L’identifiant de la demande de préparation est invalide.');
+    }
+    const { data, error } = await supabase.rpc('snp_create_shipping_preparation_atomic', {
+      p_idempotency_key: input.idempotencyKey,
+      p_mining_company_id: input.miningCompanyId,
+      p_export_license_id: input.exportLicenseId,
+      p_freight_company_id: input.freightCompanyId,
+      p_refinery_id: input.refineryId,
+      p_prepared_at: input.preparedAt,
+      p_items: input.items,
+      p_signatories: input.signatories,
+    });
+
+    // Les messages RAISE de la RPC (quota, tenant, doublon) sont curés et sûrs :
+    // ils remontent tels quels ; la page les classe sans exposer d'interne.
+    if (error) throw error;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('La création de la préparation a renvoyé une réponse invalide.');
+    }
+    return data as unknown as ShippingPreparation;
+  }
+
   async updatePreparation(id: string, updates: ShippingPreparationUpdate): Promise<ShippingPreparation> {
     // Défense runtime pour les appelants JavaScript/non typés : une mise à jour
     // générale ne doit jamais devenir un second chemin de transition de statut.

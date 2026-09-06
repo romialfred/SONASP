@@ -10,6 +10,7 @@ import { UPLOAD_POLICIES, validateUploadFile } from '@/lib/uploadValidation';
 import { DynamicPackingList } from '@/components/shipping/DynamicPackingList';
 import { BusinessErrorDialog } from '@/components/ui/BusinessErrorDialog';
 import { supabase } from '@/lib/supabase';
+import { messageErreurUtilisateur } from '@/lib/presentError';
 import { shippingPreparationService, ShippingPreparation } from '@/services/shippingPreparationService';
 import {
   exportLicenseService,
@@ -323,31 +324,6 @@ export default function ShippingPreparationNew() {
       }
     } catch (error) {
       console.error('Erreur lors du chargement de la préparation :', error);
-    }
-  };
-
-  const generateExpeditionLotNumber = async (): Promise<string> => {
-    if (!selectedMiningCompanyId) return '';
-
-    try {
-      const year = new Date().getFullYear();
-      const expeditionLotNumber = await shippingPreparationService.generateExpeditionLotNumber(
-        selectedMiningCompanyId,
-        year
-      );
-      return expeditionLotNumber;
-    } catch (error) {
-      console.error('❌ Erreur lors de la génération du numéro de lot d’expédition :', error);
-      console.error('Identifiant de la société minière :', selectedMiningCompanyId);
-      // Show error to user
-      setErrorTitle('Référence d’expédition indisponible');
-      setErrorMessage(
-        'La référence canonique de l’expédition n’a pas pu être générée. ' +
-        'Vérifiez que la société minière dispose d’une abréviation configurée, puis réessayez.'
-      );
-      setShowErrorDialog(true);
-      // No fabricated reference: the canonical numbering service must succeed.
-      throw error;
     }
   };
 
@@ -830,51 +806,62 @@ export default function ShippingPreparationNew() {
 
     try {
       setSaving(true);
-      const reference = expeditionLotNumber || await generateExpeditionLotNumber();
-      if (!reference) throw new Error('La référence de l’expédition n’a pas pu être générée.');
-      setExpeditionLotNumber(reference);
 
-      // Calculate total weights
+      // Poids agrégés (le poids net d'expédition = l'or fin, comme le colisage).
       const totalNetWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.pure_gold_grams, 0);
       const totalGrossWeightGrams = selectedProductions.reduce((sum, sp) => sum + sp.production.bullion_grams, 0);
-      const totalNetWeightOz = totalNetWeightGrams / 31.1034768;
-      const totalBoxes = selectedProductions.length; // Nombre de productions = nombre de boxes
-
-      const prepData = {
-        expedition_lot_number: reference,
-        seal_number: selectedProductions[0].sealNumber1, // For backward compatibility
-        mining_company_id: effectiveCompanyId,
-        export_license_id: selectedLicenseId,
-        freight_company_id: selectedFreightCompanyId,  // ✅ CORRECTED: Use proper column
-        refinery_id: selectedRefineryId,                // ✅ CORRECTED: Use proper column
-        total_net_weight_grams: totalNetWeightGrams,
-        total_gross_weight_grams: totalGrossWeightGrams,
-        total_weight_oz: totalNetWeightOz,
-        total_boxes: totalBoxes,
-        prepared_at: new Date().toISOString(),
-      };
-
-      // DEBUG: Vérifier les données avant envoi
+      const preparedAt = new Date().toISOString();
 
       let prepId: string;
+      let reference: string;
 
       if (preparation) {
-        await shippingPreparationService.updatePreparation(preparation.id, prepData);
+        // Édition d'une préparation déjà créée : la référence canonique existe.
+        reference = preparation.expedition_lot_number || expeditionLotNumber;
+        if (!reference) throw new Error('La référence de l’expédition est introuvable pour cette préparation.');
+        await shippingPreparationService.updatePreparation(preparation.id, {
+          seal_number: selectedProductions[0].sealNumber1,
+          mining_company_id: effectiveCompanyId,
+          export_license_id: selectedLicenseId,
+          freight_company_id: selectedFreightCompanyId,
+          refinery_id: selectedRefineryId,
+          total_net_weight_grams: totalNetWeightGrams,
+          total_gross_weight_grams: totalGrossWeightGrams,
+          total_weight_oz: totalNetWeightGrams / 31.1034768,
+          total_boxes: selectedProductions.length,
+        });
         prepId = preparation.id;
       } else {
-        // A stable UUID lets a retry recover a successful insert whose response was lost.
-        const recovered = pendingCreationId.current
-          ? await shippingPreparationService.getPreparationById(pendingCreationId.current) : null;
-        if (recovered && recovered.mining_company_id !== effectiveCompanyId) {
-          throw new Error('La préparation existante appartient à une autre société. Ouvrez son dossier avant de poursuivre.');
-        }
+        // Création ATOMIQUE : parent, lignes, signataires et réservation de quota
+        // sont validés dans une seule transaction serveur — plus de préparation
+        // « fantôme » tenant un quota après une coupure. La référence est générée
+        // côté serveur (compteur atomique) et la clé rend un rejeu sûr.
         pendingCreationId.current ||= crypto.randomUUID();
-        const newPrep = recovered || await shippingPreparationService.createPreparation({
-          ...prepData, id: pendingCreationId.current,
-          status: 'waiting_for_customs_approval',
+        const newPrep = await shippingPreparationService.createPreparationAtomic({
+          idempotencyKey: pendingCreationId.current,
+          miningCompanyId: effectiveCompanyId,
+          exportLicenseId: selectedLicenseId,
+          freightCompanyId: selectedFreightCompanyId,
+          refineryId: selectedRefineryId,
+          preparedAt,
+          items: selectedProductions.map((sp, index) => ({
+            daily_production_id: sp.production.id,
+            ingot_box_number: sp.production.bar_reference || `BOX-${index + 1}`,
+            net_weight_grams: sp.production.pure_gold_grams,
+            gross_weight_grams: sp.production.bullion_grams,
+            fineness_pct: sp.production.estimated_fineness_pct,
+            pure_gold_grams: sp.production.pure_gold_grams,
+            seal_number_1: sp.sealNumber1,
+            seal_number_2: sp.sealNumber2 || null,
+            order_index: index,
+          })),
+          signatories: signatories.map((s, index) => ({ position: s.position, name: s.name, order_index: index })),
         });
         prepId = newPrep.id;
+        reference = newPrep.expedition_lot_number || '';
+        if (!reference) throw new Error('La référence de l’expédition n’a pas été générée.');
         setPreparation(newPrep);
+        setExpeditionLotNumber(reference);
       }
 
       // A resumed save must continue the same record, not duplicate its children.
@@ -943,11 +930,13 @@ export default function ShippingPreparationNew() {
       console.error('Erreur lors de l’enregistrement de la préparation :', error);
 
       setErrorTitle('Préparation non enregistrée');
-      setErrorMessage(error instanceof Error
-        ? error.message
-        : 'La demande d’enregistrement n’a pas pu aboutir. Vérifiez cette préparation avant de réessayer.');
-      // Signal that the shared dialog must classify and sanitise the technical failure.
-      setErrorTechnicalDetails('technical-error');
+      // Les messages métier (validations, RAISE curés) sont relayés ; les erreurs
+      // PostgREST/PostgreSQL brutes sont classées sans exposer d'interne.
+      setErrorMessage(messageErreurUtilisateur(
+        error,
+        'La demande d’enregistrement n’a pas pu aboutir. Vérifiez cette préparation avant de réessayer.',
+      ));
+      setErrorTechnicalDetails(undefined);
       setShowErrorDialog(true);
     } finally {
       setSaving(false);

@@ -2370,6 +2370,16 @@
       "sha256": "6120bc67078960c17e2668bd8305b0e11749b89410ac0ae35c30163dd7a98a14"
     },
     {
+      "path": "supabase/migrations/20260906120000_creer_preparation_expedition_atomiquement.sql",
+      "version": "20260906120000",
+      "description": "creer_preparation_expedition_atomiquement",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 17589,
+      "sha256": "d356c468197188599a270421bf415ce78f497c60d137322d32740df703fd1478"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3363,10 +3373,10 @@
       },
       {
         "digits": 14,
-        "count": 140
+        "count": 141
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "652b3d83ca7d7b3098252382bd18cb585a91d3b136b6466b6976eac251cc90a6"
+  "catalogueSha256": "2c83e5934bef023e0b23784c60e44477788565dc8fc4d930e7fe237f614cc3e1"
 }

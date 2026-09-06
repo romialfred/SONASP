@@ -78,6 +78,43 @@ describe('shippingPreparationService — frontières du workflow', () => {
     });
   });
 
+  it('crée une préparation via la RPC atomique et relaie la ligne renvoyée', async () => {
+    const created = { id: 'prep-1', expedition_lot_number: 'HUM-MA-0001/2026', status: 'waiting_for_customs_approval' };
+    supabaseMock.rpc.mockResolvedValue({ data: created, error: null });
+    const key = '9b3fcaaa-9367-4c91-a82d-788f043f33f1';
+
+    await expect(shippingPreparationService.createPreparationAtomic({
+      idempotencyKey: key,
+      miningCompanyId: 'mine-1', exportLicenseId: 'lic-1', freightCompanyId: 'car-1', refineryId: 'ref-1',
+      preparedAt: '2026-09-06T00:00:00.000Z',
+      items: [{ daily_production_id: 'prod-1', ingot_box_number: 'BOX-1', net_weight_grams: 990, gross_weight_grams: 1000, fineness_pct: 99, pure_gold_grams: 990, seal_number_1: 'S1', seal_number_2: null, order_index: 0 }],
+      signatories: [{ position: 'DG', name: 'Awa', order_index: 0 }],
+    })).resolves.toEqual(created);
+
+    expect(supabaseMock.rpc).toHaveBeenCalledWith('snp_create_shipping_preparation_atomic', expect.objectContaining({
+      p_idempotency_key: key, p_mining_company_id: 'mine-1', p_export_license_id: 'lic-1',
+      p_freight_company_id: 'car-1', p_refinery_id: 'ref-1', p_prepared_at: '2026-09-06T00:00:00.000Z',
+    }));
+  });
+
+  it('refuse une clé d’idempotence invalide avant tout appel réseau', async () => {
+    await expect(shippingPreparationService.createPreparationAtomic({
+      idempotencyKey: 'not-a-uuid', miningCompanyId: 'm', exportLicenseId: 'l', freightCompanyId: 'f', refineryId: 'r',
+      preparedAt: '2026-09-06T00:00:00.000Z', items: [], signatories: [],
+    })).rejects.toThrow('identifiant de la demande');
+    expect(supabaseMock.rpc).not.toHaveBeenCalled();
+  });
+
+  it('relaie le message métier curé levé par la RPC atomique', async () => {
+    supabaseMock.rpc.mockResolvedValue({ data: null, error: new Error('Quota insuffisant : autorisé 1000 g.') });
+    await expect(shippingPreparationService.createPreparationAtomic({
+      idempotencyKey: '9b3fcaaa-9367-4c91-a82d-788f043f33f1', miningCompanyId: 'm', exportLicenseId: 'l', freightCompanyId: 'f', refineryId: 'r',
+      preparedAt: '2026-09-06T00:00:00.000Z',
+      items: [{ daily_production_id: 'p', ingot_box_number: 'B', net_weight_grams: 1, gross_weight_grams: 1, fineness_pct: 50, pure_gold_grams: 1, seal_number_1: 'S', seal_number_2: null, order_index: 0 }],
+      signatories: [],
+    })).rejects.toThrow('Quota insuffisant');
+  });
+
   it('utilise la libération canonique dérivée de l’expédition', async () => {
     supabaseMock.rpc.mockResolvedValue({ data: true, error: null });
 

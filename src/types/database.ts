@@ -14798,6 +14798,19 @@ export type Database = {
         }
         Returns: Json
       }
+      snp_create_shipping_preparation_atomic: {
+        Args: {
+          p_idempotency_key: string
+          p_mining_company_id: string
+          p_export_license_id: string
+          p_freight_company_id: string
+          p_refinery_id: string
+          p_prepared_at: string
+          p_items: Json
+          p_signatories?: Json
+        }
+        Returns: Json
+      }
       generate_numero_recu_vente_or: { Args: never; Returns: string }
       generate_pre_sale_number: { Args: never; Returns: string }
       generate_sale_number: { Args: never; Returns: string }

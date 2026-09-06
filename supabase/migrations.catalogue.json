@@ -2440,6 +2440,16 @@
       "sha256": "f99ff8909cfe1df228406407fdcde99baac8e42bdf2353cd307f3519d0d04dc9"
     },
     {
+      "path": "supabase/migrations/20260906190538_fix_artisan_card_number_search_path.sql",
+      "version": "20260906190538",
+      "description": "fix_artisan_card_number_search_path",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 887,
+      "sha256": "ed3c8ecf51438599c908dc1ae3ea5ef7ffa071659e43c0a1c065e22750b05c11"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3433,10 +3443,10 @@
       },
       {
         "digits": 14,
-        "count": 147
+        "count": 148
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "375e6ecd311d3d90eb47eca14ab8d9aef98c85e2fc9c3a9c81904780072845d1"
+  "catalogueSha256": "277f92ef9478b552be4cc14d9d07187de3a9e2f0013d61dc793243e227d9d180"
 }

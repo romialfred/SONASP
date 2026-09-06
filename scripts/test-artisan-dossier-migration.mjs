@@ -19,6 +19,9 @@ try {
     ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
   `);
   await db.exec(await fs.readFile(new URL('../supabase/tests/fixtures/artisan-dossier-baseline.sql',import.meta.url),'utf8'));
+  // Keep the production BEFORE INSERT chain: omitting this legacy trigger hid
+  // the save RPC regression when its search_path was hardened to an empty value.
+  await db.exec(await fs.readFile(new URL('../supabase/migrations/20260819_001_carte_numero_format.sql',import.meta.url),'utf8'));
   await db.exec(`ALTER TABLE public.snp_artisans_miniers ENABLE ROW LEVEL SECURITY;
     ALTER TABLE public.snp_artisan_documents ENABLE ROW LEVEL SECURITY;
     CREATE POLICY registry ON public.snp_artisans_miniers FOR ALL TO authenticated
@@ -42,10 +45,16 @@ try {
   const company=(role='exploitant')=>({type_personne:'morale',type_artisan:role,raison_sociale:'Société essai',numero_registre_commerce:'00-'+randomUUID(),numero_ifu:'000'+randomUUID(),siege_pays:'Burkina Faso',siege_region:'Centre',siege_commune:'Ouagadougou',siege_adresse:'Siège',pays:'Burkina Faso',region:'Sahel',commune:'Dori',adresse:'Lieu activité',telephone:'+22670000002',whatsapp:'',whatsapp_identique:false,email:'',artisanal_site_id:null,exploitant_id:null,responsable:{nom:'Responsable',prenoms:'Essai',date_naissance:'1980-01-01',telephone:'+22670000003',whatsapp_identique:true,whatsapp:'',fonction:'Gérant',type_piece_identite:'Passeport',numero_piece_identite:'DOC-001'}});
   const save=async(payload,id=null,creation=randomUUID(),expected=null,confirm=false)=>(await db.query('SELECT public.snp_save_artisan_dossier($1,$2,$3,$4,$5) AS saved',[id,creation,expected,JSON.stringify(payload),confirm])).rows[0].saved;
   const reject=async(action,pattern)=>{await assert.rejects(action,pattern);checks++;};
+  await reject(()=>save(person()),/function snp_encoder_instant_carte\(timestamp with time zone\) does not exist/);
+  await db.exec('RESET ROLE');
+  await db.exec(await fs.readFile(new URL('../supabase/migrations/20260906190538_fix_artisan_card_number_search_path.sql',import.meta.url),'utf8'));
+  await db.exec('SET ROLE authenticated');
   const parent=await save(person());checks++;
+  assert.match(parent.artisan.numero_carte,/^BF-AM-\d{4}-[0-9A-Za-z]{4}-\d{4}$/);checks++;
   for(const kind of ['physique','morale'])for(const role of ['exploitant','fournisseur','aide_exploitant','intermediaire']){
     const p=kind==='physique'?person(role):company(role);if(role==='aide_exploitant')p.exploitant_id=parent.artisan.id;
     const result=await save(p);assert.equal(result.artisan.type_artisan,role);assert.equal(result.artisan.artisanal_site_id,null);
+    assert.match(result.artisan.numero_carte,/^BF-AM-\d{4}-[0-9A-Za-z]{4}-\d{4}$/);
     if(kind==='morale'){assert.equal(result.artisan.date_naissance,null);assert.equal(result.responsable.whatsapp,result.responsable.telephone);assert.notEqual(result.artisan.siege_region,result.artisan.region);}checks++;
   }
   await reject(()=>save(person('aide_exploitant')),/exploitant|parent/);
@@ -64,6 +73,7 @@ try {
   await save({...person(),date_expiration_piece:'2020-01-01',date_delivrance_piece:'2019-01-01'});checks++;
   const duplicate=person();const idempotency=randomUUID();const one=await save(duplicate,null,idempotency);const again=await save(duplicate,null,idempotency);
   assert.equal(one.artisan.id,again.artisan.id);checks++;
+  assert.equal(one.artisan.numero_carte,again.artisan.numero_carte);checks++;
   await reject(()=>save({...duplicate,nom:'Autre'},null,idempotency),/déjà été enregistré/);
   await reject(()=>save(duplicate),/déjà cette pièce/);
   const society=company();const societySaved=await save(society);await reject(()=>save(society),/RCCM ou cet IFU/);
@@ -71,6 +81,7 @@ try {
   assert.equal(societyEdited.responsable.fonction,'Directrice');assert.equal(societyEdited.responsable.id,societySaved.responsable.id);checks++;
   assert.ok((await db.query("SELECT id FROM public.snp_artisan_dossier_audit WHERE artisan_id=$1 AND action='responsable_modifie'",[societySaved.artisan.id])).rows.length);checks++;
   const edited=await save({...duplicate,prenoms:'Modifié'},one.artisan.id,randomUUID(),one.artisan.updated_at);
+  assert.equal(edited.artisan.numero_carte,one.artisan.numero_carte);checks++;
   await reject(()=>save({...duplicate,prenoms:'Concurrent'},one.artisan.id,randomUUID(),'2000-01-01T00:00:00Z'),/fiche a changé/);
   await reject(()=>save({...duplicate,type_artisan:'intermediaire'},edited.artisan.id,randomUUID(),edited.artisan.updated_at),/Confirmez/);
   await reject(()=>save({...person(),type_artisan:'fournisseur'},parent.artisan.id,randomUUID(),parent.artisan.updated_at,true),/Des aides/);

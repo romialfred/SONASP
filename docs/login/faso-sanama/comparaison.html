@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comparaison de la connexion Faso SANAMA</title>
+<style>
+  *{box-sizing:border-box}body{margin:0;padding:24px;background:#f3f5f7;color:#10243e;font:15px Arial,sans-serif}h1{font-size:24px}p{max-width:1000px;line-height:1.5}button{border:1px solid #bccbd7;border-radius:8px;padding:10px 16px;background:white;color:#10243e;cursor:pointer}button[aria-pressed=true]{background:#0f7a56;color:white}nav{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:20px 0}.images{display:grid;grid-template-columns:1fr 1fr;gap:16px}.images figure{margin:0;min-width:0}figcaption{padding:10px;background:white;font-weight:bold}img{display:block;width:100%;height:auto;border:1px solid #d9e2ea}.overlay{position:relative;display:block}.overlay figure:nth-child(2){position:absolute;inset:0}.overlay figure:nth-child(2) img{opacity:var(--opacity,.5)}.overlay figcaption{display:none}input{vertical-align:middle}a{color:#0f7a56}@media(max-width:900px){.images:not(.overlay){grid-template-columns:1fr}}
+</style>
+<h1>Connexion Faso SANAMA : maquette et application</h1>
+<p>Comparaison de la maquette fournie avec la route <code>/login</code> exécutée localement. Le logo original Faso SANAMA est encore manquant : la capture montre le repli textuel. Les emblèmes officiels conservent leur forme originale, différente des versions stylisées de la maquette. Le décor a été reconstitué séparément.</p>
+<nav aria-label="Mode de comparaison">
+  <button id="side" aria-pressed="true">Côte à côte</button>
+  <button id="overlay" aria-pressed="false">Superposition</button>
+  <label>Opacité de l’application <input id="opacity" type="range" min="0" max="100" value="50"></label>
+  <a href="README.md">Compte rendu de vérification</a>
+</nav>
+<div class="images" id="images">
+  <figure><figcaption>Maquette de référence — 1672 × 941</figcaption><img src="reference.png" alt="Maquette fournie par l’utilisateur"></figure>
+  <figure><figcaption>Application locale — logo original en attente</figcaption><img src="captures/login-1672x941.jpg" alt="Capture de la page de connexion exécutée localement"></figure>
+</div>
+<script>
+  const images=document.querySelector('#images'),side=document.querySelector('#side'),overlay=document.querySelector('#overlay');
+  function mode(superpose){images.classList.toggle('overlay',superpose);side.setAttribute('aria-pressed',String(!superpose));overlay.setAttribute('aria-pressed',String(superpose));}
+  side.addEventListener('click',()=>mode(false));overlay.addEventListener('click',()=>mode(true));
+  document.querySelector('#opacity').addEventListener('input',e=>images.style.setProperty('--opacity',Number(e.target.value)/100));
+</script>
+</html>

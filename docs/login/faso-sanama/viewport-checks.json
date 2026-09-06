@@ -1,0 +1,422 @@
+[
+  {
+    "brandFallback": true,
+    "card": {
+      "bottom": 685.0859375,
+      "height": 555.7578125,
+      "left": 1027.453125,
+      "right": 1493.9375,
+      "top": 129.328125,
+      "width": 466.484375,
+      "x": 1027.453125,
+      "y": 129.328125
+    },
+    "clientWidth": 1672,
+    "document": {
+      "height": 941,
+      "width": 1672
+    },
+    "footer": {
+      "bottom": 941,
+      "height": 34,
+      "left": 0,
+      "right": 1672,
+      "top": 907,
+      "width": 1672,
+      "x": 0,
+      "y": 907
+    },
+    "institutions": {
+      "bottom": 907,
+      "height": 189.46875,
+      "left": 0,
+      "right": 1672,
+      "top": 717.53125,
+      "width": 1672,
+      "x": 0,
+      "y": 717.53125
+    },
+    "logos": [
+      {
+        "alt": "Présidence du Faso",
+        "loaded": true
+      },
+      {
+        "alt": "SONASP",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Finances",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Mines et de l’Énergie",
+        "loaded": true
+      },
+      {
+        "alt": "BUMIGEB",
+        "loaded": true
+      }
+    ],
+    "viewport": {
+      "height": 941,
+      "width": 1672
+    },
+    "capture": {
+      "path": "captures/login-1672x941.jpg",
+      "width": 1672,
+      "height": 941,
+      "format": "JPEG"
+    }
+  },
+  {
+    "brandFallback": true,
+    "card": {
+      "bottom": 776.078125,
+      "height": 628.6796875,
+      "left": 1179.84375,
+      "right": 1715.5234375,
+      "top": 147.3984375,
+      "width": 535.6796875,
+      "x": 1179.84375,
+      "y": 147.3984375
+    },
+    "clientWidth": 1920,
+    "document": {
+      "height": 1080,
+      "width": 1920
+    },
+    "footer": {
+      "bottom": 1080,
+      "height": 36,
+      "left": 0,
+      "right": 1920,
+      "top": 1044,
+      "width": 1920,
+      "x": 0,
+      "y": 1044
+    },
+    "institutions": {
+      "bottom": 1044,
+      "height": 213.8203125,
+      "left": 0,
+      "right": 1920,
+      "top": 830.1796875,
+      "width": 1920,
+      "x": 0,
+      "y": 830.1796875
+    },
+    "logos": [
+      {
+        "alt": "Présidence du Faso",
+        "loaded": true
+      },
+      {
+        "alt": "SONASP",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Finances",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Mines et de l’Énergie",
+        "loaded": true
+      },
+      {
+        "alt": "BUMIGEB",
+        "loaded": true
+      }
+    ],
+    "viewport": {
+      "height": 1080,
+      "width": 1920
+    },
+    "capture": {
+      "path": "captures/login-1920x1080.jpg",
+      "width": 1920,
+      "height": 1080,
+      "format": "JPEG"
+    }
+  },
+  {
+    "brandFallback": true,
+    "card": {
+      "bottom": 571.8046875,
+      "height": 484.8046875,
+      "left": 839.4140625,
+      "right": 1220.5234375,
+      "top": 87,
+      "width": 381.109375,
+      "x": 839.4140625,
+      "y": 87
+    },
+    "clientWidth": 1366,
+    "document": {
+      "height": 768,
+      "width": 1366
+    },
+    "footer": {
+      "bottom": 768,
+      "height": 34,
+      "left": 0,
+      "right": 1366,
+      "top": 734,
+      "width": 1366,
+      "x": 0,
+      "y": 734
+    },
+    "institutions": {
+      "bottom": 734,
+      "height": 148.40625,
+      "left": 0,
+      "right": 1366,
+      "top": 585.59375,
+      "width": 1366,
+      "x": 0,
+      "y": 585.59375
+    },
+    "logos": [
+      {
+        "alt": "Présidence du Faso",
+        "loaded": true
+      },
+      {
+        "alt": "SONASP",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Finances",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Mines et de l’Énergie",
+        "loaded": true
+      },
+      {
+        "alt": "BUMIGEB",
+        "loaded": true
+      }
+    ],
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    },
+    "capture": {
+      "path": "captures/login-1366x768.jpg",
+      "width": 1366,
+      "height": 768,
+      "format": "JPEG"
+    }
+  },
+  {
+    "brandFallback": true,
+    "card": {
+      "bottom": 629.390625,
+      "height": 505.390625,
+      "left": 516.953125,
+      "right": 917,
+      "top": 124,
+      "width": 400.046875,
+      "x": 516.953125,
+      "y": 124
+    },
+    "clientWidth": 945,
+    "document": {
+      "height": 868,
+      "width": 945
+    },
+    "footer": {
+      "bottom": 868.640625,
+      "height": 34,
+      "left": 0,
+      "right": 945,
+      "top": 834.640625,
+      "width": 945,
+      "x": 0,
+      "y": 834.640625
+    },
+    "institutions": {
+      "bottom": 834.640625,
+      "height": 173.25,
+      "left": 0,
+      "right": 945,
+      "top": 661.390625,
+      "width": 945,
+      "x": 0,
+      "y": 661.390625
+    },
+    "logos": [
+      {
+        "alt": "Présidence du Faso",
+        "loaded": true
+      },
+      {
+        "alt": "SONASP",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Finances",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Mines et de l’Énergie",
+        "loaded": true
+      },
+      {
+        "alt": "BUMIGEB",
+        "loaded": true
+      }
+    ],
+    "viewport": {
+      "height": 540,
+      "width": 960
+    },
+    "capture": {
+      "path": "captures/login-960x540.jpg",
+      "width": 945,
+      "height": 532,
+      "format": "JPEG"
+    }
+  },
+  {
+    "brandFallback": true,
+    "card": {
+      "bottom": 1006.296875,
+      "height": 533.703125,
+      "left": 20,
+      "right": 355,
+      "top": 472.59375,
+      "width": 335,
+      "x": 20,
+      "y": 472.59375
+    },
+    "clientWidth": 375,
+    "document": {
+      "height": 1611,
+      "width": 375
+    },
+    "footer": {
+      "bottom": 1611.546875,
+      "height": 73,
+      "left": 0,
+      "right": 375,
+      "top": 1538.546875,
+      "width": 375,
+      "x": 0,
+      "y": 1538.546875
+    },
+    "institutions": {
+      "bottom": 1538.546875,
+      "height": 500.25,
+      "left": 0,
+      "right": 375,
+      "top": 1038.296875,
+      "width": 375,
+      "x": 0,
+      "y": 1038.296875
+    },
+    "logos": [
+      {
+        "alt": "Présidence du Faso",
+        "loaded": true
+      },
+      {
+        "alt": "SONASP",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Finances",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Mines et de l’Énergie",
+        "loaded": true
+      },
+      {
+        "alt": "BUMIGEB",
+        "loaded": true
+      }
+    ],
+    "viewport": {
+      "height": 844,
+      "width": 390
+    },
+    "capture": {
+      "path": "captures/login-390x844.jpg",
+      "width": 375,
+      "height": 812,
+      "format": "JPEG"
+    }
+  },
+  {
+    "brandFallback": true,
+    "card": {
+      "bottom": 1146.3359375,
+      "height": 561.6796875,
+      "left": 20,
+      "right": 285,
+      "top": 584.65625,
+      "width": 265,
+      "x": 20,
+      "y": 584.65625
+    },
+    "clientWidth": 305,
+    "document": {
+      "height": 1758,
+      "width": 305
+    },
+    "footer": {
+      "bottom": 1757.78125,
+      "height": 73,
+      "left": 0,
+      "right": 305,
+      "top": 1684.78125,
+      "width": 305,
+      "x": 0,
+      "y": 1684.78125
+    },
+    "institutions": {
+      "bottom": 1684.78125,
+      "height": 506.4453125,
+      "left": 0,
+      "right": 305,
+      "top": 1178.3359375,
+      "width": 305,
+      "x": 0,
+      "y": 1178.3359375
+    },
+    "logos": [
+      {
+        "alt": "Présidence du Faso",
+        "loaded": true
+      },
+      {
+        "alt": "SONASP",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Finances",
+        "loaded": true
+      },
+      {
+        "alt": "Ministère des Mines et de l’Énergie",
+        "loaded": true
+      },
+      {
+        "alt": "BUMIGEB",
+        "loaded": true
+      }
+    ],
+    "viewport": {
+      "height": 640,
+      "width": 320
+    },
+    "capture": {
+      "path": "captures/login-320x640.jpg",
+      "width": 305,
+      "height": 610,
+      "format": "JPEG"
+    }
+  }
+]

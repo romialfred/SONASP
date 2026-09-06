@@ -1,782 +1,940 @@
-/* ══════════════════════════════════════════════════════════════════════════
-   PAGE DE CONNEXION
+/* Identité locale Faso SANAMA. Référence 1672 × 941 : carte 28vw, institutions à 76vh.
+   Le contenu agrandit toujours la page si nécessaire (erreurs, zoom, clavier). */
 
-   Proportions relevées sur la maquette de référence (1752 × 898) et exprimées
-   en fractions de la largeur, pour qu'elles tiennent à toute taille d'écran :
-
-     panneau vert   55,5 % de la largeur, biais de 5,4 %
-     marge du texte  4 %          titre         3,32 vw, 2 lignes
-     carte          35,4 %        champs        52 px de haut
-     marque         15,4 %        pastille      5,3 vw
-
-   La photographie optimisée est chargée en AVIF avec repli WebP. Le voile est
-   composé pour qu'elle se découvre à droite et reste couverte à gauche, sous
-   le texte — c'est le partage de la maquette.
-   ══════════════════════════════════════════════════════════════════════════ */
-
-.sonasp-login {
-  /* Vert institutionnel du logo (#006533), décliné pour le panneau. */
-  --login-vert: #006533;
-  --login-vert-fonce: #06331f;
-  --login-vert-profond: #042518;
-  --login-vert-clair: #0f7a56;
-  --login-or: #c8a03c;
-  --login-or-clair: #e2bc03;
-  --login-creme: #fcf8ef;
-  --login-encre: #17242f;
-  --login-muet: #5d7080;
-  --login-ligne: #e6ded0;
-
-  --login-photo: image-set(
-    url('/login-gold-background.avif') type('image/avif'),
-    url('/login-gold-background.webp') type('image/webp')
-  );
-
-  /* Recul de la diagonale entre le haut et le bas du panneau. */
-  --login-largeur: 55.8%;
-  /* Marge du texte, alignée sur celle de la maquette. */
-  --login-marge: clamp(24px, 4vw, 78px);
-
-  position: relative;
-  height: 100vh;
-  height: 100svh;
-  min-height: 100vh;
-  min-height: 100svh;
-  overflow: hidden;
-  background: var(--login-creme);
-  color: var(--login-encre);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+@font-face {
+  font-family: 'Login Roboto';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/login-faso/roboto-latin.woff2') format('woff2');
 }
 
-.sonasp-login::before {
-  position: absolute;
-  z-index: 0;
-  inset: 0 0 0 var(--login-largeur);
-  background: url('/login-pattern.svg') right center / auto 100% no-repeat;
-  content: '';
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-/* ─────────────────────────────────────────────────────────── Le décor ──── */
-
-.login-hero,
-.login-hero__edge {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: var(--login-largeur);
-  pointer-events: none;
-}
-
-.login-hero {
-  z-index: 1;
-  overflow: hidden;
-  clip-path: polygon(0 0, 100% 0, 88.7% 52%, 100% 100%, 0 100%);
-  background: var(--login-vert-profond);
-}
-
-.login-hero__image {
-  position: absolute;
-  inset: 0;
-  background: var(--login-photo) 50% center / cover no-repeat;
-  filter: saturate(1.14) brightness(1.03);
-}
-
-/* Le voile n'est pas uniforme, et c'est tout le partage de la maquette : opaque
-   à gauche, où le titre doit rester lisible sur n'importe quel cliché ; presque
-   transparent à droite, où la photographie se découvre. Un voile égal donnerait
-   soit un panneau plat, soit un titre illisible. */
-.login-hero__veil {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(97deg,
-      rgba(0, 62, 40, 0.94) 0%,
-      rgba(0, 55, 35, 0.88) 42%,
-      rgba(2, 48, 31, 0.46) 60%,
-      rgba(4, 44, 28, 0.15) 78%,
-      rgba(6, 46, 29, 0.06) 100%);
-}
-
-/* Le liseré doré est une couche distincte : posé dans `.login-hero`, il serait
-   rogné par le `clip-path` de celui-ci, exactement là où on veut le voir. */
-.login-hero__edge {
-  z-index: 2;
-  clip-path: polygon(
-    calc(100% - 4px) 0,
-    100% 0,
-    89.1% 52%,
-    100% 100%,
-    calc(100% - 4px) 100%,
-    88.3% 52%
-  );
-  background: linear-gradient(180deg, var(--login-or-clair) 0%, var(--login-or) 55%, #9a7622 100%);
-}
-
-/* ──────────────────────────────────────────────────────── La structure ─── */
-
-.login-shell {
-  position: relative;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: var(--login-largeur) 1fr;
-  min-height: 100vh;
-  min-height: 100svh;
-  height: 100%;
-}
-
-/* ──────────────────────────────────────────────────── Panneau de gauche ── */
-
-.login-presentation {
+.faso-login {
+  --login-green: #00763b;
+  --login-gold: #b7790a;
+  --login-ink: #07132f;
+  --login-muted: #526988;
+  --login-ivory: #fcfaf6;
+  --login-line: #dce2eb;
+  --login-left: clamp(32px, 8.85vw, 192px);
+  --login-right: clamp(32px, 10.65vw, 230px);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  /* La marge droite est plus large : le texte ne doit pas venir buter contre
-     la diagonale, qui se rapproche à mesure qu'on descend. */
-  padding: 48px clamp(92px, 8vw, 142px) 88px var(--login-marge);
-  color: #fff;
+  min-height: 100svh;
+  background: var(--login-ivory);
+  color: var(--login-ink);
+  font-family: 'Login Roboto', Arial, sans-serif;
 }
 
-.login-presentation__logo {
-  width: clamp(184px, 15.4vw, 288px);
-  height: auto;
-  margin-bottom: clamp(20px, 3.9vw, 72px);
-  padding: clamp(7px, 0.6vw, 10px) clamp(10px, 0.8vw, 14px);
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 12px 28px rgba(0, 25, 15, 0.2);
+.faso-login .login-national-line {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 7px;
+  background: linear-gradient(90deg, #e30613 0 50%, #007b50 50% 100%);
 }
 
-.login-presentation__eyebrow {
+.faso-login .login-national-line span {
+  position: absolute;
+  top: -3px;
+  left: calc(50% - 10px);
+  width: 20px;
+  height: 20px;
+  background: #ffdf00;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 94%, 50% 72%, 21% 94%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.faso-login .login-scene {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.faso-login .login-landscape {
+  position: absolute;
+  z-index: -2;
+  inset: 0 auto 0 0;
+  width: 63%;
+  pointer-events: none;
+  background-image: linear-gradient(180deg, #fcfaf6 0%, rgb(252 250 246 / 90%) 28%, rgb(252 250 246 / 58%) 68%, transparent 87%), image-set(url('/login-faso/mine-sunrise.avif') type('image/avif'), url('/login-faso/mine-sunrise.webp') type('image/webp'));
+  background-position: left bottom;
+  background-size: 100% 100%, 100% 82%;
+  background-repeat: no-repeat;
+  mask-image: linear-gradient(90deg, #000 0 97%, transparent 100%);
+}
+
+.faso-login .login-contours {
+  position: absolute;
+  z-index: -1;
+  width: clamp(80px, 9vw, 175px);
+  background: url('/login-faso/contours.svg') center / 100% 100% no-repeat;
+  pointer-events: none;
+  opacity: .65;
+}
+
+.faso-login .login-contours--left {
+  top: 4%;
+  left: 0;
+  height: 50%;
+  transform: rotate(180deg);
+}
+
+.faso-login .login-contours--right {
+  bottom: 3%;
+  right: 0;
+  height: 66%;
+}
+
+.faso-login .login-header {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin: 0 0 clamp(14px, 1.77vw, 33px);
-  color: #e1b52f;
-  font-size: clamp(11px, 0.74vw, 13.5px);
-  font-weight: 600;
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  transform: translateY(-12px);
+  justify-content: space-between;
+  gap: 24px;
+  min-height: clamp(90px, 13svh, 146px);
+  margin: 0 var(--login-right) 0 var(--login-left);
+  padding: 9px 0;
 }
 
-.login-presentation__eyebrow span {
-  width: clamp(26px, 2.4vw, 44px);
-  height: 2px;
-  flex: 0 0 auto;
-  background: var(--login-or-clair);
-}
-
-.login-presentation__title {
-  /* Une règle globale sur `h1` impose une encre sombre : sur le vert du
-     panneau, le contraste tombait à 1,19 — le titre disparaissait. La couleur
-     héritée ne suffit pas, il faut la poser.
-
-     La largeur est exprimée en `em` : elle suit la taille du texte, et le
-     titre garde ses deux lignes de la maquette à toute taille d'écran. */
-  /* La largeur réserve les deux lignes prévues sans déformer les glyphes. */
-  max-width: 11.4em;
-  margin: 0;
-  color: #fff;
-  font-size: clamp(31px, 3.32vw, 62px);
-  font-weight: 800;
-  line-height: 1.14;
-  letter-spacing: -0.021em;
-}
-
-.login-presentation__title span,
-.login-presentation__lead span { display: block; }
-
-.login-presentation__rule {
+.faso-login .login-brand {
   display: block;
-  width: clamp(44px, 3.5vw, 62px);
-  height: 4px;
-  margin: clamp(18px, 2vw, 37px) 0 clamp(18px, 2.06vw, 38px);
-  border-radius: 2px;
-  background: var(--login-or-clair);
+  width: clamp(285px, 28vw, 538px);
+  height: clamp(70px, 10.8svh, 120px);
+  object-fit: contain;
+  object-position: left center;
 }
 
-.login-presentation__lead {
-  max-width: 29em;
-  margin: 0;
-  color: rgba(239, 246, 241, 0.9);
-  font-size: clamp(14px, 1.08vw, 19px);
-  line-height: 1.62;
-  transform: translateY(-6px);
-}
-
-.login-pillars {
+.faso-login .login-brand--text {
   display: flex;
-  flex-wrap: wrap;
-  gap: 34px;
-  margin: clamp(24px, 3.8vw, 66px) 0 0;
+  align-items: center;
+  margin: 0;
+  font-size: clamp(28px, 2.5vw, 44px);
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+
+.faso-login .login-navigation {
+  display: flex;
+  width: clamp(360px, 25.6vw, 490px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.faso-login .login-return, .faso-login .login-language__trigger {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid #a0dcd0;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 86%);
+  padding: 0 16px;
+  color: var(--login-green);
+  font-size: clamp(13px, .9vw, 16px);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.faso-login .login-return:hover {
+  background: #eff9f4;
+  border-color: var(--login-green);
+}
+
+.faso-login .login-return svg {
+  width: 19px;
+  height: 19px;
+}
+
+.faso-login .login-language {
+  position: relative;
+  z-index: 3;
+}
+
+.faso-login .login-language__trigger {
+  border-color: var(--login-line);
+  border-radius: 30px;
+  padding: 0 20px;
+  color: var(--login-ink);
+  box-shadow: 0 2px 8px rgb(7 19 47 / 9%);
+  cursor: pointer;
+}
+
+.faso-login .login-language__trigger svg {
+  width: 21px;
+  height: 21px;
+}
+
+.faso-login .login-language__trigger svg:last-child {
+  width: 16px;
+  height: 16px;
+  transition: transform 150ms;
+}
+
+.faso-login .login-language__trigger .is-open {
+  transform: rotate(180deg);
+}
+
+.faso-login .login-language__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  padding: 5px;
+  border: 1px solid var(--login-line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(7 19 47 / 12%);
+}
+
+.faso-login .login-language__menu button {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.faso-login .login-language__menu button:not(:disabled):hover {
+  background: #edf8f2;
+}
+
+.faso-login .login-language__menu button:disabled {
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.faso-login .login-language__menu svg {
+  width: 16px;
+  height: 16px;
+  color: var(--login-green);
+}
+
+.faso-login .login-shell {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) clamp(360px, 27.9vw, 536px);
+  align-items: start;
+  column-gap: clamp(28px, 4.2vw, 82px);
+  margin: 0 var(--login-right) 0 var(--login-left);
+  padding-bottom: clamp(24px, 3.4svh, 40px);
+}
+
+.faso-login .login-presentation {
+  min-width: 0;
+  padding-top: clamp(22px, 3.8svh, 42px);
+}
+
+.faso-login .login-presentation__title {
+  margin: 0;
+  color: #030c1c;
+  font-size: clamp(42px, 3.94vw, 76px);
+  font-weight: 900;
+  letter-spacing: -.007em;
+  line-height: 1;
+}
+
+.faso-login .login-presentation__title span, .faso-login .login-presentation__lead span {
+  display: block;
+}
+
+.faso-login .login-presentation__gold {
+  color: #ac700c;
+}
+
+.faso-login .login-presentation__lead {
+  margin: clamp(9px, 1.2svh, 16px) 0 0;
+  color: #566b86;
+  font-size: clamp(20px, 1.73vw, 33px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.faso-login .login-presentation__rule {
+  display: block;
+  width: 62px;
+  height: 2px;
+  margin: clamp(18px, 2.5svh, 28px) 0 clamp(12px, 1.6svh, 20px);
+  background: var(--login-gold);
+}
+
+.faso-login .login-presentation__slogan {
+  margin: 0;
+  color: #aa6d07;
+  font-family: Cambria, Georgia, 'Times New Roman', serif;
+  font-size: clamp(20px, 1.83vw, 35px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.25;
+  letter-spacing: -.045em;
+}
+
+.faso-login .login-panel {
+  min-width: 0;
+}
+
+.faso-login .login-card {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: 1px solid rgb(210 215 222 / 65%);
+  border-top: 2px solid #bd830e;
+  border-radius: 24px;
+  background: rgb(255 255 255 / 97%);
+  padding: clamp(18px, 2.45svh, 30px) clamp(24px, 1.8vw, 36px) clamp(14px, 1.6svh, 20px);
+  box-shadow: 0 20px 40px rgb(38 28 14 / 16%);
+  text-align: center;
+}
+
+.faso-login .login-card__emblem {
+  display: grid;
+  width: clamp(50px, 6.4svh, 70px);
+  height: clamp(50px, 6.4svh, 70px);
+  flex-shrink: 0;
+  align-self: center;
+  place-items: center;
+  border: 1px solid #bce5d7;
+  border-radius: 50%;
+  background: #e8f3ee;
+  color: var(--login-green);
+}
+
+.faso-login .login-card__emblem svg {
+  width: 31px;
+  height: 31px;
+}
+
+.faso-login .login-card__eyebrow {
+  margin: clamp(10px, 1.3svh, 16px) 0 0;
+  color: var(--login-green);
+  font-size: clamp(10px, .75vw, 14px);
+  font-weight: 750;
+  letter-spacing: .09em;
+  line-height: 1.3;
+}
+
+.faso-login .login-card__title {
+  margin: 5px 0 0;
+  color: var(--login-ink);
+  font-size: clamp(29px, 2.13vw, 41px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -.035em;
+}
+
+.faso-login .login-card__subtitle {
+  margin: 4px 0 0;
+  color: var(--login-green);
+  font-size: clamp(14px, .98vw, 18px);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.faso-login .login-field {
+  margin-top: clamp(15px, 2svh, 24px);
+  text-align: left;
+}
+
+.faso-login .login-field label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--login-ink);
+  font-size: clamp(13px, .83vw, 16px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.faso-login .login-field__control {
+  position: relative;
+}
+
+.faso-login .login-field__control > svg {
+  position: absolute;
+  top: 50%;
+  left: 17px;
+  width: 21px;
+  height: 21px;
+  transform: translateY(-50%);
+  color: #45608b;
+  pointer-events: none;
+}
+
+.faso-login .login-field input {
+  display: block;
+  width: 100%;
+  height: clamp(44px, 5svh, 54px);
+  border: 1px solid #8193b2;
+  border-radius: 8px;
+  background: #fafafb;
+  padding: 0 44px 0 55px;
+  color: var(--login-ink);
+  font: inherit;
+  font-size: clamp(13px, .84vw, 16px);
+}
+
+.faso-login .login-field input::placeholder {
+  color: #60769a;
+  opacity: 1;
+}
+
+.faso-login .login-field input:hover {
+  border-color: #526c90;
+}
+
+.faso-login .login-field input:focus {
+  border-color: var(--login-green);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgb(0 118 59 / 12%);
+  outline: none;
+}
+
+.faso-login .login-field input[aria-invalid='true'] {
+  border-color: #b32c22;
+}
+
+.faso-login .login-field input:disabled {
+  cursor: wait;
+  background: #f2f4f5;
+}
+
+.faso-login .login-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 6px;
+  color: #284777;
+}
+
+.faso-login .login-field__toggle:hover {
+  background: #edf2f7;
+}
+
+.faso-login .login-field__toggle svg {
+  width: 21px;
+  height: 21px;
+}
+
+.faso-login .login-field__error {
+  margin: 6px 0 0;
+  color: #b32c22;
+  font-size: 12px;
+}
+
+.faso-login .login-card__alert {
+  margin: 16px 0 0;
+  border: 1px solid #f3c9c4;
+  border-radius: 8px;
+  background: #fff2f0;
+  padding: 12px;
+  color: #a32e23;
+  font-size: 13px;
+  text-align: left;
+}
+
+.faso-login .login-options {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.faso-login .login-options__forgot {
+  color: var(--login-green);
+  font-size: clamp(12px, .78vw, 14px);
+  font-weight: 500;
+}
+
+.faso-login .login-options__forgot:hover {
+  text-decoration: underline;
+}
+
+.faso-login .login-submit {
+  display: flex;
+  min-height: clamp(46px, 5.4svh, 58px);
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: clamp(14px, 1.7svh, 20px);
+  border: 1px solid #cea250;
+  border-radius: 10px;
+  background: linear-gradient(105deg, #c6973f, #efd084 46%, #b38735);
+  color: #0d0b06;
+  box-shadow: 0 7px 16px rgb(142 101 31 / 10%);
+  font-size: clamp(17px, 1.2vw, 22px);
+  font-weight: 650;
+  transition: filter 150ms;
+}
+
+.faso-login .login-submit:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+
+.faso-login .login-submit:disabled {
+  cursor: wait;
+  opacity: .72;
+}
+
+.faso-login .login-submit svg {
+  width: 25px;
+  height: 25px;
+}
+
+.faso-login .login-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgb(7 19 47 / 25%);
+  border-top-color: var(--login-ink);
+  border-radius: 50%;
+  animation: faso-login-spin .8s linear infinite;
+}
+
+@keyframes faso-login-spin {
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.faso-login .login-card__assurance {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: clamp(12px, 1.5svh, 18px) 0 0;
+  color: var(--login-muted);
+  font-size: clamp(11px, .75vw, 14px);
+  line-height: 1.4;
+}
+
+.faso-login .login-card__assurance svg {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+}
+
+.faso-login .login-card__help {
+  margin: clamp(13px, 1.6svh, 19px) 0 0;
+  border-top: 1px solid var(--login-line);
+  padding-top: clamp(12px, 1.6svh, 19px);
+  color: var(--login-muted);
+  font-size: clamp(12px, .8vw, 15px);
+  line-height: 1.4;
+}
+
+.faso-login .login-card__help a {
+  color: var(--login-green);
+  font-weight: 500;
+  text-underline-offset: 2px;
+  text-decoration: underline;
+}
+
+.faso-login .login-institutions {
+  border-top: 1px solid #b98827;
+  background: #fff;
+  padding: 0 clamp(24px, 2.7vw, 60px) clamp(8px, .8svh, 12px);
+}
+
+.faso-login .login-institutions h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 1.6vw, 28px);
+  margin: 6px 0 0;
+  color: var(--login-ink);
+  font-size: clamp(15px, 1.06vw, 20px);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.faso-login .login-institutions h2::before, .faso-login .login-institutions h2::after {
+  width: clamp(45px, 6.6vw, 130px);
+  height: 1px;
+  background: #bb8a2c;
+  content: '';
+}
+
+.faso-login .login-institutions__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.login-pillars li {
-  display: flex;
-  align-items: center;
-  gap: clamp(9px, 0.9vw, 15px);
-  color: #fff;
-  font-size: clamp(13px, 1vw, 17.5px);
-  font-weight: 500;
-  line-height: 1.3;
-}
-
-.login-pillars .login-pillars__icon {
+.faso-login .login-institution {
+  position: relative;
   display: grid;
-  width: clamp(42px, 3.7vw, 64px);
-  height: clamp(42px, 3.7vw, 64px);
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid rgba(226, 188, 3, 0.4);
-  border-radius: clamp(10px, 0.8vw, 15px);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.login-pillars svg {
-  width: clamp(17px, 1.3vw, 24px);
-  height: clamp(17px, 1.3vw, 24px);
-  color: var(--login-or-clair);
-}
-
-/* ───────────────────────────────────────────────────── Panneau de droite ─ */
-
-.login-panel {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: clamp(20px, 3.1vh, 30px) clamp(18px, 2.2vw, 40px) clamp(22px, 3.4vh, 34px);
-}
-
-.login-pillars .login-pillars__label,
-.login-pillars .login-pillars__label span {
-  display: block;
-}
-
-.login-panel > * {
-  position: relative;
-  z-index: 1;
-}
-
-.login-return {
-  position: absolute;
-  z-index: 20;
-  top: clamp(20px, 3.1vh, 30px);
-  left: clamp(18px, 2.2vw, 40px);
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid rgba(15, 111, 71, 0.2);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.78);
-  padding: 0 13px;
-  color: #0f6f47;
-  font-size: clamp(13px, 0.78vw, 14px);
-  font-weight: 650;
-  text-decoration: none;
-  transition: border-color 140ms ease, background-color 140ms ease;
-}
-
-.login-return:hover {
-  border-color: rgba(15, 111, 71, 0.42);
-  background: #fff;
-}
-
-.login-return svg {
-  width: 18px;
-  height: 18px;
-}
-
-.login-language {
-  position: relative;
-  z-index: 20;
-  align-self: flex-end;
-}
-
-.login-language__trigger {
-  display: flex;
-  height: clamp(40px, 5.1vh, 47px);
-  align-items: center;
-  gap: 11px;
-  border: 1px solid #d9dee3;
-  border-radius: 13px;
-  background: #fff;
-  padding: 0 24px;
-  color: #263241;
-  box-shadow: 0 2px 10px rgba(23, 36, 47, 0.05);
-  font: inherit;
-  font-size: clamp(13px, 0.86vw, 15.5px);
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 140ms ease;
-}
-
-.login-language__trigger:hover { border-color: #d9cbaf; }
-
-.login-language__trigger svg:first-child {
-  width: 19px;
-  height: 19px;
-  color: #4a5a6a;
-}
-
-.login-language__trigger svg:last-child {
-  width: 17px;
-  height: 17px;
-  color: #7c8b99;
-  transition: transform 160ms ease;
-}
-
-.login-language__trigger svg.is-open { transform: rotate(180deg); }
-
-.login-language__menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 172px;
-  overflow: hidden;
-  border: 1px solid var(--login-ligne);
-  border-radius: 13px;
-  background: #fff;
-  box-shadow: 0 14px 34px rgba(23, 36, 47, 0.15);
-}
-
-.login-language__menu button {
-  display: flex;
-  width: 100%;
-  height: 43px;
-  align-items: center;
-  justify-content: space-between;
-  border: 0;
-  background: #fff;
-  padding: 0 15px;
-  color: #344454;
-  font: inherit;
-  font-size: 14.5px;
-  cursor: pointer;
-}
-
-.login-language__menu button:hover { background: #f3faf6; }
-.login-language__menu svg { width: 16px; height: 16px; color: var(--login-vert-clair); }
-
-.login-column {
-  display: flex;
-  width: clamp(320px, 35.6vw, 624px);
-  max-width: 100%;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  margin: 0 auto;
-  padding: clamp(12px, 2vh, 22px) 0 0;
-  transform: translate(-7px, 5px);
-}
-
-/* ──────────────────────────────────────────────────────────── La carte ─── */
-
-.login-card {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #e3ddd3;
-  border-top: 2px solid #c99219;
-  border-radius: 18px;
-  background: rgba(255, 254, 251, 0.98);
-  padding: clamp(24px, 1.95vw, 34px);
-  padding-bottom: 26px;
-  box-shadow: 0 18px 42px rgba(23, 36, 47, 0.1);
+  grid-template-rows: clamp(78px, 11svh, 122px) minmax(38px, auto);
+  gap: 4px;
+  padding: 0 12px;
   text-align: center;
 }
 
-.login-card__emblem {
-  display: grid;
-  width: clamp(62px, 5.3vw, 94px);
-  height: clamp(62px, 5.3vw, 94px);
+.faso-login .login-institution + .login-institution::before {
+  position: absolute;
+  top: 14px;
+  bottom: 12px;
+  left: 0;
+  width: 1px;
+  background: #d8e0eb;
+  content: '';
+}
+
+.faso-login .login-institution__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.faso-login .login-institution__logo img {
+  width: 100%;
+  max-width: 150px;
+  height: 100%;
+  object-fit: contain;
+}
+
+.faso-login .login-institution--sonasp img {
+  max-width: clamp(150px, 12.8vw, 245px);
+  height: 78%;
+}
+
+.faso-login .login-institution--bumigeb img {
+  max-width: clamp(120px, 9vw, 175px);
+  height: 90%;
+}
+
+.faso-login .login-institution p {
   align-self: center;
-  place-items: center;
-  border: 1px solid #d5e9de;
-  border-radius: 50%;
-  background: #eaf5ef;
-  transform: scale(0.97);
-}
-
-.login-card__emblem svg {
-  width: clamp(28px, 2.6vw, 46px);
-  height: clamp(28px, 2.6vw, 46px);
-  color: #12703f;
-}
-
-.login-card__eyebrow {
-  margin: clamp(15px, 1.5vw, 24px) 0 0;
-  color: var(--login-vert-clair);
-  font-size: clamp(10.5px, 0.74vw, 13.5px);
+  margin: 0;
+  color: var(--login-ink);
+  font-size: clamp(15px, 1.17vw, 22px);
   font-weight: 700;
-  letter-spacing: 0.115em;
-  line-height: 1.2;
-  text-transform: uppercase;
+  line-height: 1.1;
 }
 
-.login-card__title {
-  margin: clamp(7px, 0.7vw, 12px) 0 0;
-  color: #16222e;
-  font-size: clamp(27px, 2.35vw, 43px);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1.05;
-}
-
-.login-card__subtitle {
-  margin: clamp(5px, 0.55vw, 9px) 0 0;
-  color: #12764f;
-  font-size: clamp(13.5px, 0.97vw, 17.5px);
-  font-weight: 500;
-  line-height: 1.3;
-}
-
-.login-card__alert {
-  margin: clamp(16px, 1.4vw, 24px) 0 0;
-  border: 1px solid #f3c9c4;
-  border-radius: 10px;
-  background: #fdeceb;
-  padding: 11px 13px;
-  color: #b32c22;
-  font-size: 13.5px;
-  font-weight: 600;
-  text-align: left;
-}
-
-/* ──────────────────────────────────────────────────────────── Les champs ─ */
-
-.login-field { margin-top: clamp(15px, 1.4vw, 24px); text-align: left; }
-
-.login-field label {
+.faso-login .login-institution p span {
   display: block;
-  margin-bottom: clamp(6px, 0.55vw, 10px);
-  color: #1f2c39;
-  font-size: clamp(12.5px, 0.86vw, 15.5px);
-  font-weight: 600;
 }
 
-.login-field__control { position: relative; display: block; }
-
-.login-field__control > svg {
-  position: absolute;
-  top: 50%;
-  left: 17px;
-  width: 19px;
-  height: 19px;
-  transform: translateY(-50%);
-  color: #6d767f;
-  pointer-events: none;
-}
-
-.login-field input {
-  width: 100%;
-  height: clamp(48px, 3.25vw, 58px);
-  border: 1px solid #87939e;
-  border-radius: 10px;
-  background: #fdfdfd;
-  padding: 0 50px 0 48px;
-  color: var(--login-encre);
-  font: inherit;
-  font-size: clamp(13.5px, 0.9vw, 16px);
-}
-
-.login-field input::placeholder { color: #6f767d; }
-
-.login-field input:hover { border-color: #dcdcdc; }
-
-.login-field input:focus {
-  border-color: var(--login-vert-clair);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(15, 122, 86, 0.13);
-  outline: none;
-}
-
-.login-field input[aria-invalid='true'] { border-color: #dc3c30; }
-
-.login-field input:disabled {
-  cursor: not-allowed;
-  background: #f2f3f3;
-  color: #64707e;
-}
-
-.login-field__toggle {
-  position: absolute;
-  top: 50%;
-  right: 9px;
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  transform: translateY(-50%);
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #6d767f;
-  cursor: pointer;
-}
-
-.login-field__toggle:hover { background: #f1f5f8; color: #33485f; }
-.login-field__toggle svg { width: 19px; height: 19px; }
-
-.login-field__error {
-  margin: 6px 0 0;
-  color: #dc3c30;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* ─────────────────────────────────────────────── Mémoriser / mot oublié ── */
-
-.login-options {
+.faso-login .login-footer {
   display: flex;
+  min-height: 34px;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  margin-top: clamp(13px, 1.2vw, 20px);
-  font-size: clamp(12.5px, 0.86vw, 15.5px);
+  gap: 12px;
+  border-top: 1px solid #e5e7eb;
+  padding: 7px clamp(20px, 2vw, 40px);
+  color: var(--login-muted);
+  font-size: clamp(11px, .75vw, 14px);
 }
 
-.login-options__remember {
+.faso-login .login-footer p {
+  margin: 0;
+}
+
+.faso-login .login-footer nav {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #45566a;
-  cursor: pointer;
+  gap: 18px;
 }
 
-.login-options__remember input {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  accent-color: var(--login-vert);
-  cursor: pointer;
+.faso-login .login-footer a:hover {
+  color: var(--login-green);
+  text-decoration: underline;
 }
 
-.login-options__forgot {
-  color: #12764f;
-  font-weight: 600;
-  text-decoration: none;
+.faso-login :is(button, a):focus-visible {
+  outline: 3px solid #137d58;
+  outline-offset: 3px;
 }
 
-.login-options__forgot:hover { text-decoration: underline; }
+/* Portable : espacement réduit, cibles interactives préservées. */
 
-/* ──────────────────────────────────────────────────────────── Le bouton ── */
+@media (min-width: 1100px) and (max-height: 820px) {
 
-.login-submit {
-  display: flex;
-  height: clamp(48px, 3.15vw, 56px);
-  align-items: center;
-  justify-content: center;
-  gap: 11px;
-  margin-top: clamp(15px, 0.9vw, 16px);
-  border: 0;
-  border-radius: 10px;
-  background: #007440;
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(10, 107, 60, 0.2);
-  font: inherit;
-  font-size: clamp(14px, 0.93vw, 16.5px);
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 140ms ease;
-}
-
-.login-submit:hover:not(:disabled) { background: #005f35; }
-
-.login-submit:disabled { cursor: progress; opacity: 0.72; box-shadow: none; }
-
-.login-submit svg { width: 19px; height: 19px; }
-
-.login-spinner {
-  width: 17px;
-  height: 17px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: login-rotation 720ms linear infinite;
-}
-
-@keyframes login-rotation { to { transform: rotate(360deg); } }
-
-/* ──────────────────────────────────────────────────────── Pied de carte ── */
-
-.login-card__assurance {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: clamp(11px, 1.1vw, 19px) 0 0;
-  color: #5d7080;
-  font-size: clamp(11.5px, 0.79vw, 14px);
-}
-
-.login-card__assurance svg { width: 16px; height: 16px; color: #93a5ad; }
-
-.login-card__help {
-  margin: clamp(13px, 1.2vw, 21px) 0 0;
-  border-top: 1px solid #eceff2;
-  padding-top: clamp(13px, 1.2vw, 21px);
-  color: #5d7080;
-  font-size: clamp(12px, 0.83vw, 15px);
-}
-
-.login-card__help a {
-  color: #12764f;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.login-card__help a:hover { text-decoration: underline; }
-
-.login-copyright {
-  margin: clamp(16px, 1.6vw, 27px) 0 0;
-  color: #667483;
-  font-size: clamp(11.5px, 0.79vw, 14px);
-  text-align: center;
-}
-
-/* ──────────────────────────────────────────────────────────── Le focus ─── */
-
-.login-language__trigger:focus-visible,
-.login-language__menu button:focus-visible,
-.login-return:focus-visible,
-.login-field__toggle:focus-visible,
-.login-submit:focus-visible,
-.login-options__forgot:focus-visible,
-.login-options__remember input:focus-visible,
-.login-card__help a:focus-visible {
-  outline: 3px solid rgba(15, 122, 86, 0.28);
-  outline-offset: 2px;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   ADAPTATIONS
-
-   Sous 1080 px la diagonale n'a plus la place de respirer : le panneau devient
-   un bandeau horizontal, puis se réduit au profit de la carte. Le formulaire
-   reste au même endroit de l'écran à toutes les largeurs.
-   ══════════════════════════════════════════════════════════════════════════ */
-
-@media (max-width: 1080px) {
-  .sonasp-login {
-    height: auto;
-    min-height: 100vh;
-    min-height: 100svh;
-    overflow-x: hidden;
-    overflow-y: auto;
+  .faso-login .login-header {
+    min-height: 80px;
+    padding: 7px 0;
   }
 
-  /* Les couches du décor disparaissent : leur hauteur devrait être accordée à
-     celle du texte, et toute valeur fixe finit par le laisser déborder sur le
-     crème — en blanc sur crème. Le panneau porte donc lui-même son fond, et
-     suit la hauteur de son contenu quelle que soit la langue. */
-  .login-hero,
-  .login-hero__edge { display: none; }
+  .faso-login .login-brand {
+    height: 64px;
+  }
 
-  .login-shell { height: auto; grid-template-columns: 1fr; }
+  .faso-login .login-card {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
 
-  .login-presentation {
+  .faso-login .login-card__emblem {
+    width: 48px;
+    height: 48px;
+  }
+
+  .faso-login .login-field {
+    margin-top: 15px;
+  }
+
+  .faso-login .login-card__eyebrow {
+    margin-top: 9px;
+  }
+
+  .faso-login .login-submit {
+    margin-top: 15px;
+  }
+
+  .faso-login .login-card__help {
+    margin-top: 13px;
+    padding-top: 13px;
+  }
+
+  .faso-login .login-shell {
+    padding-bottom: 12px;
+  }
+
+  .faso-login .login-institutions {
+    padding-bottom: 8px;
+  }
+
+  .faso-login .login-institutions h2 {
+    margin-top: 4px;
+  }
+
+  .faso-login .login-institution {
+    grid-template-rows: 76px minmax(34px, auto);
+  }
+}
+
+@media (max-width: 1099px) {
+
+  .faso-login {
+    --login-left: 28px;
+    --login-right: 28px;
+  }
+
+  .faso-login .login-header {
+    min-height: 105px;
+  }
+
+  .faso-login .login-brand {
+    width: 280px;
+    height: 76px;
+  }
+
+  .faso-login .login-navigation {
+    width: auto;
+    gap: 14px;
+  }
+
+  .faso-login .login-return {
+    font-size: 12px;
+    padding: 0 10px;
+  }
+
+  .faso-login .login-language__trigger {
+    font-size: 12px;
+    gap: 7px;
+    padding: 0 12px;
+  }
+
+  .faso-login .login-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 45%);
+    column-gap: 25px;
+    padding: 12px 0 32px;
+  }
+
+  .faso-login .login-presentation__title {
+    font-size: clamp(33px, 4.25vw, 44px);
+    line-height: 1.05;
+  }
+
+  .faso-login .login-presentation__lead {
+    font-size: 20px;
+  }
+
+  .faso-login .login-presentation__slogan {
+    font-size: 23px;
+  }
+
+  .faso-login .login-card {
+    padding: 24px;
+  }
+
+  .faso-login .login-institution {
+    padding: 0 8px;
+    grid-template-rows: 84px minmax(50px, auto);
+  }
+
+  .faso-login .login-institution p {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+
+  .faso-login {
+    --login-left: 20px;
+    --login-right: 20px;
+  }
+
+  .faso-login .login-header {
+    flex-wrap: wrap;
     justify-content: center;
-    border-bottom: 3px solid var(--login-or);
-    padding: clamp(30px, 5vw, 46px) clamp(22px, 5vw, 54px) clamp(34px, 5vw, 48px);
-    background:
-      linear-gradient(102deg,
-        rgba(4, 34, 22, 0.97) 0%,
-        rgba(4, 34, 22, 0.93) 30%,
-        rgba(5, 40, 26, 0.72) 52%,
-        rgba(6, 46, 29, 0.42) 74%,
-        rgba(6, 46, 29, 0.26) 100%),
-      var(--login-photo) center / cover no-repeat;
+    gap: 18px;
+    padding: 20px 0 0;
   }
 
-  .login-presentation__logo { width: 190px; margin-bottom: 22px; }
-  .login-presentation__eyebrow,
-  .login-presentation__lead,
-  .login-presentation__title { transform: none; }
-  .login-presentation__title { max-width: 18em; font-size: clamp(27px, 4.4vw, 40px); }
-  .login-presentation__rule { margin: 18px 0 16px; }
-  .login-pillars { margin-top: 26px; gap: 22px; }
-  .login-pillars li { max-width: none; font-size: 13.5px; }
-  .login-pillars .login-pillars__icon { width: 46px; height: 46px; }
-  .login-pillars svg { width: 19px; height: 19px; }
-
-  /* Le repère du sélecteur devient la page entière, pour qu'il se pose sur le
-     bandeau vert : dans le panneau, il tombait sur le crème, en blanc. */
-  .login-panel { position: static; padding-top: 22px; }
-
-  .login-return {
-    position: static;
-    align-self: flex-start;
-    margin-bottom: 8px;
-    background: rgba(255, 255, 255, 0.92);
+  .faso-login .login-brand {
+    width: min(100%, 340px);
+    height: 84px;
   }
 
-  .login-language { position: absolute; top: 20px; right: clamp(18px, 5vw, 40px); }
-  .login-language__trigger {
-    border-color: rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-    box-shadow: none;
-    backdrop-filter: blur(6px);
+  .faso-login .login-navigation {
+    width: 100%;
+    flex-wrap: wrap;
+    max-width: 470px;
   }
-  .login-language__trigger:hover { border-color: rgba(255, 255, 255, 0.55); }
-  .login-language__trigger svg { color: rgba(255, 255, 255, 0.82); }
 
-  .login-column { width: min(100%, 512px); padding-top: 6px; transform: none; }
-  .login-card { padding: 30px 26px; }
-  .login-card__emblem { width: 72px; height: 72px; }
-  .login-card__emblem svg { width: 30px; height: 30px; }
-  .login-card__title { font-size: 32px; }
-  .login-card__subtitle { font-size: 15.5px; }
-  .login-field input,
-  .login-submit { height: 50px; }
-}
+  .faso-login .login-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    padding: 28px 0 32px;
+  }
 
-@media (max-width: 640px) {
-  .login-presentation { padding: 28px 20px 30px; }
-  .login-presentation__logo { width: 156px; margin-bottom: 16px; }
-  .login-presentation__eyebrow { letter-spacing: 0.12em; }
-  /* Sur un téléphone, la carte doit être atteignable sans faire défiler : le
-     discours d'accueil cède la place. */
-  .login-presentation__lead,
-  .login-pillars { display: none; }
-  .login-presentation__rule { margin: 14px 0 0; }
+  .faso-login .login-presentation {
+    width: 100%;
+    max-width: 470px;
+    padding-top: 0;
+  }
 
-  .login-panel { padding: 20px 18px 26px; }
-  .login-card { border-radius: 16px; padding: 26px 20px; }
-  .login-card__title { font-size: 28px; }
-  .login-options { flex-wrap: wrap; gap: 10px; }
-}
+  .faso-login .login-presentation__title {
+    font-size: clamp(32px, 7.55vw, 52px);
+  }
 
-/* Écrans courts — portables 13 pouces, fenêtres réduites. Le rythme vertical
-   se resserre plutôt que les champs, qui doivent rester cliquables. */
-@media (min-width: 1081px) and (max-height: 800px) {
-  .login-panel { padding-top: 18px; padding-bottom: 20px; }
-  .login-column { padding-top: 8px; }
-  .login-card { padding: 24px clamp(24px, 2vw, 32px) 26px; }
-  .login-card__emblem { width: 62px; height: 62px; }
-  .login-card__emblem svg { width: 26px; height: 26px; }
-  .login-card__eyebrow { margin-top: 15px; }
-  .login-card__title { font-size: 30px; }
-  .login-field { margin-top: 15px; }
-  .login-field input,
-  .login-submit { height: 47px; }
-  .login-submit { margin-top: 17px; }
-  .login-card__assurance { margin-top: 12px; }
-  .login-card__help { margin-top: 15px; padding-top: 15px; }
-  .login-copyright { margin-top: 15px; }
-  .login-presentation__logo { margin-bottom: 24px; }
-  .login-pillars { margin-top: 30px; }
+  .faso-login .login-presentation__lead {
+    font-size: clamp(18px, 4.3vw, 23px);
+  }
+
+  .faso-login .login-presentation__slogan {
+    font-size: 23px;
+  }
+
+  .faso-login .login-presentation__rule {
+    margin: 18px 0 12px;
+  }
+
+  .faso-login .login-panel {
+    width: 100%;
+    max-width: 470px;
+  }
+
+  .faso-login .login-landscape {
+    width: 100%;
+    background-size: auto 100%;
+    background-position: center bottom;
+    mask-image: linear-gradient(#000 0 32%, rgb(0 0 0 / 40%) 65%, transparent);
+  }
+
+  .faso-login .login-contours--right {
+    height: 35%;
+  }
+
+  .faso-login .login-card {
+    padding: 24px 20px;
+  }
+
+  .faso-login .login-card__emblem {
+    width: 56px;
+    height: 56px;
+  }
+
+  .faso-login .login-card__eyebrow {
+    font-size: 11px;
+  }
+
+  .faso-login .login-card__title {
+    font-size: 32px;
+  }
+
+  .faso-login .login-field input {
+    height: 48px;
+    font-size: 16px;
+    padding-left: 46px;
+  }
+
+  .faso-login .login-submit {
+    min-height: 48px;
+  }
+
+  .faso-login .login-field input::placeholder {
+    font-size: 13px;
+  }
+
+  .faso-login .login-institutions {
+    padding: 14px 16px 20px;
+  }
+
+  .faso-login .login-institutions h2 {
+    gap: 10px;
+    margin: 0 0 18px;
+    font-size: 15px;
+  }
+
+  .faso-login .login-institutions h2::before, .faso-login .login-institutions h2::after {
+    width: 25px;
+  }
+
+  .faso-login .login-institutions__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 0;
+  }
+
+  .faso-login .login-institution {
+    grid-template-rows: 85px minmax(40px, auto);
+  }
+
+  .faso-login .login-institution:nth-child(odd)::before {
+    content: none;
+  }
+
+  .faso-login .login-institution:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .faso-login .login-institution--sonasp img {
+    max-width: 145px;
+  }
+
+  .faso-login .login-footer {
+    flex-direction: column;
+    padding: 12px 16px;
+    font-size: 12px;
+    text-align: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .login-spinner { animation-duration: 2s; }
-  .login-language__trigger svg,
-  .login-submit { transition: none; }
+
+  .faso-login .login-spinner {
+    animation-duration: 2s;
+  }
+
+  .faso-login .login-language__trigger svg, .faso-login .login-submit {
+    transition: none;
+  }
 }

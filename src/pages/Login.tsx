@@ -3,10 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
-  BarChart3,
   Check,
   ChevronDown,
-  ClipboardList,
   Eye,
   EyeOff,
   Globe,
@@ -20,30 +18,13 @@ import {
   INTERFACE_LANGUAGE_STORAGE_KEY,
   isInterfaceLanguageEnabled,
 } from '@/i18n/interfaceLanguages';
+import { usePageMetadata } from '@/components/seo/PageMetadata';
 import './Login.css';
 
 /**
- * Page de connexion.
- *
- * ══ CE QUI A CHANGÉ ══
- *
- * La version précédente peignait une capture d'écran de 1,4 Mo sur toute la
- * fenêtre (`object-fit: fill`), masquait des morceaux avec des dégradés, puis
- * posait les vrais champs par-dessus à des décalages en pixels — `top: 58px`,
- * `left: 42px`. La mise en page n'était donc juste qu'aux quelques largeurs
- * pour lesquelles ces décalages avaient été réglés, et chaque visiteur
- * téléchargeait l'image avant même de pouvoir se connecter.
- *
- * Tout est désormais dessiné en CSS. Le panneau de gauche est un vrai bloc de
- * texte, la diagonale un `clip-path`, et la carte se centre d'elle-même.
- *
- * ══ LE CHAMP D'IDENTIFICATION ══
- *
- * Il est intitulé « Nom d'utilisateur », comme la maquette. Ce que la
- * plateforme envoie à GoTrue est pourtant l'adresse de courriel : voir
- * `AuthContext.signIn`. Le libellé n'a pas été changé ici — ce serait décider
- * seul d'un point qui engage tous les comptes — mais l'écart est signalé dans
- * le registre des anomalies.
+ * Présentation Faso SANAMA. La soumission reste celle d’AuthContext ;
+ * PublicRoute et MandatoryMfaGate conservent les redirections et la sécurité.
+ * Le champ « Nom d’utilisateur » correspond toujours à l’e-mail côté GoTrue.
  */
 
 /**
@@ -107,12 +88,19 @@ export function messageConnexion(brut: string, secours: string): string {
 export function Login() {
   const { t, i18n } = useTranslation();
   const { signIn } = useAuth();
+  usePageMetadata({
+    title: t('login.pageTitle', 'Connexion | Faso SANAMA'),
+    description: t('login.pageDescription', 'Espace professionnel sécurisé de la Plateforme Nationale de Traçabilité du Secteur Minier, sous l’égide de la Présidence du Faso.'),
+    openGraph: { siteName: 'Faso SANAMA', image: '/login-faso/faso-sanama.png', imageAlt: 'Faso SANAMA' },
+  });
+  const submissionRef = useRef(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [langOpen, setLangOpen] = useState(false);
+  const [brandUnavailable, setBrandUnavailable] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const langTriggerRef = useRef<HTMLButtonElement>(null);
   const usernameInputRef = useRef<HTMLInputElement>(null);
@@ -163,9 +151,10 @@ export function Login() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (loading) return;
+    if (submissionRef.current) return;
     if (!validateForm()) return;
 
+    submissionRef.current = true;
     setLoading(true);
     setErrors({});
     const secours = t(
@@ -179,133 +168,111 @@ export function Login() {
       const brut = error instanceof Error ? error.message : '';
       setErrors({ general: messageConnexion(brut, secours) });
     } finally {
+      submissionRef.current = false;
       setLoading(false);
     }
   };
 
   const currentLanguage = 'Français';
 
-  const piliers = [
-    {
-      Icon: ShieldCheck,
-      lines: [t('login.pillar1Line1', 'Transactions'), t('login.pillar1Line2', 'sécurisées')],
-    },
-    {
-      Icon: ClipboardList,
-      lines: [t('login.pillar2Line1', 'Suivi des'), t('login.pillar2Line2', 'opérations')],
-    },
-    {
-      Icon: BarChart3,
-      lines: [t('login.pillar3Line1', 'Données'), t('login.pillar3Line2', 'fiables')],
-    },
+  const institutions = [
+    { key: 'presidency', name: t('login.institutions.presidency', 'Présidence du Faso'), image: '/login-faso/armoiries.png', kind: 'arms' },
+    { key: 'sonasp', name: 'SONASP', image: '/sonasp_logo.png', kind: 'sonasp' },
+    { key: 'finance', name: t('login.institutions.finance', 'Ministère des Finances'), image: '/login-faso/armoiries.png', kind: 'arms' },
+    { key: 'mines', name: t('login.institutions.mines', 'Ministère des Mines et de l’Énergie'), image: '/login-faso/armoiries.png', kind: 'arms' },
+    { key: 'bumigeb', name: 'BUMIGEB', image: '/login-faso/bumigeb.png', kind: 'bumigeb' },
   ];
 
   return (
-    <div className="sonasp-login">
-      {/* Décor : le panneau vert, sa photographie et le liseré doré de la
-          diagonale. Trois couches distinctes pour que le liseré passe au-dessus
-          du panneau sans être rogné par son propre `clip-path`. */}
-      <div className="login-hero" aria-hidden="true">
-        <div className="login-hero__image" />
-        <div className="login-hero__veil" />
-      </div>
-      <div className="login-hero__edge" aria-hidden="true" />
-
-      <div className="login-shell">
-        <section className="login-presentation" aria-label={t('login.officialPlatform')}>
-          <img
-            className="login-presentation__logo"
-            src="/sonasp_logo.png"
-            alt="SONASP"
-            width={621}
-            height={211}
-          />
-
-          <p className="login-presentation__eyebrow">
-            <span aria-hidden="true" />
-            {t('login.officialPlatform')}
-          </p>
-
-          <h1 className="login-presentation__title">
-            <span>{t('login.heroTitleLine1', 'Collecte et vente des')}</span>
-            <span>{t('login.heroTitleLine2', 'substances précieuses')}</span>
-          </h1>
-
-          <span className="login-presentation__rule" aria-hidden="true" />
-
-          <p className="login-presentation__lead">
-            <span>{t('login.heroSubtitleLine1', 'Une plateforme sécurisée pour gérer les opérations,')}</span>
-            <span>{t('login.heroSubtitleLine2', 'les transactions et les données du secteur.')}</span>
-          </p>
-
-          <ul className="login-pillars">
-            {piliers.map(({ Icon, lines }) => (
-              <li key={lines.join(' ')}>
-                <span className="login-pillars__icon" aria-hidden="true"><Icon /></span>
-                <span className="login-pillars__label">
-                  <span>{lines[0]}</span>
-                  <span>{lines[1]}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <main className="login-panel">
-          <Link className="login-return" to="/">
-            <ArrowLeft aria-hidden="true" />
-            <span>{t('login.backToShowcase', 'Retour à la vitrine')}</span>
-          </Link>
-
-          <div
-            ref={langRef}
-            className="login-language"
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') {
-                setLangOpen(false);
-                langTriggerRef.current?.focus();
-              }
-            }}
-          >
-            <button
-              ref={langTriggerRef}
-              type="button"
-              className="login-language__trigger"
-              aria-haspopup="menu"
-              aria-expanded={langOpen}
-              aria-controls="login-language-menu"
-              aria-label={`${t('header.currentLanguage', { language: currentLanguage })}. ${t('login.changeLanguage', 'Changer de langue')}`}
-              onClick={() => setLangOpen((open) => !open)}
+    <div className="faso-login">
+      <div className="login-national-line" aria-hidden="true"><span /></div>
+      <div className="login-scene">
+        <div className="login-landscape" aria-hidden="true" />
+        <div className="login-contours login-contours--left" aria-hidden="true" />
+        <div className="login-contours login-contours--right" aria-hidden="true" />
+        <header className="login-header">
+          {brandUnavailable ? (
+            <p className="login-brand login-brand--text">Faso SANAMA</p>
+          ) : (
+            <img
+              className="login-brand"
+              src="/login-faso/faso-sanama.png"
+              alt="Faso SANAMA"
+              width={1000}
+              height={240}
+              onError={() => setBrandUnavailable(true)}
+            />
+          )}
+          <nav className="login-navigation" aria-label={t('login.navigation', 'Navigation de connexion')}>
+            <Link className="login-return" to="/">
+              <ArrowLeft aria-hidden="true" />
+              <span>{t('login.backToShowcase', 'Retour à la vitrine')}</span>
+            </Link>
+            <div
+              ref={langRef}
+              className="login-language"
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  setLangOpen(false);
+                  langTriggerRef.current?.focus();
+                }
+              }}
             >
-              <Globe aria-hidden="true" />
-              <span>{currentLanguage}</span>
-              <ChevronDown className={langOpen ? 'is-open' : ''} aria-hidden="true" />
-            </button>
+              <button
+                ref={langTriggerRef}
+                type="button"
+                className="login-language__trigger"
+                aria-haspopup="menu"
+                aria-expanded={langOpen}
+                aria-controls="login-language-menu"
+                aria-label={`${t('header.currentLanguage', { language: currentLanguage })}. ${t('login.changeLanguage', 'Changer de langue')}`}
+                onClick={() => setLangOpen((open) => !open)}
+              >
+                <Globe aria-hidden="true" />
+                <span>{currentLanguage}</span>
+                <ChevronDown className={langOpen ? 'is-open' : ''} aria-hidden="true" />
+              </button>
 
-            {langOpen && (
-              <div id="login-language-menu" className="login-language__menu" role="menu">
-                {INTERFACE_LANGUAGES.map((language) => (
-                  <button
-                    key={language.code}
-                    type="button"
-                    role="menuitemradio"
-                    disabled={!language.enabled}
-                    aria-disabled={!language.enabled}
-                    aria-checked={language.code === 'fr'}
-                    title={language.enabled ? undefined : 'Disponible dans une prochaine version'}
-                    onClick={() => changeLanguage(language.code)}
-                  >
-                    <span>{language.label}</span>
-                    {language.code === 'fr' && (
-                      <Check aria-hidden="true" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              {langOpen && (
+                <div id="login-language-menu" className="login-language__menu" role="menu">
+                  {INTERFACE_LANGUAGES.map((language) => (
+                    <button
+                      key={language.code}
+                      type="button"
+                      role="menuitemradio"
+                      disabled={!language.enabled}
+                      aria-disabled={!language.enabled}
+                      aria-checked={language.code === 'fr'}
+                      title={language.enabled ? undefined : 'Disponible dans une prochaine version'}
+                      onClick={() => changeLanguage(language.code)}
+                    >
+                      <span>{language.label}</span>
+                      {language.code === 'fr' && (
+                        <Check aria-hidden="true" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </nav>
+        </header>
 
-          <div className="login-column">
+        <main className="login-shell">
+          <section className="login-presentation" aria-labelledby="login-hero-title">
+            <h1 id="login-hero-title" className="login-presentation__title">
+              <span>{t('login.heroTitleLine1', 'Plateforme Nationale')}</span>
+              <span>{t('login.heroTitleLine2', 'de Traçabilité du')}</span>
+              <span className="login-presentation__gold">{t('login.heroTitleLine3', 'Secteur Minier')}</span>
+            </h1>
+            <p className="login-presentation__lead">
+              <span>{t('login.heroSubtitleLine1', 'Production, collecte et vente')}</span>
+              <span>{t('login.heroSubtitleLine2', 'Impôts et taxes · Artisans miniers')}</span>
+            </p>
+            <span className="login-presentation__rule" aria-hidden="true" />
+            <p className="login-presentation__slogan">{t('login.slogan', 'La performance minière au service du citoyen')}</p>
+          </section>
+          <div className="login-panel">
             <form
               id="login-form"
               className="login-card"
@@ -319,11 +286,11 @@ export function Login() {
               </span>
 
               <p className="login-card__eyebrow">
-                {t('login.securedSpace', 'Espace professionnel sécurisé')}
+                {t('login.securedSpace', 'ESPACE PROFESSIONNEL SÉCURISÉ')}
               </p>
               <h2 id="login-card-title" className="login-card__title">{t('auth.login')}</h2>
               <p className="login-card__subtitle">
-                {t('login.cardSubtitle', 'Accédez à votre espace SONASP')}
+                {t('login.cardSubtitle', 'Accédez à votre espace Faso SANAMA')}
               </p>
 
               {errors.general && (
@@ -431,11 +398,34 @@ export function Login() {
                 <Link to="/assistance#incident">{t('login.contactAdmin')}</Link>
               </p>
             </form>
-
-            <p className="login-copyright">{t('login.copyright', { year: 2026 })}</p>
           </div>
         </main>
       </div>
+
+      <section className="login-institutions" aria-labelledby="login-institutions-title">
+        <h2 id="login-institutions-title">{t('login.institutionsTitle', 'Institutions du secteur minier')}</h2>
+        <ul className="login-institutions__grid">
+          {institutions.map((institution) => (
+            <li key={institution.key} className={`login-institution login-institution--${institution.kind}`}>
+              <div className="login-institution__logo">
+                <img src={institution.image} alt={institution.name} width={institution.kind === 'sonasp' ? 621 : 200} height={institution.kind === 'sonasp' ? 211 : 200} />
+              </div>
+              <p>{institution.key === 'mines' ? <>
+                <span>{t('login.institutions.minesLine1', 'Ministère des Mines')}</span>
+                <span>{t('login.institutions.minesLine2', 'et de l’Énergie')}</span>
+              </> : institution.name}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <footer className="login-footer">
+        <p>{t('login.copyright', { year: 2026 })}</p>
+        <nav aria-label={t('login.footerNavigation', 'Informations et assistance')}>
+          <Link to="/confidentialite">{t('login.privacy', 'Confidentialité')}</Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/assistance">{t('login.assistance', 'Assistance')}</Link>
+        </nav>
+      </footer>
     </div>
   );
 }

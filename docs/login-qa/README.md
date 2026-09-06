@@ -6,7 +6,9 @@ La page utilise une grille à hauteur `100dvh`. Les champs, le bouton de connexi
 
 Le logo provient du fichier utilisateur `F:/Data Universe/Gouvernement Burkina/Logo/Faso Sanama 2.png`, copié sans modification. SHA-256 : `e7a2a0941e3bf5af24fa8084596a98813f1ea68dff216b0b274eee7f6e728ca4`. La transparence et le ratio 3:2 sont conservés.
 
-Le bandeau horizontal avance toutes les 4,5 secondes. Il s’arrête au survol, au focus, avec la commande Pause, lorsque la page est masquée et selon la préférence de réduction des animations. Les flèches restent disponibles. Les définitions s’ouvrent au survol, au focus ou au toucher ; Échap ou un clic extérieur les ferme. Les cinq institutions sont présentes une seule fois dans l’arbre d’accessibilité.
+Depuis le 6 septembre 2026, le bandeau défile de manière continue, linéaire et en boucle (45 secondes par cycle). Il ne propose plus de commande de lecture, pause ou navigation et continue pendant la lecture d’une définition. La préférence de réduction des animations ralentit le cycle à 120 secondes. Deux groupes visuels identiques assurent la continuité ; le second est exclu de l’arbre d’accessibilité et de la tabulation. Les définitions restent fixes au-dessus du bandeau et s’ouvrent au survol, au focus ou au toucher ; Échap ou un clic extérieur les ferme.
+
+Les armoiries en 500 × 587 pixels précèdent le logo Faso SANAMA dans l’en-tête et remplacent la version de 400 pixels dans le bandeau. Les proportions des images originales sont conservées. La devise bénéficie d’un fond ivoire contrasté et reste présente sur mobile. Le pied de page identifie la Présidence du Burkina Faso et Quantix Solutions Burkina Faso.
 
 ## Vérification reproductible sans données métier
 
@@ -16,11 +18,11 @@ npm exec -- vite --config docs/login-qa/vite.config.ts
 
 Ouvrir `http://127.0.0.1:5184/` pour un refus d’identifiants, ou `http://127.0.0.1:5184/?error=network` pour une erreur réseau. N’importe quelles valeurs non vides déclenchent la réponse simulée. Le vrai composant Login et ses styles sont utilisés ; l’alias AuthContext de cette configuration ne contacte aucun service. Cette fixture n’est ni importée ni compilée par l’application de production.
 
-Contrôler les états initial, champs requis, identifiants refusés et erreur réseau. Pour chaque format, vérifier que la hauteur/largeur défilante du document ne dépasse pas le viewport, que le formulaire se termine avant le bandeau, et que le logo ne recouvre pas le titre. Comparer la position du bouton avant/après l’erreur. Vérifier ensuite les cinq logos, la pause, le survol d’une fiche, son accès clavier/tactile et sa fermeture.
+Contrôler les états initial, champs requis, identifiants refusés et erreur réseau. Pour chaque format, vérifier que la hauteur/largeur défilante du document ne dépasse pas le viewport, que le formulaire se termine avant le bandeau, et que le logo ne recouvre pas le titre. Comparer la position du bouton avant/après l’erreur. Vérifier ensuite les cinq logos, la continuité du mouvement pendant la lecture d’une fiche, son accès clavier/tactile et sa fermeture.
 
-Formats contrôlés : 320×568, 360×600, 360×640, 390×844, 667×375, 768×1024, 844×390, 960×540, 1024×768, 1280×720, 1366×650, 1366×768, 1440×900 et 1920×1080. `viewport-checks.json` contient les mesures avec erreur réseau. Les captures sont dans `captures/`.
+Formats contrôlés : 320×568, 360×600, 360×640, 390×844, 667×375, 768×1024, 844×390, 960×540, 1024×768, 1280×720, 1366×650, 1366×768, 1440×900 et 1920×1080. Les nouvelles mesures avec erreur réseau et captures sont dans [20260906](./20260906/viewport-checks.json). Les fichiers à la racine et dans `captures/` correspondent à la version précédente.
 
-Les tests de composant couvrent la pause automatique/manuelle, la réduction des animations, les définitions, le clic extérieur, Échap et le défilement au focus, en complément des contrats de connexion existants. Une connexion réelle et son challenge MFA nécessitent un compte autorisé ; les contrôles de cette modification ne créent aucune session métier.
+Les 22 tests ciblés couvrent les contrats de connexion, les nouveaux crédits et l’ordre des logos, les cinq institutions accessibles sans commandes de défilement, les définitions (y compris depuis la copie visuelle), le clic extérieur et Échap. La continuité de l’animation et la géométrie sont vérifiées dans Chrome, car JSDOM ne calcule pas les animations CSS. La suite complète de CI inclut ces tests. Une connexion réelle et son challenge MFA nécessitent un compte autorisé ; les contrôles de présentation ne créent aucune session métier.
 
 ## Sources des définitions
 

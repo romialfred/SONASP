@@ -11,7 +11,7 @@ vi.mock('@/contexts/AuthContext', () => ({ useAuth: vi.fn() }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallbackOrOptions?: string | { year?: number; language?: string }) => {
-      if (key === 'login.copyright') return '© 2026 Faso SANAMA. Tous droits réservés.';
+      if (key === 'login.copyright') return '© 2026 Présidence du Burkina Faso. Tous droits réservés.';
       if (key === 'header.currentLanguage') return `Actuel: ${(fallbackOrOptions as { language?: string })?.language}`;
       const translated = key.split('.').reduce<unknown>((value, part) => (value as Record<string, unknown>)?.[part], french);
       return translated ?? (typeof fallbackOrOptions === 'string' ? fallbackOrOptions : key);
@@ -44,6 +44,8 @@ describe('page de connexion Faso SANAMA', () => {
 
     expect(screen.getByRole('img', { name: 'Faso SANAMA' })).toHaveAttribute('src', '/login-faso/faso-sanama.png');
     expect(screen.getByRole('img', { name: 'SONASP' })).toHaveAttribute('src', '/sonasp_logo.png');
+    const identity = screen.getByRole('banner');
+    expect(within(identity).getAllByRole('img').map((image) => image.getAttribute('alt'))).toEqual(['Armoiries du Burkina Faso', 'Faso SANAMA']);
   });
 
   it('annonce les deux champs requis et place le focus sur le premier', async () => {
@@ -147,7 +149,8 @@ describe('page de connexion Faso SANAMA', () => {
     ]);
     expect(within(band).getAllByRole('listitem')).toHaveLength(5);
     expect(within(band).queryByText(/DGMG/)).not.toBeInTheDocument();
-    expect(screen.getByText('© 2026 Faso SANAMA. Tous droits réservés.')).toBeInTheDocument();
+    expect(screen.getByText('© 2026 Présidence du Burkina Faso. Tous droits réservés.')).toBeInTheDocument();
+    expect(screen.getByText('Conception & support : Quantix Solutions Burkina Faso')).toBeInTheDocument();
   });
 
   it('limite les nouvelles métadonnées à la page de connexion', () => {

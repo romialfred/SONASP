@@ -3,58 +3,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginInstitutions } from "./LoginInstitutions";
 
 describe("bandeau des institutions", () => {
-  const scrollTo = vi.fn();
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.clearAllMocks();
-    vi.stubGlobal(
-      "matchMedia",
-      vi
-        .fn()
-        .mockReturnValue({
-          matches: false,
-          addEventListener: vi.fn(),
-          removeEventListener: vi.fn(),
-        }),
-    );
-    HTMLElement.prototype.scrollTo = scrollTo;
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.unstubAllGlobals();
-  });
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
 
-  it("défile automatiquement puis se met en pause au survol et sur demande", () => {
-    render(<LoginInstitutions />);
-    act(() => vi.advanceTimersByTime(4500));
-    expect(scrollTo).toHaveBeenCalledTimes(1);
-    fireEvent.mouseEnter(screen.getByRole("region"));
-    act(() => vi.advanceTimersByTime(9000));
-    expect(scrollTo).toHaveBeenCalledTimes(1);
-    fireEvent.mouseLeave(screen.getByRole("region"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Mettre le défilement en pause" }),
-    );
-    act(() => vi.advanceTimersByTime(9000));
-    expect(scrollTo).toHaveBeenCalledTimes(1);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Reprendre le défilement" }),
-    );
-    act(() => vi.advanceTimersByTime(4500));
-    expect(scrollTo).toHaveBeenCalledTimes(2);
+  it("présente cinq institutions accessibles, sans commandes de défilement", () => {
+    const { container } = render(<LoginInstitutions />);
+    expect(screen.getAllByRole("button")).toHaveLength(5);
+    expect(screen.getAllByRole("img")).toHaveLength(5);
+    expect(screen.getAllByRole("list")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /pause|reprendre|suivantes|précédentes/i })).not.toBeInTheDocument();
+    const groups = container.querySelectorAll(".login-institutions__group");
+    expect(groups).toHaveLength(2);
+    expect(groups[1].textContent).toBe(groups[0].textContent);
+    expect(groups[1]).toHaveAttribute("aria-hidden", "true");
+    groups[1].querySelectorAll("button").forEach((button) => expect(button.tabIndex).toBe(-1));
   });
 
   it("ouvre la définition au survol, permet de la parcourir et ferme avec Échap", () => {
     render(<LoginInstitutions />);
     const sonasp = screen.getByRole("button", { name: "À propos de SONASP" });
     fireEvent.mouseEnter(sonasp);
-    expect(screen.getByRole("tooltip")).toHaveTextContent(
-      "Société Nationale des Substances Précieuses",
-    );
-    expect(sonasp).toHaveAttribute(
-      "aria-describedby",
-      "login-institution-definition",
-    );
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Société Nationale des Substances Précieuses");
+    expect(sonasp).toHaveAttribute("aria-describedby", "login-institution-definition");
+    fireEvent.mouseLeave(screen.getByRole("region"));
     fireEvent.mouseEnter(screen.getByRole("tooltip"));
     act(() => vi.advanceTimersByTime(300));
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
@@ -62,47 +33,26 @@ describe("bandeau des institutions", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
-  it("ouvre au focus et au toucher, ferme au clic extérieur et ne défile pas pendant la lecture", () => {
+  it("garde une fiche fixe ouverte pendant la lecture et la ferme au clic extérieur", () => {
     render(<LoginInstitutions />);
     const bumigeb = screen.getByRole("button", { name: "À propos de BUMIGEB" });
     fireEvent.focus(bumigeb);
-    expect(screen.getByRole("tooltip")).toHaveTextContent(
-      "Service géologique national",
-    );
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Service géologique national");
     act(() => vi.advanceTimersByTime(9000));
-    expect(scrollTo).not.toHaveBeenCalled();
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     fireEvent.click(bumigeb);
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
   });
 
-  it("respecte la réduction des animations tout en conservant la navigation manuelle", () => {
-    vi.mocked(window.matchMedia).mockReturnValue({
-      matches: true,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    } as unknown as MediaQueryList);
-    render(<LoginInstitutions />);
-    act(() => vi.advanceTimersByTime(9000));
-    expect(scrollTo).not.toHaveBeenCalled();
-    expect(
-      screen.queryByRole("button", { name: "Mettre le défilement en pause" }),
-    ).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Institutions suivantes" }),
-    );
-    expect(scrollTo).toHaveBeenCalledWith(
-      expect.objectContaining({ behavior: "instant" }),
-    );
-  });
-
-  it('conserve la définition après le défilement natif provoqué par la tabulation', () => {
-    render(<LoginInstitutions />);
-    const button = screen.getByRole('button', { name: 'À propos de BUMIGEB' });
-    act(() => button.focus());
-    fireEvent.scroll(screen.getByRole('list'));
-    expect(screen.getByRole('tooltip')).toHaveTextContent('Service géologique national');
-    expect(button).toHaveFocus();
+  it("ouvre aussi les définitions depuis la copie visuelle de la boucle", () => {
+    const { container } = render(<LoginInstitutions />);
+    const copy = container.querySelector('.login-institutions__group[aria-hidden="true"] [data-institution="sonasp"]')!;
+    fireEvent.mouseEnter(copy);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Société Nationale des Substances Précieuses");
+    fireEvent.mouseLeave(screen.getByRole("region"));
+    act(() => vi.advanceTimersByTime(200));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 });

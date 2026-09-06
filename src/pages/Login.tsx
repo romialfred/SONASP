@@ -184,18 +184,28 @@ export function Login() {
         <div className="login-contours login-contours--left" aria-hidden="true" />
         <div className="login-contours login-contours--right" aria-hidden="true" />
         <header className="login-header">
-          {brandUnavailable ? (
-            <p className="login-brand login-brand--text">Faso SANAMA</p>
-          ) : (
+          <div className="login-identity">
             <img
-              className="login-brand"
-              src="/login-faso/faso-sanama.png"
-              alt="Faso SANAMA"
-              width={1536}
-              height={1024}
-              onError={() => setBrandUnavailable(true)}
+              className="login-coat-of-arms"
+              src="/institutional/armoiries-burkina-faso.png"
+              alt="Armoiries du Burkina Faso"
+              width={500}
+              height={587}
             />
-          )}
+            <span className="login-identity__separator" aria-hidden="true" />
+            {brandUnavailable ? (
+              <p className="login-brand login-brand--text">Faso SANAMA</p>
+            ) : (
+              <img
+                className="login-brand"
+                src="/login-faso/faso-sanama.png"
+                alt="Faso SANAMA"
+                width={1536}
+                height={1024}
+                onError={() => setBrandUnavailable(true)}
+              />
+            )}
+          </div>
           <nav className="login-navigation" aria-label={t('login.navigation', 'Navigation de connexion')}>
             <Link className="login-return" to="/">
               <ArrowLeft aria-hidden="true" />
@@ -392,6 +402,7 @@ export function Login() {
       <LoginInstitutions />
       <footer className="login-footer">
         <p>{t('login.copyright', { year: 2026 })}</p>
+        <p className="login-footer__credit">{t('login.designSupport', 'Conception & support : Quantix Solutions Burkina Faso')}</p>
         <nav aria-label={t('login.footerNavigation', 'Informations et assistance')}>
           <Link to="/confidentialite">{t('login.privacy', 'Confidentialité')}</Link>
           <span aria-hidden="true">·</span>

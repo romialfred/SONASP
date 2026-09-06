@@ -19,7 +19,7 @@
   --login-left: clamp(32px, 8.85vw, 192px);
   --login-right: clamp(32px, 10.65vw, 230px);
   display: grid;
-  grid-template-rows: 5px minmax(0, 1fr) clamp(96px, 16dvh, 166px) 32px;
+  grid-template-rows: 5px minmax(0, 1fr) clamp(130px, 20dvh, 210px) 44px;
   height: 100svh;
   height: 100dvh;
   min-height: 0;
@@ -61,7 +61,7 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-rows: clamp(90px, 16dvh, 176px) minmax(0, 1fr);
+  grid-template-rows: clamp(90px, 19.5dvh, 210px) minmax(0, 1fr);
   min-height: 0;
 }
 
@@ -123,12 +123,35 @@
   padding: 9px 0;
 }
 
+.faso-login .login-identity {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.5vw, 28px);
+  height: 100%;
+  min-width: 0;
+  max-width: 58%;
+}
+
+.faso-login .login-coat-of-arms {
+  display: block;
+  height: 88%;
+  width: auto;
+  min-width: 0;
+  object-fit: contain;
+}
+
+.faso-login .login-identity__separator {
+  flex: 0 0 1px;
+  height: 60%;
+  background: linear-gradient(transparent, #c5ae77, transparent);
+}
+
 .faso-login .login-brand {
   display: block;
   width: auto;
-  max-width: 42%;
-  height: clamp(118px, 18dvh, 190px);
-  align-self: flex-start;
+  max-width: 70%;
+  height: 100%;
+  align-self: center;
   min-height: 0;
   aspect-ratio: 3 / 2;
   object-fit: contain;
@@ -263,7 +286,7 @@
 
 .faso-login .login-presentation {
   min-width: 0;
-  padding: 0 0 10dvh;
+  padding: 0 0 4dvh;
 }
 
 .faso-login .login-presentation__title {
@@ -301,14 +324,20 @@
 }
 
 .faso-login .login-presentation__slogan {
+  width: fit-content;
   margin: 0;
-  color: #aa6d07;
+  padding: 10px 16px;
+  border-left: 3px solid #b7790a;
+  border-radius: 0 10px 10px 0;
+  background: rgb(255 253 247 / 96%);
+  box-shadow: 0 4px 20px rgb(80 55 14 / 6%);
+  color: #79500b;
   font-family: Cambria, Georgia, "Times New Roman", serif;
   font-size: clamp(20px, 1.83vw, 35px);
   font-weight: 700;
   font-style: italic;
   line-height: 1.25;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.02em;
 }
 
 .faso-login .login-panel {
@@ -323,15 +352,15 @@
   border-top: 2px solid #bd830e;
   border-radius: 24px;
   background: rgb(255 255 255 / 97%);
-  padding: clamp(12px, 1.8dvh, 22px) clamp(20px, 1.8vw, 36px);
+  padding: clamp(12px, 1.5dvh, 18px) clamp(20px, 1.8vw, 36px);
   box-shadow: 0 20px 40px rgb(38 28 14 / 16%);
   text-align: center;
 }
 
 .faso-login .login-card__emblem {
   display: grid;
-  width: clamp(50px, 6.4svh, 70px);
-  height: clamp(50px, 6.4svh, 70px);
+  width: clamp(44px, 4.6svh, 54px);
+  height: clamp(44px, 4.6svh, 54px);
   flex-shrink: 0;
   align-self: center;
   place-items: center;
@@ -347,7 +376,7 @@
 }
 
 .faso-login .login-card__eyebrow {
-  margin: clamp(10px, 1.3svh, 16px) 0 0;
+  margin: clamp(6px, 0.7svh, 10px) 0 0;
   color: var(--login-green);
   font-size: clamp(10px, 0.75vw, 14px);
   font-weight: 750;
@@ -504,7 +533,7 @@
 
 .faso-login .login-submit {
   display: flex;
-  min-height: clamp(46px, 5.4svh, 58px);
+  min-height: clamp(44px, 4.7svh, 54px);
   align-items: center;
   justify-content: center;
   gap: 12px;
@@ -553,7 +582,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin: clamp(12px, 1.5svh, 18px) 0 0;
+  margin: clamp(8px, 1svh, 12px) 0 0;
   color: var(--login-muted);
   font-size: clamp(11px, 0.75vw, 14px);
   line-height: 1.4;
@@ -566,9 +595,9 @@
 }
 
 .faso-login .login-card__help {
-  margin: clamp(13px, 1.6svh, 19px) 0 0;
+  margin: clamp(8px, 0.9svh, 12px) 0 0;
   border-top: 1px solid var(--login-line);
-  padding-top: clamp(12px, 1.6svh, 19px);
+  padding-top: clamp(8px, 0.9svh, 12px);
   color: var(--login-muted);
   font-size: clamp(12px, 0.8vw, 15px);
   line-height: 1.4;
@@ -597,6 +626,11 @@
   margin: 0;
 }
 
+.faso-login .login-footer__credit {
+  color: #354c67;
+  font-weight: 500;
+}
+
 .faso-login .login-footer nav {
   display: flex;
   gap: 18px;
@@ -613,7 +647,7 @@
 }
 
 /* Hauteurs de portable : priorité aux champs et aux actions. */
-@media (max-height: 850px) {
+@media (max-height: 950px) {
   .faso-login .login-card__emblem {
     display: none;
   }
@@ -628,7 +662,7 @@
     font-size: 14px;
   }
   .faso-login .login-card__assurance {
-    margin-top: 10px;
+    display: none;
   }
   .faso-login .login-card__help {
     margin-top: 10px;
@@ -638,6 +672,9 @@
     min-height: 44px;
     margin-top: 10px;
   }
+}
+@media (max-height: 850px) {
+  .faso-login .login-scene { grid-template-rows: clamp(90px, 16dvh, 176px) minmax(0, 1fr); }
 }
 @media (max-width: 1099px) {
   .faso-login {
@@ -672,7 +709,7 @@
   .faso-login {
     --login-left: 16px;
     --login-right: 16px;
-    grid-template-rows: 4px minmax(0, 1fr) clamp(76px, 12dvh, 112px) 40px;
+    grid-template-rows: 4px minmax(0, 1fr) clamp(84px, 12dvh, 112px) 56px;
   }
   .faso-login .login-scene {
     grid-template-rows: clamp(78px, 14dvh, 134px) minmax(0, 1fr);
@@ -681,8 +718,10 @@
     gap: 12px;
     padding: 4px 0;
   }
+  .faso-login .login-identity { max-width: 64%; gap: 8px; flex: 1; }
+  .faso-login .login-coat-of-arms { width: 28%; height: 80%; }
   .faso-login .login-brand {
-    max-width: 44%;
+    max-width: 66%;
     height: 100%;
     align-self: center;
   }
@@ -707,7 +746,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 12px;
+    gap: 8px;
     padding-bottom: 12px;
   }
   .faso-login .login-presentation {
@@ -726,10 +765,10 @@
     content: " ";
   }
   .faso-login .login-presentation__lead,
-  .faso-login .login-presentation__rule,
-  .faso-login .login-presentation__slogan {
+  .faso-login .login-presentation__rule {
     display: none;
   }
+  .faso-login .login-presentation__slogan { margin-top: 7px; padding: 5px 8px; font-size: 15px; }
   .faso-login .login-panel {
     width: 100%;
     max-width: 440px;
@@ -812,11 +851,11 @@
   }
 }
 /* Paysage et petites fenêtres : une carte en deux colonnes conserve toutes les actions. */
-@media (max-height: 700px) and (min-width: 761px) {
+@media (max-height: 760px) and (min-width: 761px) {
   .faso-login {
     --login-left: 24px;
     --login-right: 24px;
-    grid-template-rows: 4px minmax(0, 1fr) 84px 26px;
+    grid-template-rows: 4px minmax(0, 1fr) 92px 42px;
   }
   .faso-login .login-scene {
     grid-template-rows: 76px minmax(0, 1fr);
@@ -894,20 +933,10 @@
     padding-top: 6px;
     font-size: 11px;
   }
-  .faso-login .login-institution button {
-    flex-direction: row;
-  }
-  .faso-login .login-institution img {
-    width: 40px;
-    height: 100%;
-  }
-  .faso-login .login-institution button > span {
-    font-size: 10px;
-  }
 }
-@media (max-width: 760px) and (max-height: 620px) {
+@media (max-width: 760px) and (max-height: 700px) {
   .faso-login {
-    grid-template-rows: 3px minmax(0, 1fr) 68px 32px;
+    grid-template-rows: 3px minmax(0, 1fr) 76px 46px;
   }
   .faso-login .login-scene {
     grid-template-rows: 70px minmax(0, 1fr);
@@ -919,22 +948,26 @@
   .faso-login .login-presentation__title {
     font-size: 16px;
   }
+  .faso-login .login-presentation__slogan { font-size: 13px; margin-top: 4px; padding: 3px 6px; }
   .faso-login .login-card {
-    padding: 8px 14px;
+    padding: 6px 14px;
   }
   .faso-login .login-card__title {
     font-size: 22px;
   }
   .faso-login .login-feedback {
-    height: 40px;
-    flex-basis: 40px;
+    height: 38px;
+    flex-basis: 38px;
   }
   .faso-login .login-field {
     margin-top: 6px;
   }
+  .faso-login .login-field input { height: 40px; }
+  .faso-login .login-submit { min-height: 40px; margin-top: 6px; }
   .faso-login .login-card__help {
-    margin-top: 6px;
-    padding-top: 6px;
+    margin-top: 4px;
+    padding-top: 4px;
+    font-size: 10px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -951,10 +984,10 @@
   .faso-login {
     --login-left: 16px;
     --login-right: 16px;
-    grid-template-rows: 3px minmax(0, 1fr) 60px 22px;
+    grid-template-rows: 3px minmax(0, 1fr) 62px 28px;
   }
   .faso-login .login-scene {
-    grid-template-rows: 54px minmax(0, 1fr);
+    grid-template-rows: 48px minmax(0, 1fr);
   }
   .faso-login .login-header {
     padding: 3px 0;
@@ -983,15 +1016,15 @@
     font-size: clamp(19px, 3vw, 28px);
   }
   .faso-login .login-presentation__lead,
-  .faso-login .login-presentation__rule,
-  .faso-login .login-presentation__slogan {
+  .faso-login .login-presentation__rule {
     display: none;
   }
+  .faso-login .login-presentation__slogan { display: block; margin-top: 8px; font-size: 14px; padding: 5px 8px; }
   .faso-login .login-card {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px 10px;
-    padding: 8px 12px;
+    gap: 3px 10px;
+    padding: 6px 12px;
     border-radius: 14px;
   }
   .faso-login .login-card__emblem,
@@ -1012,7 +1045,7 @@
     font-size: 21px;
   }
   .faso-login .login-feedback {
-    height: 40px;
+    height: 38px;
   }
   .faso-login .login-field {
     margin: 0;
@@ -1048,31 +1081,6 @@
     flex-direction: row;
     font-size: 9px;
     padding: 0 12px;
-  }
-  .faso-login .login-institutions {
-    grid-template-rows: 24px minmax(0, 1fr);
-    padding-bottom: 2px;
-  }
-  .faso-login .login-institutions h2 {
-    font-size: 11px;
-  }
-  .faso-login .login-institutions__controls button {
-    width: 23px;
-    height: 23px;
-  }
-  .faso-login .login-institution button {
-    flex-direction: row;
-    padding: 0 4px;
-  }
-  .faso-login .login-institution img {
-    width: 30px;
-    height: 100%;
-  }
-  .faso-login .login-institution button > span {
-    font-size: 9px;
-  }
-  .faso-login .login-institution__info {
-    display: none;
   }
 }
 .faso-login .login-footer { line-height: 1.2; }

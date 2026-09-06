@@ -1,0 +1,28 @@
+{
+  "before": {
+    "at": 1788726683236,
+    "duration": "45s",
+    "groupWidths": [
+      1920,
+      1919.9998779296875
+    ],
+    "iterations": "infinite",
+    "state": "running",
+    "timing": "linear",
+    "tooltip": "Institution du secteur minierSONASPSociété Nationale des Substances PrécieusesActeur de l’achat, de la consolidation et de la commercialisation de l’or du Burkina Faso. Ses achats auprès des mines industrielles s’inscrivent dans des accords contractuels.",
+    "transform": "matrix(1, 0, 0, 1, -1445.79, 0)"
+  },
+  "after": {
+    "at": 1788726725723,
+    "duration": "45s",
+    "groupWidths": [
+      1920,
+      1920
+    ],
+    "iterations": "infinite",
+    "state": "running",
+    "timing": "linear",
+    "tooltip": "Institution du secteur minierSONASPSociété Nationale des Substances PrécieusesActeur de l’achat, de la consolidation et de la commercialisation de l’or du Burkina Faso. Ses achats auprès des mines industrielles s’inscrivent dans des accords contractuels.",
+    "transform": "matrix(1, 0, 0, 1, -1341.56, 0)"
+  }
+}

@@ -31,3 +31,6 @@ supabase/.temp/
 
 .vercel
 .env*
+
+# Sauvegardes locales d'operations de donnees (jamais versionnees)
+backups/

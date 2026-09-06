@@ -8,6 +8,11 @@ const args=new Set(process.argv.slice(2));
 const commit=args.has('--commit');
 const linked=args.has('--linked');
 if (commit && !linked) throw new Error('Un COMMIT est autorisé uniquement sur le projet lié explicitement.');
+// PURGE 2026-09-06 : le jeu HIST-2024-2026 a été retiré de la base liée (décision produit :
+// base vierge, saisie humaine). Tout COMMIT distant est désormais refusé sans dérogation explicite.
+if (commit && linked && process.env.SONASP_DEV_SEED_REMOTE_OVERRIDE !== 'HIST-2024-2026-REINJECTION-EXPLICITEMENT-AUTORISEE') {
+  throw new Error('COMMIT distant interdit : le jeu HIST-2024-2026 a été purgé le 2026-09-06 (voir TACHES-EN-ATTENTE.md). Réinjection uniquement avec SONASP_DEV_SEED_REMOTE_OVERRIDE.');
+}
 for (const flag of ['--development-confirmed','--dry-run-reviewed','--rollback-snapshot']) {
   if (commit && !args.has(flag)) throw new Error(`Le COMMIT exige ${flag}.`);
 }

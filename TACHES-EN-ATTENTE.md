@@ -11,7 +11,7 @@
 | Élément | Valeur |
 |---|---|
 | Branche | `SONASP_2026` |
-| Dernier commit local = distant | `386e6dd2` (arbre propre, `origin` à jour) |
+| Dernier commit de passation | voir `git log -1` (les commits suivants : `e38e25e7` passation, `da2b549b` correctif création de compte, `62c9a8ec` gitignore, puis l'enregistrement de la purge ci-dessous) |
 | Déploiement en ligne vérifié | `386e6dd28939` = `386e6dd2` (build-version.json) |
 | Production | https://sonasp.data-univers.com |
 | Projet Supabase | `yyverzuhkdonjjuficor` |
@@ -176,3 +176,45 @@ la source de vérité n°1 devant les migrations.
 `docs/MATRICE-TESTS-2026-08-22.md`, audits `docs/audits/*` (baselines des 23-24
 août : plusieurs P0 déjà corrigés depuis — revérifier code+base+tests avant de
 réappliquer une reco ancienne).
+
+## 7. Purge des données synthétiques (2026-09-06) — base vierge pour la saisie humaine
+
+Décision produit explicite de l'utilisateur : **ne garder aucune donnée synthétique**, puis
+ressaisir humainement, pas à pas, site → production → vente → paiement, en étant connecté
+avec le compte de chaque acteur.
+
+Ce qui a été retiré de la base `yyverzuhkdonjjuficor` (transaction unique auto-vérifiée,
+rollback automatique au moindre écart, 0 référence résiduelle dans toute colonne UUID) :
+
+- Les **24 artisans « ARTISAN NN / Historique »** et leur sous-arbre (cartes, 192 ventes d'or,
+  160 factures, moyens de paiement, 3 sites dédiés) — 427 lignes.
+- Le **jeu de développement HIST-2024-2026** (`scripts/development-data/`, UUID `d8302026-*`) :
+  ≈4 400 lignes condamnées par fermeture transitive de toutes les FK (3 sociétés minières seed,
+  96 productions/expéditions/préparations/raffinages/stocks/achats/factures, 32 ventes export,
+  26 paiements, 64 certificats/analyses, 32 allocations réserve, 108×3 prévisions/ventilations,
+  9 budgets, 9 contrats, 11 réquisitions, 10 organisations, 2 clients, 2 raffineries,
+  2 ministères, 1 620 cours de change/or ajoutés par le seed) + ≈2 000 traces de journaux
+  (audit workflow, audit achats, outbox de notifications, ledger de conciliation, cycle de vie
+  des comptes, calculs fiscaux liés, signalements qualité).
+- Les **7 comptes techniques « Agent historique »** (`history-actor-N@example.invalid`) :
+  `auth.users` + `user_profiles` + toutes leurs affectations.
+- Les **12 ventes de test `SL-2026-001…012`** (créées le 20 août, sans adossement physique
+  réel) et leurs 6 paiements/4 conciliations/écritures : la règle d'adossement physique
+  (`snp_sync_export_sale_lot_physical_backing`) interdit une vente vendue sans lots, elles ne
+  pouvaient donc pas être conservées sans le seed.
+
+Ce qui reste (données réelles ou préexistantes) : 9 profils, 64 artisans, 9 sociétés minières,
+221 productions, 8 frets, 16 préparations, 7 ventes (dont `SL-2026-000013/14`, 24 août,
+conservées), 2 paiements, 2 lignes de stock, cours de change/or préexistants.
+
+**Interdictions durables** :
+- Ne **jamais** relancer `scripts/development-data/run.mjs --linked --commit` contre ce projet :
+  un garde-fou dans `run.mjs` refuse désormais tout COMMIT distant sans la variable de
+  dérogation `SONASP_DEV_SEED_REMOTE_OVERRIDE`.
+- Les triggers d'immuabilité (historique unifié, grands livres, résultats d'analyse, paiements
+  virtuels, garde d'allocation physique, versions de conciliation, imputations d'avoirs,
+  journal d'accès, synthèse paiement) ont été neutralisés **uniquement** le temps de la
+  transaction et sont tous réactivés (vérifié).
+
+Le worktree contient du travail en cours d'une autre session (sites artisanaux AEA, refonte
+dossier artisan, migrations `20260906093115` et `20260906111030`) : non touché, non indexé.

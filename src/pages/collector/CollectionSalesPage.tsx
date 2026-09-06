@@ -442,7 +442,7 @@ export default function CollectionSalesPage({
           title={create ? "Nouvelle vente de collecte" : "Ventes de collecte"}
           subtitle="Soumission, approbation par l’organisme et suivi du paiement."
           breadcrumb={[
-            { label: "Artisans miniers" },
+            { label: "Collecte" },
             {
               label: "Ventes de collecte",
               to: create ? "/collecte/ventes" : undefined,

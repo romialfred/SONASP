@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/sn";
 import { useAuth } from "@/contexts/AuthContext";
 import { canManageMiningRegistry } from "@/lib/miningRegistryAccess";
+import { isCollectorScopedUser } from "@/lib/collectorAccess";
+import { isComptoirScopedUser } from "@/lib/comptoirAccess";
 import {
   collectorService,
   type CollectorRecord,
@@ -231,6 +233,9 @@ export default function CollectorsPage() {
         ) : id ? (
           selected ? (
             <CollectorDetails
+              showCollectionSales={
+                isCollectorScopedUser(user) || isComptoirScopedUser(user)
+              }
               record={selected}
               manage={manage}
               canDelegate={canDelegate && !!selected.can_delegate_payment}

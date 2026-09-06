@@ -1,6 +1,6 @@
 # Collecteurs et comptoirs — livraison du 6 septembre 2026
 
-Le module ajoute **Artisans miniers → Collecteurs**, **Comptoirs** et **Ventes de collecte**. Le comptoir dispose aussi d’un accès à ses collecteurs et à leurs ventes dans son portail. La DGMG retrouve le registre des collecteurs dans son menu de supervision.
+Le module ajoute **Artisans miniers → Collecteurs** et **Comptoirs**. L’entrée **Ventes de collecte** et son raccourci dans la fiche collecteur sont retirés de cet espace. Le suivi des ventes reste disponible dans les portails opérationnels : **Achats d’or → Ventes des collecteurs** pour le comptoir et **Registre des collectes** pour le collecteur. La DGMG retrouve le registre des collecteurs dans son menu de supervision.
 
 ## Utilisation
 

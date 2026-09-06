@@ -51,6 +51,15 @@ const BUDGETS = {
 const MARGE = 10;
 
 describe('intitulés de la barre latérale', () => {
+  it('retire les ventes de collecte du module Artisans miniers', () => {
+    const artisans = NAVIGATION_SECTIONS.flatMap((section) => section.groups)
+      .find((group) => group.id === 'artisans');
+    const routes = artisans?.children?.map((item) => item.path);
+    expect(routes).not.toContain('/collecte/ventes');
+    expect(routes).toContain('/artisan-minier/collecteurs');
+    expect(routes).toContain('/artisan-minier/comptoirs');
+  });
+
   it('réserve l’ellipse et l’infobulle aux intitulés métier volontairement longs', () => {
     const trop = ALL_GROUPS.filter((groupe) => groupe.children?.length).filter(
       (groupe) => largeurTexte(groupe.label, ['market', 'sales'].includes(groupe.id) ? 12 : 13)
@@ -432,6 +441,7 @@ describe('navigation', () => {
       'comptoir-collecte', 'comptoir-conformite', 'comptoir-stock', 'comptoir-analyses',
     ]);
     expect(routes).toContain('/artisan-minier/ventes-or');
+    expect(routes).toContain('/collecte/ventes');
     expect(routes).toContain('/artisan-minier/rapports/taxes');
     expect(routes).toContain('/portail-comptoir/stock');
     expect(routes).toContain('/portail-comptoir/ventes-sonasp');

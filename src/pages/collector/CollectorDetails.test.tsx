@@ -47,6 +47,7 @@ function view(props: Partial<Parameters<typeof CollectorDetails>[0]> = {}) {
         record={record}
         manage
         canDelegate={false}
+        showCollectionSales={false}
         onRefresh={vi.fn()}
         paymentForm={
           <label>
@@ -75,8 +76,8 @@ describe("Fiche collecteur", () => {
     expect(screen.getByText("Dossier incomplet")).toBeInTheDocument();
     expect(screen.getByText("Identifiant du dossier")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Consulter les ventes/ }),
-    ).toHaveAttribute("href", "/collecte/ventes?collecteur=collector-a");
+      screen.queryByRole("link", { name: /Consulter les ventes/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Configurer la délégation" }),
     ).not.toBeInTheDocument();
@@ -115,7 +116,10 @@ describe("Fiche collecteur", () => {
     await waitFor(() => expect(mocks.activity).toHaveBeenCalled());
   });
   it("masque les actions de gestion pour une lecture seule", async () => {
-    view({ manage: false });
+    view({ manage: false, showCollectionSales: true });
+    expect(
+      screen.getByRole("link", { name: /Consulter les ventes/ }),
+    ).toHaveAttribute("href", "/collecte/ventes?collecteur=collector-a");
     expect(
       screen.queryByRole("link", { name: "Modifier le dossier" }),
     ).not.toBeInTheDocument();
@@ -141,6 +145,7 @@ describe("Fiche collecteur", () => {
           record={{ ...record, id: "collector-b" }}
           manage={false}
           canDelegate={false}
+          showCollectionSales={false}
           onRefresh={vi.fn()}
           paymentForm={null}
         />

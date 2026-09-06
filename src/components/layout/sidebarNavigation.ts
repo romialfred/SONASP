@@ -147,7 +147,6 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
           { label: 'Liste des artisans', path: '/artisan-minier/liste', icon: Users, color: '#2f6fec' },
           { label: 'Collecteurs', path: '/artisan-minier/collecteurs', icon: Users, color: '#10976b' },
           { label: 'Comptoirs', path: '/artisan-minier/comptoirs', icon: Building2, color: '#2f6fec' },
-          { label: 'Ventes de collecte', path: '/collecte/ventes', icon: CircleDollarSign, color: '#10976b' },
           { label: 'Affiliations & Cartes', path: '/artisan-minier/cartes/suivi', icon: TrendingUp, color: '#8b5cf6' },
           { label: 'Validation des cartes', path: '/artisan-minier/cartes/validation', icon: CheckCircle2, color: '#635bff' },
           { label: 'Expirations', path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, color: '#f36b21' },

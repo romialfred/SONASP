@@ -206,12 +206,14 @@ export function CollectorDetails({
   record,
   manage,
   canDelegate,
+  showCollectionSales,
   onRefresh,
   paymentForm,
 }: {
   record: CollectorRecord;
   manage: boolean;
   canDelegate: boolean;
+  showCollectionSales: boolean;
   onRefresh: () => void;
   paymentForm: ReactNode;
 }) {
@@ -447,14 +449,16 @@ export function CollectorDetails({
                     Affecter les sites de collecte
                   </Link>
                 )}
-                <Link
-                  to={salesUrl}
-                  className="sn-btn sn-btn--secondary collector-detail__sales-link"
-                >
-                  <BarChart3 size={18} />
-                  Consulter les ventes de collecte
-                  <ArrowUpRight size={16} />
-                </Link>
+                {showCollectionSales && (
+                  <Link
+                    to={salesUrl}
+                    className="sn-btn sn-btn--secondary collector-detail__sales-link"
+                  >
+                    <BarChart3 size={18} />
+                    Consulter les ventes de collecte
+                    <ArrowUpRight size={16} />
+                  </Link>
+                )}
               </div>
             </Section>
           </div>

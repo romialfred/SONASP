@@ -80,7 +80,7 @@ async function rpc<T>(
   name: CollectorRpc,
   args: Record<string, Json | undefined> = {},
 ): Promise<T> {
-  const call = supabase.rpc as unknown as (
+  const call = supabase.rpc.bind(supabase) as unknown as (
     n: string,
     a: Record<string, Json | undefined>,
   ) => Promise<{ data: T; error: { message: string } | null }>;

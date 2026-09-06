@@ -3,7 +3,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 import type { Affectation } from './tracabiliteVenteService';
 
-const invokeExportSaleRpc = supabase.rpc as unknown as (
+const invokeExportSaleRpc = supabase.rpc.bind(supabase) as unknown as (
   functionName: 'snp_creer_vente_export_idempotent',
   parameters: Record<string, unknown>,
 ) => PromiseLike<PostgrestSingleResponse<unknown>>;

@@ -332,7 +332,7 @@ export function construireLots(
     });
 }
 
-const invokeEligibleLotsRpc = supabase.rpc as unknown as (
+const invokeEligibleLotsRpc = supabase.rpc.bind(supabase) as unknown as (
   functionName: 'snp_lots_vente_export_eligibles',
 ) => PromiseLike<PostgrestSingleResponse<unknown>>;
 

@@ -7,10 +7,11 @@ import { PortalAccessButton } from './PortalAccessButton';
 import type { PublicLocale } from './publicContent';
 import { INTERFACE_LANGUAGES } from '@/i18n/interfaceLanguages';
 import './public-site.css';
+import './faso-vitrine.css';
 
 const publicLinks = [
   { key: 'platform', href: '/#plateforme' },
-  { key: 'mines', href: '/#espace-mines' },
+  { key: 'mines', href: '/#acteurs' },
   { key: 'process', href: '/#processus' },
   { key: 'security', href: '/#securite' },
 ] as const;
@@ -32,7 +33,8 @@ function PublicLayoutInner() {
 
   useEffect(() => {
     setMenuOpen(false);
-  }, [location.pathname, location.hash]);
+    if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname, location.hash, location.key]);
 
   useEffect(() => {
     let animationFrame = 0;
@@ -118,7 +120,7 @@ function PublicLayoutInner() {
   });
 
   return (
-    <div className="public-site">
+    <div className="public-site faso-public">
       <a className="public-site__skip-link" href="#contenu-principal">
         {locale === 'fr' ? 'Aller au contenu' : 'Skip to content'}
       </a>
@@ -129,7 +131,7 @@ function PublicLayoutInner() {
             <img src="/institutional/armoiries-burkina-faso.png" alt="" aria-hidden="true" />
             <span className="institutional-bar__copy">
               <strong>BURKINA FASO</strong>
-              <small>La Patrie ou la Mort, nous Vaincrons</small>
+              <small>PRÉSIDENCE DU FASO</small>
             </span>
           </div>
           <div className="institutional-bar__ticker" aria-label={locale === 'fr' ? 'Cours indicatif de l’or 24 carats' : 'Indicative 24-carat gold price'}>
@@ -182,8 +184,10 @@ function PublicLayoutInner() {
 
       <header className={`public-header${condensed ? ' public-header--condensed' : ''}`}>
         <div className="public-shell public-header__inner">
-          <Link className="public-brand" to="/" aria-label="SONASP — Accueil">
-            <img src="/SONASP v2.png" alt="SONASP" width="621" height="211" />
+          <Link className="public-brand" to="/" aria-label="Faso SANAMA — Accueil">
+            <img className="fs-brand__arms" src="/institutional/armoiries-burkina-faso.png" alt="Armoiries du Burkina Faso" width="500" height="587" />
+            <span className="fs-brand__divider" aria-hidden="true" />
+            <img src="/login-faso/faso-sanama.png" alt="Faso SANAMA" width="1536" height="1024" />
           </Link>
 
           <nav className="public-nav" aria-label={navigationLabel}>
@@ -262,7 +266,7 @@ function PublicLayoutInner() {
       <footer className="public-footer">
         <div className="public-shell public-footer__grid">
           <div className="public-footer__brand">
-            <img src="/SONASP v2.png" alt="SONASP" width="621" height="211" loading="lazy" />
+            <img src="/login-faso/faso-sanama.png" alt="Faso SANAMA" width="1536" height="1024" loading="lazy" />
             <p>{content.footer.description}</p>
           </div>
           <div>
@@ -275,7 +279,8 @@ function PublicLayoutInner() {
             <h2>{content.footer.platform}</h2>
             <a href="/#plateforme">{content.navigation.platform}</a>
             <a href="/#processus">{content.navigation.process}</a>
-            <Link to="/portail-mine">Portail Mine</Link>
+            <a href="/#acteurs">Les acteurs et leurs portails</a>
+            <Link to="/login">Connexion sécurisée</Link>
           </div>
           <div>
             <h2>{content.footer.legal}</h2>
@@ -286,8 +291,8 @@ function PublicLayoutInner() {
           </div>
         </div>
         <div className="public-shell public-footer__bottom">
-          <span>© {new Date().getFullYear()} SONASP. {content.footer.rights}</span>
-          <span>Burkina Faso</span>
+          <span>© {new Date().getFullYear()} Présidence du Burkina Faso. {content.footer.rights}</span>
+          <span>Conception &amp; support : Quantix Solutions Burkina Faso</span>
         </div>
       </footer>
     </div>

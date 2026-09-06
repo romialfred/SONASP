@@ -1,626 +1,143 @@
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Banknote,
-  Building2,
-  CalendarClock,
-  Check,
-  Compass,
-  HelpCircle,
-  Factory,
-  FileKey2,
-  FileSignature,
-  FlaskConical,
-  Gem,
-  Globe2,
-  Landmark,
-  LifeBuoy,
-  Pickaxe,
-  RefreshCcw,
-  ReceiptText,
-  RotateCcw,
-  Scale,
-  ShieldCheck,
-  Ship,
-  Truck,
-} from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState, type KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { PageMetadata } from '../../components/seo/PageMetadata';
 import {
-  AccessibleButton,
-  MinePortalPreview,
-  PaymentPreview,
-  PortalContractPreview,
-  PublicIcon,
-  ResponsiveImage,
-  SectionHeading,
-} from './PublicComponents';
-import { usePublicLocale } from './PublicLocaleContext';
-import { PublicProcessWorkflow } from './PublicProcessWorkflow';
+  ArrowDown, ArrowRight, ArrowUpRight, BarChart3, Check, Fingerprint,
+  Gem, Landmark, Layers3, LockKeyhole, MapPin, ShieldCheck, Waypoints,
+} from 'lucide-react';
+import { PageMetadata } from '../../components/seo/PageMetadata';
 import { PortalAccessButton } from './PortalAccessButton';
-import './public-site.css';
+import { fasoActors, fasoTraceability } from './fasoVitrineContent';
+import './faso-vitrine.css';
 
 function HeroSection() {
-  const { content, locale } = usePublicLocale();
-  const titleLines = locale === 'fr'
-    ? ['L’or du Burkina,', 'collecté et valorisé', 'dans un cadre souverain.']
-    : ['Burkina Faso’s gold,', 'collected and valued', 'within a sovereign framework.'];
-
   return (
-    <section className="public-hero" aria-labelledby="public-hero-title">
-      <ResponsiveImage
-        className="public-hero__photo"
-        alt={locale === 'fr'
-          ? 'Professionnels équipés observant les opérations d’une mine à ciel ouvert en Afrique de l’Ouest.'
-          : 'Equipped professionals overlooking an open-pit mining operation in West Africa.'}
-        eager
-      />
-      <div className="public-hero__wash" aria-hidden="true" />
-      <div className="public-hero__diagonal" aria-hidden="true" />
-      <div className="public-shell public-hero__inner">
-        <div className="public-hero__content">
-          <div className="public-kicker">{content.hero.eyebrow}</div>
-          <h1 id="public-hero-title" aria-label={titleLines.join(' ')}>
-            {titleLines.map((line, index) => (
-              <span key={line}>{index > 0 ? ` ${line}` : line}</span>
-            ))}
-          </h1>
-          <p>{content.hero.description}</p>
-          <div className="public-hero__actions">
-            <PortalAccessButton label={content.hero.primary} />
-            <a className="public-button public-button--secondary" href="#plateforme">
-              <Compass aria-hidden="true" />{content.hero.secondary}
-            </a>
-          </div>
-          <div className="public-hero__trust" aria-label={locale === 'fr' ? 'Engagements de la plateforme' : 'Platform commitments'}>
-            <ShieldCheck aria-hidden="true" />
-            {content.hero.reassurance.map((item, index) => (
-              <span key={item}>
-                {index > 0 && <i aria-hidden="true">•</i>}
-                {item}
-              </span>
-            ))}
-          </div>
-          <div className="public-hero-flow" aria-label={locale === 'fr' ? 'Flux Mine, SONASP, Marché' : 'Mine, SONASP, Market flow'}>
-            <div><span><Pickaxe aria-hidden="true" /></span><strong>Mine</strong></div>
-            <i aria-hidden="true"><ArrowRight /></i>
-            <div><span><Landmark aria-hidden="true" /></span><strong>SONASP</strong></div>
-            <i aria-hidden="true"><ArrowRight /></i>
-            <div><span><Globe2 aria-hidden="true" /></span><strong>{locale === 'fr' ? 'Marché' : 'Market'}</strong></div>
-          </div>
+    <section className="fs-hero" aria-labelledby="fs-hero-title">
+      <div className="public-shell fs-hero__grid">
+        <div className="fs-hero__copy">
+          <p className="fs-eyebrow"><span /> Une plateforme de la Présidence du Faso</p>
+          <h1 id="fs-hero-title">Une filière connectée.<br />Une richesse <em>mieux maîtrisée.</em></h1>
+          <p className="fs-hero__description">Faso SANAMA réunit les acteurs du secteur minier pour tracer la production, suivre les échanges et éclairer la décision publique.</p>
+          <div className="fs-actions"><PortalAccessButton label="Accéder à mon espace" /><a className="fs-text-link" href="#acteurs">Découvrir les portails <ArrowDown aria-hidden="true" /></a></div>
+          <p className="fs-hero__slogan">La performance minière au service du citoyen.</p>
         </div>
-        <div className="public-hero__showcase">
-          <MinePortalPreview />
+        <div className="fs-hero__visual">
+          <picture>
+            <source srcSet="/login-faso/mine-sunrise.avif" type="image/avif" />
+            <img src="/login-faso/mine-sunrise.webp" alt="Paysage minier à ciel ouvert et pépites d’or à la lumière du soleil." width="1536" height="1024" {...{ fetchpriority: 'high' }} />
+          </picture>
+          <div className="fs-hero__visual-top"><span><MapPin aria-hidden="true" /> Burkina Faso</span><span>FASO SANAMA</span></div>
+          <div className="fs-hero__visual-caption"><span>Du terrain à la décision</span><strong>La traçabilité comme<br />patrimoine commun.</strong></div>
+          <div className="fs-connection"><div className="fs-connection__seal"><Landmark aria-hidden="true" /></div><div><small>Pilotage national</small><strong>Présidence du Faso</strong></div><div className="fs-connection__tags"><span>Acteurs</span><span>Opérations</span><span>Recettes</span></div></div>
         </div>
+      </div>
+      <div className="public-shell fs-hero__signature"><span>PLATEFORME NATIONALE DE TRAÇABILITÉ DU SECTEUR MINIER</span><span>Production <i /> Collecte et vente <i /> Impôts et taxes</span></div>
+    </section>
+  );
+}
+
+function PlatformSection() {
+  return (
+    <section className="fs-section fs-platform public-shell" id="plateforme" aria-labelledby="fs-platform-title">
+      <div className="fs-section-heading"><div><p className="fs-eyebrow">Une ambition nationale</p><h2 id="fs-platform-title">Une même chaîne.<br /><em>Des responsabilités claires.</em></h2></div><p>Du site minier aux institutions publiques, Faso SANAMA relie les dossiers, les opérations et leurs justificatifs. Chaque acteur conserve son métier et intervient dans son périmètre.</p></div>
+      <div className="fs-pillars">
+        {[
+          { number: '01', title: 'Tracer', icon: Waypoints, text: 'Retrouver l’origine, les mouvements et les transformations de la matière.' },
+          { number: '02', title: 'Contrôler', icon: ShieldCheck, text: 'Rapprocher les quantités, les documents, les paiements et les obligations fiscales.' },
+          { number: '03', title: 'Décider', icon: BarChart3, text: 'Consolider l’information pour orienter la supervision et le pilotage national.' },
+        ].map(({ number, title, icon: Icon, text }) => <article key={title}><div><span>{number}</span><Icon aria-hidden="true" /></div><h3>{title}</h3><p>{text}</p></article>)}
       </div>
     </section>
   );
 }
 
-function ValueChainSection() {
-  const { content } = usePublicLocale();
-  return (
-    <section className="public-section public-value-chain" id="plateforme">
-      <div className="public-shell">
-        <div className="public-value-chain__heading">
-          <h2>{content.valueChain.title}</h2>
-          <span aria-hidden="true" />
-        </div>
-        <div className="public-value-chain__grid">
-          {content.valueChain.items.map((item) => (
-            <article className="public-capability" key={item.title}>
-              <div className="public-capability__icon"><PublicIcon name={item.icon} /></div>
-              <div>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function MinePortalSection() {
-  const { content, locale } = usePublicLocale();
-  const familyIcons = [Truck, FileKey2, Banknote, ShieldCheck];
-  const familyItemIcons = [
-    [CalendarClock, FileSignature, FlaskConical, Ship],
-    [FileSignature, CalendarClock, FileKey2, RefreshCcw],
-    [Building2, ReceiptText, Banknote, Scale],
-    [Building2, ShieldCheck, FileKey2, RefreshCcw],
-  ];
-  const familyIntroductions = locale === 'fr'
-    ? [
-        'Prévisions, contrôle et départ de la production.',
-        'Contrats et échéances réunis dans un même espace.',
-        'Achats, factures et règlements, au même endroit.',
-        'Dossiers partagés avec les interlocuteurs autorisés.',
-      ]
-    : [
-        'Prepare, check and ship production.',
-        'Mine and SONASP commitments gathered in one place.',
-        'A clear view of purchases, invoices and settlements.',
-        'Useful records shared with the right contacts.',
-      ];
-  return (
-    <section className="public-section public-portal-section" id="espace-mines">
-      <div className="public-shell">
-        <div className="public-portal-section__intro">
-          <SectionHeading eyebrow={content.portal.eyebrow} title={content.portal.title} description={content.portal.description} />
-          <AccessibleButton to="/portail-mine" variant="outline">
-            {content.portal.cta}<ArrowRight aria-hidden="true" />
-          </AccessibleButton>
-        </div>
-        <div className="public-portal-section__layout">
-          <div className="public-portal-section__preview"><MinePortalPreview compact /></div>
-          <div className="public-feature-families">
-            {content.portal.families.map((family, index) => {
-              const FamilyIcon = familyIcons[index] ?? ShieldCheck;
-              const itemIcons = familyItemIcons[index] ?? [];
-              return (
-              <article className={`public-feature-family public-feature-family--${index + 1}`} key={family.title}>
-                <header className="public-feature-family__header">
-                  <div className="public-feature-family__icon"><FamilyIcon aria-hidden="true" /></div>
-                  <div>
-                    <h3>{family.title}</h3>
-                    <p>{familyIntroductions[index]}</p>
-                  </div>
-                </header>
-                <div className="public-feature-family__items" role="list">
-                  {family.items.map((item, itemIndex) => {
-                    const ItemIcon = itemIcons[itemIndex] ?? ArrowRight;
-                    return (
-                      <div className="public-feature-family__item" role="listitem" key={item}>
-                        <span className="public-feature-family__item-icon"><ItemIcon aria-hidden="true" /></span>
-                        <span>{item}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </article>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProcessTimeline() {
-  return <PublicProcessWorkflow />;
-}
-
-function ContractsSection() {
-  const { content, locale } = usePublicLocale();
-  const engagementIcons = [FileSignature, Scale, CalendarClock, ShieldCheck, RotateCcw];
-  const engagementLabels = locale === 'fr'
-    ? ['Cadre', 'Paramètres', 'Calendrier', 'Exceptions', 'Cycle de vie']
-    : ['Framework', 'Parameters', 'Schedule', 'Exceptions', 'Lifecycle'];
-  return (
-    <section className="public-section public-contracts" id="engagements">
-      <div className="public-shell">
-        <div className="public-contracts__intro">
-          <SectionHeading {...content.contracts} />
-          <p className="public-contracts__promise">
-            {locale === 'fr'
-              ? 'Une lecture commune, du document signé jusqu’au rapprochement de chaque expédition.'
-              : 'A shared view, from the signed document through to reconciliation of every shipment.'}
-          </p>
-        </div>
-
-        <div className="public-contracts__layout">
-          <div className="public-contracts__capabilities">
-            {content.contracts.items.map((item, index) => {
-              const Icon = engagementIcons[index] ?? FileSignature;
-              return (
-                <article key={item}>
-                  <span className={`public-contracts__capability-icon public-contracts__capability-icon--${index + 1}`}>
-                    <Icon aria-hidden="true" />
-                  </span>
-                  <div>
-                    <small>{engagementLabels[index]}</small>
-                    <h3>{item}</h3>
-                  </div>
-                  <ArrowRight aria-hidden="true" />
-                </article>
-              );
-            })}
-          </div>
-          <PortalContractPreview locale={locale} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PaymentsSection() {
-  const { content, locale } = usePublicLocale();
-  const capabilityIcons = [ReceiptText, Banknote, Landmark, FileKey2, RefreshCcw];
-  const capabilityLabels = locale === 'fr'
-    ? ['Documents', 'Règlements', 'Coordonnées', 'Justificatifs', 'Audit']
-    : ['Records', 'Settlements', 'Accounts', 'Evidence', 'Audit'];
-
-  return (
-    <section className="public-section public-payments" id="paiements">
-      <div className="public-shell public-payments__layout">
-        <PaymentPreview locale={locale} />
-        <div className="public-payments__content">
-          <SectionHeading {...content.payments} />
-          <div className="public-payments__capabilities">
-            {content.payments.items.map((item, index) => {
-              const Icon = capabilityIcons[index] ?? FileKey2;
-              return (
-                <article className={`public-payments__capability public-payments__capability--${index + 1}`} key={item}>
-                  <span><Icon aria-hidden="true" /></span>
-                  <div><small>{capabilityLabels[index]}</small><h3>{item}</h3></div>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SecuritySection() {
-  const { content, locale } = usePublicLocale();
-  const categories = locale === 'fr'
-    ? ['Identités', 'Audit', 'Échanges', 'Résilience']
-    : ['Identities', 'Audit', 'Exchanges', 'Resilience'];
-  const protectedAreas = locale === 'fr'
-    ? ['Utilisateurs et périmètres', 'Décisions et validations', 'Documents et transmissions', 'Services essentiels']
-    : ['Users and scopes', 'Decisions and approvals', 'Records and transmissions', 'Essential services'];
-
-  return (
-    <section className="public-section public-security" id="securite">
-      <div className="public-shell">
-        <div className="public-security__heading">
-          <SectionHeading {...content.security} />
-          <div className="public-security__statement">
-            <ShieldCheck aria-hidden="true" />
-            <div>
-              <strong>{locale === 'fr' ? 'Un socle commun de confiance' : 'A shared trust foundation'}</strong>
-              <p>{locale === 'fr'
-                ? 'Les contrôles couvrent l’accès, l’action, le document et la continuité de service.'
-                : 'Controls cover access, action, records and service continuity.'}</p>
-            </div>
-          </div>
-        </div>
-        <div className="public-security__grid">
-          {content.security.items.map((item, index) => (
-            <article className={`public-security-card public-security-card--${index + 1}`} key={item.title}>
-              <div className="public-security-card__top">
-                <span><PublicIcon name={item.icon} /></span>
-                <small>{categories[index]}</small>
-              </div>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-              <div className="public-security-card__scope">
-                <ShieldCheck aria-hidden="true" />
-                <span><small>{locale === 'fr' ? 'Protège' : 'Protects'}</small><strong>{protectedAreas[index]}</strong></span>
-              </div>
-            </article>
-          ))}
-        </div>
-        <aside id="security-guarantees-note" className="public-security__note" aria-label={locale === 'fr' ? 'Précision sur les garanties' : 'Safeguards clarification'}>
-          <span><FileKey2 aria-hidden="true" /></span>
-          <div>
-            <strong>{locale === 'fr' ? 'À propos de ces garanties' : 'About these safeguards'}</strong>
-            <p>{locale === 'fr'
-              ? 'Les garanties présentées décrivent les contrôles prévus par la plateforme. Elles ne constituent ni une certification, ni une promesse de conformité à un référentiel qui n’aurait pas été officiellement audité.'
-              : 'The safeguards shown describe planned platform controls. They do not constitute a certification or a compliance claim against a framework that has not been formally audited.'}</p>
-          </div>
-        </aside>
-      </div>
-    </section>
-  );
-}
-
-function BenefitsSection() {
-  const { content, locale } = usePublicLocale();
-  const panels = [
-    { title: content.benefits.minesTitle, description: content.benefits.minesDescription, items: content.benefits.minesItems, label: locale === 'fr' ? 'Pour les mines' : 'For mining companies', icon: Factory },
-    { title: content.benefits.stateTitle, description: content.benefits.stateDescription, items: content.benefits.stateItems, label: locale === 'fr' ? 'Pour l’État' : 'For public institutions', icon: Landmark },
-  ];
-  return (
-    <section className="public-benefits" id="apropos">
-      <div className="public-shell public-benefits__grid">
-        {panels.map(({ title, description, items, label, icon: Icon }, index) => (
-          <article className={index === 1 ? 'public-benefit public-benefit--state' : 'public-benefit'} key={title}>
-            <div className="public-benefit__label"><Icon aria-hidden="true" />{label}</div>
-            <h2>{title}</h2>
-            <p>{description}</p>
-            <ul>{items.map((item) => <li key={item}><Check aria-hidden="true" />{item}</li>)}</ul>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function StakeholdersSection() {
-  const { content, locale } = usePublicLocale();
-  const [activeActorId, setActiveActorId] = useState('sonasp');
-  const producers = [
-    {
-      id: 'industrial',
-      title: content.ecosystem.actors[0],
-      role: locale === 'fr' ? 'Volumes, déclarations et engagements industriels.' : 'Industrial volumes, declarations and commitments.',
-      movement: locale === 'fr' ? 'Vers la SONASP' : 'To SONASP',
-      icon: Factory,
-    },
-    {
-      id: 'semi-mechanized',
-      title: content.ecosystem.actors[1],
-      role: locale === 'fr' ? 'Production encadrée et expéditions planifiées.' : 'Structured production and scheduled shipments.',
-      movement: locale === 'fr' ? 'Vers la SONASP' : 'To SONASP',
-      icon: Building2,
-    },
-    {
-      id: 'artisanal',
-      title: content.ecosystem.actors[2],
-      role: locale === 'fr' ? 'Production artisanale intégrée au circuit national.' : 'Artisanal production connected to the national channel.',
-      movement: locale === 'fr' ? 'Vers la SONASP' : 'To SONASP',
-      icon: Gem,
-    },
-  ];
-  const supportActors = [
-    {
-      id: 'laboratories',
-      title: content.ecosystem.actors[3],
-      role: locale === 'fr' ? 'Analyses, teneur et conformité de la matière.' : 'Assays, grade and material conformity.',
-      movement: locale === 'fr' ? 'Contrôle technique' : 'Technical control',
-      icon: FlaskConical,
-    },
-    {
-      id: 'logistics',
-      title: content.ecosystem.actors[4],
-      role: locale === 'fr' ? 'Transport sécurisé et continuité de la chaîne de garde.' : 'Secure transport and custody-chain continuity.',
-      movement: locale === 'fr' ? 'Chaîne de garde' : 'Custody chain',
-      icon: Truck,
-    },
-    {
-      id: 'customs',
-      title: content.ecosystem.actors[5],
-      role: locale === 'fr' ? 'Contrôles documentaires et formalités de sortie.' : 'Document controls and outbound formalities.',
-      movement: locale === 'fr' ? 'Contrôle de sortie' : 'Outbound control',
-      icon: Scale,
-    },
-    {
-      id: 'finance',
-      title: content.ecosystem.actors[7],
-      role: locale === 'fr' ? 'Règlements, preuves et rapprochement financier.' : 'Settlements, evidence and financial reconciliation.',
-      movement: locale === 'fr' ? 'Flux financiers' : 'Financial flows',
-      icon: Banknote,
-    },
-    {
-      id: 'institutions',
-      title: content.ecosystem.actors[8],
-      role: locale === 'fr' ? 'Supervision publique et vision consolidée.' : 'Public oversight and consolidated insight.',
-      movement: locale === 'fr' ? 'Supervision nationale' : 'National oversight',
-      icon: Landmark,
-    },
-  ];
-  const sonaspActor = {
-    id: 'sonasp',
-    title: 'SONASP',
-    role: locale === 'fr'
-      ? 'Centralise les flux autorisés, sécurise les contrôles et organise l’accès de la production nationale aux débouchés internationaux.'
-      : 'Centralizes authorized flows, secures controls and organizes access from national production to international outlets.',
-    movement: locale === 'fr' ? 'Pivot national' : 'National hub',
-    icon: ShieldCheck,
+function ActorsSection() {
+  const [selected, setSelected] = useState(0);
+  const tabs = useRef<Array<HTMLButtonElement | null>>([]);
+  const actor = fasoActors[selected];
+  const ActorIcon = actor.icon;
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const next = event.key === 'ArrowDown' || event.key === 'ArrowRight' ? (index + 1) % fasoActors.length
+      : event.key === 'ArrowUp' || event.key === 'ArrowLeft' ? (index - 1 + fasoActors.length) % fasoActors.length
+        : event.key === 'Home' ? 0 : event.key === 'End' ? fasoActors.length - 1 : null;
+    if (next === null) return;
+    event.preventDefault(); setSelected(next); tabs.current[next]?.focus();
   };
-  const internationalActor = {
-    id: 'international',
-    title: locale === 'fr' ? 'Marchés internationaux' : 'International markets',
-    role: locale === 'fr'
-      ? 'Raffineries et débouchés internationaux reçoivent des flux contrôlés et documentés.'
-      : 'Refineries and international outlets receive controlled, documented flows.',
-    movement: locale === 'fr' ? 'Depuis la SONASP' : 'From SONASP',
-    icon: Globe2,
-  };
-  const actors = [sonaspActor, ...producers, ...supportActors, internationalActor];
-  const activeActor = actors.find((actor) => actor.id === activeActorId) ?? sonaspActor;
-  const ActiveActorIcon = activeActor.icon;
-  const activateActor = (actorId: string) => setActiveActorId(actorId);
-
   return (
-    <section className="public-section public-ecosystem" id="ecosysteme">
+    <section className="fs-actors fs-section" id="acteurs" aria-labelledby="fs-actors-title">
       <div className="public-shell">
-        <div className="public-ecosystem__heading">
-          <SectionHeading {...content.ecosystem} />
-          <div className="public-ecosystem__heading-note">
-            <Globe2 aria-hidden="true" />
-            <p>{locale === 'fr'
-              ? 'Une continuité institutionnelle, de la première déclaration jusqu’à la sortie vers l’international.'
-              : 'Institutional continuity from the first declaration through to international market access.'}</p>
+        <div className="fs-section-heading"><div><p className="fs-eyebrow">Les acteurs de Faso SANAMA</p><h2 id="fs-actors-title">Un espace pour chacun.<br /><em>Une continuité pour tous.</em></h2></div><p>Sélectionnez un acteur pour découvrir ses outils, ses responsabilités et sa contribution à la filière.</p></div>
+        <div className="fs-actors__layout">
+          <div className="fs-actor-tabs" role="tablist" aria-label="Acteurs de la plateforme" aria-orientation="vertical">
+            {fasoActors.map((item, index) => { const Icon = item.icon; return <button key={item.id} ref={(element) => { tabs.current[index] = element; }} id={`acteur-${item.id}`} role="tab" type="button" aria-selected={selected === index} aria-controls="actor-panel" tabIndex={selected === index ? 0 : -1} onClick={() => setSelected(index)} onKeyDown={(event) => onKeyDown(event, index)}><Icon aria-hidden="true" /><span><strong>{item.label}</strong><small>{item.role}</small></span><ArrowUpRight aria-hidden="true" /></button>; })}
+          </div>
+          <div className="fs-actor-panel" role="tabpanel" id="actor-panel" aria-labelledby={`acteur-${actor.id}`} tabIndex={0}>
+            <div className="fs-actor-panel__top"><span><ActorIcon aria-hidden="true" />{actor.role}</span><small>ESPACE MÉTIER</small></div>
+            <h3>{actor.title}</h3><p>{actor.description}</p>
+            <div className="fs-actor-modules">{actor.modules.map(({ title, description, icon: Icon }) => <article key={title}><span><Icon aria-hidden="true" /></span><div><h4>{title}</h4><p>{description}</p></div></article>)}</div>
+            <div className="fs-actor-panel__outcome"><ShieldCheck aria-hidden="true" /><p>{actor.outcome}</p></div>
+            <Link className="fs-text-link" to="/login">Rejoindre mon espace sécurisé <ArrowRight aria-hidden="true" /></Link>
           </div>
         </div>
-
-        <div className="public-ecosystem__gateway" aria-label={locale === 'fr' ? 'Parcours de la production nationale vers les marchés internationaux' : 'National production journey to international markets'}>
-          <div className="public-ecosystem__main-flow">
-            <section className="public-ecosystem__origin" aria-labelledby="public-ecosystem-origin-title">
-              <header>
-                <span>{locale === 'fr' ? 'Origine' : 'Origin'}</span>
-                <h3 id="public-ecosystem-origin-title">{locale === 'fr' ? 'Production nationale' : 'National production'}</h3>
-                <p>{locale === 'fr' ? 'Les flux miniers entrent dans un cadre commun.' : 'Mining flows enter a shared framework.'}</p>
-              </header>
-              <div className="public-ecosystem__producer-list">
-                {producers.map(({ id, title, role, icon: Icon }) => (
-                  <button
-                    type="button"
-                    className={activeActorId === id ? 'is-active' : ''}
-                    key={id}
-                    onMouseEnter={() => activateActor(id)}
-                    onFocus={() => activateActor(id)}
-                    onClick={() => activateActor(id)}
-                    aria-pressed={activeActorId === id}
-                  >
-                    <span><Icon aria-hidden="true" /></span>
-                    <span><strong>{title}</strong><small>{role}</small></span>
-                    <ArrowRight aria-hidden="true" />
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <div className="public-ecosystem__connector public-ecosystem__connector--inbound" aria-hidden="true">
-              <span /><ArrowRight />
-            </div>
-
-            <article className="public-ecosystem__hub" aria-label={locale === 'fr' ? 'SONASP, pivot national' : 'SONASP, national hub'}>
-              <div className="public-ecosystem__hub-orbit" aria-hidden="true"><i /><i /><i /></div>
-              <div className="public-ecosystem__hub-badge"><ShieldCheck aria-hidden="true" />{locale === 'fr' ? 'Mandat central' : 'Central mandate'}</div>
-              <img src="/SONASP v2.png" alt="SONASP" width="621" height="211" loading="lazy" />
-              <h3>{locale === 'fr' ? 'Pivot de la chaîne nationale' : 'National value-chain hub'}</h3>
-              <p>{locale === 'fr'
-                ? 'La SONASP consolide, contrôle et oriente les flux avant leur accès aux débouchés internationaux.'
-                : 'SONASP consolidates, controls and directs flows before they reach international outlets.'}</p>
-              <div className="public-ecosystem__hub-roles">
-                <span><Building2 aria-hidden="true" />{locale === 'fr' ? 'Consolider' : 'Consolidate'}</span>
-                <span><ShieldCheck aria-hidden="true" />{locale === 'fr' ? 'Sécuriser' : 'Secure'}</span>
-                <span><Globe2 aria-hidden="true" />{locale === 'fr' ? 'Ouvrir l’accès' : 'Open access'}</span>
-              </div>
-              <button
-                type="button"
-                className={activeActorId === 'sonasp' ? 'is-active' : ''}
-                onMouseEnter={() => activateActor('sonasp')}
-                onFocus={() => activateActor('sonasp')}
-                onClick={() => activateActor('sonasp')}
-                aria-pressed={activeActorId === 'sonasp'}
-              >
-                <Globe2 aria-hidden="true" />
-                {locale === 'fr' ? 'Porte institutionnelle vers l’international' : 'Institutional gateway to international markets'}
-                <ArrowUpRight aria-hidden="true" />
-              </button>
-            </article>
-
-            <div className="public-ecosystem__connector public-ecosystem__connector--outbound" aria-hidden="true">
-              <span /><ArrowRight />
-            </div>
-
-            <button
-              type="button"
-              className={`public-ecosystem__destination${activeActorId === 'international' ? ' is-active' : ''}`}
-              onMouseEnter={() => activateActor('international')}
-              onFocus={() => activateActor('international')}
-              onClick={() => activateActor('international')}
-              aria-pressed={activeActorId === 'international'}
-            >
-              <span className="public-ecosystem__destination-kicker">{locale === 'fr' ? 'Porte de sortie' : 'Outbound gateway'}</span>
-              <span className="public-ecosystem__destination-icon"><Ship aria-hidden="true" /></span>
-              <strong>{locale === 'fr' ? 'Marchés internationaux' : 'International markets'}</strong>
-              <small>{locale === 'fr' ? 'Raffineries et débouchés internationaux' : 'Refineries and international outlets'}</small>
-              <span className="public-ecosystem__destination-status"><ArrowUpRight aria-hidden="true" />{locale === 'fr' ? 'Flux validés par la SONASP' : 'Flows validated by SONASP'}</span>
-            </button>
-          </div>
-
-          <section className="public-ecosystem__support" aria-labelledby="public-ecosystem-support-title">
-            <div className="public-ecosystem__support-heading">
-              <span>{locale === 'fr' ? 'Couche d’appui' : 'Support layer'}</span>
-              <h3 id="public-ecosystem-support-title">{locale === 'fr' ? 'Les fonctions qui sécurisent le passage' : 'Functions that secure the journey'}</h3>
-            </div>
-            <div className="public-ecosystem__support-grid">
-              {supportActors.map(({ id, title, movement, icon: Icon }) => (
-                <button
-                  type="button"
-                  className={activeActorId === id ? 'is-active' : ''}
-                  key={id}
-                  onMouseEnter={() => activateActor(id)}
-                  onFocus={() => activateActor(id)}
-                  onClick={() => activateActor(id)}
-                  aria-pressed={activeActorId === id}
-                >
-                  <span><Icon aria-hidden="true" /></span>
-                  <span><strong>{title}</strong><small>{movement}</small></span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <div className="public-ecosystem__active-link" aria-live="polite">
-            <span className="public-ecosystem__active-link-icon"><ActiveActorIcon aria-hidden="true" /></span>
-            <div>
-              <small>{locale === 'fr' ? 'Liaison sélectionnée' : 'Selected connection'}</small>
-              <strong>{activeActor.title}</strong>
-              <p>{activeActor.role}</p>
-            </div>
-            <span className="public-ecosystem__active-link-route">{activeActor.movement}<ArrowRight aria-hidden="true" /></span>
-          </div>
-        </div>
+        <p className="fs-access-note"><LockKeyhole aria-hidden="true" />Une connexion commune. Un accès déterminé par votre compte et vos habilitations.</p>
       </div>
     </section>
   );
 }
 
-function AssistanceSection() {
-  const { content } = usePublicLocale();
-  const items = [
-    { title: content.assistance.help, to: '/assistance', icon: HelpCircle },
-    { title: content.assistance.password, to: '/recuperer-acces', icon: RefreshCcw },
-    { title: content.assistance.incident, to: '/assistance#incident', icon: LifeBuoy },
-  ];
+function TraceabilitySection() {
+  const [selected, setSelected] = useState(0);
+  const step = fasoTraceability[selected];
+  const Icon = step.icon;
   return (
-    <section className="public-section public-assistance" id="assistance">
-      <div className="public-shell public-assistance__grid">
-        <SectionHeading {...content.assistance} />
-        <div className="public-assistance__links">
-          {items.map(({ title, to, icon: Icon }) => (
-            <Link key={title} to={to}><Icon aria-hidden="true" /><span>{title}</span><ArrowRight aria-hidden="true" /></Link>
-          ))}
-        </div>
-      </div>
+    <section className="fs-section fs-trace public-shell" id="processus" aria-labelledby="fs-trace-title">
+      <div className="fs-section-heading"><div><p className="fs-eyebrow">La chaîne de traçabilité</p><h2 id="fs-trace-title">L’or circule.<br /><em>Son histoire reste.</em></h2></div><p>Chaque étape apporte une pièce au dossier. Explorez la chaîne pour comprendre ce qui relie la matière, les acteurs et les transactions.</p></div>
+      <ol className="fs-trace__steps">{fasoTraceability.map((item, index) => { const StepIcon = item.icon; return <li key={item.id}><button type="button" aria-pressed={selected === index} aria-controls="trace-detail" onClick={() => setSelected(index)}><span>{String(index + 1).padStart(2, '0')}<StepIcon aria-hidden="true" /></span><strong>{item.title}</strong></button></li>; })}</ol>
+      <div className="fs-trace__detail" id="trace-detail" aria-live="polite"><div className="fs-trace__emblem"><Icon aria-hidden="true" /></div><div><p className="fs-eyebrow">{String(selected + 1).padStart(2, '0')} / {step.title}</p><h3>{step.heading}</h3><p>{step.description}</p></div><ul>{step.evidence.map((item) => <li key={item}><Check aria-hidden="true" />{item}</li>)}</ul></div>
+      <p className="fs-trace__note">Les circuits industriel et artisanal suivent leurs propres règles. Leurs références et leurs justificatifs permettent une lecture nationale cohérente.</p>
     </section>
   );
 }
 
-function FinalCallToAction() {
-  const { content } = usePublicLocale();
+function NationalValueSection() {
   return (
-    <section className="public-final-cta">
-      <div className="public-shell public-final-cta__inner">
-        <div><span>Portail Mine</span><h2>{content.finalCta.title}</h2><p>{content.finalCta.description}</p></div>
-        <div className="public-final-cta__actions">
-          <PortalAccessButton label={content.finalCta.portal} />
-          <AccessibleButton to="/assistance" variant="secondary">{content.finalCta.assistance}</AccessibleButton>
-        </div>
-      </div>
+    <section className="fs-national" id="apropos" aria-labelledby="fs-national-title"><div className="public-shell fs-national__grid">
+      <div><p className="fs-eyebrow">Au service de l’intérêt national</p><h2 id="fs-national-title">La richesse du sous-sol.<br /><em>La valeur pour le pays.</em></h2><p>La digitalisation rapproche l’activité minière de ses enjeux publics : formalisation, transparence, recettes et souveraineté de l’information.</p><a className="fs-text-link" href="#acteurs">Explorer les espaces métiers <ArrowRight aria-hidden="true" /></a></div>
+      <div className="fs-national__benefits">{[
+        { title: 'Une filière mieux identifiée', text: 'Des sites, des professionnels et des autorisations réunis dans des registres structurés.', icon: Fingerprint },
+        { title: 'Des recettes mieux suivies', text: 'Un lien entre les transactions documentées, les obligations fiscales et leur recouvrement.', icon: BarChart3 },
+        { title: 'Des écarts plus visibles', text: 'Le rapprochement des flux aide à repérer les incohérences et à orienter les contrôles.', icon: ShieldCheck },
+        { title: 'Une information consolidée', text: 'Une lecture nationale accessible aux institutions selon leurs responsabilités.', icon: Landmark },
+      ].map(({ title, text, icon: Icon }) => <article key={title}><Icon aria-hidden="true" /><div><h3>{title}</h3><p>{text}</p></div></article>)}</div>
+    </div></section>
+  );
+}
+
+function TrustSection() {
+  return (
+    <section className="fs-section public-shell fs-trust" id="securite" aria-labelledby="fs-trust-title"><div className="fs-section-heading"><div><p className="fs-eyebrow">Un cadre de confiance</p><h2 id="fs-trust-title">Partager l’information.<br /><em>Préserver les responsabilités.</em></h2></div><Link className="fs-text-link" to="/securite">Comprendre les protections <ArrowUpRight aria-hidden="true" /></Link></div>
+      <div className="fs-trust__grid">{[
+        { title: 'Accès maîtrisés', text: 'Authentification renforcée et droits adaptés à l’utilisateur, à son organisme et à son périmètre.', icon: LockKeyhole },
+        { title: 'Décisions historisées', text: 'Des opérations et validations documentées pour faciliter le suivi et la relecture des dossiers.', icon: Layers3 },
+        { title: 'Documents protégés', text: 'Des pièces justificatives consultables par les utilisateurs habilités, dans le contexte de leur dossier.', icon: ShieldCheck },
+      ].map(({ title, text, icon: Icon }) => <article key={title}><Icon aria-hidden="true" /><h3>{title}</h3><p>{text}</p></article>)}</div>
     </section>
   );
+}
+
+function InstitutionsSection() {
+  return <section className="fs-institutions public-shell" aria-label="Institutions du secteur minier"><p className="fs-eyebrow">Une filière, des institutions complémentaires</p><div>{[
+    { name: 'Présidence du Faso', src: '/institutional/armoiries-burkina-faso.png' },
+    { name: 'Ministère des Finances', src: '/institutional/armoiries-burkina-faso.png' },
+    { name: 'Ministère chargé des Mines', src: '/institutional/armoiries-burkina-faso.png' },
+    { name: 'SONASP', src: '/sonasp_logo.png' },
+    { name: 'BUMIGEB', src: '/login-faso/bumigeb.png' },
+  ].map(({ name, src }) => <figure key={name}><img src={src} alt="" loading="lazy" width="140" height="90" /><figcaption>{name}</figcaption></figure>)}</div></section>;
 }
 
 export default function PublicHomePage() {
-  return (
-    <>
-      <PageMetadata
-        title="Plateforme nationale de collecte et de vente de l’or | SONASP"
-        description="La plateforme sécurisée de la SONASP dédiée à la collecte, aux achats, aux ventes et au suivi des opérations aurifères au Burkina Faso."
-        openGraph={{ type: 'website', locale: 'fr_BF', siteName: 'SONASP' }}
-        twitter={{ card: 'summary_large_image' }}
-        structuredData={{
-          '@context': 'https://schema.org',
-          '@type': 'Organization',
-          name: 'Société Nationale des Substances Précieuses',
-          alternateName: 'SONASP',
-          areaServed: { '@type': 'Country', name: 'Burkina Faso' },
-        }}
-      />
-      <HeroSection />
-      <ValueChainSection />
-      <MinePortalSection />
-      <ProcessTimeline />
-      <ContractsSection />
-      <PaymentsSection />
-      <SecuritySection />
-      <BenefitsSection />
-      <StakeholdersSection />
-      <AssistanceSection />
-      <FinalCallToAction />
-    </>
-  );
+  return <div className="fs-home">
+    <PageMetadata title="Faso SANAMA | Présidence du Faso · Traçabilité du secteur minier" description="La plateforme de la Présidence du Faso qui relie sociétés minières, artisans, comptoirs, collecteurs, DGMG et DGI : production, traçabilité et suivi des recettes publiques." openGraph={{ type: 'website', locale: 'fr_BF', siteName: 'Faso SANAMA' }} structuredData={{ '@context': 'https://schema.org', '@type': 'WebSite', name: 'Faso SANAMA', inLanguage: 'fr', publisher: { '@type': 'GovernmentOrganization', name: 'Présidence du Faso' } }} />
+    <HeroSection /><PlatformSection /><ActorsSection /><TraceabilitySection /><NationalValueSection /><TrustSection /><InstitutionsSection />
+    <section className="fs-final"><div className="public-shell"><div><Gem aria-hidden="true" /><p className="fs-eyebrow">Votre espace Faso SANAMA</p><h2>Participez à une filière<br />connectée et responsable.</h2><p>Retrouvez les outils et les dossiers de votre organisme.</p></div><div className="fs-actions"><PortalAccessButton label="Accéder à mon espace" /><Link className="fs-text-link" to="/assistance">Besoin d’accompagnement ? <ArrowUpRight aria-hidden="true" /></Link></div></div></section>
+  </div>;
 }

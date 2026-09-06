@@ -7,13 +7,13 @@ interface PlatformLoadingProps {
 
 export function PlatformLoading({
   title = 'Initialisation de la plateforme',
-  message = 'Connexion aux services sécurisés SONASP…',
+  message = 'Connexion aux services sécurisés Faso SANAMA…',
 }: PlatformLoadingProps) {
   return (
     <div className="sonasp-loading" role="status" aria-live="polite" aria-label={`${title}. ${message}`}>
       <div className="sonasp-loading__flag" aria-hidden="true"><span /><span /><span /></div>
       <div className="sonasp-loading__panel">
-        <img className="sonasp-loading__logo" src="/SONASP v2.png" alt="SONASP" width="621" height="211" />
+        <img className="sonasp-loading__logo" src="/login-faso/faso-sanama.png" alt="Faso SANAMA" width="1536" height="1024" />
         <div className="sonasp-hourglass" aria-hidden="true">
           <span className="sonasp-hourglass__bar sonasp-hourglass__bar--top" />
           <span className="sonasp-hourglass__glass">
@@ -28,7 +28,7 @@ export function PlatformLoading({
           <span>{message}</span>
         </div>
         <div className="sonasp-loading__progress" aria-hidden="true"><span /></div>
-        <small>Plateforme nationale de collecte et de vente de l’or</small>
+        <small>Plateforme nationale de traçabilité du secteur minier</small>
       </div>
     </div>
   );

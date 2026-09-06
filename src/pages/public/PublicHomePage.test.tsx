@@ -1,111 +1,88 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import PublicHomePage from './PublicHomePage';
-import { PublicLocaleProvider, usePublicLocale } from './PublicLocaleContext';
+import { PublicLocaleProvider } from './PublicLocaleContext';
 
 function renderHome() {
-  return render(
-    <MemoryRouter>
-      <PublicLocaleProvider>
-        <PublicHomePage />
-      </PublicLocaleProvider>
-    </MemoryRouter>,
-  );
+  return render(<MemoryRouter><PublicLocaleProvider><PublicHomePage /></PublicLocaleProvider></MemoryRouter>);
 }
 
-function LocaleProbe() {
-  const { locale, setLocale, content } = usePublicLocale();
-  return (
-    <div>
-      <span>{locale}</span>
-      <span>{content.hero.title}</span>
-      <button type="button" onClick={() => setLocale('en')}>English</button>
-    </div>
-  );
-}
+describe('vitrine présidentielle Faso SANAMA', () => {
+  beforeEach(() => { window.localStorage.clear(); document.documentElement.lang = 'fr'; });
 
-describe('vitrine publique SONASP', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    window.localStorage.setItem('sonasp-language', 'fr');
-    document.documentElement.lang = 'fr';
-  });
-
-  it('présente les parcours métier essentiels et relie le CTA au portail sécurisé', async () => {
-    const { container } = renderHome();
-
-    expect(screen.getByRole('heading', {
-      level: 1,
-      name: 'L’or du Burkina, collecté et valorisé dans un cadre souverain.',
-    })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Une plateforme unique pour toute la chaîne de valeur' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Un espace sécurisé, pensé pour chaque mine' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Production & Expédition' })).toBeInTheDocument();
-    expect(screen.getByText('Gestion des prévisions de production')).toBeInTheDocument();
-    expect(screen.getByText('Analyse Labo')).toBeInTheDocument();
-    expect(screen.getByText('Enlèvement & Expédition', { selector: '.public-feature-family__item > span:last-child' })).toBeInTheDocument();
-    expect(screen.queryByText('Production et livraisons')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Une chaîne numérique continue, de la mine au paiement' })).toBeInTheDocument();
-    expect(screen.getByText('Début du processus')).toBeInTheDocument();
-    expect(screen.getByText('Fin du processus')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Préparer le flux' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Contrôler la matière' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Finaliser l’opération' })).toBeInTheDocument();
-    expect(screen.getByText('Une opération, toutes ses pièces reliées')).toBeInTheDocument();
-    expect(screen.getByText('À propos de ces garanties')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'La SONASP, pivot national vers les marchés internationaux' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Production nationale' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Porte de sortie Marchés internationaux/i })).toBeInTheDocument();
-    screen.getAllByRole('link', { name: /portail sonasp/i }).forEach((link) => {
+  it('présente le rattachement présidentiel et un accès commun aux espaces habilités', () => {
+    renderHome();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Une filière connectée.');
+    expect(screen.getByText('Une plateforme de la Présidence du Faso')).toBeInTheDocument();
+    expect(document.title).toContain('Faso SANAMA | Présidence du Faso');
+    for (const link of screen.getAllByRole('link', { name: /Accéder à mon espace|Rejoindre mon espace sécurisé/ })) {
       expect(link).toHaveAttribute('href', '/login');
-      expect(link).toHaveClass('public-portal-button');
-      expect(link.querySelector('.public-portal-button__label')).toHaveTextContent('Portail SONASP');
-      expect(link.querySelector('.public-portal-button__icon')).toHaveAttribute('aria-hidden', 'true');
-    });
-    expect(screen.getByRole('link', { name: 'Découvrir le Portail Mine' })).toHaveAttribute('href', '/portail-mine');
-
-    const heroFlow = container.querySelector('.public-hero-flow');
-    expect(heroFlow).toBeInTheDocument();
-    expect(heroFlow?.closest('.public-hero__content')).toBeInTheDocument();
-    expect(heroFlow?.closest('.public-hero__showcase')).toBeNull();
-
+    }
+    expect(screen.queryByText('Portail SONASP')).not.toBeInTheDocument();
+    expect(screen.queryByText(/pivot national vers les marchés internationaux/i)).not.toBeInTheDocument();
   });
 
-  it('permet de sélectionner une étape du flux et expose son état actif', () => {
+  it('expose les huit acteurs et leur dossier sans afficher de données métier', () => {
     renderHome();
-
-    const analysisStep = screen.getByRole('button', { name: /Analyse Contrôle de la teneur/i });
-    fireEvent.click(analysisStep);
-
-    expect(analysisStep).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Étape suivante')).toBeInTheDocument();
+    const labels = ['Présidence du Faso', 'Sociétés minières', 'Artisans et sites', 'Comptoirs d’or', 'Collecteurs', 'DGMG', 'Finances et DGI', 'SONASP'];
+    expect(screen.getAllByRole('tab')).toHaveLength(labels.length);
+    for (const label of labels) {
+      const tab = screen.getByRole('tab', { name: new RegExp('^' + label) });
+      fireEvent.click(tab);
+      expect(tab).toHaveAttribute('aria-selected', 'true');
+      const panel = screen.getByRole('tabpanel');
+      expect(panel).toHaveAttribute('aria-labelledby', tab.id);
+      expect(document.getElementById(tab.getAttribute('aria-controls')!)).toBe(panel);
+      expect(within(panel).getAllByRole('heading', { level: 4 })).toHaveLength(3);
+      expect(within(panel).getByRole('link')).toHaveAttribute('href', '/login');
+    }
   });
 
-  it('explique le rôle de chaque acteur autour du pivot SONASP', () => {
+  it('distingue les contrats des mines du circuit des comptoirs et les délégations du collecteur', () => {
     renderHome();
-
-    const financeActor = screen.getByRole('button', { name: /Finance Flux financiers/i });
-    fireEvent.click(financeActor);
-
-    expect(financeActor).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Règlements, preuves et rapprochement financier.')).toBeInTheDocument();
-    expect(screen.getByText('Flux financiers', { selector: '.public-ecosystem__active-link-route' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /^Sociétés minières/ }));
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('conditions contractuelles acceptées par la société minière');
+    fireEvent.click(screen.getByRole('tab', { name: /^Comptoirs/ }));
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('cession de leur or à la SONASP');
+    fireEvent.click(screen.getByRole('tab', { name: /^Collecteurs/ }));
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('Règlement selon délégation');
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('transmission à l’organisme responsable');
   });
 
-  it('maintient le français tant que le catalogue anglais privé est incomplet', async () => {
-    render(
-      <PublicLocaleProvider>
-        <LocaleProbe />
-      </PublicLocaleProvider>,
-    );
+  it('permet de changer de portail au clavier avec un seul onglet dans la tabulation', () => {
+    renderHome();
+    const first = screen.getByRole('tab', { name: /^Présidence/ });
+    first.focus();
+    fireEvent.keyDown(first, { key: 'ArrowDown' });
+    const mine = screen.getByRole('tab', { name: /^Sociétés minières/ });
+    expect(mine).toHaveFocus();
+    expect(mine).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(mine, { key: 'End' });
+    const last = screen.getByRole('tab', { name: /^SONASP/ });
+    expect(last).toHaveFocus();
+    expect(screen.getAllByRole('tab').filter((tab) => tab.tabIndex === 0)).toEqual([last]);
+    fireEvent.keyDown(last, { key: 'Home' });
+    expect(first).toHaveFocus();
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'English' }));
+  it('explique les huit étapes et conserve les justificatifs de la sélection', () => {
+    renderHome();
+    for (const label of ['Production', 'Collecte', 'Contrôle', 'Achat et vente', 'Stocks et lots', 'Expédition', 'Raffinage', 'Fiscalité']) {
+      const button = screen.getByRole('button', { name: new RegExp(label) });
+      fireEvent.click(button);
+      expect(button).toHaveAttribute('aria-pressed', 'true');
+      expect(document.getElementById('trace-detail')).toHaveAttribute('aria-live', 'polite');
+    }
+    expect(screen.getByText('Assiette documentée')).toBeInTheDocument();
+    expect(screen.getByText('Recouvrement')).toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(document.documentElement.lang).toBe('fr');
-      expect(window.localStorage.getItem('sonasp-language')).toBe('fr');
-    });
-    expect(screen.getByText("L’or du Burkina, collecté et valorisé dans un cadre souverain.")).toBeInTheDocument();
+  it('relie chaque ancre de découverte à une section existante', () => {
+    const { container } = renderHome();
+    for (const link of container.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')) {
+      expect(document.getElementById(link.hash.slice(1))).not.toBeNull();
+    }
   });
 });

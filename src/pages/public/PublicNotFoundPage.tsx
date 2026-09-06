@@ -5,7 +5,7 @@ import { PageMetadata } from '../../components/seo/PageMetadata';
 export default function PublicNotFoundPage() {
   return (
     <div className="public-not-found">
-      <PageMetadata title="Page introuvable | SONASP" description="La page demandée n’est pas disponible." robots="noindex, nofollow" />
+      <PageMetadata title="Page introuvable | Faso SANAMA" description="La page demandée n’est pas disponible." robots="noindex, nofollow" />
       <div className="public-shell">
         <SearchX aria-hidden="true" />
         <span>Erreur 404</span>

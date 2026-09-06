@@ -17,7 +17,7 @@ export default function PublicAssistancePage() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const isFrench = locale === 'fr';
   const faqs = useMemo(() => [
-    { q: isFrench ? 'Comment accéder au Portail Mine ?' : 'How do I access the Mine Portal?', a: isFrench ? 'Utilisez le compte attribué à votre société minière. Si votre compte n’est pas encore activé, rapprochez-vous de votre administrateur habilité.' : 'Use the account assigned to your mining company. If it is not active yet, contact your authorized administrator.' },
+    { q: isFrench ? 'Comment accéder à mon espace métier ?' : 'How do I access my workspace?', a: isFrench ? 'Connectez-vous avec le compte attribué à votre société ou à votre institution. Vos habilitations déterminent votre portail. Pour un accès ou une activation, rapprochez-vous de votre administrateur habilité.' : 'Sign in with the account assigned to your organization. Your permissions determine your portal. Contact your authorized administrator to activate access.' },
     { q: isFrench ? 'Comment récupérer mon mot de passe ?' : 'How do I recover my password?', a: isFrench ? 'La page de connexion donne accès au parcours sécurisé de récupération du mot de passe.' : 'The sign-in page provides access to the secure password recovery flow.' },
     { q: isFrench ? 'Quelles informations joindre à une demande ?' : 'What should I include in a request?', a: isFrench ? 'Précisez votre société, l’opération concernée, la date et le résultat attendu. Ne transmettez jamais votre mot de passe.' : 'Specify your company, the affected operation, the date and the expected outcome. Never share your password.' },
   ], [isFrench]);
@@ -47,7 +47,7 @@ export default function PublicAssistancePage() {
 
   return (
     <div className="public-page">
-      <PageMetadata title="Assistance | Plateforme SONASP" description="Centre d’aide, récupération d’accès et formulaire sécurisé d’assistance pour les utilisateurs de la plateforme SONASP." openGraph={{ type: 'website', locale: 'fr_BF', siteName: 'SONASP' }} />
+      <PageMetadata title="Assistance | Faso SANAMA" description="Centre d’aide, récupération d’accès et formulaire sécurisé d’assistance pour les utilisateurs de Faso SANAMA." openGraph={{ type: 'website', locale: 'fr_BF', siteName: 'Faso SANAMA' }} />
       <header className="public-page-hero">
         <div className="public-shell">
           <SectionHeading eyebrow={isFrench ? 'Centre d’aide' : 'Help center'} title={isFrench ? 'Assistance aux utilisateurs de la plateforme' : 'Platform user support'} description={isFrench ? 'Consultez les réponses essentielles ou transmettez une demande structurée à l’équipe d’assistance.' : 'Review essential answers or submit a structured request to the support team.'} as="h1" />

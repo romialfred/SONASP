@@ -1,0 +1,144 @@
+{
+  "viewports": [
+    {
+      "logosLoaded": true,
+      "overflow": [],
+      "scrollWidth": 1905,
+      "viewport": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "logosLoaded": true,
+      "overflow": [],
+      "scrollWidth": 1425,
+      "viewport": [
+        1440,
+        900
+      ]
+    },
+    {
+      "logosLoaded": true,
+      "overflow": [],
+      "scrollWidth": 1351,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "logosLoaded": true,
+      "overflow": [],
+      "scrollWidth": 1009,
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "logosLoaded": true,
+      "overflow": [],
+      "scrollWidth": 753,
+      "viewport": [
+        768,
+        1024
+      ]
+    },
+    {
+      "logosLoaded": true,
+      "overflow": [],
+      "scrollWidth": 375,
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "logosLoaded": true,
+      "overflow": [],
+      "scrollWidth": 345,
+      "viewport": [
+        360,
+        800
+      ]
+    },
+    {
+      "logosLoaded": true,
+      "overflow": [],
+      "scrollWidth": 305,
+      "viewport": [
+        320,
+        568
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "actor": "Présidence du Faso",
+      "panel": "Pilotage national\nESPACE MÉTIER\nUne vision d’ensemble pour la décision publique.\n\nRapprocher la production, les flux commerciaux et les informations financières pour suivre la performance du secteur minier à l’échelle nationale.\n\nVue exécutive\n\nProduction, prévisions et performance des sociétés.\n\nLecture financière\n\nContrats, factures, règlements et rapprochements.\n\nRapports et alertes\n\nUne information consolidée pour orienter le suivi.\n\nUn pilotage stratégique, distinct de la gestion quotidienne des opérations.\n\nRejoindre mon espace sécurisé"
+    },
+    {
+      "actor": "Sociétés minières",
+      "panel": "Production industrielle\nESPACE MÉTIER\nDe la production à l’expédition, un dossier continu.\n\nChaque société dispose d’un espace dédié pour ses prévisions, ses déclarations, ses contrats et le suivi commercial de sa production.\n\nProduction et prévisions\n\nDéclarations, disponibilités et planification des volumes.\n\nContrats et ventes\n\nConditions commerciales, engagements et demandes d’achat.\n\nExpéditions et règlements\n\nAnalyses, documents, factures et suivi des paiements.\n\nLes ventes à la SONASP reposent sur les conditions contractuelles acceptées par la société minière.\n\nRejoindre mon espace sécurisé"
+    },
+    {
+      "actor": "Artisans et sites",
+      "panel": "Identification et formalisation\nESPACE MÉTIER\nDonner à chaque acteur une place dans la filière.\n\nL’identification des artisans et des sites relie les dossiers administratifs, les affiliations et les opérations du marché artisanal.\n\nSites artisanaux\n\nLocalisation, catégorie formalisée ou non formalisée, dossier AEA.\n\nAffiliations et cartes\n\nIdentité, droits d’adhésion, validité et suivi des cartes.\n\nVentes et paiements\n\nOrigine de la production et historique des transactions.\n\nDes dossiers suivis par les gestionnaires habilités, tout au long de leur validité.\n\nRejoindre mon espace sécurisé"
+    },
+    {
+      "actor": "Comptoirs d’or",
+      "panel": "Achat et consolidation\nESPACE MÉTIER\nStructurer les achats et suivre chaque lot.\n\nUn portail pour les achats locaux, les relations avec les collecteurs, les pièces fiscales, les paiements et la constitution des stocks.\n\nDossier du comptoir\n\nSociété, responsables et autorisations documentées.\n\nAchats et validations\n\nVentes soumises par les collecteurs et règlements autorisés.\n\nStocks et cessions\n\nLots disponibles, mouvements et ventes à la SONASP.\n\nLe circuit des comptoirs organise la cession de leur or à la SONASP.\n\nRejoindre mon espace sécurisé"
+    },
+    {
+      "actor": "Collecteurs",
+      "panel": "Lien avec le terrain\nESPACE MÉTIER\nDocumenter la transaction dès la collecte.\n\nRattaché à un comptoir ou à la SONASP, le collecteur intervient dans son périmètre autorisé et enregistre les ventes des artisans.\n\nRattachements\n\nSites de collecte, artisans et organisme représenté.\n\nVentes à approuver\n\nSaisie des opérations et transmission à l’organisme responsable.\n\nPaiements habilités\n\nRèglement selon délégation et conservation des justificatifs.\n\nLa saisie, l’approbation et le paiement restent associés à des responsabilités distinctes.\n\nRejoindre mon espace sécurisé"
+    },
+    {
+      "actor": "DGMG",
+      "panel": "Supervision réglementaire\nESPACE MÉTIER\nRelier les registres à la réalité des opérations.\n\nLa Direction générale des mines et de la géologie dispose d’une lecture transversale des sites, des acteurs et des déclarations de production.\n\nRegistres nationaux\n\nSites, sociétés minières, artisans, comptoirs et collecteurs.\n\nDéclarations et conformité\n\nSuivi de l’activité, des dossiers et des points de vigilance.\n\nValidations réglementaires\n\nDécisions et pièces de contrôle selon les habilitations.\n\nUn même socle d’information pour documenter la supervision du secteur.\n\nRejoindre mon espace sécurisé"
+    },
+    {
+      "actor": "Finances et DGI",
+      "panel": "Suivi fiscal\nESPACE MÉTIER\nRapprocher l’activité minière et les recettes.\n\nLe ministère chargé des Finances et la Direction générale des impôts s’appuient sur les opérations documentées pour le suivi fiscal de la filière.\n\nAssiette et fiscalité\n\nOpérations, TVA, taxes et redevances associées.\n\nPaiements fiscaux\n\nÉchéances, règlements et montants restant à rapprocher.\n\nContrôle des écarts\n\nAnalyse des différences et suivi du recouvrement.\n\nUne lecture fiscale reliée aux transactions et à leurs pièces justificatives.\n\nRejoindre mon espace sécurisé"
+    },
+    {
+      "actor": "SONASP",
+      "panel": "Opérateur national\nESPACE MÉTIER\nAcheter, consolider et valoriser l’or du Burkina.\n\nLa SONASP intervient comme acteur de la filière. Son espace rassemble les achats, le contrôle de la matière, les stocks et la commercialisation.\n\nAchats et contrats\n\nAcquisitions auprès des comptoirs et relations contractuelles avec les mines.\n\nConsolidation et raffinage\n\nAnalyses, lots, stocks et transformations de la matière.\n\nCommercialisation\n\nVentes, expéditions, facturation et paiements.\n\nUn rôle commercial au sein de Faso SANAMA, plateforme de la Présidence du Faso.\n\nRejoindre mon espace sécurisé"
+    }
+  ],
+  "traceability": [
+    {
+      "step": "01 Production",
+      "detail": "01 / PRODUCTION\n\nIdentifier l’origine.\n\nRelier la production déclarée à une société minière ou à un site artisanal et à ses acteurs enregistrés.\n\nSite et acteur\nDéclaration\nQuantité produite"
+    },
+    {
+      "step": "02 Collecte",
+      "detail": "02 / COLLECTE\n\nDocumenter le premier échange.\n\nAssocier l’artisan, le collecteur et l’organisme de rattachement à la transaction soumise pour approbation.\n\nVendeur identifié\nCollecteur habilité\nVente soumise"
+    },
+    {
+      "step": "03 Contrôle",
+      "detail": "03 / CONTRÔLE\n\nCaractériser la matière.\n\nRéunir les pesées, les analyses et les justificatifs utiles à la validation de la matière et de son dossier.\n\nPoids\nTeneur\nPièces de contrôle"
+    },
+    {
+      "step": "04 Achat et vente",
+      "detail": "04 / ACHAT ET VENTE\n\nFormaliser les engagements.\n\nConserver les conditions de l’opération, les validations et les documents associés à la vente et à son règlement.\n\nAccord commercial\nFacture\nPaiement"
+    },
+    {
+      "step": "05 Stocks et lots",
+      "detail": "05 / STOCKS ET LOTS\n\nSuivre la matière disponible.\n\nConstituer les lots et rattacher les mouvements de stock aux opérations qui les justifient.\n\nRéférence du lot\nEntrées et sorties\nSolde disponible"
+    },
+    {
+      "step": "06 Expédition",
+      "detail": "06 / EXPÉDITION\n\nAccompagner chaque mouvement.\n\nRéunir les documents et les validations nécessaires au suivi des enlèvements et des expéditions.\n\nLot expédié\nDocuments\nSuivi du mouvement"
+    },
+    {
+      "step": "07 Raffinage",
+      "detail": "07 / RAFFINAGE\n\nConserver le lien après transformation.\n\nRapprocher les lots confiés au raffinage des résultats d’analyse et de la matière obtenue.\n\nLot d’origine\nRésultat d’analyse\nMatière raffinée"
+    },
+    {
+      "step": "08 Fiscalité",
+      "detail": "08 / FISCALITÉ\n\nRelier les flux aux recettes publiques.\n\nRapprocher les opérations, les montants fiscaux et les règlements pour suivre les échéances et les écarts.\n\nAssiette documentée\nTaxes et redevances\nRecouvrement"
+    }
+  ]
+}

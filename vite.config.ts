@@ -55,10 +55,10 @@ function publicSeoFilesPlugin(publicBaseUrl: string | undefined): Plugin {
           ? [
               `    <link rel="canonical" href="${publicBaseUrl}/" />`,
               `    <meta property="og:url" content="${publicBaseUrl}/" />`,
-              `    <meta property="og:image" content="${publicBaseUrl}/og.png" />`,
-              '    <meta property="og:image:alt" content="Identité visuelle de la plateforme nationale SONASP" />',
-              `    <meta name="twitter:image" content="${publicBaseUrl}/og.png" />`,
-              '    <meta name="twitter:image:alt" content="Identité visuelle de la plateforme nationale SONASP" />',
+              `    <meta property="og:image" content="${publicBaseUrl}/login-faso/faso-sanama.png" />`,
+              '    <meta property="og:image:alt" content="Faso SANAMA, plateforme de la Présidence du Faso" />',
+              `    <meta name="twitter:image" content="${publicBaseUrl}/login-faso/faso-sanama.png" />`,
+              '    <meta name="twitter:image:alt" content="Faso SANAMA, plateforme de la Présidence du Faso" />',
             ].join('\n')
           : '';
         const index = fs
@@ -142,9 +142,9 @@ export default defineConfig(({ mode }) => {
       ],
       manifest: {
         id: '/',
-        name: 'SONASP — Plateforme nationale de collecte et de vente de l’or',
-        short_name: 'SONASP',
-        description: 'Plateforme nationale sécurisée de collecte, d’achat et de vente de l’or au Burkina Faso.',
+        name: 'Faso SANAMA — Traçabilité du secteur minier',
+        short_name: 'Faso SANAMA',
+        description: 'Plateforme de la Présidence du Faso pour la traçabilité du secteur minier.',
         lang: 'fr-BF',
         start_url: '/',
         scope: '/',

@@ -33,7 +33,10 @@ function PublicLayoutInner() {
 
   useEffect(() => {
     setMenuOpen(false);
-    if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (!location.hash) {
+      setActiveSection('platform');
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   }, [location.pathname, location.hash, location.key]);
 
   useEffect(() => {
@@ -41,6 +44,7 @@ function PublicLayoutInner() {
     const updateScrollState = () => {
       const availableScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
       setCondensed(window.scrollY > 24);
+      if (window.scrollY <= 24) setActiveSection('platform');
       setScrollProgress(Math.min(100, Math.max(0, (window.scrollY / availableScroll) * 100)));
     };
     const onScroll = () => {

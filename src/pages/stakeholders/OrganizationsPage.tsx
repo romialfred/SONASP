@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Building2, Landmark, Loader2, PencilLine, Plus, ShieldCheck } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { Badge, DataTable, Field, Note, PageHeader, StatGrid, type Column } from '@/components/ui/sn';
@@ -129,6 +129,8 @@ export function OrganizationsPage({ comptoirsOnly = false }: { comptoirsOnly?: b
   ];
 
   const institutionalTypes = new Set(['sonasp', 'dgi', 'dgmg', 'public_institution']);
+
+  if (isDgmg) return <Navigate replace to="/artisan-minier/comptoirs" />;
 
   return (
     <NationalDashboardLayout>

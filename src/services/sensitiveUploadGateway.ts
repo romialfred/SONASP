@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type SensitiveUploadProfile =
+  | 'comptoir-document'
   | 'artisan-document'
   | 'mining-company-document'
   | 'assay-certificate'
@@ -12,7 +13,7 @@ export type SensitiveUploadProfile =
   | 'reserve-allocation-document'
   | 'international-payment-proof';
 
-export type SensitiveDeleteProfile = Exclude<SensitiveUploadProfile, 'international-payment-proof'>;
+export type SensitiveDeleteProfile = Exclude<SensitiveUploadProfile, 'international-payment-proof' | 'comptoir-document'>;
 
 export class SensitiveUploadGatewayError extends Error {
   constructor() {

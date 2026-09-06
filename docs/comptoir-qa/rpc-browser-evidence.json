@@ -1,0 +1,56 @@
+{
+  "transport": "Supabase JS réel",
+  "database": "PostgreSQL jetable PGlite",
+  "requests": [
+    {
+      "method": "POST",
+      "rpc": "snp_save_comptoir_dossier",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_list_comptoir_dossiers",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_list_comptoir_dossiers",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_save_comptoir_dossier",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_list_comptoir_dossiers",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_list_comptoir_dossiers",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_save_comptoir_dossier",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_list_comptoir_dossiers",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_list_comptoir_dossiers",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "rpc": "snp_list_comptoir_dossiers",
+      "status": 200
+    }
+  ]
+}

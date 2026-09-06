@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
+import { comptoirDocumentAccess, parseComptoirDocument, persistComptoirDocument, type ComptoirDocumentMetadata } from '../_shared/comptoir-document-upload.ts';
 import { artisanDocumentAccess, parseArtisanDocument, persistArtisanDocument, removeArtisanDocument, type ArtisanDocumentMetadata } from '../_shared/artisan-document-upload.ts';
 import { niveauAssurance } from '../_shared/assurance.ts';
 import { supprimerObjetAvecCompensation } from '../_shared/compensated-storage-delete.ts';
@@ -80,6 +81,7 @@ const PROFILS_SUPPRESSION_DOCUMENTAIRE = new Set([
 ]);
 
 const profiles: Record<string, ProfilGatewayUpload> = {
+  'comptoir-document': { policy: POLITIQUE_DOCUMENT_ARTISAN, parseMetadata: parseComptoirDocument },
   'artisan-document': { policy: POLITIQUE_DOCUMENT_ARTISAN, parseMetadata: parseArtisanDocument },
   [PROFILE_DOCUMENT_SOCIETE]: {
     policy: POLITIQUE_DOCUMENT_SOCIETE_MINIERE,
@@ -204,6 +206,13 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
         const m = metadata as ArtisanDocumentMetadata;
         return await artisanDocumentAccess(clientActeur, token, m.artisanId)
           ? { allowed: true, actorId: utilisateur.id, tenantId: m.artisanId }
+          : { allowed: false, status: 403 };
+      }
+
+      if (profileId === 'comptoir-document') {
+        const m = metadata as ComptoirDocumentMetadata;
+        return await comptoirDocumentAccess(clientActeur, token, m.organizationId)
+          ? { allowed: true, actorId: utilisateur.id, tenantId: m.organizationId }
           : { allowed: false, status: 403 };
       }
 
@@ -422,6 +431,10 @@ if (!urlSupabase || !cleService || !cleAnonyme) {
     },
 
     async persist(input: ContextePersistanceUpload) {
+      if (input.profileId === 'comptoir-document') {
+        const client = createClient(urlSupabase, cleAnonyme, { auth: { autoRefreshToken: false, persistSession: false }, global: { headers: { Authorization: `Bearer ${input.token}` } } });
+        return persistComptoirDocument(admin, client, input);
+      }
       if (input.profileId === 'artisan-document') {
         const client = createClient(urlSupabase, cleAnonyme, { auth: { autoRefreshToken: false, persistSession: false }, global: { headers: { Authorization: `Bearer ${input.token}` } } });
         return persistArtisanDocument(admin, client, input);

@@ -1,0 +1,62 @@
+[
+  {
+    "documentOverflow": false,
+    "fieldsOutside": [],
+    "height": 800,
+    "saveButton": {
+      "bottom": 749,
+      "left": 102.015625,
+      "right": 318,
+      "visible": true
+    },
+    "width": 360
+  },
+  {
+    "documentOverflow": false,
+    "fieldsOutside": [],
+    "height": 1024,
+    "saveButton": {
+      "bottom": 969,
+      "left": 540.765625,
+      "right": 722,
+      "visible": true
+    },
+    "width": 768
+  },
+  {
+    "documentOverflow": false,
+    "fieldsOutside": [],
+    "height": 768,
+    "saveButton": {
+      "bottom": 713,
+      "left": 816.765625,
+      "right": 998,
+      "visible": true
+    },
+    "width": 1366
+  },
+  {
+    "documentOverflow": false,
+    "fieldsOutside": [],
+    "height": 900,
+    "saveButton": {
+      "bottom": 845,
+      "left": 890.765625,
+      "right": 1072,
+      "visible": true
+    },
+    "width": 1440
+  },
+  {
+    "documentOverflow": false,
+    "fieldsOutside": [],
+    "height": 1080,
+    "saveButton": {
+      "bottom": 1025,
+      "left": 1352.265625,
+      "right": 1533.5,
+      "visible": true
+    },
+    "width": 1920
+  }
+]

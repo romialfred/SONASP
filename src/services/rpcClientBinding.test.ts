@@ -16,11 +16,53 @@ vi.mock("@/lib/supabase", async () => {
   };
 });
 import { collectorService } from "./collectorService";
+import { comptoirService } from "./comptoirService";
+import { emptyComptoir } from "@/lib/comptoirDossier";
 import { addInventoryEntry } from "./inventoryService";
 import { createExportSale } from "./saleCreationService";
 import { tracabiliteVenteService } from "./tracabiliteVenteService";
 
 describe("liaison des services au véritable client Supabase", () => {
+  it("enregistre et relit le comptoir à travers le véritable transport RPC", async () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    const values = {
+      ...emptyComptoir(),
+      name: "Comptoir QA",
+      legal_form: "SARL",
+      city: "Ouagadougou",
+    };
+    const row = {
+      id,
+      code: "CPT-QA",
+      name: values.name,
+      values,
+      documents: [],
+      is_active: true,
+      version: 1,
+      organization_updated_at: "2026-09-06T12:00:00Z",
+      updated_at: "2026-09-06T12:00:00Z",
+    };
+    http.response = row;
+    await expect(
+      comptoirService.save(values, id, undefined, id),
+    ).resolves.toMatchObject({ id, values });
+    const [, options] = http.fetch.mock.calls[0];
+    expect(JSON.parse(options.body)).toMatchObject({
+      p_id: id,
+      p_values: values,
+      p_expected_version: 0,
+      p_request_id: id,
+    });
+    http.response = [row];
+    await expect(comptoirService.get(id)).resolves.toMatchObject({
+      id,
+      version: 1,
+    });
+  });
+  it("refuse une réponse serveur de comptoir incomplète", async () => {
+    http.response = [{ id: "not-a-record" }];
+    await expect(comptoirService.list()).rejects.toThrow();
+  });
   beforeEach(() => {
     http.fetch.mockReset();
     http.response = [];

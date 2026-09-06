@@ -82,7 +82,7 @@ export const PRIVATE_ROUTE_REGISTRY: readonly PrivateRoutePolicy[] = Object.free
   ...policies(['/artisan-minier/collecteurs', '/artisan-minier/collecteurs/:id'], {
     roles: ['owner', 'admin', 'dgmg', 'management', 'comptoir', 'collector', 'customer'], accountTypes: ['owner', 'admin', 'dgmg', 'sonasp', 'comptoir', 'collector'], capabilities: [], readOnly: true, national: false,
   }),
-  ...policies(['/artisan-minier/collecteurs/nouveau', '/artisan-minier/collecteurs/:id/modifier', '/artisan-minier/comptoirs'], {
+  ...policies(['/artisan-minier/collecteurs/nouveau', '/artisan-minier/collecteurs/:id/modifier', '/artisan-minier/comptoirs', '/artisan-minier/comptoirs/nouveau', '/artisan-minier/comptoirs/:id', '/artisan-minier/comptoirs/:id/modifier'], {
     roles: ['owner', 'admin', 'dgmg'], accountTypes: ['owner', 'admin', 'dgmg'], capabilities: [], readOnly: false, national: false,
   }),
   ...policies(['/collecte/ventes'], {

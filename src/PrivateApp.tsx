@@ -201,6 +201,7 @@ const CollectorPortalPage = lazy(() => import('./pages/collector/CollectorPortal
 const CollectorFormPage = lazy(() => import('./pages/collector/CollectorForm'));
 const CollectorsPage = lazy(() => import('./pages/collector/CollectorsPage'));
 const ComptoirsPage = lazy(() => import('./pages/collector/ComptoirsPage'));
+const ComptoirForm = lazy(() => import('./pages/collector/ComptoirForm'));
 const CollectionSalesPage = lazy(() => import('./pages/collector/CollectionSalesPage'));
 const CollectorStockPage = lazy(() => import('./pages/collector/CollectorStockPage'));
 const CollectorDocumentsPage = lazy(() => import('./pages/collector/CollectorDocumentsPage'));
@@ -323,6 +324,9 @@ function AppRoutes() {
             <Route path={privateRoutePath('/artisan-minier/collecteurs/nouveau')} element={<ProtectedRoute><CollectorFormPage /></ProtectedRoute>} />
             <Route path={privateRoutePath('/artisan-minier/collecteurs/:id/modifier')} element={<ProtectedRoute><CollectorFormPage /></ProtectedRoute>} />
             <Route path={privateRoutePath('/artisan-minier/comptoirs')} element={<ProtectedRoute><ComptoirsPage /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/artisan-minier/comptoirs/nouveau')} element={<ProtectedRoute><ComptoirForm /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/artisan-minier/comptoirs/:id')} element={<ProtectedRoute><ComptoirForm readOnly /></ProtectedRoute>} />
+            <Route path={privateRoutePath('/artisan-minier/comptoirs/:id/modifier')} element={<ProtectedRoute><ComptoirForm /></ProtectedRoute>} />
             <Route path={privateRoutePath('/collecte/ventes')} element={<ProtectedRoute><CollectionSalesPage /></ProtectedRoute>} />
             <Route path={privateRoutePath('/collecte/ventes/nouvelle')} element={<ProtectedRoute><CollectorPortalGuard><CollectionSalesPage create /></CollectorPortalGuard></ProtectedRoute>} />
             <Route

@@ -2430,6 +2430,16 @@
       "sha256": "2787fff0ea6f9fdd044090a309a72eabf34565b2f8d2d9b35f28df9fb6955302"
     },
     {
+      "path": "supabase/migrations/20260906174800_dossiers_comptoirs_entreprises.sql",
+      "version": "20260906174800",
+      "description": "dossiers_comptoirs_entreprises",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 30023,
+      "sha256": "f99ff8909cfe1df228406407fdcde99baac8e42bdf2353cd307f3519d0d04dc9"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3423,10 +3433,10 @@
       },
       {
         "digits": 14,
-        "count": 146
+        "count": 147
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "ca7f6905ffa902c8a94c0a7fba4133791979abfd851325a3c122e4a625fa35a8"
+  "catalogueSha256": "375e6ecd311d3d90eb47eca14ab8d9aef98c85e2fc9c3a9c81904780072845d1"
 }

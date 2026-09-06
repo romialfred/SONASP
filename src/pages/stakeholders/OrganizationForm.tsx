@@ -10,7 +10,7 @@ import {
   Save,
   Shapes,
 } from 'lucide-react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
@@ -163,6 +163,9 @@ export function OrganizationForm() {
     return selected ? selected.name : 'Obligatoire pour toute organisation.';
   }, [ministries, form.supervisingMinistryId]);
 
+  if (form.organizationType === 'comptoir' && (!id || (!loading && !loadFailed))) {
+    return <Navigate replace to={id ? `/artisan-minier/comptoirs/${id}/modifier` : '/artisan-minier/comptoirs/nouveau'} />;
+  }
   return (
     <NationalDashboardLayout>
       <main className="sn-page admin-page organisation-form">

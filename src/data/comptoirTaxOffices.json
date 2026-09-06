@@ -1,0 +1,425 @@
+{
+  "checkedOn": "2026-09-06",
+  "offices": [
+    {
+      "code": "DGE",
+      "label": "Direction des grandes entreprises",
+      "group": "Grandes et moyennes entreprises",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DME-C-I",
+      "label": "Direction des moyennes entreprises du Centre I",
+      "group": "Grandes et moyennes entreprises",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DME-C-II",
+      "label": "Direction des moyennes entreprises du Centre II",
+      "group": "Grandes et moyennes entreprises",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DME-C-III",
+      "label": "Direction des moyennes entreprises du Centre III",
+      "group": "Grandes et moyennes entreprises",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DME-C-IV",
+      "label": "Direction des moyennes entreprises du Centre IV",
+      "group": "Grandes et moyennes entreprises",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DME-C-V",
+      "label": "Direction des moyennes entreprises du Centre V",
+      "group": "Grandes et moyennes entreprises",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DME-HBS",
+      "label": "Direction des moyennes entreprises des Hauts-Bassins",
+      "group": "Grandes et moyennes entreprises",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-BMH",
+      "label": "Direction régionale des impôts de la Boucle du Mouhoun",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-C",
+      "label": "Direction régionale des impôts du Centre",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/organigramme/"
+    },
+    {
+      "code": "DRI-CASC",
+      "label": "Direction régionale des impôts des Cascades",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-CE",
+      "label": "Direction régionale des impôts du Centre-Est",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-CN",
+      "label": "Direction régionale des impôts du Centre-Nord",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-CO",
+      "label": "Direction régionale des impôts du Centre-Ouest",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-CS",
+      "label": "Direction régionale des impôts du Centre-Sud",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-E",
+      "label": "Direction régionale des impôts de l’Est",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-HBS",
+      "label": "Direction régionale des impôts des Hauts-Bassins",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-N",
+      "label": "Direction régionale des impôts du Nord",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-PCL",
+      "label": "Direction régionale des impôts du Plateau central",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-S",
+      "label": "Direction régionale des impôts du Sahel",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DRI-SO",
+      "label": "Direction régionale des impôts du Sud-Ouest",
+      "group": "Directions régionales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-I",
+      "label": "Direction du Centre des Impôts Ouaga I",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-II",
+      "label": "Direction du Centre des Impôts Ouaga II",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-III",
+      "label": "Direction du Centre des Impôts Ouaga III",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-IV",
+      "label": "Direction du Centre des Impôts Ouaga IV",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-V",
+      "label": "Direction du Centre des Impôts Ouaga V",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-VI",
+      "label": "Direction du Centre des Impôts Ouaga VI",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-VII",
+      "label": "Direction du Centre des Impôts Ouaga VII",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-VIII",
+      "label": "Direction du Centre des Impôts Ouaga VIII",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-OUAGA-IX",
+      "label": "Direction du Centre des Impôts Ouaga IX",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-BOBO-I",
+      "label": "Direction du Centre des Impôts Bobo I",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-BOBO-II",
+      "label": "Direction du Centre des Impôts Bobo II",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-BOBO-III",
+      "label": "Direction du Centre des Impôts Bobo III",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DCI-BOBO-IV",
+      "label": "Direction du Centre des Impôts Bobo IV",
+      "group": "Centres des impôts",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-KENEDOUGOU",
+      "label": "Direction provinciale des impôts — Kénédougou",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-TUY",
+      "label": "Direction provinciale des impôts — Tuy",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-BOULGOU",
+      "label": "Direction provinciale des impôts — Boulgou",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-KOULPELOGO",
+      "label": "Direction provinciale des impôts — Koulpélogo",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-KOURITTENGA",
+      "label": "Direction provinciale des impôts — Kourittenga",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-BOUGOURIBA",
+      "label": "Direction provinciale des impôts — Bougouriba",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-IOBA",
+      "label": "Direction provinciale des impôts — Ioba",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-NOUMBIEL",
+      "label": "Direction provinciale des impôts — Noumbiel",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-PONI",
+      "label": "Direction provinciale des impôts — Poni",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-SANMATENGA",
+      "label": "Direction provinciale des impôts — Sanmatenga",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-BAM",
+      "label": "Direction provinciale des impôts — Bam",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-NAMENTENGA",
+      "label": "Direction provinciale des impôts — Namentenga",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-SENO",
+      "label": "Direction provinciale des impôts — Séno",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-SOUM",
+      "label": "Direction provinciale des impôts — Soum",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-OUDALAN",
+      "label": "Direction provinciale des impôts — Oudalan",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-YAGHA",
+      "label": "Direction provinciale des impôts — Yagha",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-GOURMA",
+      "label": "Direction provinciale des impôts — Gourma",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-TAPOA",
+      "label": "Direction provinciale des impôts — Tapoa",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-GNAGNA",
+      "label": "Direction provinciale des impôts — Gnagna",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-KOMPIENGA",
+      "label": "Direction provinciale des impôts — Kompienga",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "DPI-KOMONDJARI",
+      "label": "Direction provinciale des impôts — Komondjari",
+      "group": "Directions provinciales",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-PABRE",
+      "label": "Centre des impôts — Pabré",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-SAABA",
+      "label": "Centre des impôts — Saaba",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-KOMSILGA",
+      "label": "Centre des impôts — Komsilga",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-TANGHIN-DASSOURI",
+      "label": "Centre des impôts — Tanghin Dassouri",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-KOUBRI",
+      "label": "Centre des impôts — Koubri",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-FO",
+      "label": "Centre des impôts — Fô",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-N-DOROLA",
+      "label": "Centre des impôts — N’Dorola",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-SAMOROGOUAN",
+      "label": "Centre des impôts — Samorogouan",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-BITTOU",
+      "label": "Centre des impôts — Bittou",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-GARANGO",
+      "label": "Centre des impôts — Garango",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-ZABRE",
+      "label": "Centre des impôts — Zabré",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-POUYTENGA",
+      "label": "Centre des impôts — Pouytenga",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-KAMPTI",
+      "label": "Centre des impôts — Kampti",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-KORSIMORO",
+      "label": "Centre des impôts — Korsimoro",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-BARSALOGHO",
+      "label": "Centre des impôts — Barsalogho",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    },
+    {
+      "code": "CDI-TOUGOURI",
+      "label": "Centre des impôts — Tougouri",
+      "group": "Centres départementaux",
+      "source": "https://dgi.bf/contacts/"
+    }
+  ]
+}

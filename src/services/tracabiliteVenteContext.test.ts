@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ from: vi.fn(), queries: [] as Array<{ table: string; calls: unknown[][] }>, rows: {} as Record<string, unknown[]>, errors: {} as Record<string, unknown> }));
-vi.mock('@/lib/supabase', () => ({ supabase: { from: mocks.from } }));
+vi.mock('@/lib/supabase', () => ({ supabase: { from: mocks.from, rpc: vi.fn() } }));
 import { tracabiliteVenteService } from './tracabiliteVenteService';
 beforeEach(() => {
   mocks.queries.length = 0; mocks.rows = {}; mocks.errors = {};

@@ -2370,6 +2370,16 @@
       "sha256": "6120bc67078960c17e2668bd8305b0e11749b89410ac0ae35c30163dd7a98a14"
     },
     {
+      "path": "supabase/migrations/20260906073651_corriger_creation_compte_portails_et_ressources.sql",
+      "version": "20260906073651",
+      "description": "corriger_creation_compte_portails_et_ressources",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 7323,
+      "sha256": "2ff4fc615845b6380757407256cc0556412b117f6dbe22a0c55fd97838ebd9f5"
+    },
+    {
       "path": "supabase/migrations/20260906120000_creer_preparation_expedition_atomiquement.sql",
       "version": "20260906120000",
       "description": "creer_preparation_expedition_atomiquement",
@@ -3373,10 +3383,10 @@
       },
       {
         "digits": 14,
-        "count": 141
+        "count": 142
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "2c83e5934bef023e0b23784c60e44477788565dc8fc4d930e7fe237f614cc3e1"
+  "catalogueSha256": "d2b10bc1087055770ae064ab9a528eca45144da4be1b5e06a33d78668249fc19"
 }

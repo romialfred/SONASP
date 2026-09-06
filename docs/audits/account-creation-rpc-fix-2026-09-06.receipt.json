@@ -1,0 +1,111 @@
+{
+  "checkedAt": "2026-09-06T07:42:43.318Z",
+  "migration": "20260906073651",
+  "results": [
+    {
+      "category": "societe-miniere",
+      "function": "snp_access_resources_search",
+      "status": 200,
+      "count": 12
+    },
+    {
+      "category": "societe-miniere",
+      "function": "snp_access_compatible_portals",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "category": "comptoir",
+      "function": "snp_access_resources_search",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "category": "comptoir",
+      "function": "snp_access_compatible_portals",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "category": "artisan-minier",
+      "function": "snp_access_resources_search",
+      "status": 200,
+      "count": 20
+    },
+    {
+      "category": "artisan-minier",
+      "function": "snp_access_compatible_portals",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "category": "collecteur",
+      "function": "snp_access_resources_search",
+      "status": 200,
+      "count": 15
+    },
+    {
+      "category": "collecteur",
+      "function": "snp_access_compatible_portals",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "category": "mine-semi-mecanisee",
+      "function": "snp_access_resources_search",
+      "status": 200,
+      "count": 9
+    },
+    {
+      "category": "mine-semi-mecanisee",
+      "function": "snp_access_compatible_portals",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "category": "administrateur",
+      "function": "snp_access_resources_search",
+      "status": 200,
+      "count": 0
+    },
+    {
+      "category": "administrateur",
+      "function": "snp_access_compatible_portals",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "category": "administration-dgmg",
+      "function": "snp_access_resources_search",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "category": "administration-dgmg",
+      "function": "snp_access_compatible_portals",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "category": "administration-dgi",
+      "function": "snp_access_resources_search",
+      "status": 200,
+      "count": 3
+    },
+    {
+      "category": "administration-dgi",
+      "function": "snp_access_compatible_portals",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "function": "snp_access_resources_search",
+      "anonymousDenied": true
+    },
+    {
+      "function": "snp_access_compatible_portals",
+      "anonymousDenied": true
+    }
+  ],
+  "note": "RPC réelles, sans création de compte ni envoi de courriel. Validation finale du formulaire par utilisateur attendue."
+}

@@ -72,6 +72,7 @@ vi.mock('@/hooks/useCustomAlert', () => ({
   }),
 }));
 
+vi.mock('@/services/affiliationService', () => ({ affiliationService: { eligibleArtisans: mocks.getAllArtisans } }));
 vi.mock('@/services/artisanMinierService', () => ({
   artisanMinierService: { getAll: mocks.getAllArtisans },
 }));

@@ -10,6 +10,7 @@ const PublicLayout = lazy(() => import('./pages/public/PublicLayout'));
 const PublicAssistancePage = lazy(() => import('./pages/public/PublicAssistancePage'));
 const PublicLegalPage = lazy(() => import('./pages/public/PublicLegalPage'));
 const PublicNotFoundPage = lazy(() => import('./pages/public/PublicNotFoundPage'));
+const VerifyAffiliation = lazy(() => import('./pages/public/VerifyAffiliation'));
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<PlatformLoading />}>
           <Routes>
+            <Route path="/verifier-carte/:reference" element={<VerifyAffiliation />} />
             <Route element={<PublicLayout />}>
               <Route index element={<PublicHomePage />} />
 

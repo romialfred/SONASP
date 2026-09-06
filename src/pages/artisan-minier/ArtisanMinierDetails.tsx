@@ -1,3 +1,4 @@
+import { AffiliationDossier } from '@/components/artisan/AffiliationDossier';
 import { ArtisanDossierSummary } from '@/components/artisan/ArtisanDossierSummary';
 import '@/components/artisan/artisan-form.css';
 import { useEffect, useMemo, useState } from 'react';
@@ -5,11 +6,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowLeft,
-  BadgeCheck,
   Banknote,
   Coins,
-  CreditCard,
-  Download,
   Eye,
   Contact,
   Loader2,
@@ -37,7 +35,7 @@ import {
 import { useCustomAlert } from '@/hooks/useCustomAlert';
 import { CustomAlert } from '@/components/ui/CustomAlert';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
-import { carteProfessionnelleService, type CarteProfessionnelle } from '@/services/carteProfessionnelleService';
+import { type CarteProfessionnelle } from '@/services/carteProfessionnelleService';
 import { artisanGoldSalesService, type ArtisanGoldSale } from '@/services/artisanGoldSalesService';
 import { artisanInfractionsService, type ArtisanInfraction } from '@/services/artisanInfractionsService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -116,7 +114,6 @@ export default function ArtisanMinierDetails() {
   const isCollector = isCollectorScopedUser(user);
 
   const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);
-  const [cartes, setCartes] = useState<CarteProfessionnelle[]>([]);
   const [ventes, setVentes] = useState<ArtisanGoldSale[]>([]);
   const [infractions, setInfractions] = useState<ArtisanInfraction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,9 +130,8 @@ export default function ArtisanMinierDetails() {
     const charger = async () => {
       // Chaque source est indépendante : l'absence d'infractions ou de ventes ne doit
       // pas empêcher l'affichage du dossier.
-      const [artisanResult, cartesResult, ventesResult, infractionsResult] = await Promise.allSettled([
+      const [artisanResult, ventesResult, infractionsResult] = await Promise.allSettled([
         artisanMinierService.getById(id),
-        carteProfessionnelleService.getByArtisanId(id),
         artisanGoldSalesService.getByArtisan(id),
         isCollector ? Promise.resolve([]) : artisanInfractionsService.getByArtisanId(id),
       ]);
@@ -148,7 +144,6 @@ export default function ArtisanMinierDetails() {
         showError("Impossible de charger le dossier de l'artisan");
       }
 
-      setCartes(cartesResult.status === 'fulfilled' ? ((cartesResult.value || []) as CarteProfessionnelle[]) : []);
       setVentes(ventesResult.status === 'fulfilled' ? ((ventesResult.value || []) as ArtisanGoldSale[]) : []);
       setInfractions(
         infractionsResult.status === 'fulfilled' ? ((infractionsResult.value || []) as ArtisanInfraction[]) : []
@@ -162,7 +157,6 @@ export default function ArtisanMinierDetails() {
     };
   }, [id, isCollector]);
 
-  const carte = useMemo(() => carteActive(cartes), [cartes]);
 
   const totaux = useMemo(
     () => ({
@@ -371,78 +365,8 @@ export default function ArtisanMinierDetails() {
         {onglet === 'informations' && <ArtisanDossierSummary artisan={artisan} />}
 
         {onglet === 'carte' && (
-          <Section
-            id="carte"
-            icon={Contact}
-            tone="violet"
-            title="Carte professionnelle"
-            description="Titre d’exercice délivré à l’artisan."
-          >
-            {!carte ? (
-              <EmptyState
-                title="Aucune carte délivrée"
-                description="La carte est générée après validation du dossier par la direction."
-                action={!isCollector ? (
-                  <button
-                    type="button"
-                    className="sn-btn"
-                    onClick={() => navigate('/artisan-minier/cartes/validation')}
-                  >
-                    <BadgeCheck aria-hidden="true" /> Ouvrir la validation des cartes
-                  </button>
-                ) : undefined}
-              />
-            ) : (
-              <>
-                <dl className="artisan-detail__facts">
-                  <div>
-                    <dt>Numéro de carte</dt>
-                    <dd>{carte.numero_carte}</dd>
-                  </div>
-                  <div>
-                    <dt>Statut</dt>
-                    <dd><Badge tone={carte.statut === 'suspendue' ? 'danger' : 'success'}>{carte.statut}</Badge></dd>
-                  </div>
-                  <div>
-                    <dt>Délivrance</dt>
-                    <dd>{formatDate(carte.date_delivrance)}</dd>
-                  </div>
-                  <div>
-                    <dt>Expiration</dt>
-                    <dd>{formatDate(carte.date_expiration)}</dd>
-                  </div>
-                  <div>
-                    <dt>Numéro de sécurité</dt>
-                    <dd>{carte.numero_securite || 'Non attribué'}</dd>
-                  </div>
-                </dl>
-
-                {carte.carte_pdf_url ? (
-                  <div className="artisan-detail__card-actions">
-                    <a className="sn-btn" href={carte.carte_pdf_url} target="_blank" rel="noreferrer">
-                      <Eye aria-hidden="true" /> Voir le PDF
-                    </a>
-                    <a
-                      className="sn-btn sn-btn--primary"
-                      href={carte.carte_pdf_url}
-                      download={`carte_${(carte.numero_carte || '').replace(/\//g, '_')}.pdf`}
-                    >
-                      <Download aria-hidden="true" /> Télécharger
-                    </a>
-                  </div>
-                ) : (
-                  <Note tone="warning" icon={CreditCard}>
-                    Le PDF de la carte n’a pas encore été généré pour ce titulaire.
-                  </Note>
-                )}
-
-                {cartes.length > 1 && (
-                  <p className="artisan-detail__muted" style={{ marginTop: 12 }}>
-                    {integer.format(cartes.length - 1)} carte(s) antérieure(s) dans l’historique du titulaire.
-                  </p>
-                )}
-              </>
-            )}
+          <Section id="carte" icon={Contact} tone="amber" title="Carte professionnelle" description="Carte numérique, droits d’adhésion et historique de validité.">
+            <AffiliationDossier artisanId={artisan.id} />
           </Section>
         )}
 

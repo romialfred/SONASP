@@ -157,6 +157,10 @@ export default function PaiementsVentesDashboard() {
    * lorsque la création échouait, laissant l'utilisateur sur un dossier sans facture.
    */
   const handleProcederPaiement = async (vente: VenteEnAttentePaiement) => {
+    if (vente.affiliation_eligible !== true) {
+      showError('Le titulaire doit disposer d’une carte activée et de droits d’adhésion valides.');
+      return;
+    }
     if (vente.facture_id) {
       const opensPayment = !isComptoir || vente.certification_dgi_status === 'certified';
       if (opensPayment && !canExecutePayment) {
@@ -259,6 +263,7 @@ export default function PaiementsVentesDashboard() {
             className="sn-btn sn-btn--sm sn-btn--primary"
             disabled={
               processing === vente.vente_id
+              || vente.affiliation_eligible !== true
               || vente.statut_paiement === 'paye'
               || (!vente.facture_id && !canIssueInvoice)
               || (
@@ -268,7 +273,7 @@ export default function PaiementsVentesDashboard() {
               )
             }
             title={
-              !vente.facture_id && !canIssueInvoice
+              vente.affiliation_eligible !== true ? 'Carte activée et droits d’adhésion valides requis' : !vente.facture_id && !canIssueInvoice
                 ? 'Capacité sensible d’émission de facture requise'
                 : Boolean(vente.facture_id)
                   && (!isComptoir || vente.certification_dgi_status === 'certified')

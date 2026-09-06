@@ -10,7 +10,7 @@
     "dev:fresh": "node scripts/clean-build-cache.mjs && vite",
     "build": "node scripts/release/verify-build-source.mjs && vite build",
     "build:release": "node scripts/release/verify-build-source.mjs --require-git && npm run test:registry && npm run typecheck && npm run build",
-    "test:registry": "node --test tests/release/build-source.node.mjs tests/migrations/migration-integrity.node.mjs && node scripts/check-migration-integrity.mjs verify && vitest run --maxWorkers=2 src/pages/artisanal-sites src/components/artisan src/pages/artisan-minier/ArtisanMinierDetails.test.tsx src/pages/artisan-minier/ArtisanMinierListe.test.tsx src/lib/artisanDossier.test.ts src/lib/siteFormalization.test.ts src/lib/cardPdfPreview.test.ts src/hooks/useArtisanalSiteData.test.tsx src/hooks/useArtisanUnsavedChanges.test.tsx src/services/artisanalSiteSave.test.ts src/services/artisanalSiteInsights.test.ts src/components/layout/sidebarNavigation.test.ts supabase/functions/_shared/artisan-document-upload.test.ts",
+    "test:registry": "node scripts/test-affiliation-migration.mjs && node --test tests/release/build-source.node.mjs tests/migrations/migration-integrity.node.mjs && node scripts/check-migration-integrity.mjs verify && vitest run --maxWorkers=2 src/pages/artisanal-sites src/components/artisan src/pages/artisan-minier/ArtisanMinierDetails.test.tsx src/pages/artisan-minier/ArtisanMinierListe.test.tsx src/lib/artisanDossier.test.ts src/lib/siteFormalization.test.ts src/lib/cardPdfPreview.test.ts src/hooks/useArtisanalSiteData.test.tsx src/hooks/useArtisanUnsavedChanges.test.tsx src/services/artisanalSiteSave.test.ts src/services/artisanalSiteInsights.test.ts src/components/layout/sidebarNavigation.test.ts supabase/functions/_shared/artisan-document-upload.test.ts src/pages/public/VerifyAffiliation.test.tsx supabase/functions/affiliation-card-render/handler.test.ts",
     "build:fresh": "node scripts/clean-build-cache.mjs && vite build",
     "lint": "eslint . && npm run lint:fr",
     "lint:fr": "node scripts/check-french-ui.mjs",
@@ -21,7 +21,8 @@
     "typecheck:compiler": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "test:affiliations": "node scripts/test-affiliation-migration.mjs && vitest run --maxWorkers=2 src/components/artisan/AffiliationDigitalCard.test.tsx src/components/artisan/AffiliationDossier.test.tsx src/pages/public/VerifyAffiliation.test.tsx supabase/functions/affiliation-card-render/handler.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
@@ -48,6 +49,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@eslint/js": "^9.9.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",

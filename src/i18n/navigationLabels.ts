@@ -11,6 +11,7 @@ export const ENGLISH_NAVIGATION_LABELS: Readonly<Record<string, string>> = {
   "artisans miniers": "Artisanal miners",
   "liste des artisans": "Miners",
   "suivi des cartes": "Card tracking",
+  "affiliations & cartes": "Memberships & cards",
   "validation des cartes": "Card approvals",
   "expirations": "Expiring cards",
   "marché d'or artisanal": "Artisanal gold market",

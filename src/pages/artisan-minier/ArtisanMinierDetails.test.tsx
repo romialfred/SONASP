@@ -44,6 +44,8 @@ vi.mock('@/services/artisanMinierService', () => ({
   artisanMinierService: { getById: mocks.getArtisan },
 }));
 
+vi.mock('@/components/artisan/AffiliationDossier', () => ({ AffiliationDossier: ({ artisanId }: { artisanId: string }) => <div data-testid="affiliation-dossier">{artisanId}</div> }));
+
 vi.mock('@/services/carteProfessionnelleService', () => ({
   carteProfessionnelleService: { getByArtisanId: mocks.getCartes },
 }));
@@ -139,9 +141,7 @@ describe('ArtisanMinierDetails', () => {
     expect(screen.getByText('Vente hors circuit')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Carte professionnelle/ }));
-    // La carte valide la plus récente est retenue, pas l'expirée.
-    expect(screen.getByText('CP-0001')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Télécharger/ })).toHaveAttribute('href', 'https://exemple/carte.pdf');
+    expect(screen.getByTestId('affiliation-dossier')).toHaveTextContent('a1');
   });
 
   it('filtre les ventes du dossier', async () => {

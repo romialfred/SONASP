@@ -156,9 +156,9 @@ const ArtisanMinierDashboard = lazy(() => import('./pages/artisan-minier/Artisan
 const ArtisanMinierListe = lazy(() => import('./pages/artisan-minier/ArtisanMinierListe'));
 const ArtisanMinierDetails = lazy(() => import('./pages/artisan-minier/ArtisanMinierDetails'));
 const ArtisanMinierEdit = lazy(() => import('./pages/artisan-minier/ArtisanMinierEdit'));
-const CarteSuivi = lazy(() => import('./pages/artisan-minier/CarteSuivi'));
-const CarteValidation = lazy(() => import('./pages/artisan-minier/CarteValidation'));
-const CarteExpirations = lazy(() => import('./pages/artisan-minier/CarteExpirations'));
+const CarteSuivi = lazy(() => import('./pages/artisan-minier/AffiliationsCartes'));
+const CarteValidation = lazy(() => import('./pages/artisan-minier/AffiliationsCartes'));
+const CarteExpirations = lazy(() => import('./pages/artisan-minier/AffiliationsCartes'));
 const VentesOr = lazy(() => import('./pages/artisan-minier/VentesOr'));
 const VenteOrForm = lazy(() => import('./pages/artisan-minier/VenteOrForm'));
 const VenteOrDetails = lazy(() => import('./pages/artisan-minier/VenteOrDetails'));
@@ -460,7 +460,7 @@ function AppRoutes() {
               path="/artisan-minier/cartes/validation"
               element={
                 <ProtectedRoute>
-                  <CarteValidation />
+                  <CarteValidation validationOnly />
                 </ProtectedRoute>
               }
             />
@@ -469,7 +469,7 @@ function AppRoutes() {
               path="/artisan-minier/cartes/expirations"
               element={
                 <ProtectedRoute>
-                  <CarteExpirations />
+                  <CarteExpirations expirationsOnly />
                 </ProtectedRoute>
               }
             />

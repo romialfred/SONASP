@@ -7,6 +7,7 @@ import type { ArtisanMinier } from '@/services/artisanMinierService';
 import type { FactureDefinitive, PaiementArtisan } from '@/services/artisanPaiementsService';
 
 const mocks = vi.hoisted(() => ({
+  eligible: vi.fn(),
   listerMoyens: vi.fn(),
   navigate: vi.fn(),
   params: { venteId: 'v1' as string | undefined },
@@ -163,9 +164,12 @@ describe('buildInvoicePayload', () => {
   });
 });
 
+vi.mock('@/services/affiliationService', () => ({ affiliationService: { eligible: mocks.eligible } }));
+
 describe('PaiementForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.eligible.mockResolvedValue(true);
     mocks.user = {
       id: 'u1', role: 'customer', is_active: true,
       capabilities: ['comptoir.manage', 'comptoir.payments.execute'],

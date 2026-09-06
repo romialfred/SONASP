@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { affiliationService } from './affiliationService';
 import type { Json, Tables } from '@/types/database';
 
 export interface FactureDefinitive {
@@ -170,6 +171,7 @@ export interface TaxeRetenue {
 }
 
 export interface VenteEnAttentePaiement {
+  affiliation_eligible?: boolean;
   vente_id: string;
   reference_vente: string;
   date_vente: string;
@@ -462,6 +464,7 @@ const artisanPaiementsService = {
 
       if (error) throw error;
 
+      const eligibleIds = new Set((await affiliationService.eligibleArtisans()).map(artisan => artisan.id));
       const ventesWithFactures = await Promise.all(
         (data || []).map(async (vente: any) => {
           let facture = null;
@@ -488,6 +491,7 @@ const artisanPaiementsService = {
             reference_vente: vente.numero_recu || `VENTE-${vente.id.slice(0, 8)}`,
             date_vente: vente.date_vente,
             artisan_id: vente.artisan_id,
+            affiliation_eligible: eligibleIds.has(vente.artisan_id),
             artisan_nom_complet: nomComplet,
             numero_carte: artisan.numero_carte,
             telephone: artisan.telephone || '',

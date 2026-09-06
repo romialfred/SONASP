@@ -1,0 +1,52 @@
+export type AdhesionBareme = {
+  id: string;
+  libelle: string;
+  role_artisan: string;
+  montant: number;
+  devise: string;
+  duree_jours: number;
+  fuseau: string;
+  alerte_jours: number;
+  actif: boolean;
+  created_at: string;
+  created_by: string | null;
+};
+export type AdhesionDroit = {
+  id: string;
+  carte_id: string;
+  artisan_id: string;
+  bareme_id: string;
+  montant: number;
+  devise: string;
+  duree_jours: number;
+  fuseau: string;
+  alerte_jours: number;
+  debut: string;
+  fin: string;
+  statut: "ouvert" | "annule";
+  created_by: string | null;
+  created_at: string;
+};
+export type AdhesionEncaissement = {
+  id: string;
+  droit_id: string;
+  montant: number;
+  reference: string;
+  mode: string;
+  date_paiement: string;
+  statut: "en_attente" | "confirme" | "annule" | "rembourse";
+  created_by: string | null;
+  created_at: string;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  revised_by: string | null;
+  revised_at: string | null;
+  motif: string | null;
+};
+export type AffiliationEvent = {
+  id: number;
+  action: string;
+  occurred_at: string;
+  reason: string | null;
+  status_after: string | null;
+};

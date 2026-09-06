@@ -1,3 +1,4 @@
+import { affiliationService } from '@/services/affiliationService';
 import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -29,7 +30,7 @@ import {
   artisanGoldSalesService,
   type ArtisanStatistics,
 } from '@/services/artisanGoldSalesService';
-import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
+import { type ArtisanMinier } from '@/services/artisanMinierService';
 import { tauxAchatService, type TauxAchat } from '@/services/tauxAchatService';
 import { genererNumeroRecu } from '@/services/venteRecuNumberService';
 import './vente-or-form.css';
@@ -241,7 +242,7 @@ export default function VenteOrForm() {
 
     const load = async () => {
       try {
-        const data = await artisanMinierService.getAll();
+        const data = await affiliationService.eligibleArtisans();
         if (mounted) {
           const artisansActifs = (data || []).filter((artisan) => artisan.actif !== false);
           // Le type genere par Supabase conserve certains champs historiques

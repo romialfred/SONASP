@@ -1,3 +1,5 @@
+import type { AdhesionBareme, AdhesionDroit, AdhesionEncaissement } from './affiliations';
+
 export type Json =
   | string
   | number
@@ -46,6 +48,9 @@ export type Database = {
   }
   public: {
     Tables: {
+      snp_adhesion_baremes: { Row: AdhesionBareme; Insert: never; Update: never; Relationships: [] }
+      snp_adhesion_droits: { Row: AdhesionDroit; Insert: never; Update: never; Relationships: [] }
+      snp_adhesion_encaissements: { Row: AdhesionEncaissement; Insert: never; Update: never; Relationships: [] }
       allowed_status_transitions: {
         Row: {
           created_at: string | null

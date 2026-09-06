@@ -54,3 +54,7 @@ verify_jwt = false
 # honeypot et limitation de débit. Il ne reçoit volontairement aucun JWT.
 [functions.public-assistance]
 verify_jwt = false
+
+[functions.affiliation-card-render]
+verify_jwt = false
+static_files = ["./functions/affiliation-card-render/assets/*"]

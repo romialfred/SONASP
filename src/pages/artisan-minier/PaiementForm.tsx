@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { affiliationService } from '@/services/affiliationService';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -270,6 +271,10 @@ export default function PaiementForm() {
           return;
         }
         setVente(venteData);
+        if (!await affiliationService.eligible(venteData.artisan_id)) {
+          setLoadError('Ce titulaire doit disposer d’une carte activée et de droits d’adhésion valides avant un nouveau paiement.');
+          return;
+        }
 
         try {
           setArtisan(normaliserArtisan(await artisanMinierService.getById(venteData.artisan_id)));

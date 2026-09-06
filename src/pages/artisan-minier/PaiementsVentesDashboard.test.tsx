@@ -54,6 +54,7 @@ const vente = (over: Partial<VenteEnAttentePaiement>): VenteEnAttentePaiement =>
     artisan_id: 'a1',
     artisan_nom_complet: 'KABORE Awa',
     numero_carte: 'CP-0001',
+    affiliation_eligible: true,
     telephone: '+226 70 00 00 00',
     facture_id: null,
     numero_facture: null,

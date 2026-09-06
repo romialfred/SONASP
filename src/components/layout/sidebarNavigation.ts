@@ -145,7 +145,7 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
         children: [
           { label: "Vue d'ensemble", path: '/artisan-minier', icon: Grid2X2, color: '#10976b' },
           { label: 'Liste des artisans', path: '/artisan-minier/liste', icon: Users, color: '#2f6fec' },
-          { label: 'Suivi des cartes', path: '/artisan-minier/cartes/suivi', icon: TrendingUp, color: '#8b5cf6' },
+          { label: 'Affiliations & Cartes', path: '/artisan-minier/cartes/suivi', icon: TrendingUp, color: '#8b5cf6' },
           { label: 'Validation des cartes', path: '/artisan-minier/cartes/validation', icon: CheckCircle2, color: '#635bff' },
           { label: 'Expirations', path: '/artisan-minier/cartes/expirations', icon: AlertTriangle, color: '#f36b21' },
         ],

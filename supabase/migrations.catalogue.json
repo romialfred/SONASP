@@ -2410,6 +2410,16 @@
       "sha256": "d356c468197188599a270421bf415ce78f497c60d137322d32740df703fd1478"
     },
     {
+      "path": "supabase/migrations/20260906134228_affiliations_cartes_faso_sanama.sql",
+      "version": "20260906134228",
+      "description": "affiliations_cartes_faso_sanama",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 49532,
+      "sha256": "63a3d54481db8ee969adf815cd4c96210c259b182de8257a0916bf491ae86db3"
+    },
+    {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
       "version": "26122025",
       "description": "01_artisan_minier_migration",
@@ -3403,10 +3413,10 @@
       },
       {
         "digits": 14,
-        "count": 144
+        "count": 145
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "c80804feeb352ea0ba3fac5b7a9a42a5e7339fe151e0c8f29fea6941b954268b"
+  "catalogueSha256": "e81442af18e9b4996fd433f4d55ced2629402ca2f0c932d926855e2763dba5c1"
 }

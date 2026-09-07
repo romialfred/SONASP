@@ -54,7 +54,7 @@ export function portalThemeVariables(value: PortalTheme): CSSProperties {
   return {
     '--sidebar-bg': value.sidebar, '--sidebar-hover-bg': value.hover,
     '--portal-primary': value.primary, '--portal-accent': value.accent,
-    '--nav-active-bg': value.active, '--nav-active-text': value.sidebar,
+    '--nav-active-bg': 'rgba(240, 199, 80, 0.22)', '--nav-active-text': '#FFE39A',
     '--header-bg-end': value.header, '--header-wave-color': value.accent,
     '--focus-ring': value.primary,
   } as CSSProperties;

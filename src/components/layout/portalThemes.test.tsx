@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { accountTypeFor, canAccessPrivateRoute } from '@/lib/routeAccessRegistry';
 import type { UserProfile } from '@/types/auth';
 import { PORTAL_THEMES } from './portalThemes';
-import { institutionLogo, usePortalBrand } from './usePortalBrand';
+import { institutionLogo, NATIONAL_ARMS_LOGO, usePortalBrand } from './usePortalBrand';
 import { PortalBrandPair } from './PortalBrandPair';
 
-const mocks = vi.hoisted(() => ({ read: vi.fn(), dossier: vi.fn(), url: vi.fn() }));
+const mocks = vi.hoisted(() => ({ read: vi.fn(), dossier: vi.fn(), url: vi.fn(), organization: vi.fn() }));
 vi.mock('@/lib/supabase', () => ({ supabase: {
   from: () => ({ select: () => ({ eq: (_column: string, id: string) => ({ maybeSingle: () => mocks.read(id) }) }) }),
+  rpc: (...args: unknown[]) => mocks.organization(...args),
 } }));
 vi.mock('@/services/comptoirService', () => ({ comptoirService: { get: mocks.dossier, url: mocks.url } }));
 const profile = (overrides: Partial<UserProfile>) => ({ id: 'user-a', role: 'owner', is_active: true, mining_company_id: null, ...overrides } as UserProfile);
@@ -74,11 +75,40 @@ describe('Identité et thème des portails', () => {
     expect(mocks.url).toHaveBeenCalledWith(latest);
   });
 
-  it('garde le monogramme réel quand un logo est absent ou inaccessible', () => {
-    render(<PortalBrandPair brand={{ name: 'Comptoir Alpha', shortName: 'ALPHA', logo: '/missing.png', source: 'test' }} />);
+  it.each(['owner', 'admin'] as const)('conserve les armoiries pour %s même avec un organisme rattaché', (accountType) => {
+    const { result } = renderHook(() => usePortalBrand(profile({ role: accountType, organization_id: 'sonasp' }), accountType));
+    render(<PortalBrandPair brand={result.current} />);
+    expect(screen.getAllByRole('img').map(image => image.getAttribute('src'))).toEqual(['/login-faso/faso-sanama.png', NATIONAL_ARMS_LOGO]);
+    expect(mocks.read).not.toHaveBeenCalled();
+  });
+
+  it('résout la SONASP de rattachement du collecteur depuis la session', async () => {
+    mocks.organization.mockResolvedValue({ data: 'sonasp-a', error: null });
+    mocks.read.mockResolvedValue({ data: { id: 'sonasp-a', name: 'SONASP', code: 'SONASP', organization_type: 'sonasp' }, error: null });
+    const { result } = renderHook(() => usePortalBrand(profile({ role: 'collector' }), 'collector'));
+    await waitFor(() => expect(result.current.logo).toBe('/sonasp_logo.png'));
+    expect(mocks.organization).toHaveBeenCalledWith('snp_current_organization_id');
+    expect(mocks.read).toHaveBeenCalledWith('sonasp-a');
+  });
+
+  it('utilise aussi le logo du comptoir auquel le collecteur est rattaché', async () => {
+    mocks.read.mockResolvedValue({ data: { id: 'cpt', name: 'Comptoir Alpha', code: 'ALPHA', organization_type: 'comptoir' }, error: null });
+    mocks.dossier.mockResolvedValue({ documents: [{ kind: 'logo', uploaded_at: '2026-09-07' }] });
+    mocks.url.mockResolvedValue('https://storage.example.test/signed/alpha');
+    const { result } = renderHook(() => usePortalBrand(profile({ role: 'collector', organization_id: 'cpt' }), 'collector'));
+    await waitFor(() => expect(result.current.logo).toBe('https://storage.example.test/signed/alpha'));
+    expect(mocks.dossier).toHaveBeenCalledWith('cpt');
+  });
+
+  it('affiche les armoiries quand un logo est absent ou inaccessible puis accepte le logo suivant', () => {
+    const { rerender } = render(<PortalBrandPair brand={{ name: 'Comptoir Alpha', shortName: 'ALPHA', logo: '/missing.png', source: 'test' }} />);
     fireEvent.error(screen.getByRole('img', { name: 'Comptoir Alpha' }));
-    expect(screen.getByText('ALPHA')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Armoiries du Burkina Faso' })).toHaveAttribute('src', NATIONAL_ARMS_LOGO);
     expect(screen.queryByRole('img', { name: 'SONASP' })).not.toBeInTheDocument();
     expect(institutionLogo('mining_company')).toBeNull();
+    rerender(<PortalBrandPair brand={{ name: 'Mine Alpha', shortName: 'ALPHA', logo: null, source: 'test' }} />);
+    expect(screen.getByRole('img', { name: 'Armoiries du Burkina Faso' })).toBeInTheDocument();
+    rerender(<PortalBrandPair brand={{ name: 'Comptoir Bêta', shortName: 'BÊTA', logo: '/beta.png', source: 'test' }} />);
+    expect(screen.getByRole('img', { name: 'Comptoir Bêta' })).toHaveAttribute('src', '/beta.png');
   });
 });

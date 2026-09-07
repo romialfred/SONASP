@@ -212,7 +212,7 @@ describe('NationalDashboardLayout', () => {
 
     expect(screen.getByTestId('app-shell')).toHaveClass('is-dgi');
     expect(screen.getAllByTestId('app-sidebar')[0]).toHaveClass('is-dgi');
-    expect(screen.getByRole('img', { name: 'Finances · DGI' })).toHaveAttribute('src', '/institutional/armoiries-burkina-faso.png');
+    expect(screen.getByRole('img', { name: 'Armoiries du Burkina Faso' })).toHaveAttribute('src', '/institutional/armoiries-burkina-faso.png');
     expect(screen.getByLabelText('Portail Finances · DGI')).toBeInTheDocument();
     expect(screen.getByText('Contrôleur fiscal DGI')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Contrôle fiscal' })).toBeInTheDocument();
@@ -244,7 +244,7 @@ describe('NationalDashboardLayout', () => {
 
     expect(screen.getByTestId('app-shell')).toHaveClass('is-dgmg');
     expect(screen.getAllByTestId('app-sidebar')[0]).toHaveClass('is-dgmg');
-    expect(screen.getByRole('img', { name: 'Mines · DGMG' })).toHaveAttribute('src', '/institutional/armoiries-burkina-faso.png');
+    expect(screen.getByRole('img', { name: 'Armoiries du Burkina Faso' })).toHaveAttribute('src', '/institutional/armoiries-burkina-faso.png');
     expect(screen.getByLabelText('Portail Mines · DGMG')).toBeInTheDocument();
     expect(screen.getByText('Agent DGMG de test')).toBeInTheDocument();
     expect(screen.getByText('Superviseur réglementaire')).toBeInTheDocument();
@@ -253,6 +253,30 @@ describe('NationalDashboardLayout', () => {
     expect(screen.queryByRole('link', { name: 'Tableau de bord' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Cours de l’or' })).toBeInTheDocument();
     expect(screen.getByRole('contentinfo')).toHaveTextContent('FASO SANAMA');
+  });
+
+  it.each(['/artisan-minier/comptoirs', '/artisan-minier/comptoirs/comptoir-id'])('surligne seulement la page active à %s et jamais son groupe', async (path) => {
+    Object.assign(authState.user, { role: 'owner', capabilities: [] });
+    render(<MemoryRouter initialEntries={[path]}><NationalDashboardLayout><div>Contenu</div></NationalDashboardLayout></MemoryRouter>);
+    await act(async () => {});
+    const sidebar = screen.getByRole('complementary', { name: 'Navigation principale' });
+    const group = within(sidebar).getByRole('button', { name: 'Artisans miniers' });
+    expect(group).toHaveAttribute('aria-expanded', 'true');
+    expect(group).not.toHaveClass('is-current');
+    expect(within(sidebar).getByRole('link', { name: 'Comptoirs' })).toHaveAttribute('aria-current', 'page');
+    expect(sidebar.querySelectorAll('.is-current, .is-active')).toHaveLength(1);
+    expect(sidebar.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+    expect(screen.getByLabelText('Portail Administrateur').querySelector('.national-header__security-badge')).toBeInTheDocument();
+  });
+
+  it('ne surligne pas deux liens vers l’accueil du collecteur', async () => {
+    Object.assign(authState.user, { role: 'collector', organization_id: 'sonasp', organization_type: 'sonasp', capabilities: ['collector.operate'] });
+    render(<MemoryRouter initialEntries={['/portail-collecteur']}><NationalDashboardLayout><div>Contenu</div></NationalDashboardLayout></MemoryRouter>);
+    await act(async () => {});
+    const sidebar = screen.getByRole('complementary', { name: 'Navigation principale' });
+    expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveAttribute('aria-current', 'page');
+    expect(within(sidebar).getByRole('link', { name: 'Mon espace' })).not.toHaveClass('is-current');
+    expect(sidebar.querySelectorAll('.is-current, .is-active')).toHaveLength(1);
   });
 
   it('rend tous les modules au Owner même sans périmètre explicite', () => {

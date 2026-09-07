@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { NationalDashboardLayout } from './NationalDashboardLayout';
@@ -70,13 +70,14 @@ vi.mock('@/services/liveGoldPriceService', () => ({
 }));
 
 describe('NationalDashboardLayout — espace Mine', () => {
-  it('affiche l’identité société dynamique et la navigation métier or/anthracite', () => {
+  it('affiche l’identité société dynamique et la navigation métier or/anthracite', async () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/portail-mine']}>
         <NationalDashboardLayout><div>Contenu Mine</div></NationalDashboardLayout>
       </MemoryRouter>
     );
 
+    await act(async () => {});
     expect(container.querySelector('.national-shell')).toHaveClass('is-mine');
     expect(screen.getByRole('heading', { name: 'Plateforme Nationale de Traçabilité de l’Or' })).toBeInTheDocument();
     expect(screen.getByText('Production, collecte, commercialisation et suivi des recettes')).toBeInTheDocument();
@@ -84,7 +85,8 @@ describe('NationalDashboardLayout — espace Mine', () => {
 
     const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
     expect(within(sidebar).getByText('ESPACE SOCIÉTÉ MINIÈRE')).toBeInTheDocument();
-    expect(within(screen.getByTestId('app-header')).getByText('Burkina Mining SA')).toBeInTheDocument();
+    expect(within(screen.getByTestId('app-header')).getByTitle('Burkina Mining SA')).toBeInTheDocument();
+    expect(within(screen.getByTestId('app-header')).getByRole('img', { name: 'Armoiries du Burkina Faso' })).toBeInTheDocument();
     expect(within(sidebar).queryByText('Responsable Mine')).not.toBeInTheDocument();
     expect(within(sidebar).queryByRole('link', { name: 'Accueil' })).not.toBeInTheDocument();
     expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveAttribute('href', '/portail-mine');

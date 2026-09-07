@@ -6,9 +6,10 @@ import type { AccountType } from '@/lib/routeAccessRegistry';
 import { PORTAL_THEMES } from './portalThemes';
 
 export interface PortalBrand { name: string; shortName: string; logo: string | null; source: string }
+export const NATIONAL_ARMS_LOGO = '/institutional/armoiries-burkina-faso.png';
 export function institutionLogo(type?: string | null) {
   if (type === 'sonasp') return '/sonasp_logo.png';
-  if (type === 'dgi' || type === 'dgmg') return '/institutional/armoiries-burkina-faso.png';
+  if (type && ['owner', 'admin', 'dgi', 'dgmg'].includes(type)) return NATIONAL_ARMS_LOGO;
   return null;
 }
 
@@ -26,7 +27,8 @@ export function usePortalBrand(user: UserProfile | null, accountType: AccountTyp
   };
   useEffect(() => {
     let current = true;
-    if (!userId || accountType === 'unknown' || accountType === 'mine') return;
+    // The administrator represents the platform, even if their profile has an organization.
+    if (!userId || ['owner', 'admin', 'unknown', 'mine'].includes(accountType)) return;
     async function load() {
       try {
         let organizationId = profileOrganizationId;
@@ -48,7 +50,7 @@ export function usePortalBrand(user: UserProfile | null, accountType: AccountTyp
               brand.logo = await comptoirService.url(document);
               brand.source = 'Logo privé du dossier comptoir, URL signée';
             }
-          } catch { /* Keep the authorized organization with its monogram. */ }
+          } catch { /* Keep the authorized organization and the national arms fallback. */ }
         }
         if (current) setResult({ key, brand });
       } catch { /* An inaccessible logo never broadens access or blocks navigation. */ }

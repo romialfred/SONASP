@@ -436,7 +436,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     ]);
     const moreSpecificPathExists = navigationPaths.some(
       (item) =>
-        item !== path &&
+        item.startsWith(`${path}/`) &&
         (location.pathname === item || location.pathname.startsWith(`${item}/`))
     );
     return !moreSpecificPathExists;
@@ -479,6 +479,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
             to={dashboardPath}
             aria-label={label('Tableau de bord')}
             title={label('Tableau de bord')}
+            aria-current={(isMine ? mineDashboardActive : isActive(dashboardPath)) ? 'page' : undefined}
             className={cn(
               'national-sidebar__dashboard-link',
               isMine ? mineDashboardActive && 'is-active' : isActive(dashboardPath) && 'is-active'
@@ -499,7 +500,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
             {section.groups.map((group) => {
               const Icon = group.icon;
               const hasChildren = Boolean(group.children?.length);
-              const groupActive = isDgi && group.id === 'dgi-overview'
+              const groupActive = !isDgmg && group.path === dashboardPath
                 ? false
                 : isActive(group.path) || Boolean(group.children?.some((item) => isActive(item.path)));
               const isOpen = openGroup === group.id;
@@ -512,8 +513,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                   className={cn(
                     'national-sidebar__group-trigger',
                     !isMine && !isComptoir && ['market', 'sales', 'dgmg-productions'].includes(group.id)
-                      && 'national-sidebar__group-trigger--compact',
-                    groupActive && 'is-current'
+                      && 'national-sidebar__group-trigger--compact'
                   )}
                   onClick={(evenement) => basculerGroupe(group.id, evenement.currentTarget)}
                   aria-expanded={isOpen}
@@ -533,6 +533,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                     {/* Une puce claire remplace l'icone de module : a ce niveau, dix
                         icones de dix couleurs se lisaient comme dix alertes. */}
                     {group.children?.map((item, index) => {
+                      const itemActive = isActive(item.path) && (isDgmg || item.path !== dashboardPath);
                       const showCategory = Boolean(
                         item.category && group.children?.[index - 1]?.category !== item.category
                       );
@@ -545,7 +546,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                           )}
                           <Link
                             to={item.path}
-                            className={cn(isActive(item.path) && 'is-current')}
+                            className={cn(itemActive && 'is-current')}
+                            aria-current={itemActive ? 'page' : undefined}
                             onClick={() => setMobileOpen(false)}
                             title={label(item.label)}
                           >
@@ -566,6 +568,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                   to={group.path}
                   aria-label={label(group.label)}
                   title={label(group.label)}
+                  aria-current={groupActive ? 'page' : undefined}
                   className={cn('national-sidebar__group-trigger national-sidebar__group-link', groupActive && 'is-current')}
                   key={group.id}
                   onClick={() => setMobileOpen(false)}
@@ -586,7 +589,7 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
 
       {(isDgi || isDgmg) && <DgiGoldSidebarCard />}
       {isMine && <MineGoldSidebarCard />}
-      <Link className="national-sidebar__help" to="/help" aria-label="Centre d’assistance" title="Centre d’assistance" onClick={() => setMobileOpen(false)}><HelpCircle aria-hidden="true" /><span>Centre d’assistance</span></Link>
+      <Link className={cn('national-sidebar__help', isActive('/help') && 'is-current')} to="/help" aria-current={isActive('/help') ? 'page' : undefined} aria-label="Centre d’assistance" title="Centre d’assistance" onClick={() => setMobileOpen(false)}><HelpCircle aria-hidden="true" /><span>Centre d’assistance</span></Link>
 
     </aside>
   );

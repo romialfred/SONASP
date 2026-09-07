@@ -1,16 +1,15 @@
 import { useState } from 'react';
-import type { PortalBrand } from './usePortalBrand';
+import { NATIONAL_ARMS_LOGO, type PortalBrand } from './usePortalBrand';
 
 export function PortalBrandPair({ brand }: { brand: PortalBrand }) {
   const [failed, setFailed] = useState<string | null>(null);
-  const initials = brand.shortName.split(/\s+/).filter(Boolean).map(word => word[0]).slice(0, 3).join('').toUpperCase();
+  const logo = brand.logo && failed !== brand.logo ? brand.logo : NATIONAL_ARMS_LOGO;
+  const logoLabel = logo === NATIONAL_ARMS_LOGO ? 'Armoiries du Burkina Faso' : brand.name;
   return <div className="national-brand-pair" aria-label={`FASO SANAMA — ${brand.name}`}>
     <img className="national-brand-pair__platform" src="/login-faso/faso-sanama.png" alt="FASO SANAMA" />
     <span className="national-brand-pair__separator" aria-hidden="true" />
     <div className="national-brand-pair__organization" title={brand.name}>
-      {brand.logo && failed !== brand.logo
-        ? <img src={brand.logo} alt={brand.name} onError={() => setFailed(brand.logo)} />
-        : <span className="national-brand-pair__fallback"><b aria-hidden="true">{initials}</b><span>{brand.shortName}</span></span>}
+      <img src={logo} alt={logoLabel} onError={() => setFailed(brand.logo)} />
     </div>
   </div>;
 }

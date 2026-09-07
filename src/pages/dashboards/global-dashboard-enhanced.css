@@ -15,9 +15,9 @@
   display: flex;
   gap: 9px;
   align-items: center;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .national-dashboard__breadcrumb a {
@@ -30,12 +30,12 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  min-height: 75px;
+  min-height: 64px;
 }
 
 .national-dashboard__intro h2 {
   margin: 0;
-  font-size: 32px;
+  font-size: 26px;
   line-height: 1.18;
   font-weight: 600;
   letter-spacing: -.025em;
@@ -43,7 +43,7 @@
 
 .national-dashboard__intro p {
   margin: 3px 0 0;
-  font-size: 17px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -52,8 +52,8 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 12px;
-  max-width: 560px;
+  gap: 10px;
+  max-width: 500px;
   flex: none;
 }
 
@@ -66,21 +66,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  height: 46px;
-  padding: 0 17px;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
   border: 1px solid #cedae9;
   color: var(--navy);
   background: #fff;
   border-radius: 6px;
-  font: 500 15px 'Source Sans 3',sans-serif;
+  font: 500 13px 'Source Sans 3',sans-serif;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .national-dashboard__control svg,.national-dashboard__export svg {
-  width: 21px;
-  height: 21px;
+  width: 18px;
+  height: 18px;
   stroke-width: 1.7;
 }
 
@@ -92,7 +92,7 @@
   border-color: var(--green);
   background: var(--green);
   color: #fff;
-  padding: 0 24px;
+  padding: 0 18px;
 }
 
 .national-dashboard__export:disabled {
@@ -137,6 +137,11 @@
   margin-bottom: 14px;
 }
 
+.national-dashboard__date-panel {
+  left: 0;
+  right: auto;
+}
+
 .national-dashboard__popover input[type=date] {
   min-width: 0;
   max-width: 190px;
@@ -175,7 +180,7 @@
 
 .national-dashboard__popover-backdrop {
   position: fixed;
-  inset: 102px 0 0;
+  inset: var(--header-height,92px) 0 0;
   z-index: 10;
   background: transparent;
   border: 0;
@@ -321,7 +326,7 @@
   border-bottom: 2px solid transparent;
   background: none;
   color: #647995;
-  font: 400 16px 'Source Sans 3',sans-serif;
+  font: 400 14px 'Source Sans 3',sans-serif;
   cursor: pointer;
 }
 
@@ -356,7 +361,7 @@
 
 .national-panel__header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: -.02em;
@@ -369,7 +374,7 @@
 
 .national-panel__subtitle {
   margin: 3px 0 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
 }
 
@@ -737,6 +742,17 @@
 }
 
 @media (max-width:1199px) {
+  .national-dashboard__filter-panel {
+    left: 0;
+    right: auto;
+  }
+  .national-dashboard__intro {
+    display: block;
+  }
+  .national-dashboard__controls {
+    justify-content: flex-start;
+    margin-top: 14px;
+  }
   .national-dashboard__metrics {
     grid-template-columns: repeat(3,minmax(0,1fr));
     row-gap: 24px;
@@ -755,6 +771,7 @@
     max-width: 400px;
   }
   .national-dashboard__updated {
+    justify-content: flex-start;
     margin-bottom: 5px;
   }
 }
@@ -767,10 +784,10 @@
     display: block;
   }
   .national-dashboard__intro h2 {
-    font-size: 27px;
+    font-size: 23px;
   }
   .national-dashboard__intro p {
-    font-size: 15px;
+    font-size: 14px;
   }
   .national-dashboard__controls {
     justify-content: flex-start;
@@ -799,9 +816,9 @@
     row-gap: 22px;
   }
   .national-metric-card {
-    grid-template-columns: 34px minmax(0,1fr);
+    grid-template-columns: 28px minmax(0,1fr);
     padding: 0 12px;
-    gap: 0 8px;
+    gap: 0 6px;
   }
   .national-metric-card:nth-child(3) {
     border-right: 1px solid var(--line);
@@ -810,19 +827,19 @@
     border: 0;
   }
   .national-metric-card__icon {
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
   }
   .national-metric-card__icon svg {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
   .national-metric-card h3 {
     font-size: 12px;
     white-space: normal;
   }
   .national-metric-card strong {
-    font-size: 24px;
+    font-size: 21px;
   }
   .national-metric-card>p {
     font-size: 11px;
@@ -840,7 +857,7 @@
     flex-wrap: wrap;
   }
   .national-panel__header h3 {
-    font-size: 17px;
+    font-size: 16px;
   }
   .national-volume-chart {
     height: 230px;

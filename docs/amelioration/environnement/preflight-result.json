@@ -1,0 +1,51 @@
+{
+  "checkedAt": "2026-09-07T04:41:36.879Z",
+  "revision": "83f8c74ea83c81a2734ef9e086c2edd211573ebe",
+  "branch": "codex/amelioration-integrale",
+  "readOnly": true,
+  "environmentTargets": [
+    {
+      "file": ".env",
+      "variable": "VITE_SUPABASE_URL",
+      "classification": "production"
+    }
+  ],
+  "remoteLinkedMarkerPresent": true,
+  "docker": {
+    "available": true,
+    "exitCode": null,
+    "timeout": true,
+    "version": null
+  },
+  "containers": null,
+  "migrations": {
+    "catalogueExitCode": 0,
+    "strictAuditExitCode": 1,
+    "stats": {
+      "files": 257,
+      "uniqueVersions": 169,
+      "canonicalFiles": 143,
+      "duplicateVersionGroups": 11,
+      "unversionedFiles": 11,
+      "nonCanonicalPrefixes": 103,
+      "nonCanonicalNames": 8,
+      "unsupportedSqlEntries": 0,
+      "versionWidths": [
+        {
+          "digits": 8,
+          "count": 97
+        },
+        {
+          "digits": 14,
+          "count": 149
+        }
+      ]
+    }
+  },
+  "fullStackReadiness": "NOT_PROVEN",
+  "limits": [
+    "Aucune connexion métier ni MFA effectuée.",
+    "Aucune écriture de test, restauration ou migration exécutée.",
+    "Un PostgreSQL seul ou un banc PGlite ne valide pas Auth, PostgREST, Storage et Edge Functions."
+  ]
+}

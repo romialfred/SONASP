@@ -1,0 +1,98 @@
+
+> vite-react-typescript-starter@0.0.0 test:registry
+> node scripts/test-artisan-dossier-migration.mjs && npm run test:comptoirs && npm run test:collectors && node scripts/test-affiliation-migration.mjs && node --test tests/release/build-source.node.mjs tests/migrations/migration-integrity.node.mjs && node scripts/check-migration-integrity.mjs verify && vitest run --maxWorkers=2 src/pages/artisanal-sites src/components/artisan src/pages/artisan-minier/ArtisanMinierDetails.test.tsx src/pages/artisan-minier/ArtisanMinierListe.test.tsx src/lib/artisanDossier.test.ts src/lib/siteFormalization.test.ts src/lib/cardPdfPreview.test.ts src/hooks/useArtisanalSiteData.test.tsx src/hooks/useArtisanUnsavedChanges.test.tsx src/services/artisanalSiteSave.test.ts src/services/artisanalSiteInsights.test.ts src/components/layout/sidebarNavigation.test.ts supabase/functions/_shared/artisan-document-upload.test.ts src/pages/public/VerifyAffiliation.test.tsx supabase/functions/affiliation-card-render/handler.test.ts src/pages/artisan-minier/AffiliationsCartes.test.tsx src/components/artisan/AffiliationPaymentPanel.test.tsx
+
+54 contrôles PostgreSQL isolés réussis.
+
+> vite-react-typescript-starter@0.0.0 test:comptoirs
+> node scripts/test-comptoir-migration.mjs && vitest run --maxWorkers=2 src/pages/collector/ComptoirForm.test.tsx src/services/rpcClientBinding.test.ts supabase/functions/_shared/comptoir-document-upload.test.ts
+
+62 contrôles SQL Comptoir réussis (PostgreSQL jetable, aucun accès aux données métier).
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+
+ Test Files  4 passed (4)
+      Tests  40 passed (40)
+   Start at  05:22:46
+   Duration  24.96s (transform 2.15s, setup 5.34s, import 4.26s, tests 15.72s, environment 8.91s)
+
+
+> vite-react-typescript-starter@0.0.0 test:collectors
+> node scripts/test-collector-migration.mjs && vitest run --maxWorkers=2 src/pages/collector src/lib/collectorAccess.test.ts src/lib/routeAccessRegistry.test.ts src/components/layout/sidebarNavigation.test.ts supabase/functions/collection-notifications/handler.test.ts src/services/rpcClientBinding.test.ts
+
+67 collector SQL contracts passed.
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+
+ Test Files  12 passed (12)
+      Tests  152 passed (152)
+   Start at  05:23:33
+   Duration  66.66s (transform 4.49s, setup 16.71s, import 12.42s, tests 28.87s, environment 57.59s)
+
+92 contrats SQL affiliation validés (base isolée, aucune donnée distante modifiée).
+✔ reconnaît un timestamp UTC et un nom canoniques (3.2604ms)
+✔ détecte préfixe court, absence de préfixe et timestamp impossible (0.5482ms)
+✔ l’inventaire détecte doublon, ordre ambigu et largeurs mixtes (88.0439ms)
+✔ le catalogue est déterministe et accepte un état inchangé (49.5591ms)
+✔ un octet modifié produit une divergence de checksum (43.0161ms)
+✔ les fins de ligne LF et CRLF ont le même checksum canonique (42.861ms)
+✔ ajout et suppression de migration sont bloqués avant revue de baseline (61.8206ms)
+✔ une modification manuelle du catalogue invalide son digest (32.8823ms)
+✔ le rapprochement distant détecte versions et checksums divergents (46.1326ms)
+✔ la sérialisation produite est du JSON relisible (33.9863ms)
+✔ un build local de développement reste autorisé (4.6065ms)
+✔ une copie locale Vercel sans commit GitHub est refusée (1.5975ms)
+✔ un commit propre est accepté et les documents hors application sont conservés (3473.5294ms)
+✔ les modifications enregistrées seulement dans l’index sont bloquées (4221.4157ms)
+✔ un nouveau composant non suivi empêche la publication (3422.1001ms)
+✔ un faux identifiant de commit et une autre branche de production sont refusés (4901.1411ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16655.1032
+[OK] catalogue/checksums conformes; dette historique inchangée
+{
+  "files": 258,
+  "uniqueVersions": 170,
+  "canonicalFiles": 144,
+  "duplicateVersionGroups": 11,
+  "unversionedFiles": 11,
+  "nonCanonicalPrefixes": 103,
+  "nonCanonicalNames": 8,
+  "unsupportedSqlEntries": 0,
+  "versionWidths": [
+    {
+      "digits": 8,
+      "count": 97
+    },
+    {
+      "digits": 14,
+      "count": 150
+    }
+  ]
+}
+{
+  "catalogue": {
+    "ok": true,
+    "catalogueErrors": [],
+    "missingFiles": [],
+    "unexpectedFiles": [],
+    "changedFiles": [],
+    "structuralDrift": false
+  }
+}
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+
+ Test Files  25 passed (25)
+      Tests  223 passed (223)
+   Start at  05:25:13
+   Duration  126.06s (transform 6.26s, setup 35.22s, import 22.30s, tests 62.80s, environment 105.13s)
+

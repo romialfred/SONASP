@@ -1,0 +1,258 @@
+{
+  "generatedAt": "2026-09-07T06:18:13.6764039Z",
+  "baseline": "83f8c74ea83c81a2734ef9e086c2edd211573ebe",
+  "portalModuleCandidates": 25,
+  "screensActionsDetected": 502,
+  "jsxRouteDeclarations": 46,
+  "distinctRouteColumnValues": 58,
+  "recipeRowsNotExecuted": 502,
+  "rulesVariantsSubformsActions": 21,
+  "ruleNatureCounts": [
+    {
+      "nature": "ACTION_CONFIRMATION",
+      "count": 1
+    },
+    {
+      "nature": "ACTIONS_METIER_DISTINCTES",
+      "count": 1
+    },
+    {
+      "nature": "FORMULAIRE_BAREME",
+      "count": 1
+    },
+    {
+      "nature": "FORMULAIRE_DROIT",
+      "count": 1
+    },
+    {
+      "nature": "FORMULAIRE_ENCAISSEMENT",
+      "count": 1
+    },
+    {
+      "nature": "FORMULAIRE_PARTAGE_CREATION_MODIFICATION",
+      "count": 3
+    },
+    {
+      "nature": "FORMULAIRE_PARTAGE_CREATION_MODIFICATION_LECTURE",
+      "count": 1
+    },
+    {
+      "nature": "FORMULAIRES_A_QUALIFIER",
+      "count": 1
+    },
+    {
+      "nature": "SELECTEUR_SANS_CREATION_IMMEDIATE",
+      "count": 1
+    },
+    {
+      "nature": "SOUS_FORMULAIRE_DELEGATION",
+      "count": 1
+    },
+    {
+      "nature": "SOUS_FORMULAIRE_DOCUMENTS",
+      "count": 2
+    },
+    {
+      "nature": "SOUS_FORMULAIRE_MOYENS_PAIEMENT",
+      "count": 1
+    },
+    {
+      "nature": "SOUS_FORMULAIRE_REVISION",
+      "count": 1
+    },
+    {
+      "nature": "SOUS_FORMULAIRES_DECISION_FINANCIERE",
+      "count": 1
+    },
+    {
+      "nature": "VARIANTE_CONDITIONNELLE",
+      "count": 4
+    }
+  ],
+  "componentTests": {
+    "log": "test-lecture-artisan.log",
+    "count": 32,
+    "startedAtUtc": "2026-09-07T06:15:46Z",
+    "passed": 32,
+    "commandExit": 0
+  },
+  "eslint": {
+    "exit": 0,
+    "log": "eslint-lecture-artisan.log"
+  },
+  "realBrowserDatabaseValidation": "NON_EXECUTE",
+  "limits": [
+    "Correspondance automatique par fichiers, pas qualification de chaque ligne detectee.",
+    "21 lignes de regles ne sont pas 21 formulaires independants.",
+    "Les parcours connexes de vente, paiement, infractions, stock et rapports restent dans le denominateur et a qualifier en profondeur.",
+    "Tests de composant avec services simules, aucune preuve Auth/RLS/API/persistance/deploiement."
+  ],
+  "sourcesAtQualification": [
+    {
+      "path": "src/components/artisan/AffiliationDossier.tsx",
+      "sha256": "79694a014c552e17347393fe5bd5b949e605635099f91c6db548e9a2228a450b"
+    },
+    {
+      "path": "src/components/artisan/AffiliationPaymentPanel.tsx",
+      "sha256": "8a479c7d89fab17e1c1170bd65e471ed6d9d858406211f7dca83e251b3156057"
+    },
+    {
+      "path": "src/components/artisan/ArtisanDossierSummary.tsx",
+      "sha256": "aa23242c7b3e8987a1385df870abe1338e44d668af0b6b5cfd3223f8eba1ed9a"
+    },
+    {
+      "path": "src/components/artisan/ArtisanMinierForm.tsx",
+      "sha256": "d9f3427ceff7f846e2176ecd5f2e625b96d0f3aa14f41cf00f7fb3003d01126e"
+    },
+    {
+      "path": "src/data/artisanalSitesData.ts",
+      "sha256": "1549a32d1aebd604e0601b471d646f669bdb8e6e3f76bd3ca36cc9af5d3101ef"
+    },
+    {
+      "path": "src/lib/artisanDossier.ts",
+      "sha256": "b29527744e94f416f999b81cd38fa532c8c61d40845b525509f85761313df6e8"
+    },
+    {
+      "path": "src/lib/collectorDossier.ts",
+      "sha256": "a94e4df74c851f5bc127600da2173c6b5dc140bda71d41da603e3b46543d33a5"
+    },
+    {
+      "path": "src/lib/comptoirDossier.ts",
+      "sha256": "39c7a31afcad2084126243740d2729d1ad06bdeb4301c6be935a7df08cfecd28"
+    },
+    {
+      "path": "src/lib/miningRegistryAccess.ts",
+      "sha256": "202122cd7e004161dfda13beb1d64e4107364ab6ad76c54c904c83002a8f86ab"
+    },
+    {
+      "path": "src/lib/routeAccessRegistry.ts",
+      "sha256": "9fa0b5fc87d9a1b21961960be4e0d88d0f806cdee4fa5c6a2bb364e54852c01d"
+    },
+    {
+      "path": "src/pages/artisan-minier/AffiliationsCartes.tsx",
+      "sha256": "dc852828d859b48943a9eaf9dacda932d9a0b2f75a6009235c0291bdaa45a883"
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDashboard.tsx",
+      "sha256": "ec69946e4e7754002a0e4cb9e0a0f501ba95443165061fa7aca1cc4f83d40c81"
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "sha256": "cc8827f05897cf6b36e50c8881b399c99b6aa537a577f1d57dcab8b446344a28"
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.tsx",
+      "sha256": "a77682eb925fff2cc921453fe186ed87e8ecf9910061ec33b272d82994bd1088"
+    },
+    {
+      "path": "src/pages/artisanal-sites/ArtisanalSiteDetails.tsx",
+      "sha256": "b0bbd820167c5ab44b03f0bf01573b3453b8fae8f0959666fa46c7d4555f3f55"
+    },
+    {
+      "path": "src/pages/artisanal-sites/ArtisanalSiteForm.tsx",
+      "sha256": "a6c3b13953a9b7bbca0df50b26379a8938e90bef4579a05ab8fb332c971e2345"
+    },
+    {
+      "path": "src/pages/collector/CollectorForm.tsx",
+      "sha256": "963d98140888ab8e9ec794785ad458251dfaf378d7ce235c07106e8f70761ec7"
+    },
+    {
+      "path": "src/pages/collector/CollectorsPage.tsx",
+      "sha256": "a1cef5d5cfc11156ba8906e8623858fdccf27ca171f1d6830ed8b418803651b2"
+    },
+    {
+      "path": "src/pages/collector/ComptoirForm.tsx",
+      "sha256": "ad95df441430fdbd643140cfce29a2b32497d24013cb51d65f8944516ba29f32"
+    },
+    {
+      "path": "src/PrivateApp.tsx",
+      "sha256": "d3afbba07a243730a0434ec25a5471c2a38f4be2c6b1ab0c13dca992a0de48cd"
+    },
+    {
+      "path": "src/services/affiliationService.ts",
+      "sha256": "4442615323adade8d145353db75f3872e2614249c106fd134f4e6d611cc3b346"
+    },
+    {
+      "path": "src/services/artisanalSiteService.ts",
+      "sha256": "da4e18077083a12633c8d3e9114c4de3d4f8a57cd9ea4ee90f3eb77ee1e6d4fc"
+    },
+    {
+      "path": "src/services/artisanDossierService.ts",
+      "sha256": "63e8bc33c7227a9ad8c184fcc9e726ea6c7d38f37b0f6c3cbf393b1d2399a14a"
+    },
+    {
+      "path": "src/services/artisanGoldSalesService.ts",
+      "sha256": "66f1f4a14eeec9a2b777808d4c22220274659ffe76d6515313f1f40701192393"
+    },
+    {
+      "path": "src/services/artisanInfractionsService.ts",
+      "sha256": "63f7ad712016e2e91fda2bb4429dd46baf7ac79aa9e9930384d01bcbc9efd4b3"
+    },
+    {
+      "path": "src/services/artisanMinierService.ts",
+      "sha256": "820431f3be82bfb73983475a7d747a5666b7d1044162f601c00dd56702a84e4e"
+    },
+    {
+      "path": "src/services/collectorService.ts",
+      "sha256": "60b3cafcc78f7e7cbca7ab0add7d93e5709c87296c474b042b8a957ee366b7e8"
+    },
+    {
+      "path": "src/services/comptoirService.ts",
+      "sha256": "2e2c3ec71c56d2f5576ce3c9ee1a99b9369892bf695a8c80730a44b8d38cbd3d"
+    },
+    {
+      "path": "src/services/sitePhotoService.ts",
+      "sha256": "49deabb912fedc01553e3eb62da0c116be4cb644e996d56b6ca267ef065e9bee"
+    },
+    {
+      "path": "supabase/migrations/20260906093115_sites_artisanaux_formalisation_aea.sql",
+      "sha256": "2de381766387d56a66a49e10067476810f043d916085d02ba9ef63c11573b60c"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "01_EXTRAIT_PORTAILS_MODULES_BASELINE.csv",
+      "sha256": "a741574f74afd5ee38c31e70ba4690f3619907a37ef297eef856c1fcb0d0857e"
+    },
+    {
+      "path": "02_EXTRAIT_ECRANS_ACTIONS_BASELINE.csv",
+      "sha256": "b95c04775767122d59f7f5052392e2c25a72ba69f0fc25483d45082855a5dfff"
+    },
+    {
+      "path": "05_EXTRAIT_PLAN_RECETTE_BASELINE.csv",
+      "sha256": "aa58470508d07cbe97e2cd34ea5d3a3472bae71793dd520461b63eb5421e1c20"
+    },
+    {
+      "path": "comptages.json",
+      "sha256": "cbbc57df058dc7022b57786f8ed448b1a0dd49fc3d1a454d4846de5bd8a811a2"
+    },
+    {
+      "path": "correspondance-regles-inventaire.csv",
+      "sha256": "8b4403a87479721ae662b1cbf068955aea5eb18abfe654107eeb2aa5cfc144c6"
+    },
+    {
+      "path": "eslint-lecture-artisan.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "matrice-formulaires-regles.csv",
+      "sha256": "6c849b9d11e01a5aeca2c5118b4520bd83d219b55b70ca35fb5348fb7b04575e"
+    },
+    {
+      "path": "qualifier-inventaire.ps1",
+      "sha256": "5f9bbf0e22c0b8901138b35cb7b0ac0a971d29002bd660f9fd8d19963fc29d89"
+    },
+    {
+      "path": "rapport-correction-lecture.md",
+      "sha256": "9e8863779009288acc49a9d91651019cb75e26b9020e2eeb32e3a00882352220"
+    },
+    {
+      "path": "README.md",
+      "sha256": "599333d9757d2099ef49345736fec91b4e59e84f3aff28ae01e4b5cfb2958f22"
+    },
+    {
+      "path": "test-lecture-artisan.log",
+      "sha256": "a3fb16746e2f6f8c4a8ccaa2201ed6b834c0db1f90b2431551ee807d1958ee26"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "evidence_id": "A_RENSEIGNER",
+  "scenario_id": "A_RENSEIGNER",
+  "criterion_ids": [],
+  "lot_id": "CLI-PILOTE",
+  "date_utc": null,
+  "test_result": "NON EXÉCUTÉ",
+  "evidence_kind": "A_RENSEIGNER",
+  "application": {
+    "git_commit": null,
+    "dirty_app_inputs": null,
+    "artifact_sha256": null,
+    "served_build_id": null,
+    "migration_catalogue_sha256": null
+  },
+  "environment": {
+    "name": null,
+    "origin": null,
+    "backend_id_non_secret": null,
+    "isolation_evidence_id": null,
+    "production": false,
+    "backend_simulated": null
+  },
+  "session": {
+    "portal_id": null,
+    "profile_test_alias": null,
+    "account_type": null,
+    "organisation_test_alias": null,
+    "capabilities_under_test": [],
+    "authentication_method": null,
+    "mfa_level_observed": null
+  },
+  "entry_route": null,
+  "route": null,
+  "test_record": {
+    "parent_table": null,
+    "parent_id": null,
+    "child_records": [],
+    "test_prefix": null
+  },
+  "steps": [
+    {"order": 1, "phase": "connexion", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 2, "phase": "navigation", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 3, "phase": "saisie", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 4, "phase": "enregistrement", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 5, "phase": "persistance", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 6, "phase": "detail", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 7, "phase": "rechargement", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 8, "phase": "liste", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 9, "phase": "modification", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"},
+    {"order": 10, "phase": "design_droits", "action": null, "expected": null, "observed": null, "artifact_ids": [], "result": "NON EXÉCUTÉ"}
+  ],
+  "field_assertions": [],
+  "persistence": {
+    "read_method": null,
+    "authoritative_source": null,
+    "read_at_utc": null,
+    "values_artifact_id": null,
+    "comparison_artifact_id": null,
+    "relations_verified": [],
+    "unchanged_fields_verified": []
+  },
+  "artifacts": [],
+  "execution": {"agent": null, "command_if_automated": null, "exit_code": null},
+  "independent_audit": {
+    "reviewer_agent": null,
+    "reviewed_at_utc": null,
+    "artifact_hashes_checked": false,
+    "critical_steps_replayed": [],
+    "decision": "NON AUDITÉ",
+    "reason": null
+  },
+  "cleanup": {"authorised_record_ids": [], "performed": false, "evidence_id": null},
+  "scope_adaptation": null,
+  "blockers": []
+}

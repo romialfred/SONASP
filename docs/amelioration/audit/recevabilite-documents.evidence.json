@@ -1,0 +1,97 @@
+{
+  "evidence_id": "AUD-DOC-00-08-01",
+  "date_utc": "2026-09-07T06:38:12.9558672Z",
+  "kind": "LECTURE_DOCUMENTAIRE_ET_RECOMPTAGE_CSV",
+  "baseline": "83f8c74ea83c81a2734ef9e086c2edd211573ebe",
+  "final_candidate_commit": null,
+  "executor": "audit_independant",
+  "application_mutations": false,
+  "real_ui_db_validation": false,
+  "files": [
+    {
+      "path": "docs/amelioration/00_MISSION_ET_REPRISE.md",
+      "sha256": "5d4bf779363431a547ffec6e4a78fcbf2c2840adacbb8d7244abb99c2b48c63c"
+    },
+    {
+      "path": "docs/amelioration/01_INVENTAIRE_PORTAILS_MODULES.csv",
+      "sha256": "53d4e483248108c9973b37d66fb48ad3b9103b3d04589d36e3f8063a462c01bb"
+    },
+    {
+      "path": "docs/amelioration/02_MATRICE_ECRANS_ET_ACTIONS.csv",
+      "sha256": "9e0575f3d8addd6e3f4c1af90765480aa79532d655fb337c45467f45e5ea90ad"
+    },
+    {
+      "path": "docs/amelioration/03_MAPPING_FORMULAIRES_CHAMPS_TABLES.csv",
+      "sha256": "68fe493c209e0744926e91cbd19393b3a5b3cf61582829f8e75a124331905c65"
+    },
+    {
+      "path": "docs/amelioration/04_MATRICE_DROITS_ET_CONTEXTES.csv",
+      "sha256": "882fef3109cf4a47889c492eb9eb3b6d3a8a91b89d67f94414586b7441f0dc6a"
+    },
+    {
+      "path": "docs/amelioration/05_CORRESPONDANCE_IDS_PILOTE.csv",
+      "sha256": "4491b5b547af95cac3a5853bbd1a93eb4e7199debd910ac434e6284b14fbecb5"
+    },
+    {
+      "path": "docs/amelioration/05_PLAN_ET_RESULTATS_RECETTE.csv",
+      "sha256": "d4aa62c1292a8e9a23bb93c6d66e289d826d79f10a7c9bca6f6c567bf176e36b"
+    },
+    {
+      "path": "docs/amelioration/06_ANOMALIES_ET_ITERATIONS.csv",
+      "sha256": "4ffc8bb7c588654034e872de621b3f912fee502698f67c0c73b05e8f13ec92a5"
+    },
+    {
+      "path": "docs/amelioration/07_AUDIT_QUALITE.md",
+      "sha256": "44b9eed88ab513ba16c27e9fad7667c241362b6b83009dc48ee6c254d74c573f"
+    },
+    {
+      "path": "docs/amelioration/08_DEPLOIEMENT_ET_RETOUR_ARRIERE.md",
+      "sha256": "7d510b017af389932f68675d927feb1f4420a24ba88bf21de64496130f0527dd"
+    }
+  ],
+  "csv_summary": [
+    {
+      "file": "01_INVENTAIRE_PORTAILS_MODULES.csv",
+      "rows": 139,
+      "identifier_column": "id",
+      "duplicate_ids": []
+    },
+    {
+      "file": "02_MATRICE_ECRANS_ET_ACTIONS.csv",
+      "rows": 2146,
+      "identifier_column": "id",
+      "duplicate_ids": []
+    },
+    {
+      "file": "03_MAPPING_FORMULAIRES_CHAMPS_TABLES.csv",
+      "rows": 50,
+      "identifier_column": "id",
+      "duplicate_ids": []
+    },
+    {
+      "file": "04_MATRICE_DROITS_ET_CONTEXTES.csv",
+      "rows": 12090,
+      "identifier_column": "id",
+      "duplicate_ids": []
+    },
+    {
+      "file": "05_CORRESPONDANCE_IDS_PILOTE.csv",
+      "rows": 13,
+      "identifier_column": "ancien_id",
+      "duplicate_ids": []
+    },
+    {
+      "file": "05_PLAN_ET_RESULTATS_RECETTE.csv",
+      "rows": 2158,
+      "identifier_column": "id",
+      "duplicate_ids": []
+    },
+    {
+      "file": "06_ANOMALIES_ET_ITERATIONS.csv",
+      "rows": 25,
+      "identifier_column": "id",
+      "duplicate_ids": []
+    }
+  ],
+  "decision": "ETAT_AVANCEMENT_RECEVABLE; PILOTE_INTEGRE_NON_RECETTE; MISSION_INACHEVEE; DEPLOIEMENT_NON_ADMISSIBLE"
+}

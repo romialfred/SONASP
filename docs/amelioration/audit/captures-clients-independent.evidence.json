@@ -1,0 +1,143 @@
+{
+  "date_utc": "2026-09-07T06:21:57.5163559Z",
+  "auditor": "audit_independant",
+  "scope": "CAPTURES_FIXTURES_SANS_PERSISTANCE",
+  "manifestSha256": "097cffd9c438048aac07cf3c0cd785d541791ea7b2abf030d4d8180e5ea8141e",
+  "results": [
+    {
+      "file": "06-detail-desktop.jpg",
+      "sha256": "3f2e663b2c881e38c25a0557ea90a423929f8a875135b358d6404a3bb3371137",
+      "hashMatches": true,
+      "width": 1536,
+      "height": 1024,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "07-transactions-desktop.jpg",
+      "sha256": "1b98cfd5158f7b41483543b030e7bd862e31e41005d1b2d34232066aa9e9a5b8",
+      "hashMatches": true,
+      "width": 1536,
+      "height": 1024,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "08-modification-credit-zero-desktop.jpg",
+      "sha256": "e1ee079a720ddc13d622f4db0a699b1771cb6fff9909997875afb6a03c1327a0",
+      "hashMatches": true,
+      "width": 1536,
+      "height": 1024,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "09-modification-mobile-haut.jpg",
+      "sha256": "84489889b58571f05f8314e3426f7eded3013555d4828355304e73c6bd488267",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "10-modification-mobile-bas.jpg",
+      "sha256": "1091f894f8213509b64d441f4b48fc8167af5c5593171d82a862147adbd5a9bf",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "11-liste-mobile.jpg",
+      "sha256": "991dcd7f867765e29538c50d83d23b7d176a7b2ecc632f69a77eb9600f41b39f",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "12-detail-mobile-haut.jpg",
+      "sha256": "a49acaaf1abf5ac729cbbfb9494b21124a6ae6d54c2ab75e2c6ebaf10196a2e4",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "13-detail-mobile-bas.jpg",
+      "sha256": "8fefe09a10a881836ad80587ba7395dc4a48323ac7821429f65347e2a7bc72f3",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "14-liste-erreur-mobile.jpg",
+      "sha256": "025c188eefab6b3e8caef2beb779e72723e2c9abc5654bec13cc25607239138c",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "15-detail-erreur-ventes-mobile.jpg",
+      "sha256": "3e31299bb830ce87679c92208d9d3faf7b3a7eacfbc4c40b3cc64b0c7784721e",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "16-liste-vide-mobile.jpg",
+      "sha256": "093cf56d17fc5041691a7a493416acdb6dbc669d99ba90b01f4a26235b048b6b",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "17-liste-desktop-finale.jpg",
+      "sha256": "b1135f8cd380e9f74ca1ddd635eae68817d9b67535330cd34576b0827e95a157",
+      "hashMatches": true,
+      "width": 1536,
+      "height": 1024,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "18-modification-mobile-conditions.jpg",
+      "sha256": "c09fe0f69963f8f2839f6ae28a377c8070c44ae7590fc594e08efed8e3c99aa0",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "19-modification-mobile-banque.jpg",
+      "sha256": "682e8ff88941fd72e57fc56062f9c636348ff68992f978b30a0d0a1fa9db5993",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    },
+    {
+      "file": "20-detail-mobile-banque.jpg",
+      "sha256": "f67595abc75cf46f01d901f2ca54847f454b7c5a9b644f370943101cc4e28f15",
+      "hashMatches": true,
+      "width": 390,
+      "height": 844,
+      "dimensionsMatch": true,
+      "jpeg": true
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+▶ Audit indépendant : limites et invariants du dossier client, PGlite sans Auth réelle
+  ✔ inversion du compte principal dans les deux ordres du payload (174.0204ms)
+  ✔ banque omise déjà inactive inchangée et réactivation explicite conservant son ID (101.6937ms)
+  ✔ trigger ignorant INSERT enfant : parent entièrement annulé (106.7563ms)
+  ✔ trigger ignorant UPDATE enfant : parent et banque restaurés (45.4722ms)
+  ✔ types parent et options bancaires invalides refusés avant écriture (172.2668ms)
+  ✔ capacités SONASP existantes : comportement RLS préservé sans inventer un rôle (61.0939ms)
+  ✔ statuts existants acceptés et défaut supposé non imposé par le RPC (21.4546ms)
+  ✔ table temporaire homonyme ne capture pas les mises à jour du trigger historique (46.0975ms)
+✔ Audit indépendant : limites et invariants du dossier client, PGlite sans Auth réelle (8344.3675ms)
+▶ Dossier client atomique — PostgreSQL embarqué, sans Auth/MFA ou réseau réel
+  ✔ RPC invoker, rôle API autorisé, anon interdit (15.3009ms)
+  ✔ création : tous les champs, zéro crédit, banque principale, normalisation (70.5179ms)
+  ✔ édition : identité bancaire, dates de création et champs hors formulaire conservés (52.7126ms)
+  ✔ statut et conditions de paiement explicitement null : création et édition sans faux défaut (107.6855ms)
+  ✔ clés statut et conditions de paiement absentes : rejet sans effacement implicite (61.4789ms)
+  ✔ conditions, pays et devise historiques hors listes UI conservés selon les colonnes texte existantes (42.8195ms)
+  ✔ banque retirée : désactivation et conservation des références paiement/prévente (112.6289ms)
+  ✔ liste vide autorisée : création sans banque, retrait sans suppression (72.6519ms)
+  ✔ échec SQL sur le second enfant : création entièrement annulée (43.1885ms)
+  ✔ échec SQL en édition : parent, ancienne banque et ses flags restaurés (50.2821ms)
+  ✔ banque d’un autre client : rejet et absence de déplacement (23.4879ms)
+  ✔ banque inconnue et identifiant répété refusés (16.522ms)
+  ✔ client inconnu ne produit pas de faux succès (3.9431ms)
+  ✔ banques absentes ou mal formées ne valent pas une suppression (11.9867ms)
+  ✔ validations existantes : requis, email, crédit, statuts, banque, principal unique (38.0253ms)
+  ✔ champs système, parent bancaire injecté et mauvais types refusés (36.4686ms)
+  ✔ email unique : contrainte serveur propagée sans nouveau dossier (6.8185ms)
+  ✔ absence de capacité, AAL1, session expirée, absence d’identité et anon refusés (43.3922ms)
+  ✔ restriction RLS additionnelle sur le parent reste opposable (28.1926ms)
+  ✔ restriction RLS enfant annule la mise à jour du parent (35.8934ms)
+  ✔ trigger ignorant UPDATE : zéro ligne détecté, aucun faux succès (37.5768ms)
+  ✔ migration rejouable sans modifier les policies ni les données (91.5303ms)
+✔ Dossier client atomique — PostgreSQL embarqué, sans Auth/MFA ou réseau réel (8361.8485ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9339.5973
+

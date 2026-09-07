@@ -1,0 +1,23 @@
+{
+  "recordedAtUtc": "2026-09-07T05:20:33.9180736Z",
+  "baseRevision": "83f8c74ea83c81a2734ef9e086c2edd211573ebe",
+  "files": [
+    {
+      "path": "supabase/migrations/20260907044811_enregistrer_dossier_client_atomique.sql",
+      "sha256": "0b87f4df5de4e59c7c7252550018c92d923d978f356289109c142b417c31cb0f"
+    },
+    {
+      "path": "supabase/tests/fixtures/customer-dossier-baseline.sql",
+      "sha256": "03a5e2dfe914a3c8db795c25907b012ac35ddf50f092c66afc671f88eaffa0f3"
+    },
+    {
+      "path": "tests/clients/customer-dossier.node.mjs",
+      "sha256": "0e6aac208e63d7d43d19db8cca45c45fa6d1c9b961063acf3bc09f421e77553e"
+    }
+  ],
+  "testCommand": "node --test --test-reporter=tap tests/clients/customer-dossier.node.mjs",
+  "tests": 23,
+  "passed": 23,
+  "failed": 0,
+  "environment": "PGlite disposable; identity/capability/session fixtures; no real Auth/MFA or remote connections"
+}

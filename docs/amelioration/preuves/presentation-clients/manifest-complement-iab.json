@@ -1,0 +1,127 @@
+{
+  "generatedUtc": "2026-09-07T06:18:47.110215+00:00",
+  "method": "Capture native CUA viewport, JPEG réel, aucun recadrage ni retouche",
+  "scope": "Présentation avec fixtures. Aucun enregistrement DB.",
+  "files": [
+    {
+      "file": "06-detail-desktop.jpg",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3f2e663b2c881e38c25a0557ea90a423929f8a875135b358d6404a3bb3371137",
+      "modifiedUtc": "2026-09-07T06:07:07.106425+00:00"
+    },
+    {
+      "file": "07-transactions-desktop.jpg",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1b98cfd5158f7b41483543b030e7bd862e31e41005d1b2d34232066aa9e9a5b8",
+      "modifiedUtc": "2026-09-07T06:07:07.473002+00:00"
+    },
+    {
+      "file": "08-modification-credit-zero-desktop.jpg",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "e1ee079a720ddc13d622f4db0a699b1771cb6fff9909997875afb6a03c1327a0",
+      "modifiedUtc": "2026-09-07T06:07:10.715244+00:00"
+    },
+    {
+      "file": "09-modification-mobile-haut.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "84489889b58571f05f8314e3426f7eded3013555d4828355304e73c6bd488267",
+      "modifiedUtc": "2026-09-07T06:08:58.925436+00:00"
+    },
+    {
+      "file": "10-modification-mobile-bas.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "1091f894f8213509b64d441f4b48fc8167af5c5593171d82a862147adbd5a9bf",
+      "modifiedUtc": "2026-09-07T06:05:07.071320+00:00"
+    },
+    {
+      "file": "11-liste-mobile.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "991dcd7f867765e29538c50d83d23b7d176a7b2ecc632f69a77eb9600f41b39f",
+      "modifiedUtc": "2026-09-07T06:18:02.174067+00:00"
+    },
+    {
+      "file": "12-detail-mobile-haut.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "a49acaaf1abf5ac729cbbfb9494b21124a6ae6d54c2ab75e2c6ebaf10196a2e4",
+      "modifiedUtc": "2026-09-07T06:18:05.303717+00:00"
+    },
+    {
+      "file": "13-detail-mobile-bas.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "8fefe09a10a881836ad80587ba7395dc4a48323ac7821429f65347e2a7bc72f3",
+      "modifiedUtc": "2026-09-07T06:05:36.908556+00:00"
+    },
+    {
+      "file": "14-liste-erreur-mobile.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "025c188eefab6b3e8caef2beb779e72723e2c9abc5654bec13cc25607239138c",
+      "modifiedUtc": "2026-09-07T06:06:13.738486+00:00"
+    },
+    {
+      "file": "15-detail-erreur-ventes-mobile.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "3e31299bb830ce87679c92208d9d3faf7b3a7eacfbc4c40b3cc64b0c7784721e",
+      "modifiedUtc": "2026-09-07T06:18:26.754289+00:00"
+    },
+    {
+      "file": "16-liste-vide-mobile.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "093cf56d17fc5041691a7a493416acdb6dbc669d99ba90b01f4a26235b048b6b",
+      "modifiedUtc": "2026-09-07T06:18:06.443389+00:00"
+    },
+    {
+      "file": "17-liste-desktop-finale.jpg",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b1135f8cd380e9f74ca1ddd635eae68817d9b67535330cd34576b0827e95a157",
+      "modifiedUtc": "2026-09-07T06:08:40.386914+00:00"
+    },
+    {
+      "file": "18-modification-mobile-conditions.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "c09fe0f69963f8f2839f6ae28a377c8070c44ae7590fc594e08efed8e3c99aa0",
+      "modifiedUtc": "2026-09-07T06:05:06.372441+00:00"
+    },
+    {
+      "file": "19-modification-mobile-banque.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "682e8ff88941fd72e57fc56062f9c636348ff68992f978b30a0d0a1fa9db5993",
+      "modifiedUtc": "2026-09-07T06:05:06.581825+00:00"
+    },
+    {
+      "file": "20-detail-mobile-banque.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 844,
+      "sha256": "f67595abc75cf46f01d901f2ca54847f454b7c5a9b644f370943101cc4e28f15",
+      "modifiedUtc": "2026-09-07T06:06:12.607090+00:00"
+    }
+  ]
+}

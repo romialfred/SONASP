@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+
+ Test Files  4 passed (4)
+      Tests  28 passed (28)
+   Start at  05:15:59
+   Duration  13.96s (transform 1.41s, setup 2.95s, import 3.47s, tests 6.76s, environment 9.96s)
+

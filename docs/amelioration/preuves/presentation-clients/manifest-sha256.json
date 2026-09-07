@@ -1,0 +1,91 @@
+{
+  "generatedAtUtc": "2026-09-07T05:33:28.7370149Z",
+  "origin": "http://127.0.0.1:5187",
+  "viewport": {
+    "height": 1024,
+    "width": 1536
+  },
+  "scope": "PRESENTATION_FIXTURES_SANS_PERSISTANCE",
+  "sourceHashLimitation": "Empreintes sources relevees apres les essais, pas preuve des octets compiles lors des captures; HMR desactive et code stabilise en parallele.",
+  "artifacts": [
+    {
+      "path": "F:\\Development\\SONASP\\docs\\amelioration\\preuves\\presentation-clients\\01-liste-desktop.png",
+      "bytes": 146995,
+      "lastWriteUtc": "2026-09-07T05:10:38.3008474Z",
+      "sha256": "253000cb8c2354c871edba264dc54d155704e93486ea891b495b6ac0f586d182"
+    },
+    {
+      "path": "F:\\Development\\SONASP\\docs\\amelioration\\preuves\\presentation-clients\\02-liste-pagination-desktop.png",
+      "bytes": 139787,
+      "lastWriteUtc": "2026-09-07T05:11:59.8413150Z",
+      "sha256": "0180283f528832d4f3b961bc38405ffa9d5f7a676d9c334685016d5bc18b78a9"
+    },
+    {
+      "path": "F:\\Development\\SONASP\\docs\\amelioration\\preuves\\presentation-clients\\03-creation-erreurs-requis-desktop.png",
+      "bytes": 151304,
+      "lastWriteUtc": "2026-09-07T05:13:44.1202063Z",
+      "sha256": "06f074b5af85387b2b5cf66aba8c67cfbf8482763870669aa72585b33f24bdff"
+    },
+    {
+      "path": "F:\\Development\\SONASP\\docs\\amelioration\\preuves\\presentation-clients\\04-creation-refus-persistance-desktop.png",
+      "bytes": 56371,
+      "lastWriteUtc": "2026-09-07T05:15:53.5024752Z",
+      "sha256": "c5d54d72e0cafacbace757d70a8e88b3e3c4270e9e7be3e40e9053fba4c8a9a6"
+    },
+    {
+      "path": "F:\\Development\\SONASP\\docs\\amelioration\\preuves\\presentation-clients\\05-creation-banque-desktop.png",
+      "bytes": 122558,
+      "lastWriteUtc": "2026-09-07T05:21:17.8934070Z",
+      "sha256": "bac9fccb636d93bce488ea1bf4756c1ef94948a6b6249b79f457de2ef83797e7"
+    },
+    {
+      "path": "F:\\Development\\SONASP\\docs\\amelioration\\preuves\\presentation-clients\\rapport-qa-independante.md",
+      "bytes": 8585,
+      "lastWriteUtc": "2026-09-07T05:33:05.7554229Z",
+      "sha256": "e7a3d0e51f7cb57ed21783f44759cd2b16c144e334e7f93cf49b22560dd26bdc"
+    },
+    {
+      "path": "F:\\Development\\SONASP\\docs\\amelioration\\preuves\\presentation-clients\\resultats-controles.csv",
+      "bytes": 3158,
+      "lastWriteUtc": "2026-09-07T05:33:05.7614229Z",
+      "sha256": "279c5fb3f747a19f76771213d078bc5694fd99e1b4a5f48e1b528cc4ab7d3766"
+    }
+  ],
+  "sourcesAfterTests": [
+    {
+      "path": "src/pages/customers/CustomerListing.tsx",
+      "lastWriteUtc": "2026-09-07T05:26:36.3049991Z",
+      "sha256": "424a421148bab386ed2f99d83c5d5d806683cac693032c7566257de5c33c601e"
+    },
+    {
+      "path": "src/pages/customers/CustomerForm.tsx",
+      "lastWriteUtc": "2026-09-07T05:23:14.7601076Z",
+      "sha256": "02adf0357e521e1654ce714b0b382e6136f9d0d8b20224f02e303daec1d5320c"
+    },
+    {
+      "path": "src/pages/customers/CustomerProfile.tsx",
+      "lastWriteUtc": "2026-09-07T05:23:14.7759767Z",
+      "sha256": "6c760b9164f82c3bfc05acc0033ea8b061a2d8d532c59a625ac08f26fcb711da"
+    },
+    {
+      "path": "src/components/customers/BankAccountForm.tsx",
+      "lastWriteUtc": "2026-09-07T05:15:07.5855709Z",
+      "sha256": "2b3a16e7c8ab8b4c52dbdcca4a9a0df453ad058c32c8eedbd2fd0600677a99dc"
+    },
+    {
+      "path": "src/pages/customers/customers.css",
+      "lastWriteUtc": "2026-09-07T05:05:53.8275225Z",
+      "sha256": "9a9054bed7b70e08ff1d0222225e12ca97363b6c4545708398c8c84c53aa6922"
+    },
+    {
+      "path": "docs/amelioration/preview-clients/README.md",
+      "lastWriteUtc": "2026-09-07T05:05:43.9463118Z",
+      "sha256": "97d4faf5ea6c7b6fe4351f8e725907b2a0e7a30a4280506187a6c73c0bf1ebf6"
+    },
+    {
+      "path": "docs/amelioration/preview-clients/vite.config.ts",
+      "lastWriteUtc": "2026-09-07T05:05:43.9181909Z",
+      "sha256": "716ce6564e345ef02738c31e135fe899136305349ca0a318e85cad91d0163c98"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "recordedAtUtc": "2026-09-07T06:45:08.821127+00:00",
+  "command": "npx eslint src/pages/customers/CustomerProfile.tsx",
+  "outputFile": "lint-profile-delta-final.txt",
+  "outputFileModifiedAtUtc": "2026-09-07T06:38:48.113621+00:00",
+  "exitCode": 0,
+  "observation": "Code de sortie observé via exec ; journal vide car ESLint ne produit aucune sortie en cas de réussite.",
+  "gitDiffCheckExitCode": 0,
+  "gitDiffCheckOutput": "git-diff-check.txt"
+}

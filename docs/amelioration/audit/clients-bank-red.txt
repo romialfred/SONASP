@@ -1,0 +1,1794 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ❯ src/components/customers/BankAccountForm.test.tsx (5 tests | 3 failed) 4366ms
+     × permet de saisir et conserver intégralement une banque hors catalogue 313ms
+     × conserve une banque hors catalogue lors de la réouverture 124ms
+     × change le compte principal sans muter les objets reçus 3285ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/customers/BankAccountForm.test.tsx > BankAccountForm > permet de saisir et conserver intégralement une banque hors catalogue
+TestingLibraryElementError: Found a label with the text of: /Nom de la banque/, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="space-y-4"
+    >
+      <div
+        class="flex items-center justify-between"
+      >
+        <div
+          class="flex items-center gap-2"
+        >
+          <svg
+            class="lucide lucide-building2 w-5 h-5 text-blue-600"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+            />
+            <path
+              d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+            />
+            <path
+              d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+            />
+            <path
+              d="M10 6h4"
+            />
+            <path
+              d="M10 10h4"
+            />
+            <path
+              d="M10 14h4"
+            />
+            <path
+              d="M10 18h4"
+            />
+          </svg>
+          <h3
+            class="text-lg font-semibold text-gray-900"
+          >
+            Comptes bancaires
+          </h3>
+          <span
+            class="text-sm text-gray-500"
+          >
+            (
+            1
+            )
+          </span>
+        </div>
+        <button
+          class="sn-btn sn-btn--sm flex items-center gap-2"
+          type="button"
+        >
+          <svg
+            class="lucide lucide-plus w-4 h-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+          Ajouter un compte
+        </button>
+      </div>
+      <div
+        class="space-y-3"
+      >
+        <div
+          class="sn-card transition-all border-amber-500 bg-amber-50/30"
+        >
+          <div
+            class="p-4"
+          >
+            <div
+              class="flex items-center justify-between cursor-pointer"
+            >
+              <div
+                class="flex items-center gap-3 flex-1"
+              >
+                <div
+                  class="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-100"
+                >
+                  <svg
+                    class="lucide lucide-building2 w-5 h-5 text-amber-600"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+                    />
+                    <path
+                      d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+                    />
+                    <path
+                      d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+                    />
+                    <path
+                      d="M10 6h4"
+                    />
+                    <path
+                      d="M10 10h4"
+                    />
+                    <path
+                      d="M10 14h4"
+                    />
+                    <path
+                      d="M10 18h4"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="flex-1"
+                >
+                  <div
+                    class="flex items-center gap-2"
+                  >
+                    <h4
+                      class="font-semibold text-gray-900"
+                    >
+                      Coris Bank International
+                    </h4>
+                    <span
+                      class="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full"
+                    >
+                      <svg
+                        class="lucide lucide-star w-3 h-3 fill-current"
+                        fill="none"
+                        height="24"
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        viewBox="0 0 24 24"
+                        wi...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:108:40
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/customers/BankAccountForm.test.tsx:24:37
+     22|     render(<Dossier />);
+     23|     const user = userEvent.setup();
+     24|     await user.selectOptions(screen.getByLabelText(/Nom de la banque/)…
+       |                                     ^
+     25|     await user.type(screen.getByLabelText('Nom de la banque hors catal…
+     26|     expect(screen.getByLabelText('Nom de la banque hors catalogue')).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/components/customers/BankAccountForm.test.tsx > BankAccountForm > conserve une banque hors catalogue lors de la réouverture
+TestingLibraryElementError: Unable to find a label with the text of: Nom de la banque hors catalogue
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="space-y-4"
+    >
+      <div
+        class="flex items-center justify-between"
+      >
+        <div
+          class="flex items-center gap-2"
+        >
+          <svg
+            class="lucide lucide-building2 w-5 h-5 text-blue-600"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+            />
+            <path
+              d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+            />
+            <path
+              d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+            />
+            <path
+              d="M10 6h4"
+            />
+            <path
+              d="M10 10h4"
+            />
+            <path
+              d="M10 14h4"
+            />
+            <path
+              d="M10 18h4"
+            />
+          </svg>
+          <h3
+            class="text-lg font-semibold text-gray-900"
+          >
+            Comptes bancaires
+          </h3>
+          <span
+            class="text-sm text-gray-500"
+          >
+            (
+            1
+            )
+          </span>
+        </div>
+        <button
+          class="sn-btn sn-btn--sm flex items-center gap-2"
+          type="button"
+        >
+          <svg
+            class="lucide lucide-plus w-4 h-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+          Ajouter un compte
+        </button>
+      </div>
+      <div
+        class="space-y-3"
+      >
+        <div
+          class="sn-card transition-all border-amber-500 bg-amber-50/30"
+        >
+          <div
+            class="p-4"
+          >
+            <div
+              class="flex items-center justify-between cursor-pointer"
+            >
+              <div
+                class="flex items-center gap-3 flex-1"
+              >
+                <div
+                  class="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-100"
+                >
+                  <svg
+                    class="lucide lucide-building2 w-5 h-5 text-amber-600"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+                    />
+                    <path
+                      d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+                    />
+                    <path
+                      d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+                    />
+                    <path
+                      d="M10 6h4"
+                    />
+                    <path
+                      d="M10 10h4"
+                    />
+                    <path
+                      d="M10 14h4"
+                    />
+                    <path
+                      d="M10 18h4"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="flex-1"
+                >
+                  <div
+                    class="flex items-center gap-2"
+                  >
+                    <h4
+                      class="font-semibold text-gray-900"
+                    >
+                      Banque de recette
+                    </h4>
+                    <span
+                      class="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full"
+                    >
+                      <svg
+                        class="lucide lucide-star w-3 h-3 fill-current"
+                        fill="none"
+                        height="24"
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        viewBox="0 0 24 24"
+                        width[39...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/customers/BankAccountForm.test.tsx:31:19
+     29|   it('conserve une banque hors catalogue lors de la réouverture', () =…
+     30|     render(<BankAccountForm banks={[{ ...bank, bankName: 'Banque de re…
+     31|     expect(screen.getByLabelText('Nom de la banque hors catalogue')).t…
+       |                   ^
+     32|   });
+     33|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/components/customers/BankAccountForm.test.tsx > BankAccountForm > change le compte principal sans muter les objets reçus
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Ouvrir le compte bancaire 2/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Comptes bancaires":
+  <h3
+    class="text-lg font-semibold text-gray-900"
+  />
+
+  Name "Coris Bank International":
+  <h4
+    class="font-semibold text-gray-900"
+  />
+
+  Name "Coris Bank International":
+  <h4
+    class="font-semibold text-gray-900"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Ajouter un compte":
+  <button
+    class="sn-btn sn-btn--sm flex items-center gap-2"
+    type="button"
+  />
+
+  Name "":
+  <button
+    class="sn-btn sn-btn--sm text-red-600 hover:bg-red-50"
+    type="button"
+  />
+
+  Name "":
+  <button
+    class="sn-btn sn-btn--sm text-red-600 hover:bg-red-50"
+    type="button"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm text-gray-600"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-gray-600"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-blue-800"
+  />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "":
+  <select
+    class="sn-input sn-input--select"
+    id=":re:"
+  />
+
+  Name "":
+  <select
+    class="sn-input sn-input--select"
+    id=":rg:"
+  />
+
+  Name "":
+  <select
+    class="sn-input sn-input--select"
+    id=":rh:"
+  />
+
+  --------------------------------------------------
+  option:
+
+  Name "Sélectionnez un pays":
+  <option
+    value=""
+  />
+
+  Name "Afghanistan":
+  <option
+    value="Afghanistan"
+  />
+
+  Name "Albania":
+  <option
+    value="Albania"
+  />
+
+  Name "Algeria":
+  <option
+    value="Algeria"
+  />
+
+  Name "Andorra":
+  <option
+    value="Andorra"
+  />
+
+  Name "Angola":
+  <option
+    value="Angola"
+  />
+
+  Name "Antigua and Barbuda":
+  <option
+    value="Antigua and Barbuda"
+  />
+
+  Name "Argentina":
+  <option
+    value="Argentina"
+  />
+
+  Name "Armenia":
+  <option
+    value="Armenia"
+  />
+
+  Name "Australia":
+  <option
+    value="Australia"
+  />
+
+  Name "Austria":
+  <option
+    value="Austria"
+  />
+
+  Name "Azerbaijan":
+  <option
+    value="Azerbaijan"
+  />
+
+  Name "Bahamas":
+  <option
+    value="Bahamas"
+  />
+
+  Name "Bahrain":
+  <option
+    value="Bahrain"
+  />
+
+  Name "Bangladesh":
+  <option
+    value="Bangladesh"
+  />
+
+  Name "Barbados":
+  <option
+    value="Barbados"
+  />
+
+  Name "Belarus":
+  <option
+    value="Belarus"
+  />
+
+  Name "Belgium":
+  <option
+    value="Belgium"
+  />
+
+  Name "Belize":
+  <option
+    value="Belize"
+  />
+
+  Name "Benin":
+  <option
+    value="Benin"
+  />
+
+  Name "Bhutan":
+  <option
+    value="Bhutan"
+  />
+
+  Name "Bolivia":
+  <option
+    value="Bolivia"
+  />
+
+  Name "Bosnia and Herzegovina":
+  <option
+    value="Bosnia and Herzegovina"
+  />
+
+  Name "Botswana":
+  <option
+    value="Botswana"
+  />
+
+  Name "Brazil":
+  <option
+    value="Brazil"
+  />
+
+  Name "Brunei":
+  <option
+    value="Brunei"
+  />
+
+  Name "Bulgaria":
+  <option
+    value="Bulgaria"
+  />
+
+  Name "Burkina Faso":
+  <option
+    value="Burkina Faso"
+  />
+
+  Name "Burundi":
+  <option
+    value="Burundi"
+  />
+
+  Name "Cabo Verde":
+  <option
+    value="Cabo Verde"
+  />
+
+  Name "Cambodia":
+  <option
+    value="Cambodia"
+  />
+
+  Name "Cameroon":
+  <option
+    value="Cameroon"
+  />
+
+  Name "Canada":
+  <option
+    value="Canada"
+  />
+
+  Name "Central African Republic":
+  <option
+    value="Central African Republic"
+  />
+
+  Name "Chad":
+  <option
+    value="Chad"
+  />
+
+  Name "Chile":
+  <option
+    value="Chile"
+  />
+
+  Name "China":
+  <option
+    value="China"
+  />
+
+  Name "Colombia":
+  <option
+    value="Colombia"
+  />
+
+  Name "Comoros":
+  <option
+    value="Comoros"
+  />
+
+  Name "Congo":
+  <option
+    value="Congo"
+  />
+
+  Name "Costa Rica":
+  <option
+    value="Costa Rica"
+  />
+
+  Name "Croatia":
+  <option
+    value="Croatia"
+  />
+
+  Name "Cuba":
+  <option
+    value="Cuba"
+  />
+
+  Name "Cyprus":
+  <option
+    value="Cyprus"
+  />
+
+  Name "Czech Republic":
+  <option
+    value="Czech Republic"
+  />
+
+  Name "Democratic Republic of the Congo":
+  <option
+    value="Democratic Republic of the Congo"
+  />
+
+  Name "Denmark":
+  <option
+    value="Denmark"
+  />
+
+  Name "Djibouti":
+  <option
+    value="Djibouti"
+  />
+
+  Name "Dominica":
+  <option
+    value="Dominica"
+  />
+
+  Name "Dominican Republic":
+  <option
+    value="Dominican Republic"
+  />
+
+  Name "East Timor (Timor-Leste)":
+  <option
+    value="East Timor (Timor-Leste)"
+  />
+
+  Name "Ecuador":
+  <option
+    value="Ecuador"
+  />
+
+  Name "Egypt":
+  <option
+    value="Egypt"
+  />
+
+  Name "El Salvador":
+  <option
+    value="El Salvador"
+  />
+
+  Name "Equatorial Guinea":
+  <option
+    value="Equatorial Guinea"
+  />
+
+  Name "Eritrea":
+  <option
+    value="Eritrea"
+  />
+
+  Name "Estonia":
+  <option
+    value="Estonia"
+  />
+
+  Name "Eswatini":
+  <option
+    value="Eswatini"
+  />
+
+  Name "Ethiopia":
+  <option
+    value="Ethiopia"
+  />
+
+  Name "Fiji":
+  <option
+    value="Fiji"
+  />
+
+  Name "Finland":
+  <option
+    value="Finland"
+  />
+
+  Name "France":
+  <option
+    value="France"
+  />
+
+  Name "Gabon":
+  <option
+    value="Gabon"
+  />
+
+  Name "Gambia":
+  <option
+    value="Gambia"
+  />
+
+  Name "Georgia":
+  <option
+    value="Georgia"
+  />
+
+  Name "Germany":
+  <option
+    value="Germany"
+  />
+
+  Name "Ghana":
+  <option
+    value="Ghana"
+  />
+
+  Name "Greece":
+  <option
+    value="Greece"
+  />
+
+  Name "Grenada":
+  <option
+    value="Grenada"
+  />
+
+  Name "Guatemala":
+  <option
+    value="Guatemala"
+  />
+
+  Name "Guinea":
+  <option
+    value="Guinea"
+  />
+
+  Name "Guinea-Bissau":
+  <option
+    value="Guinea-Bissau"
+  />
+
+  Name "Guyana":
+  <option
+    value="Guyana"
+  />
+
+  Name "Haiti":
+  <option
+    value="Haiti"
+  />
+
+  Name "Honduras":
+  <option
+    value="Honduras"
+  />
+
+  Name "Hong Kong":
+  <option
+    value="Hong Kong"
+  />
+
+  Name "Hungary":
+  <option
+    value="Hungary"
+  />
+
+  Name "Iceland":
+  <option
+    value="Iceland"
+  />
+
+  Name "India":
+  <option
+    value="India"
+  />
+
+  Name "Indonesia":
+  <option
+    value="Indonesia"
+  />
+
+  Name "Iran":
+  <option
+    value="Iran"
+  />
+
+  Name "Iraq":
+  <option
+    value="Iraq"
+  />
+
+  Name "Ireland":
+  <option
+    value="Ireland"
+  />
+
+  Name "Israel":
+  <option
+    value="Israel"
+  />
+
+  Name "Italy":
+  <option
+    value="Italy"
+  />
+
+  Name "Ivory Coast":
+  <option
+    value="Ivory Coast"
+  />
+
+  Name "Jamaica":
+  <option
+    value="Jamaica"
+  />
+
+  Name "Japan":
+  <option
+    value="Japan"
+  />
+
+  Name "Jordan":
+  <option
+    value="Jordan"
+  />
+
+  Name "Kazakhstan":
+  <option
+    value="Kazakhstan"
+  />
+
+  Name "Kenya":
+  <option
+    value="Kenya"
+  />
+
+  Name "Kiribati":
+  <option
+    value="Kiribati"
+  />
+
+  Name "Kosovo":
+  <option
+    value="Kosovo"
+  />
+
+  Name "Kuwait":
+  <option
+    value="Kuwait"
+  />
+
+  Name "Kyrgyzstan":
+  <option
+    value="Kyrgyzstan"
+  />
+
+  Name "Laos":
+  <option
+    value="Laos"
+  />
+
+  Name "Latvia":
+  <option
+    value="Latvia"
+  />
+
+  Name "Lebanon":
+  <option
+    value="Lebanon"
+  />
+
+  Name "Lesotho":
+  <option
+    value="Lesotho"
+  />
+
+  Name "Liberia":
+  <option
+    value="Liberia"
+  />
+
+  Name "Libya":
+  <option
+    value="Libya"
+  />
+
+  Name "Liechtenstein":
+  <option
+    value="Liechtenstein"
+  />
+
+  Name "Lithuania":
+  <option
+    value="Lithuania"
+  />
+
+  Name "Luxembourg":
+  <option
+    value="Luxembourg"
+  />
+
+  Name "Madagascar":
+  <option
+    value="Madagascar"
+  />
+
+  Name "Malawi":
+  <option
+    value="Malawi"
+  />
+
+  Name "Malaysia":
+  <option
+    value="Malaysia"
+  />
+
+  Name "Maldives":
+  <option
+    value="Maldives"
+  />
+
+  Name "Mali":
+  <option
+    value="Mali"
+  />
+
+  Name "Malta":
+  <option
+    value="Malta"
+  />
+
+  Name "Marshall Islands":
+  <option
+    value="Marshall Islands"
+  />
+
+  Name "Mauritania":
+  <option
+    value="Mauritania"
+  />
+
+  Name "Mauritius":
+  <option
+    value="Mauritius"
+  />
+
+  Name "Mexico":
+  <option
+    value="Mexico"
+  />
+
+  Name "Micronesia":
+  <option
+    value="Micronesia"
+  />
+
+  Name "Moldova":
+  <option
+    value="Moldova"
+  />
+
+  Name "Monaco":
+  <option
+    value="Monaco"
+  />
+
+  Name "Mongolia":
+  <option
+    value="Mongolia"
+  />
+
+  Name "Montenegro":
+  <option
+    value="Montenegro"
+  />
+
+  Name "Morocco":
+  <option
+    value="Morocco"
+  />
+
+  Name "Mozambique":
+  <option
+    value="Mozambique"
+  />
+
+  Name "Myanmar":
+  <option
+    value="Myanmar"
+  />
+
+  Name "Namibia":
+  <option
+    value="Namibia"
+  />
+
+  Name "Nauru":
+  <option
+    value="Nauru"
+  />
+
+  Name "Nepal":
+  <option
+    value="Nepal"
+  />
+
+  Name "Netherlands":
+  <option
+    value="Netherlands"
+  />
+
+  Name "New Zealand":
+  <option
+    value="New Zealand"
+  />
+
+  Name "Nicaragua":
+  <option
+    value="Nicaragua"
+  />
+
+  Name "Niger":
+  <option
+    value="Niger"
+  />
+
+  Name "Nigeria":
+  <option
+    value="Nigeria"
+  />
+
+  Name "North Korea":
+  <option
+    value="North Korea"
+  />
+
+  Name "North Macedonia":
+  <option
+    value="North Macedonia"
+  />
+
+  Name "Norway":
+  <option
+    value="Norway"
+  />
+
+  Name "Oman":
+  <option
+    value="Oman"
+  />
+
+  Name "Pakistan":
+  <option
+    value="Pakistan"
+  />
+
+  Name "Palau":
+  <option
+    value="Palau"
+  />
+
+  Name "Palestine":
+  <option
+    value="Palestine"
+  />
+
+  Name "Panama":
+  <option
+    value="Panama"
+  />
+
+  Name "Papua New Guinea":
+  <option
+    value="Papua New Guinea"
+  />
+
+  Name "Paraguay":
+  <option
+    value="Paraguay"
+  />
+
+  Name "Peru":
+  <option
+    value="Peru"
+  />
+
+  Name "Philippines":
+  <option
+    value="Philippines"
+  />
+
+  Name "Poland":
+  <option
+    value="Poland"
+  />
+
+  Name "Portugal":
+  <option
+    value="Portugal"
+  />
+
+  Name "Qatar":
+  <option
+    value="Qatar"
+  />
+
+  Name "Romania":
+  <option
+    value="Romania"
+  />
+
+  Name "Russia":
+  <option
+    value="Russia"
+  />
+
+  Name "Rwanda":
+  <option
+    value="Rwanda"
+  />
+
+  Name "Saint Kitts and Nevis":
+  <option
+    value="Saint Kitts and Nevis"
+  />
+
+  Name "Saint Lucia":
+  <option
+    value="Saint Lucia"
+  />
+
+  Name "Saint Vincent and the Grenadines":
+  <option
+    value="Saint Vincent and the Grenadines"
+  />
+
+  Name "Samoa":
+  <option
+    value="Samoa"
+  />
+
+  Name "San Marino":
+  <option
+    value="San Marino"
+  />
+
+  Name "Sao Tome and Principe":
+  <option
+    value="Sao Tome and Principe"
+  />
+
+  Name "Saudi Arabia":
+  <option
+    value="Saudi Arabia"
+  />
+
+  Name "Senegal":
+  <option
+    value="Senegal"
+  />
+
+  Name "Serbia":
+  <option
+    value="Serbia"
+  />
+
+  Name "Seychelles":
+  <option
+    value="Seychelles"
+  />
+
+  Name "Sierra Leone":
+  <option
+    value="Sierra Leone"
+  />
+
+  Name "Singapore":
+  <option
+    value="Singapore"
+  />
+
+  Name "Slovakia":
+  <option
+    value="Slovakia"
+  />
+
+  Name "Slovenia":
+  <option
+    value="Slovenia"
+  />
+
+  Name "Solomon Islands":
+  <option
+    value="Solomon Islands"
+  />
+
+  Name "Somalia":
+  <option
+    value="Somalia"
+  />
+
+  Name "South Africa":
+  <option
+    value="South Africa"
+  />
+
+  Name "South Korea":
+  <option
+    value="South Korea"
+  />
+
+  Name "South Sudan":
+  <option
+    value="South Sudan"
+  />
+
+  Name "Spain":
+  <option
+    value="Spain"
+  />
+
+  Name "Sri Lanka":
+  <option
+    value="Sri Lanka"
+  />
+
+  Name "Sudan":
+  <option
+    value="Sudan"
+  />
+
+  Name "Suriname":
+  <option
+    value="Suriname"
+  />
+
+  Name "Sweden":
+  <option
+    value="Sweden"
+  />
+
+  Name "Switzerland":
+  <option
+    value="Switzerland"
+  />
+
+  Name "Syria":
+  <option
+    value="Syria"
+  />
+
+  Name "Taiwan":
+  <option
+    value="Taiwan"
+  />
+
+  Name "Tajikistan":
+  <option
+    value="Tajikistan"
+  />
+
+  Name "Tanzania":
+  <option
+    value="Tanzania"
+  />
+
+  Name "Thailand":
+  <option
+    value="Thailand"
+  />
+
+  Name "Togo":
+  <option
+    value="Togo"
+  />
+
+  Name "Tonga":
+  <option
+    value="Tonga"
+  />
+
+  Name "Trinidad and Tobago":
+  <option
+    value="Trinidad and Tobago"
+  />
+
+  Name "Tunisia":
+  <option
+    value="Tunisia"
+  />
+
+  Name "Turkey":
+  <option
+    value="Turkey"
+  />
+
+  Name "Turkmenistan":
+  <option
+    value="Turkmenistan"
+  />
+
+  Name "Tuvalu":
+  <option
+    value="Tuvalu"
+  />
+
+  Name "Uganda":
+  <option
+    value="Uganda"
+  />
+
+  Name "Ukraine":
+  <option
+    value="Ukraine"
+  />
+
+  Name "United Arab Emirates":
+  <option
+    value="United Arab Emirates"
+  />
+
+  Name "United Kingdom":
+  <option
+    value="United Kingdom"
+  />
+
+  Name "United States":
+  <option
+    value="United States"
+  />
+
+  Name "Uruguay":
+  <option
+    value="Uruguay"
+  />
+
+  Name "Uzbekistan":
+  <option
+    value="Uzbekistan"
+  />
+
+  Name "Vanuatu":
+  <option
+    value="Vanuatu"
+  />
+
+  Name "Vatican City":
+  <option
+    value="Vatican City"
+  />
+
+  Name "Venezuela":
+  <option
+    value="Venezuela"
+  />
+
+  Name "Vietnam":
+  <option
+    value="Vietnam"
+  />
+
+  Name "Yemen":
+  <option
+    value="Yemen"
+  />
+
+  Name "Zambia":
+  <option
+    value="Zambia"
+  />
+
+  Name "Zimbabwe":
+  <option
+    value="Zimbabwe"
+  />
+
+  Name "Sélectionnez une banque":
+  <option
+    value=""
+  />
+
+  Name "Banque Atlantique Burkina Faso":
+  <option
+    value="Banque Atlantique Burkina Faso"
+  />
+
+  Name "Ecobank Burkina Faso":
+  <option
+    value="Ecobank Burkina Faso"
+  />
+
+  Name "Coris Bank International":
+  <option
+    value="Coris Bank International"
+  />
+
+  Name "Banque Commerciale du Burkina (BCB)":
+  <option
+    value="Banque Commerciale du Burkina (BCB)"
+  />
+
+  Name "Banque Internationale du Burkina (BIB)":
+  <option
+    value="Banque Internationale du Burkina (BIB)"
+  />
+
+  Name "Société Générale Burkina Faso":
+  <option
+    value="Société Générale Burkina Faso"
+  />
+
+  Name "Bank of Africa Burkina Faso":
+  <option
+    value="Bank of Africa Burkina Faso"
+  />
+
+  Name "UBA Burkina Faso":
+  <option
+    value="UBA Burkina Faso"
+  />
+
+  Name "Banque Agricole et Commerciale du Burkina (BACB)":
+  <option
+    value="Banque Agricole et Commerciale du Burkina (BACB)"
+  />
+
+  Name "Banque Sahélo-Saharienne pour l'Investissement et le Commerce (BSIC)":
+  <option
+    value="Banque Sahélo-Saharienne pour l'Investissement et le Commerce (BSIC)"
+  />
+
+  Name "Orabank Burkina Faso":
+  <option
+    value="Orabank Burkina Faso"
+  />
+
+  Name "NSIA Banque Burkina Faso":
+  <option
+    value="NSIA Banque Burkina Faso"
+  />
+
+  Name "Autre (à préciser ci-dessous)":
+  <option
+    value="__other__"
+  />
+
+  Name "Sélectionnez une devise":
+  <option
+    value=""
+  />
+
+  Name "USD — dollar américain":
+  <option
+    value="USD"
+  />
+
+  Name "EUR — euro":
+  <option
+    value="EUR"
+  />
+
+  Name "GBP — livre sterling":
+  <option
+    value="GBP"
+  />
+
+  Name "CHF — franc suisse":
+  <option
+    value="CHF"
+  />
+
+  Name "GNF — franc guinéen":
+  <option
+    value="GNF"
+  />
+
+  Name "XOF — franc CFA d’Afrique de l’Ouest":
+  <option
+    value="XOF"
+  />
+
+  Name "XAF — franc CFA d’Afrique centrale":
+  <option
+    value="XAF"
+  />
+
+  --------------------------------------------------
+  textbox:
+
+  Name "":
+  <input
+    class="sn-input"
+    id=":rf:"
+    placeholder="Ex. : Abidjan, Ouagadougou"
+    value="Ouagadougou"
+  />
+
+  Name "":
+  <input
+    class="sn-input"
+    id=":ri:"
+    placeholder="Numéro de compte"
+    value=""
+  />
+
+  Name "":
+  <input
+    class="sn-input"
+    id=":rj:"
+    placeholder="CI93 0076 2011 6238 5295 7"
+    value=""
+  />
+
+  Name "":
+  <input
+    class="sn-input"
+    id=":rk:"
+    placeholder="Ex. : SGBFCIAB"
+    value=""
+  />
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Définir comme compte bancaire principal":
+  <input
+    checked=""
+    class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+    id="primary-0"
+    type="checkbox"
+  />
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  <strong />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="space-y-4"
+    >
+      <div
+        class="flex items-center justify-between"
+      >
+        <div
+          class="flex items-center gap-2"
+        >
+          <svg
+            class="lucide lucide-building2 w-5 h-5 text-blue-600"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+            />
+            <path
+              d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+            />
+            <path
+              d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+            />
+            <path
+              d="M10 6h4"
+            />
+            <path
+              d="M10 10h4"
+            />
+            <path
+              d="M10 14h4"
+            />
+            <path
+              d="M10 18h4"
+            />
+          </svg>
+          <h3
+            class="text-lg font-semibold text-gray-900"
+          >
+            Comptes bancaires
+          </h3>
+          <span
+            class="text-sm text-gray-500"
+          >
+            (
+            2
+            )
+          </span>
+        </div>
+        <button
+          class="sn-btn sn-btn--sm flex items-center gap-2"
+          type="button"
+        >
+          <svg
+            class="lucide lucide-plus w-4 h-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+          Ajouter un compte
+        </button>
+      </div>
+      <div
+        class="space-y-3"
+      >
+        <div
+          class="sn-card transition-all border-amber-500 bg-amber-50/30"
+        >
+          <div
+            class="p-4"
+          >
+            <div
+              class="flex items-center justify-between cursor-pointer"
+            >
+              <div
+                class="flex items-center gap-3 flex-1"
+              >
+                <div
+                  class="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-100"
+                >
+                  <svg
+                    class="lucide lucide-building2 w-5 h-5 text-amber-600"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+                    />
+                    <path
+                      d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+                    />
+                    <path
+                      d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+                    />
+                    <path
+                      d="M10 6h4"
+                    />
+                    <path
+                      d="M10 10h4"
+                    />
+                    <path
+                      d="M10 14h4"
+                    />
+                    <path
+                      d="M10 18h4"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="flex-1"
+                >
+                  <div
+                    class="flex items-center gap-2"
+                  >
+                    <h4
+                      class="font-semibold text-gray-900"
+                    >
+                      Coris Bank International
+                    </h4>
+                    <span
+                      class="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full"
+                    >
+                      <svg
+                        class="lucide lucide-star w-3 h-3 fill-current"
+                        fill="none"
+                        height="24"
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        viewBox="0 0 24 24"
+                        wi...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/customers/BankAccountForm.test.tsx:39:34
+     37|     const change = vi.fn();
+     38|     render(<BankAccountForm banks={[original, second]} onChange={chang…
+     39|     await userEvent.click(screen.getByRole('button', { name: /Ouvrir l…
+       |                                  ^
+     40|     await userEvent.click(screen.getByLabelText('Définir comme compte …
+     41|     expect(original.isPrimary).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  04:49:38
+   Duration  10.77s (transform 560ms, setup 1.26s, import 1.18s, tests 4.37s, environment 3.31s)
+

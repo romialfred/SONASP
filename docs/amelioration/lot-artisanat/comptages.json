@@ -1,0 +1,69 @@
+{
+  "portals": 25,
+  "screensActions": 502,
+  "distinctRoutes": 58,
+  "planRows": 502,
+  "portalsNames": [
+    "Administrateur",
+    "Agent collecteur",
+    "Comptoir",
+    "Finances · DGI",
+    "Mines · DGMG",
+    "Public / identité / alias à qualifier",
+    "SONASP"
+  ],
+  "types": [
+    {
+      "Name": "ACTION_JSX",
+      "Count": 333
+    },
+    {
+      "Name": "COMPOSANT_DETAIL",
+      "Count": 6
+    },
+    {
+      "Name": "COMPOSANT_FORMULAIRE",
+      "Count": 7
+    },
+    {
+      "Name": "COMPOSANT_LISTE",
+      "Count": 1
+    },
+    {
+      "Name": "DASHBOARD_OU_SECTION",
+      "Count": 2
+    },
+    {
+      "Name": "DETAIL_ROUTE",
+      "Count": 9
+    },
+    {
+      "Name": "ENTREE_MENU",
+      "Count": 44
+    },
+    {
+      "Name": "FORMULAIRE_HTML",
+      "Count": 17
+    },
+    {
+      "Name": "FORMULAIRE_ROUTE",
+      "Count": 13
+    },
+    {
+      "Name": "MODALE_JSX",
+      "Count": 10
+    },
+    {
+      "Name": "PAGE_A_QUALIFIER",
+      "Count": 22
+    },
+    {
+      "Name": "SOUS_FORMULAIRE_PIECE_JOINTE",
+      "Count": 7
+    },
+    {
+      "Name": "TABLE_LISTE",
+      "Count": 31
+    }
+  ]
+}

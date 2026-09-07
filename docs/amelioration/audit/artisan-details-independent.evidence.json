@@ -1,0 +1,57 @@
+{
+  "evidence_id": "AUD-ART-DETAIL-01",
+  "date_utc": "2026-09-07T06:17:02.648Z",
+  "finished_at_utc": "2026-09-07T06:17:24.300Z",
+  "evidence_kind": "COMPOSANTS_JSDOM_SERVICES_AUTH_SIMULES",
+  "environment": {
+    "name": "Vitest jsdom local",
+    "production": false,
+    "network_backend": false,
+    "auth_simulated": true,
+    "actual_browser": false
+  },
+  "application": {
+    "baseline_commit": "83f8c74ea83c81a2734ef9e086c2edd211573ebe",
+    "integrated_release_commit": null,
+    "source_file_hashes": {
+      "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx": "cc8827f05897cf6b36e50c8881b399c99b6aa537a577f1d57dcab8b446344a28",
+      "docs/amelioration/audit/artisan-details-independent.test.tsx": "9aa6c51190c9cfddcdfc778fcd4148db6158854c06b292645227408b84644fb3",
+      "src/pages/artisan-minier/ArtisanMinierDetails.tsx": "a77682eb925fff2cc921453fe186ed87e8ecf9910061ec33b272d82994bd1088",
+      "src/pages/artisan-minier/artisanRow.ts": "28b53c839e62eaf43bc31d88b7ced64d23a78f466811a81013a352e82ebe4507",
+      "src/pages/artisan-minier/artisan-details.css": "ffa8074e4073f1d90c5e9fefbefaf13a9e900123cf49f9d9f02bd47b51001d44",
+      "src/components/artisan/ArtisanDossierSummary.tsx": "aa23242c7b3e8987a1385df870abe1338e44d668af0b6b5cfd3223f8eba1ed9a",
+      "src/lib/collectorAccess.ts": "61f1efc4a055e55685a06f790dd5b2270ce7f53b8aad0df466bcabc8fd677170",
+      "src/lib/routeAccessRegistry.ts": "9fa0b5fc87d9a1b21961960be4e0d88d0f806cdee4fa5c6a2bb364e54852c01d",
+      "src/utils/artisanIdentity.ts": "0bef4bd34e4beeb9e50e75dd9b98d9164f0e25d7dfca81aaabf368faedd7d06a",
+      "src/components/ui/sn/index.tsx": "59a4619da4f7bab878eee262281eafafcab350124454d12fc5e9ef4acab8a92f",
+      "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+      "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+      "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+    },
+    "stable_inputs_during_execution": true
+  },
+  "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=1 --reporter=verbose src/pages/artisan-minier/ArtisanMinierDetails.test.tsx docs/amelioration/audit/artisan-details-independent.test.tsx",
+  "exit_code": 0,
+  "test_result": "RÉUSSI",
+  "summary": {
+    "passed": 38,
+    "test_files": 2,
+    "independent_cases": 6
+  },
+  "artifacts": [
+    {
+      "path": "docs/amelioration/audit/artisan-details-independent.txt",
+      "sha256": "bdbe762411bdf8402890c0e5099d7f3c5171e4afe971cf22f6cd87c9ca0ecd46",
+      "kind": "vitest-verbose-output"
+    }
+  ],
+  "executor": "audit_independant",
+  "limitations": [
+    "Services de lecture et Auth simulés ; erreurs/réponses tardives injectées par les tests.",
+    "Pas de parcours navigateur, formulaire, écriture ou rechargement depuis une base réelle.",
+    "Aucun test de permissions serveur, MFA, document ou paiement exécuté par cette preuve.",
+    "Lot limité au détail et ses sources annexes ; ne valide pas les autres modules Artisan."
+  ],
+  "ui_form_validated": false,
+  "deployment_authorised_by_this_evidence": false
+}

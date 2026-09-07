@@ -1,0 +1,36 @@
+{
+  "scope": "Inventaire initial, pas denominator de formulaires metier distincts",
+  "authenticatedAccountTypes": 13,
+  "visualIdentities": 12,
+  "portalIdentifiersIncludingPublicGroup": 14,
+  "canonicalModules": 21,
+  "observedModuleGroups": 30,
+  "candidatePortalModulePairs": 139,
+  "detectionsByType": {
+    "ACTION_JSX": 1455,
+    "TABLE_LISTE": 148,
+    "COMPOSANT_DETAIL": 18,
+    "COMPOSANT_LISTE": 2,
+    "PAGE_A_QUALIFIER": 105,
+    "DETAIL_ROUTE": 29,
+    "FORMULAIRE_ROUTE": 44,
+    "DASHBOARD_OU_SECTION": 23,
+    "REDIRECTION": 10,
+    "FRONTIERE_ROUTEUR": 1,
+    "FORMULAIRE_HTML": 53,
+    "SOUS_FORMULAIRE_PIECE_JOINTE": 19,
+    "COMPOSANT_FORMULAIRE": 23,
+    "COMPOSANT_MODALE": 17,
+    "MODALE_JSX": 77,
+    "ENTREE_MENU": 120,
+    "MOTIF_AUTORISATION_A_QUALIFIER": 2
+  },
+  "realTestStatuses": {
+    "NON EXÉCUTÉ": 2146,
+    "BLOQUÉ": 12
+  },
+  "validatedForms": 0,
+  "realDatabaseTestRecordIds": [],
+  "productionDeployment": false,
+  "globalScore": null
+}

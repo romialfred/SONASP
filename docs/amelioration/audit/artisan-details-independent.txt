@@ -1,0 +1,48 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > carteActive > retient la carte valide la plus récente 4ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > carteActive > retombe sur la plus récente si aucune n’est valide 3ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > carteActive > compose le nom selon le type de personne 1ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > présente l’identité, les indicateurs et les alertes du dossier 667ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > navigue entre les sections du dossier 632ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > filtre les ventes du dossier 333ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > reste consultable mais ne présente aucun faux zéro quand les sources annexes échouent 633ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > reprend uniquement les ventes et conserve l’erreur indépendante des infractions 309ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > conserve l’état indisponible après une reprise infructueuse puis récupère les infractions 469ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > affiche les zéros et états vides seulement après une lecture vide réussie 494ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > affiche le dossier sans attendre une source lente et distingue son chargement d’un zéro 349ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > ignore les réponses tardives de l’artisan précédent après un changement de dossier 509ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand id change 403ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand organization_id change 329ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand mining_company_id change 408ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand access_role_id change 335ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand role change 339ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand account_type change 277ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand organization_type change 225ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand is_active change 193ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand capabilities change 179ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand module_codes change 194ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand site_ids change 181ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand responsibilities change 207ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand module_domains change 203ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand access_portal_id change 198ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand access_portal_code change 181ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > efface immédiatement le dossier et recharge les trois sources quand actor_category_code change 196ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > ignore une identité et des sources tardives après changement de contexte sans changement de rôle 155ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > quitte l’onglet Infractions et masque ses données lors du passage au contexte Collecteur 204ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > affiche un état vide si l’artisan n’existe pas 26ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx > ArtisanMinierDetails > rend le dossier Collecteur consultatif et ne charge pas les infractions 137ms
+ ✓ docs/amelioration/audit/artisan-details-independent.test.tsx > Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle > change organization_id seul : masque/recharge le même dossier et rejette les anciennes annexes 421ms
+ ✓ docs/amelioration/audit/artisan-details-independent.test.tsx > Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle > change mining_company_id seul : masque/recharge le même dossier et rejette les anciennes annexes 172ms
+ ✓ docs/amelioration/audit/artisan-details-independent.test.tsx > Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle > change access_role_id seul : masque/recharge le même dossier et rejette les anciennes annexes 160ms
+ ✓ docs/amelioration/audit/artisan-details-independent.test.tsx > Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle > ignore une identité de l’ancien utilisateur qui répond après le nouveau 67ms
+ ✓ docs/amelioration/audit/artisan-details-independent.test.tsx > Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle > bascule d’Infractions vers Informations quand le contexte devient collecteur 202ms
+ ✓ docs/amelioration/audit/artisan-details-independent.test.tsx > Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle > une reprise de ventes A échouant après navigation B ne rend pas B indisponible 150ms
+
+ Test Files  2 passed (2)
+      Tests  38 passed (38)
+   Start at  06:17:05
+   Duration  18.87s (transform 962ms, setup 1.41s, import 2.21s, tests 10.16s, environment 4.35s)
+
+

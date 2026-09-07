@@ -1,0 +1,53 @@
+{
+  "evidence_id": "AUD-CLI-SQL-01",
+  "scenario_id": "CLI-TECH-BACKEND-INDEPENDANT",
+  "date_utc": "2026-09-07T05:23:51.663Z",
+  "finished_at_utc": "2026-09-07T05:24:02.526Z",
+  "evidence_kind": "SQL_POSTGRES_EMBARQUE_AUTH_SIMULEE",
+  "environment": {
+    "name": "PGlite en mémoire jetable",
+    "production": false,
+    "network_backend": false,
+    "auth_simulated": true
+  },
+  "application": {
+    "baseline_commit": "83f8c74ea83c81a2734ef9e086c2edd211573ebe",
+    "integrated_release_commit": null,
+    "source_file_hashes": {
+      "supabase/migrations/20260907044811_enregistrer_dossier_client_atomique.sql": "0b87f4df5de4e59c7c7252550018c92d923d978f356289109c142b417c31cb0f",
+      "supabase/migrations/20260905000000_durcir_rls_clients.sql": "718d238ae5f30b1a837b20946816d157c6b95644b52d233674824755046a7a6c",
+      "supabase/migrations/20260823180000_capacites_et_separation_fonctions.sql": "d527e6bd8fcf72233c48631499ca562778f185875f4bbe46c8c4607480f7cc5f",
+      "supabase/tests/fixtures/customer-dossier-baseline.sql": "03a5e2dfe914a3c8db795c25907b012ac35ddf50f092c66afc671f88eaffa0f3",
+      "tests/clients/customer-dossier.node.mjs": "0e6aac208e63d7d43d19db8cca45c45fa6d1c9b961063acf3bc09f421e77553e",
+      "docs/amelioration/audit/customer-dossier-independent.node.mjs": "7bf511ae8a0e5662ce25b279c444fc296ad5a20b004aeea7c882519af3157624"
+    },
+    "stable_inputs_during_execution": true
+  },
+  "command": "node --test tests/clients/customer-dossier.node.mjs docs/amelioration/audit/customer-dossier-independent.node.mjs",
+  "exit_code": 0,
+  "test_result": "RÉUSSI",
+  "summary": {
+    "tests_including_parent_tests": 32,
+    "passed": 32,
+    "failed": 0
+  },
+  "artifacts": [
+    {
+      "path": "docs/amelioration/audit/backend-independent.tap.txt",
+      "sha256": "5eb5dd4719383ce96aa5b24c0c0d2252586abe63fbd462a6bb40d1064a5b255a",
+      "kind": "node-test-output"
+    }
+  ],
+  "expected": "Transaction client et banques atomique, droits RLS du demandeur conservés, IDs et FK historiques préservés, types invalides refusés.",
+  "observed": "Voir les assertions nommées du rapport brut ; aucune affirmation UI, MFA ou API réelle.",
+  "executor": "audit_independant",
+  "limitations": [
+    "Schéma PGlite fixture, pas une introspection du schéma live.",
+    "Auth, AAL2, capacité et session simulés.",
+    "Pas de concurrence multi-connexion ni de reprise après réponse réseau perdue.",
+    "Aucun enregistrement créé depuis l’interface.",
+    "Version de travail non committée ; réexaminer à l’intégration."
+  ],
+  "ui_form_validated": false,
+  "deployment_authorised_by_this_evidence": false
+}

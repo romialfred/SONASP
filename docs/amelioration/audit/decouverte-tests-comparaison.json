@@ -1,0 +1,373 @@
+{
+  "recordedAtUtc": "2026-09-07T06:35:03.519Z",
+  "success": true,
+  "totalFiles": 354,
+  "totalTests": 2634,
+  "passedTests": 2634,
+  "failedTests": 0,
+  "pendingTests": 0,
+  "failedSuites": [],
+  "archivedSuites": [],
+  "referenceFiles": 352,
+  "referenceTests": 2599,
+  "missingSuites": [],
+  "addedSuites": [
+    "src/lib/customerCountryLabels.test.ts",
+    "docs/amelioration/audit/artisan-details-independent.test.tsx"
+  ],
+  "missingCases": [
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails reste consultable quand les sources annexes échouent",
+      "count": 1
+    }
+  ],
+  "addedCases": [
+    {
+      "path": "src/lib/customerCountryLabels.test.ts",
+      "fullName": "Libellés des pays clients traduit les libellés sans changer les valeurs du contrat existant",
+      "count": 1
+    },
+    {
+      "path": "src/lib/customerCountryLabels.test.ts",
+      "fullName": "Libellés des pays clients préserve les libellés historiques français et les valeurs hors catalogue",
+      "count": 1
+    },
+    {
+      "path": "docs/amelioration/audit/artisan-details-independent.test.tsx",
+      "fullName": "Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle change organization_id seul : masque/recharge le même dossier et rejette les anciennes annexes",
+      "count": 1
+    },
+    {
+      "path": "docs/amelioration/audit/artisan-details-independent.test.tsx",
+      "fullName": "Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle change mining_company_id seul : masque/recharge le même dossier et rejette les anciennes annexes",
+      "count": 1
+    },
+    {
+      "path": "docs/amelioration/audit/artisan-details-independent.test.tsx",
+      "fullName": "Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle change access_role_id seul : masque/recharge le même dossier et rejette les anciennes annexes",
+      "count": 1
+    },
+    {
+      "path": "docs/amelioration/audit/artisan-details-independent.test.tsx",
+      "fullName": "Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle ignore une identité de l’ancien utilisateur qui répond après le nouveau",
+      "count": 1
+    },
+    {
+      "path": "docs/amelioration/audit/artisan-details-independent.test.tsx",
+      "fullName": "Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle bascule d’Infractions vers Informations quand le contexte devient collecteur",
+      "count": 1
+    },
+    {
+      "path": "docs/amelioration/audit/artisan-details-independent.test.tsx",
+      "fullName": "Audit indépendant du détail Artisan — lectures simulées, sans Auth/DB réelle une reprise de ventes A échouant après navigation B ne rend pas B indisponible",
+      "count": 1
+    },
+    {
+      "path": "docs/amelioration/audit/customer-frontend-independent.test.tsx",
+      "fullName": "Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle traduit les huit graphies historiques corrigées sans changer ni perdre une valeur du catalogue API",
+      "count": 1
+    },
+    {
+      "path": "docs/amelioration/audit/customer-frontend-independent.test.tsx",
+      "fullName": "Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle ne propose pas le catalogue guinéen pour la Guinée-Bissau ou la Guinée équatoriale",
+      "count": 1
+    },
+    {
+      "path": "src/components/customers/BankAccountForm.test.tsx",
+      "fullName": "BankAccountForm affiche les banques ivoiriennes avec la valeur historique anglaise du pays",
+      "count": 1
+    },
+    {
+      "path": "src/components/customers/BankAccountForm.test.tsx",
+      "fullName": "BankAccountForm ne propose pas les banques de Guinée à un compte de Papouasie-Nouvelle-Guinée",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails reste consultable mais ne présente aucun faux zéro quand les sources annexes échouent",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails reprend uniquement les ventes et conserve l’erreur indépendante des infractions",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails conserve l’état indisponible après une reprise infructueuse puis récupère les infractions",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails affiche les zéros et états vides seulement après une lecture vide réussie",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails affiche le dossier sans attendre une source lente et distingue son chargement d’un zéro",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails ignore les réponses tardives de l’artisan précédent après un changement de dossier",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand id change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand organization_id change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand mining_company_id change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand access_role_id change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand role change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand account_type change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand organization_type change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand is_active change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand capabilities change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand module_codes change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand site_ids change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand responsibilities change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand module_domains change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand access_portal_id change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand access_portal_code change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails efface immédiatement le dossier et recharge les trois sources quand actor_category_code change",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails ignore une identité et des sources tardives après changement de contexte sans changement de rôle",
+      "count": 1
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "fullName": "ArtisanMinierDetails quitte l’onglet Infractions et masque ses données lors du passage au contexte Collecteur",
+      "count": 1
+    }
+  ],
+  "sourceFingerprint": {
+    "before": "a1b9bd0415bbaefaf314c9470d85b905c2b3cb923d2b02b38833404c116095d3",
+    "after": "a7693a0c3fd9e5a285315defd1435aebaaf9352408a9d99f466e80dd780c8c68",
+    "stable": false,
+    "beforeCount": 1485,
+    "afterCount": 1485,
+    "changedSources": [
+      {
+        "path": "docs/amelioration/audit/customer-frontend-independent.test.tsx",
+        "sha256Before": "11e974154514f0980bd80bfdc2d65d4f373b949d10123e5ed9b4a69ad48df866",
+        "sha256After": "eeefccb14b4244671fb71af152cb559fe3915f87ac92928f73958a78394fa385"
+      },
+      {
+        "path": "docs/amelioration/audit/run-frontend-audit.mjs",
+        "sha256Before": "a95d08d2f9c475597402d1c190f8f462fb6195288a08be926e83e8ad298d26a5",
+        "sha256After": "8b3ef56ba0f1c20af30b13296dfb9e5d3b9fbd596413500d029160e9729a8d59"
+      },
+      {
+        "path": "src/pages/customers/CustomerProfile.tsx",
+        "sha256Before": "78948d38fb92650a6ca105b3750237cf138b4faea78b3c223f8c809243f8b55e",
+        "sha256After": "baddbfc3e887bb8f081612d31279658397640bffc38e0eb9ca89b708cfffa089"
+      }
+    ],
+    "missingSources": [],
+    "addedSources": []
+  },
+  "artifacts": [
+    {
+      "path": "docs/amelioration/audit/decouverte-tests-vitest.json",
+      "sha256": "19dd55e7c18ff5a26377a85b4f0ef9d90e50b94c7fcb1a0ca0e809eef24f9162"
+    },
+    {
+      "path": "docs/amelioration/audit/decouverte-tests-vitest.log",
+      "sha256": "32c4505e20a6bd160652967745c27f25dd69b67654a69212ecc0725de07f2ee2"
+    },
+    {
+      "path": "docs/amelioration/audit/decouverte-tests-reference.json",
+      "sha256": "8bc1ac8b62b9b252d75a12c02364371421bf756916258fbe82828a78f496bf97"
+    },
+    {
+      "path": "docs/amelioration/audit/decouverte-tests-source-avant.json",
+      "sha256": "0e75bd3316e808bad4a6bf556d2ef52047243c0c20266523bcbd18d1d16ec57a"
+    },
+    {
+      "path": "docs/amelioration/audit/decouverte-tests-source-apres.json",
+      "sha256": "01749d6a0b2b8b7e84a914ccf031c719c522c93c5ca872f3aae9070aaf979b12"
+    }
+  ],
+  "reviewedCaseReplacements": [
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "oldFullName": "ArtisanMinierDetails reste consultable quand les sources annexes échouent",
+      "newFullName": "ArtisanMinierDetails reste consultable mais ne présente aucun faux zéro quand les sources annexes échouent",
+      "reason": "Le scénario conserve la consultation du dossier après un échec annexe, mais remplace l’attente erronée de liste vide par les états indisponibles et ajoute les assertions de non-affichage des faux zéros et de reprise.",
+      "sourceEvidence": "git diff -- src/pages/artisan-minier/ArtisanMinierDetails.test.tsx; blocs de scénario relus"
+    }
+  ],
+  "unreviewedMissingCases": [],
+  "canonicalScopePreserved": true,
+  "postDeltaTargetedEvidence": {
+    "path": "docs/amelioration/audit/frontend-independent.evidence.json",
+    "sha256": "53ba42cea1ac66b6c6eedbcd9db4e5ecb4ecbc5c3d47e0886575fd5f970c4d8e",
+    "startedAtUtc": "2026-09-07T06:26:50.703Z",
+    "finishedAtUtc": "2026-09-07T06:28:02.252Z",
+    "exitCode": 0,
+    "passed": 46,
+    "testFiles": 6,
+    "stableInputsDuringExecution": true,
+    "matchingCurrentInputs": [
+      {
+        "path": "src/pages/customers/CustomerForm.test.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/pages/customers/CustomerViews.test.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/components/customers/BankAccountForm.test.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/services/customerDossierService.test.ts",
+        "matching": true
+      },
+      {
+        "path": "src/lib/customerCountryLabels.test.ts",
+        "matching": true
+      },
+      {
+        "path": "docs/amelioration/audit/customer-frontend-independent.test.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/pages/customers/CustomerForm.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/pages/customers/CustomerProfile.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/pages/customers/CustomerListing.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/components/customers/BankAccountForm.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/services/customerDossierService.ts",
+        "matching": true
+      },
+      {
+        "path": "src/lib/customerCountryLabels.ts",
+        "matching": true
+      },
+      {
+        "path": "src/constants/countries.ts",
+        "matching": true
+      },
+      {
+        "path": "src/pages/customers/customers.css",
+        "matching": true
+      },
+      {
+        "path": "src/types/database.ts",
+        "matching": true
+      },
+      {
+        "path": "src/components/ui/sn/index.tsx",
+        "matching": true
+      },
+      {
+        "path": "src/lib/routeAccessRegistry.ts",
+        "matching": true
+      },
+      {
+        "path": "src/hooks/useArtisanUnsavedChanges.ts",
+        "matching": true
+      },
+      {
+        "path": "src/hooks/useAutoRefresh.ts",
+        "matching": true
+      },
+      {
+        "path": "src/test/setup.ts",
+        "matching": true
+      },
+      {
+        "path": "vitest.config.ts",
+        "matching": true
+      },
+      {
+        "path": "package-lock.json",
+        "matching": true
+      }
+    ],
+    "artifactsMatching": [
+      {
+        "path": "docs/amelioration/audit/frontend-independent.txt",
+        "matching": true
+      }
+    ],
+    "limits": "Composants jsdom, Auth/services/layout simulés ; ne représente ni une nouvelle suite globale sur un arbre figé, ni une recette navigateur/API/DB réelle."
+  }
+}

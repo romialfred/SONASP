@@ -1,0 +1,7 @@
+warning: in the working copy of 'src/components/customers/BankAccountForm.test.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/artisan-minier/ArtisanMinierDetails.test.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/artisan-minier/ArtisanMinierDetails.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/customers/CustomerProfile.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/types/database.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'supabase/migrations.catalogue.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'vitest.config.ts', LF will be replaced by CRLF the next time Git touches it

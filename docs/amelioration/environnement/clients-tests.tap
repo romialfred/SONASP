@@ -1,0 +1,149 @@
+TAP version 13
+# Subtest: Dossier client atomique — PostgreSQL embarqué, sans Auth/MFA ou réseau réel
+    # Subtest: RPC invoker, rôle API autorisé, anon interdit
+    ok 1 - RPC invoker, rôle API autorisé, anon interdit
+      ---
+      duration_ms: 15.4259
+      type: 'test'
+      ...
+    # Subtest: création : tous les champs, zéro crédit, banque principale, normalisation
+    ok 2 - création : tous les champs, zéro crédit, banque principale, normalisation
+      ---
+      duration_ms: 68.5267
+      type: 'test'
+      ...
+    # Subtest: édition : identité bancaire, dates de création et champs hors formulaire conservés
+    ok 3 - édition : identité bancaire, dates de création et champs hors formulaire conservés
+      ---
+      duration_ms: 39.4952
+      type: 'test'
+      ...
+    # Subtest: statut et conditions de paiement explicitement null : création et édition sans faux défaut
+    ok 4 - statut et conditions de paiement explicitement null : création et édition sans faux défaut
+      ---
+      duration_ms: 33.0232
+      type: 'test'
+      ...
+    # Subtest: clés statut et conditions de paiement absentes : rejet sans effacement implicite
+    ok 5 - clés statut et conditions de paiement absentes : rejet sans effacement implicite
+      ---
+      duration_ms: 39.3069
+      type: 'test'
+      ...
+    # Subtest: conditions, pays et devise historiques hors listes UI conservés selon les colonnes texte existantes
+    ok 6 - conditions, pays et devise historiques hors listes UI conservés selon les colonnes texte existantes
+      ---
+      duration_ms: 24.5945
+      type: 'test'
+      ...
+    # Subtest: banque retirée : désactivation et conservation des références paiement/prévente
+    ok 7 - banque retirée : désactivation et conservation des références paiement/prévente
+      ---
+      duration_ms: 51.6289
+      type: 'test'
+      ...
+    # Subtest: liste vide autorisée : création sans banque, retrait sans suppression
+    ok 8 - liste vide autorisée : création sans banque, retrait sans suppression
+      ---
+      duration_ms: 23.1867
+      type: 'test'
+      ...
+    # Subtest: échec SQL sur le second enfant : création entièrement annulée
+    ok 9 - échec SQL sur le second enfant : création entièrement annulée
+      ---
+      duration_ms: 36.9737
+      type: 'test'
+      ...
+    # Subtest: échec SQL en édition : parent, ancienne banque et ses flags restaurés
+    ok 10 - échec SQL en édition : parent, ancienne banque et ses flags restaurés
+      ---
+      duration_ms: 46.3636
+      type: 'test'
+      ...
+    # Subtest: banque d’un autre client : rejet et absence de déplacement
+    ok 11 - banque d’un autre client : rejet et absence de déplacement
+      ---
+      duration_ms: 30.1339
+      type: 'test'
+      ...
+    # Subtest: banque inconnue et identifiant répété refusés
+    ok 12 - banque inconnue et identifiant répété refusés
+      ---
+      duration_ms: 14.3826
+      type: 'test'
+      ...
+    # Subtest: client inconnu ne produit pas de faux succès
+    ok 13 - client inconnu ne produit pas de faux succès
+      ---
+      duration_ms: 2.8391
+      type: 'test'
+      ...
+    # Subtest: banques absentes ou mal formées ne valent pas une suppression
+    ok 14 - banques absentes ou mal formées ne valent pas une suppression
+      ---
+      duration_ms: 14.9384
+      type: 'test'
+      ...
+    # Subtest: validations existantes : requis, email, crédit, statuts, banque, principal unique
+    ok 15 - validations existantes : requis, email, crédit, statuts, banque, principal unique
+      ---
+      duration_ms: 43.9686
+      type: 'test'
+      ...
+    # Subtest: champs système, parent bancaire injecté et mauvais types refusés
+    ok 16 - champs système, parent bancaire injecté et mauvais types refusés
+      ---
+      duration_ms: 12.0679
+      type: 'test'
+      ...
+    # Subtest: email unique : contrainte serveur propagée sans nouveau dossier
+    ok 17 - email unique : contrainte serveur propagée sans nouveau dossier
+      ---
+      duration_ms: 5.5012
+      type: 'test'
+      ...
+    # Subtest: absence de capacité, AAL1, session expirée, absence d’identité et anon refusés
+    ok 18 - absence de capacité, AAL1, session expirée, absence d’identité et anon refusés
+      ---
+      duration_ms: 29.7139
+      type: 'test'
+      ...
+    # Subtest: restriction RLS additionnelle sur le parent reste opposable
+    ok 19 - restriction RLS additionnelle sur le parent reste opposable
+      ---
+      duration_ms: 21.6893
+      type: 'test'
+      ...
+    # Subtest: restriction RLS enfant annule la mise à jour du parent
+    ok 20 - restriction RLS enfant annule la mise à jour du parent
+      ---
+      duration_ms: 30.381
+      type: 'test'
+      ...
+    # Subtest: trigger ignorant UPDATE : zéro ligne détecté, aucun faux succès
+    ok 21 - trigger ignorant UPDATE : zéro ligne détecté, aucun faux succès
+      ---
+      duration_ms: 32.9913
+      type: 'test'
+      ...
+    # Subtest: migration rejouable sans modifier les policies ni les données
+    ok 22 - migration rejouable sans modifier les policies ni les données
+      ---
+      duration_ms: 69.2027
+      type: 'test'
+      ...
+    1..22
+ok 1 - Dossier client atomique — PostgreSQL embarqué, sans Auth/MFA ou réseau réel
+  ---
+  duration_ms: 7026.7821
+  type: 'test'
+  ...
+1..1
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7948.7862

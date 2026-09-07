@@ -1,0 +1,208 @@
+{
+  "generatedAt": "2026-09-07T06:48:27.023Z",
+  "baseline": "83f8c74ea83c81a2734ef9e086c2edd211573ebe",
+  "candidateCommit": "07ffc71ab9e1320df845694736a3f5af88141431",
+  "rows": 177,
+  "counts": {
+    "SITE": {
+      "SAISIE_METIER": 23,
+      "FICHIER": 2,
+      "METADONNEE_OU_DERIVE": 7
+    },
+    "ARTISAN": {
+      "SAISIE_METIER": 51,
+      "SAISIE_DOCUMENTAIRE": 6,
+      "FICHIER": 4,
+      "SAISIE_ACTION_REVUE": 1,
+      "METADONNEE_OU_DERIVE": 8
+    },
+    "COLLECTEUR": {
+      "SAISIE_METIER": 22,
+      "FICHIER": 2,
+      "METADONNEE_OU_DERIVE": 6
+    },
+    "COMPTOIR": {
+      "SAISIE_METIER": 32,
+      "VALEUR_IMPOSEE": 1,
+      "FICHIER": 7,
+      "METADONNEE_OU_DERIVE": 5
+    }
+  },
+  "controlledSets": {
+    "artisanDeclaredKeys": 34,
+    "artisanResponsibleKeys": 13,
+    "comptoirDeclaredKeys": 33,
+    "missingArtisanModel": [],
+    "missingResponsible": [],
+    "missingComptoir": []
+  },
+  "omissions": [
+    "MAP-ARTISAN-moyens.type",
+    "MAP-ARTISAN-moyens.titulaire",
+    "MAP-ARTISAN-moyens.numero_telephone",
+    "MAP-ARTISAN-moyens.banque",
+    "MAP-ARTISAN-moyens.numero_compte",
+    "MAP-ARTISAN-moyens.code_swift",
+    "MAP-ARTISAN-moyens.est_principal",
+    "MAP-ARTISAN-reviewReason",
+    "MAP-COLLECTEUR-observations",
+    "MAP-COLLECTEUR-date_naissance",
+    "MAP-COLLECTEUR-lieu_naissance",
+    "MAP-COLLECTEUR-sexe",
+    "MAP-COLLECTEUR-nationalite",
+    "MAP-COLLECTEUR-type_piece_identite",
+    "MAP-COLLECTEUR-numero_piece_identite",
+    "MAP-COLLECTEUR-date_delivrance_piece",
+    "MAP-COLLECTEUR-date_expiration_piece",
+    "MAP-COLLECTEUR-lieu_delivrance_piece",
+    "MAP-COLLECTEUR-identityFiles",
+    "MAP-COLLECTEUR-photoFile"
+  ],
+  "limitations": [
+    "Couverture bornée à ces quatre formulaires et sous-formulaires inspectés ; pas à tous les modules artisanat.",
+    "Une ligne par champ logique/variante ; les boucles de fichiers/moyens ne sont pas comptées pour chaque enregistrement.",
+    "Les métadonnées agrégées ne sont pas un inventaire exhaustif du schéma.",
+    "Les sources SQL sont les migrations du dépôt ; leur présence/application en environnement n’est pas validée.",
+    "Aucune saisie navigateur, persistance, RLS, suppression ou validation intégrée exécutée."
+  ],
+  "sources": [
+    {
+      "path": "src/pages/artisanal-sites/ArtisanalSiteForm.tsx",
+      "candidateSha256": "a6c3b13953a9b7bbca0df50b26379a8938e90bef4579a05ab8fb332c971e2345",
+      "baselineGitBlob": "7e9a989a62e4c34b3a3ea845d41bcabda3ae16cf",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/services/artisanalSiteService.ts",
+      "candidateSha256": "da4e18077083a12633c8d3e9114c4de3d4f8a57cd9ea4ee90f3eb77ee1e6d4fc",
+      "baselineGitBlob": "5d127fc430c7cf0d80ed8414b7454391720d8755",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "supabase/migrations/20260906093115_sites_artisanaux_formalisation_aea.sql",
+      "candidateSha256": "2de381766387d56a66a49e10067476810f043d916085d02ba9ef63c11573b60c",
+      "baselineGitBlob": "bf6f382112453e05342a2a26c8fe04046c9a2760",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/pages/artisanal-sites/ArtisanalSiteDetails.tsx",
+      "candidateSha256": "b0bbd820167c5ab44b03f0bf01573b3453b8fae8f0959666fa46c7d4555f3f55",
+      "baselineGitBlob": "5b675f56a1800d3393aa3066fdb6505bf9255a00",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/components/artisan/ArtisanDossierSummary.tsx",
+      "candidateSha256": "aa23242c7b3e8987a1385df870abe1338e44d668af0b6b5cfd3223f8eba1ed9a",
+      "baselineGitBlob": "af393e904d292afcf0f2ff6e5a20c02833ab14ca",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/components/artisan/ArtisanDossierFields.tsx",
+      "candidateSha256": "56f6b9d1e2ed8f1664c363cd5a32cdb99b820a2afd8165a61caa6cc311ddf9ba",
+      "baselineGitBlob": "ba4374e3000862eb4c06194f3eedad1de592804b",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/lib/artisanDossier.ts",
+      "candidateSha256": "b29527744e94f416f999b81cd38fa532c8c61d40845b525509f85761313df6e8",
+      "baselineGitBlob": "b319b41e1c8d90bf6c13c61e33cdb9e5a20d4a84",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "supabase/migrations/20260906111030_refonte_dossier_artisan.sql",
+      "candidateSha256": "29e774d4d48084f48bff8e9c14932d11ad6595040b87f76bbcc1934e0024f954",
+      "baselineGitBlob": "c376db014cc1e25d828382e0aa34ff7e12537d73",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/components/artisan/ArtisanDocuments.tsx",
+      "candidateSha256": "ce2e0779087598e3a213e362035287062767b52cfed63cb2e420b3d93057979b",
+      "baselineGitBlob": "5c70c56f70e62c97dddd4ee5b06498dc21d3ad41",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/services/artisanDocumentService.ts",
+      "candidateSha256": "ddcb8c5d90bacda934005c344d741f6774a1136eecebcdb0f87eaca10218fa41",
+      "baselineGitBlob": "c6f12fe45c19bb4dc85eb876bd36bb5fe78157d9",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/components/artisan/ArtisanMinierForm.tsx",
+      "candidateSha256": "d9f3427ceff7f846e2176ecd5f2e625b96d0f3aa14f41cf00f7fb3003d01126e",
+      "baselineGitBlob": "8390d74453efca174cec67b74def2005cf4ce504",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/services/artisanMoyenPaiementService.ts",
+      "candidateSha256": "7911dd7c5f4cc5a9d516843d67c095ce888c352333d5d81d6fb98817f7579fe0",
+      "baselineGitBlob": "f7cd6fc4d61ef4bce30fef1b66c298545acb7508",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/pages/collector/CollectorForm.tsx",
+      "candidateSha256": "963d98140888ab8e9ec794785ad458251dfaf378d7ce235c07106e8f70761ec7",
+      "baselineGitBlob": "4dc9cbabb24712477ba61edc3875e0060ba75672",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/pages/collector/CollectorDetails.tsx",
+      "candidateSha256": "6cfd0c45fe137acadb65d1232d60f9b35f9a1c09bcc3d087965e468429f4c851",
+      "baselineGitBlob": "9c8f6ee0d890463916d0bd366eaf8b3fe8f70572",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/lib/collectorDossier.ts",
+      "candidateSha256": "a94e4df74c851f5bc127600da2173c6b5dc140bda71d41da603e3b46543d33a5",
+      "baselineGitBlob": "6731b7efa3f974cac15469a9c375bd98759e2e14",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "supabase/migrations/20260906145430_collecteurs_comptoirs_ventes.sql",
+      "candidateSha256": "2787fff0ea6f9fdd044090a309a72eabf34565b2f8d2d9b35f28df9fb6955302",
+      "baselineGitBlob": "56117f502f35d28c76ce2642de1244b2ba94ee04",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/lib/comptoirDossier.ts",
+      "candidateSha256": "39c7a31afcad2084126243740d2729d1ad06bdeb4301c6be935a7df08cfecd28",
+      "baselineGitBlob": "02fd2fb505368a4e1eecca77ad351b2d6b0e9cc6",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/pages/collector/ComptoirForm.tsx",
+      "candidateSha256": "ad95df441430fdbd643140cfce29a2b32497d24013cb51d65f8944516ba29f32",
+      "baselineGitBlob": "c38cc2b2769d13116a5a36484bd22b271787ae00",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/services/comptoirService.ts",
+      "candidateSha256": "2e2c3ec71c56d2f5576ce3c9ee1a99b9369892bf695a8c80730a44b8d38cbd3d",
+      "baselineGitBlob": "f602e1fd1661f0659ede63ffa3d0e942986156f0",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "supabase/migrations/20260906174800_dossiers_comptoirs_entreprises.sql",
+      "candidateSha256": "f99ff8909cfe1df228406407fdcde99baac8e42bdf2353cd307f3519d0d04dc9",
+      "baselineGitBlob": "401e04e95e7f36e29557a06052ed6b5b68487cbd",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "supabase/migrations/20260824235950_lot_4b_separation_fonctions_et_integrite_reglementaire.sql",
+      "candidateSha256": "daace92057f4ee404af3e2270e1209128b86d9524e7c748db1af86f7fbae2d5b",
+      "baselineGitBlob": "88b2d6d5a194c313107f42165de965c503dd7ac8",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/services/artisanDossierService.ts",
+      "candidateSha256": "63e8bc33c7227a9ad8c184fcc9e726ea6c7d38f37b0f6c3cbf393b1d2399a14a",
+      "baselineGitBlob": "95a45b507d5b81fe58486148aac01c5d01a304c2",
+      "sameTextIgnoringLineEndings": true
+    },
+    {
+      "path": "src/services/collectorService.ts",
+      "candidateSha256": "60b3cafcc78f7e7cbca7ab0add7d93e5709c87296c474b042b8a957ee366b7e8",
+      "baselineGitBlob": "88beb525fe8bbef9098a0a381137daac27804527",
+      "sameTextIgnoringLineEndings": true
+    }
+  ]
+}

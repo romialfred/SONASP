@@ -1,0 +1,8 @@
+{
+  "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=default --reporter=json --outputFile.json=docs/amelioration/audit/decouverte-tests-vitest.json",
+  "startedAtUtc": "2026-09-07T06:24:16.3564405Z",
+  "completedAtUtc": "2026-09-07T06:33:19.6352436Z",
+  "exitCode": 0,
+  "configSha256Before": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+  "configSha256After": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69"
+}

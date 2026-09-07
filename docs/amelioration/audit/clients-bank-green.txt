@@ -1,0 +1,371 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ❯ src/components/customers/BankAccountForm.test.tsx (5 tests | 2 failed) 2042ms
+     × permet de saisir et conserver intégralement une banque hors catalogue 449ms
+     × conserve une banque hors catalogue lors de la réouverture 65ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/customers/BankAccountForm.test.tsx > BankAccountForm > permet de saisir et conserver intégralement une banque hors catalogue
+TestingLibraryElementError: Unable to find a label with the text of: Nom de la banque hors catalogue
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="space-y-4"
+    >
+      <div
+        class="flex items-center justify-between flex-wrap gap-3"
+      >
+        <h3
+          class="font-semibold"
+        >
+          Comptes bancaires 
+          <span
+            class="text-gray-500"
+          >
+            (
+            1
+            )
+          </span>
+        </h3>
+        <button
+          class="sn-btn sn-btn--sm"
+          type="button"
+        >
+          <svg
+            class="lucide lucide-plus w-4 h-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+          Ajouter un compte
+        </button>
+      </div>
+      <div
+        class="sn-card border-amber-300"
+      >
+        <div
+          class="p-4"
+        >
+          <div
+            class="flex items-center gap-3"
+          >
+            <button
+              aria-controls=":r0:-bank-0"
+              aria-expanded="true"
+              aria-label="Fermer le compte bancaire 1"
+              class="flex min-w-0 flex-1 items-center gap-3 text-left rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"
+              type="button"
+            >
+              <svg
+                class="lucide lucide-building2 h-5 w-5 shrink-0 text-emerald-700"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+                />
+                <path
+                  d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+                />
+                <path
+                  d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+                />
+                <path
+                  d="M10 6h4"
+                />
+                <path
+                  d="M10 10h4"
+                />
+                <path
+                  d="M10 14h4"
+                />
+                <path
+                  d="M10 18h4"
+                />
+              </svg>
+              <span
+                class="min-w-0"
+              >
+                <strong
+                  class="block break-words"
+                >
+                  Compte bancaire 1
+                </strong>
+                <small
+                  class="text-gray-500"
+                >
+                  Ouagadougou · Burkina Faso · XOF
+                </small>
+              </span>
+              <span
+                class="inline-flex items-center gap-1 text-xs text-amber-800"
+              >
+                <svg
+                  class="lucide lucide-star h-3 w-3"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                  />
+                </svg>
+                Principal
+              </span>
+            </button>
+            <button
+              aria-label="Retirer le compte bancaire 1"
+              class="sn-btn sn-btn--sm"
+              type="button"
+            >
+              <svg
+                class="lucide lucide-trash2 h-4 w-4 text-red-700"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 6h18"
+                />
+                <path
+                  d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
+                />
+                <path
+                  d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+                />
+                <line
+                  x...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/customers/BankAccountForm.test.tsx:25:28
+     23|     const user = userEvent.setup();
+     24|     await user.selectOptions(screen.getByLabelText(/Nom de la banque/)…
+     25|     await user.type(screen.getByLabelText('Nom de la banque hors catal…
+       |                            ^
+     26|     expect(screen.getByLabelText('Nom de la banque hors catalogue')).t…
+     27|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/customers/BankAccountForm.test.tsx > BankAccountForm > conserve une banque hors catalogue lors de la réouverture
+TestingLibraryElementError: Unable to find a label with the text of: Nom de la banque hors catalogue
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="space-y-4"
+    >
+      <div
+        class="flex items-center justify-between flex-wrap gap-3"
+      >
+        <h3
+          class="font-semibold"
+        >
+          Comptes bancaires 
+          <span
+            class="text-gray-500"
+          >
+            (
+            1
+            )
+          </span>
+        </h3>
+        <button
+          class="sn-btn sn-btn--sm"
+          type="button"
+        >
+          <svg
+            class="lucide lucide-plus w-4 h-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+          Ajouter un compte
+        </button>
+      </div>
+      <div
+        class="sn-card border-amber-300"
+      >
+        <div
+          class="p-4"
+        >
+          <div
+            class="flex items-center gap-3"
+          >
+            <button
+              aria-controls=":r9:-bank-0"
+              aria-expanded="true"
+              aria-label="Fermer le compte bancaire 1"
+              class="flex min-w-0 flex-1 items-center gap-3 text-left rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"
+              type="button"
+            >
+              <svg
+                class="lucide lucide-building2 h-5 w-5 shrink-0 text-emerald-700"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+                />
+                <path
+                  d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+                />
+                <path
+                  d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+                />
+                <path
+                  d="M10 6h4"
+                />
+                <path
+                  d="M10 10h4"
+                />
+                <path
+                  d="M10 14h4"
+                />
+                <path
+                  d="M10 18h4"
+                />
+              </svg>
+              <span
+                class="min-w-0"
+              >
+                <strong
+                  class="block break-words"
+                >
+                  Banque de recette
+                </strong>
+                <small
+                  class="text-gray-500"
+                >
+                  Ouagadougou · Burkina Faso · XOF
+                </small>
+              </span>
+              <span
+                class="inline-flex items-center gap-1 text-xs text-amber-800"
+              >
+                <svg
+                  class="lucide lucide-star h-3 w-3"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                  />
+                </svg>
+                Principal
+              </span>
+            </button>
+            <button
+              aria-label="Retirer le compte bancaire 1"
+              class="sn-btn sn-btn--sm"
+              type="button"
+            >
+              <svg
+                class="lucide lucide-trash2 h-4 w-4 text-red-700"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 6h18"
+                />
+                <path
+                  d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
+                />
+                <path
+                  d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+                />
+                <line
+                  x...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/customers/BankAccountForm.test.tsx:31:19
+     29|   it('conserve une banque hors catalogue lors de la réouverture', () =…
+     30|     render(<BankAccountForm banks={[{ ...bank, bankName: 'Banque de re…
+     31|     expect(screen.getByLabelText('Nom de la banque hors catalogue')).t…
+       |                   ^
+     32|   });
+     33|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  05:03:18
+   Duration  7.66s (transform 565ms, setup 825ms, import 1.32s, tests 2.04s, environment 2.95s)
+

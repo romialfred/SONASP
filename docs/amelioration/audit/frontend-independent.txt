@@ -1,0 +1,56 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > relit un crédit nul et conserve les identifiants bancaires dans le contrat de sauvegarde 685ms
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > empêche les soumissions répétées pendant une sauvegarde différée 255ms
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > interdit la sauvegarde après échec de lecture des banques et permet de réessayer 206ms
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > réinitialise tous les champs et les banques lors du passage édition → création 211ms
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > relit le dossier lorsque seule la mine du contexte change 188ms
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > ignore une réponse de sauvegarde arrivée après la sortie de la page 147ms
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > affiche les erreurs de pays et refuse une banque incomplète avant tout appel 133ms
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > rouvre une banque incomplète à chaque soumission puis accepte sa correction 1114ms
+ ✓ src/pages/customers/CustomerForm.test.tsx > Dossier client — composants, sans preuve de persistance réelle > conserve les valeurs historiques hors catalogue sans substitution implicite 2870ms
+ ✓ src/components/customers/BankAccountForm.test.tsx > BankAccountForm > affiche les banques ivoiriennes avec la valeur historique anglaise du pays 1679ms
+ ✓ src/components/customers/BankAccountForm.test.tsx > BankAccountForm > ne propose pas les banques de Guinée à un compte de Papouasie-Nouvelle-Guinée 1086ms
+ ✓ src/components/customers/BankAccountForm.test.tsx > BankAccountForm > permet de saisir et conserver intégralement une banque hors catalogue 1018ms
+ ✓ src/components/customers/BankAccountForm.test.tsx > BankAccountForm > conserve une banque hors catalogue lors de la réouverture 183ms
+ ✓ src/components/customers/BankAccountForm.test.tsx > BankAccountForm > change le compte principal sans muter les objets reçus 259ms
+ ✓ src/components/customers/BankAccountForm.test.tsx > BankAccountForm > affiche l’état vide et son action en français 60ms
+ ✓ src/components/customers/BankAccountForm.test.tsx > BankAccountForm > traduit les libellés sans modifier les codes métier 1303ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > ignore le chargement A qui répond après le chargement B du formulaire 353ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > ignore une ancienne erreur de sauvegarde après changement du rôle d’accès 1027ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > préserve B lorsque le détail A et ses ventes répondent tardivement 307ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > masque immédiatement le détail puis recharge si seul access_role_id change 318ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > rejette les réponses anciennes du répertoire et de ses ventes après changement de mine 277ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > conserve un onglet de statut inconnu actif lorsque la recherche réduit son total à zéro 459ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > ne prétend pas qu’il n’y a aucune vente lorsque la lecture a échoué 216ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > affiche les centimes enregistrés d’une vente dans le détail 192ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > traduit uniquement le pays et préserve une raison sociale homonyme avec fiscalité absente 89ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > n’accepte pas un chemin de retour externe ou étranger au répertoire 293ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > retire le compte principal sans muter les identités ou objets reçus 182ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > ne calcule pas de total avec montant non fini ou devise inconnue 3ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > traduit les huit graphies historiques corrigées sans changer ni perdre une valeur du catalogue API 4ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx > Audit indépendant Clients — jsdom/services doublés, aucune persistance réelle > ne propose pas le catalogue guinéen pour la Guinée-Bissau ou la Guinée équatoriale 3031ms
+ ✓ src/pages/customers/CustomerViews.test.tsx > Vues Clients — composants sans serveur réel > affiche les données relues, le crédit décimal et les banques 1317ms
+ ✓ src/pages/customers/CustomerViews.test.tsx > Vues Clients — composants sans serveur réel > ouvre uniquement la vraie référence et aucun historique synthétique 672ms
+ ✓ src/pages/customers/CustomerViews.test.tsx > Vues Clients — composants sans serveur réel > distingue les ventes indisponibles d’un historique vide 184ms
+ ✓ src/pages/customers/CustomerViews.test.tsx > Vues Clients — composants sans serveur réel > calcule les compteurs avant pagination et combine recherche et statut 1607ms
+ ✓ src/pages/customers/CustomerViews.test.tsx > Vues Clients — composants sans serveur réel > ne convertit pas une erreur de répertoire en liste vide 44ms
+ ✓ src/pages/customers/CustomerViews.test.tsx > Vues Clients — composants sans serveur réel > recharge la liste lorsque seule la mine du contexte change 125ms
+ ✓ src/pages/customers/CustomerViews.test.tsx > Vues Clients — composants sans serveur réel > relit les filtres et la pagination depuis l’URL 708ms
+ ✓ src/pages/customers/CustomerViews.test.tsx > Vues Clients — composants sans serveur réel > propose un retour au contexte de liste transmis au détail 414ms
+ ✓ src/services/customerDossierService.test.ts > Contrat Clients — tests de service isolés > calcule une moyenne par vente, en conservant les valeurs nulles et les devises 11ms
+ ✓ src/services/customerDossierService.test.ts > Contrat Clients — tests de service isolés > remonte une erreur bancaire au lieu de simuler une collection vide 6ms
+ ✓ src/services/customerDossierService.test.ts > Contrat Clients — tests de service isolés > continue la pagination selon le décompte serveur même si une page est courte 4ms
+ ✓ src/services/customerDossierService.test.ts > Contrat Clients — tests de service isolés > remonte les erreurs des ventes, sans faux agrégats à zéro 4ms
+ ✓ src/services/customerDossierService.test.ts > Contrat Clients — tests de service isolés > ne traite pas une réponse RPC vide comme un succès 2ms
+ ✓ src/services/customerDossierService.test.ts > Contrat Clients — tests de service isolés > refuse Autre non renseigné et ne perd aucune banque silencieusement 2ms
+ ✓ src/lib/customerCountryLabels.test.ts > Libellés des pays clients > traduit les libellés sans changer les valeurs du contrat existant 5ms
+ ✓ src/lib/customerCountryLabels.test.ts > Libellés des pays clients > préserve les libellés historiques français et les valeurs hors catalogue 1ms
+
+ Test Files  6 passed (6)
+      Tests  46 passed (46)
+   Start at  06:26:55
+   Duration  66.34s (transform 1.71s, setup 7.18s, import 6.68s, tests 23.30s, environment 24.15s)
+
+

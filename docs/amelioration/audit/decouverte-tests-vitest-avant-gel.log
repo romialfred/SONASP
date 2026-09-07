@@ -1,0 +1,1915 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > borne le chrome bleu, l’identité et la navigation au compte DGI
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > borne la charte minérale, le header et la navigation au compte DGMG réel
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > rend tous les modules au Owner même sans périmètre explicite
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+ ✓ src/pages/collector/ComptoirForm.test.tsx (13 tests) 16537ms
+     ✓ relit le dossier après modification avec une réponse immédiate  4185ms
+     ✓ relit le dossier après modification avec une réponse différée  2822ms
+     ✓ recalcule la validité lorsque les deux dates sont renseignées  633ms
+     ✓ présente les champs entreprise, fiscalité, autorisation et responsable sans tutelle institutionnelle  699ms
+     ✓ empêche un enregistrement vide et indique le champ à corriger  1071ms
+     ✓ enregistre les nouveaux champs, puis relit le serveur avant navigation  1030ms
+     ✓ conserve la même clé de reprise quand la réponse de création est perdue  2937ms
+     ✓ réessaie uniquement la pièce échouée sans recréer le comptoir ni perdre les fichiers  2486ms
+     ✓ refuse un PDF dans la photo et un document trop volumineux  585ms
+ ✓ src/components/auth/PortalEntry.integration.test.tsx (36 tests) 15918ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Owner sans droits individuels'  1808ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Administrateur'  513ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'SONASP'  649ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Direction consultative'  423ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'DGI'  436ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'DGMG'  467ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Mine A'  507ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Mine B historique'  423ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Comptoir'  484ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Collecteur'  407ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Collecteur historique cumulant Compto…'  390ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Usine'  439ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Aéroport'  412ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Raffinerie'  387ms
+     ✓ ouvre le bon espace depuis le bouton Accéder à mon espace : 'Client'  329ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Owner sans droits individuels'  396ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Administrateur'  490ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'SONASP'  443ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Direction consultative'  487ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'DGI'  591ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'DGMG'  430ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Mine A'  456ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Mine B historique'  534ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Comptoir'  550ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Collecteur'  675ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Collecteur historique cumulant Compto…'  425ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Usine'  613ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Aéroport'  465ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Raffinerie'  444ms
+     ✓ respecte le profil après connexion depuis la vitrine : 'Client'  648ms
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > garde le groupe ouvert quand la navigation reconstruit la barre
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > rouvre le groupe de la route quand la navigation change de module
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx (13 tests) 19490ms
+     ✓ aligne les deux identités au-dessus de la sidebar réduisible  3034ms
+     ✓ déploie les sous-menus des groupes métier  3768ms
+     ✓ ouvre deux groupes métier de façon exclusive  1360ms
+     ✓ borne le chrome bleu, l’identité et la navigation au compte DGI  474ms
+     ✓ borne la charte minérale, le header et la navigation au compte DGMG réel  571ms
+     ✓ rend tous les modules au Owner même sans périmètre explicite  1332ms
+     ✓ conserve les six écrans Réserve du Owner après chargement et désactivation du catalogue  1397ms
+     ✓ marque les groupes d’un plus, remplacé par un moins une fois dépliés  1195ms
+     ✓ marque les sous-menus d’une puce, sans icône de module  673ms
+     ✓ garde le groupe ouvert quand la navigation reconstruit la barre  2130ms
+     ✓ rouvre le groupe de la route quand la navigation change de module  889ms
+     ✓ ferme réellement le menu utilisateur et y expose la documentation  1152ms
+     ✓ n’ouvre jamais deux menus d’en-tête simultanément  1450ms
+ ✓ src/pages/admin/UserManagementModern.test.tsx (37 tests) 29570ms
+     ✓ propose Propriétaire à Owner sans réintroduire les rôles historiques  3579ms
+     ✓ crée un autre Owner avec une matrice complète non réductible  2866ms
+     ✓ ne propose ni Owner ni Administrateur à un Administrateur  969ms
+     ✓ bloque le passage aux habilitations tant que l’identité est incomplète  1322ms
+     ✓ présente uniquement les responsabilités compatibles avec le rôle  997ms
+     ✓ crée un compte interne sans lui attribuer un faux site minier  1109ms
+     ✓ impose la consultation aux autres droits autorisés par le plafond  1097ms
+     ✓ crée un compte Société minière rattaché à une seule compagnie  2561ms
+     ✓ crée un compte Comptoir avec son périmètre et son habilitation obligatoires  2698ms
+     ✓ enregistre la finance Comptoir explicitement et refuse le cumul exécution/contrôle  2817ms
+     ✓ affiche les mines déjà rattachées en grisé sans permettre leur sélection  1974ms
+     ✓ restitue un échec de création  1205ms
+     ✓ charge un compte historique et exige sa migration explicite  993ms
+     ✓ permet à Owner d’accorder puis retirer les droits métier d’un Administrateur  530ms
+     ✓ charge et enregistre le compte via les services autorisés même si la lecture directe est vide pour Owner  398ms
+     ✓ propose de réessayer sans formulaire vide ni faux refus hiérarchique si le compte ne charge pas  308ms
+     ✓ conserve la saisie et ne signale aucun succès lorsque le serveur refuse l’enregistrement  496ms
+     ✓ réinitialise le formulaire lors du passage de la modification à la création  462ms
+     ✓ précharge le périmètre et le profil collecteur existants  1075ms
+ ✓ src/pages/sales/SalesDashboard.test.tsx (11 tests) 11941ms
+     ✓ renders the requested columns, real invoice/licence, 10 rows and detail links  1708ms
+     ✓ supports status chips, counts, search, reset and pagination  2559ms
+     ✓ exports all filtered results rather than just the current page  757ms
+     ✓ does not export filtered-out structures  800ms
+     ✓ does not offer a structure selector inside a tenant portal  343ms
+     ✓ opens advanced filters and closes actions with Escape while restoring focus  3049ms
+     ✓ keeps the shell visible during loading and distinguishes errors from empty data  324ms
+     ✓ preserves the English interface  779ms
+     ✓ does not reload on tab focus or equivalent refreshed profile objects  423ms
+     ✓ clears the previous account data immediately and ignores its late response  323ms
+     ✓ invalidates a customer perimeter when its authoritative email changes  868ms
+ ✓ src/pages/payments/PaymentCreate.security.test.tsx (10 tests) 12886ms
+     ✓ préremplit depuis la fiche et transmet le statut réel pour un second versement partiel  2375ms
+     ✓ refuse un dépassement du solde disponible sans appeler le serveur  1040ms
+     ✓ exige une preuve et conserve la saisie au retour de focus  779ms
+     ✓ retire puis rattache un justificatif sans créer de paiement prématuré  1338ms
+     ✓ affiche une erreur de comptes récupérable et conserve le refus serveur  853ms
+     ✓ ne réinterprète pas le montant dans une autre devise et ignore un ancien taux  699ms
+     ✓ exécute l’engagement existant avec version et clé de rejeu  1580ms
+     ✓ reste fermé après un échec réseau de preuve et rejoue sans réexécuter le paiement  1852ms
+     ✓ retrouve après remount le paiement processing serveur et réutilise la clé déjà commise  2229ms
+ ✓ src/pages/Login.component.test.tsx (13 tests) 12074ms
+     ✓ affiche la marque Faso SANAMA et conserve SONASP parmi les institutions  1051ms
+     ✓ annonce les deux champs requis et place le focus sur le premier  731ms
+     ✓ garde la marque lisible si le fichier du logo ne peut pas être chargé  1306ms
+     ✓ affiche et remasque le mot de passe sans soumettre le formulaire  1613ms
+     ✓ transmet les identifiants sans proposer de session persistante  1276ms
+     ✓ relie les actions secondaires aux routes existantes  335ms
+     ✓ présente le français comme langue active et réserve l’anglais à une prochaine version  545ms
+     ✓ suit un ordre de tabulation logique  917ms
+     ✓ respecte les textes validés et les cinq institutions dans leur ordre  359ms
+     ✓ soumet avec Entrée et empêche les soumissions concurrentes  1781ms
+     ✓ gère une erreur réseau sans exposer le détail technique et permet de réessayer  1729ms
+     ✓ ferme le choix de langue avec Échap et rend le focus au bouton  379ms
+ ✓ src/pages/public/PublicHomePage.test.tsx (11 tests) 11463ms
+     ✓ intègre les neuf sections centrales entre le header et le footer et tous les raccordements  1136ms
+     ✓ avance toutes les huit secondes, boucle et garde un seul H1 et un seul visuel accessible  640ms
+     ✓ conserve la progression pendant le survol et suspend la lecture en arrière-plan  486ms
+     ✓ exige une reprise explicite après un choix manuel ou une navigation clavier  1698ms
+     ✓ permet de mettre en pause et de reprendre avec Entrée sur la commande de lecture  745ms
+     ✓ commence en pause si les animations sont réduites et suspend la lecture au focus  719ms
+     ✓ présente les sept portails sans changement de rôle et avec un aperçu sans données privées  2634ms
+     ✓ conserve les règles commerciales et le parcours clavier des portails  1158ms
+     ✓ actualise chacune des huit étapes et ses informations sans lancer de transaction  2043ms
+stderr | src/components/artisan/ArtisanMinierForm.test.tsx > ArtisanMinierForm > conserve la région étrangère et le rôle historique en modification
+Warning: An update to ArtisanMinierForm inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ArtisanMinierForm (F:/Development/SONASP/src/components/artisan/ArtisanMinierForm.tsx:58:3)
+Warning: An update to ArtisanMinierForm inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ArtisanMinierForm (F:/Development/SONASP/src/components/artisan/ArtisanMinierForm.tsx:58:3)
+Warning: An update to ArtisanMinierForm inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ArtisanMinierForm (F:/Development/SONASP/src/components/artisan/ArtisanMinierForm.tsx:58:3)
+
+stderr | src/components/artisan/ArtisanMinierForm.test.tsx > ArtisanMinierForm > préserve les brouillons de chaque qualité et retire les champs inactifs
+Warning: An update to ArtisanMinierForm inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ArtisanMinierForm (F:/Development/SONASP/src/components/artisan/ArtisanMinierForm.tsx:58:3)
+
+stderr | src/components/artisan/ArtisanMinierForm.test.tsx > ArtisanMinierForm > guide vers le premier champ invalide et calcule une progression réelle
+Warning: An update to ArtisanMinierForm inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ArtisanMinierForm (F:/Development/SONASP/src/components/artisan/ArtisanMinierForm.tsx:58:3)
+
+ ✓ src/pages/artisan-minier/AffiliationsCartes.test.tsx (15 tests) 10209ms
+     ✓ compte une seule émission courante par titulaire et affiche les droits autoritatifs  1437ms
+     ✓ combine recherche, statut et filtres métier puis les réinitialise  1464ms
+     ✓ ouvre les tâches et onglets sur leurs vrais dossiers  1020ms
+     ✓ préserve la validation documentaire distincte de l’activation  374ms
+     ✓ permet de parcourir les onglets au clavier  568ms
+     ✓ ouvre une émission dans une adresse persistante et revient au registre  761ms
+     ✓ sélectionne un titulaire actif pour une nouvelle affiliation sans créer ni générer une carte  805ms
+     ✓ conserve la sélection de page pour copier uniquement les références choisies  1491ms
+     ✓ ne présente pas de zéros comme données en cas d’échec et permet la reprise  429ms
+     ✓ retient la dernière lecture lorsque l’actualisation échoue  644ms
+     ✓ masque la création et les barèmes sans habilitation  511ms
+stderr | src/components/artisan/ArtisanMinierForm.test.tsx > ArtisanMinierForm > refuse les fichiers surdimensionnés et les faux formats côté client
+Warning: An update to ArtisanMinierForm inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ArtisanMinierForm (F:/Development/SONASP/src/components/artisan/ArtisanMinierForm.tsx:58:3)
+
+ ✓ src/components/artisan/ArtisanMinierForm.test.tsx (11 tests) 9346ms
+     ✓ conserve la région étrangère et le rôle historique en modification  1501ms
+     ✓ préserve les brouillons de chaque qualité et retire les champs inactifs  1939ms
+     ✓ guide vers le premier champ invalide et calcule une progression réelle  591ms
+     ✓ reprend une pièce échouée sans recréer le dossier ni renvoyer la pièce réussie  1063ms
+     ✓ exige un parent pour un aide et propose une recherche bornée  1956ms
+     ✓ refuse les fichiers surdimensionnés et les faux formats côté client  516ms
+     ✓ rend les coordonnées en lecture seule sans capability AAL2 et ne tente aucune mutation  381ms
+     ✓ expose l’état de vérification et relaie le refus serveur de double contrôle  441ms
+     ✓ affiche l’état vérifié confirmé par la RPC et retire les actions de revue  542ms
+stderr | src/pages/conciliation/ConciliationDetails.test.tsx > ConciliationDetails > laisse consulter une preuve non approuvée sans permettre son enregistrement
+Warning: An update to SimulationFiscale inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SimulationFiscale (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:2914:30)
+    at section
+    at div
+    at ResultatsRaffinage (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:1657:31)
+    at section
+    at main
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx:29:31)
+    at ConciliationDetails (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:3445:51)
+Warning: An update to SimulationFiscale inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SimulationFiscale (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:2914:30)
+    at section
+    at div
+    at ResultatsRaffinage (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:1657:31)
+    at section
+    at main
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx:29:31)
+    at ConciliationDetails (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:3445:51)
+
+stderr | src/pages/conciliation/ConciliationDetails.test.tsx > ConciliationDetails > explique le dossier sans expédition et interdit l’enregistrement
+Warning: An update to SimulationFiscale inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SimulationFiscale (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:2914:30)
+    at section
+    at div
+    at ResultatsRaffinage (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:1657:31)
+    at section
+    at main
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx:29:31)
+    at ConciliationDetails (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:3445:51)
+Warning: An update to SimulationFiscale inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SimulationFiscale (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:2914:30)
+    at section
+    at div
+    at ResultatsRaffinage (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:1657:31)
+    at section
+    at main
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx:29:31)
+    at ConciliationDetails (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:3445:51)
+
+stderr | src/pages/conciliation/ConciliationDetails.test.tsx > ConciliationDetails > présente les expéditions et résultats physiques multiples sans faux blocage
+Warning: An update to SimulationFiscale inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SimulationFiscale (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:2914:30)
+    at section
+    at div
+    at ResultatsRaffinage (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:1657:31)
+    at section
+    at main
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx:29:31)
+    at ConciliationDetails (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:3445:51)
+Warning: An update to SimulationFiscale inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SimulationFiscale (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:2914:30)
+    at section
+    at div
+    at ResultatsRaffinage (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:1657:31)
+    at section
+    at main
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx:29:31)
+    at ConciliationDetails (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:3445:51)
+
+stderr | src/pages/conciliation/ConciliationDetails.test.tsx > ConciliationDetails > actualise les mesures affichées lorsqu’un autre certificat du même lot est sélectionné
+Warning: An update to SimulationFiscale inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SimulationFiscale (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:2914:30)
+    at section
+    at div
+    at ResultatsRaffinage (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:1657:31)
+    at section
+    at main
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx:29:31)
+    at ConciliationDetails (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:3445:51)
+Warning: An update to SimulationFiscale inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SimulationFiscale (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:2914:30)
+    at section
+    at div
+    at ResultatsRaffinage (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:1657:31)
+    at section
+    at main
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx:29:31)
+    at ConciliationDetails (F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.tsx:3445:51)
+
+ ✓ src/pages/conciliation/ConciliationDetails.test.tsx (18 tests) 8712ms
+     ✓ affiche les données relationnelles et les sept onglets fonctionnels  1966ms
+     ✓ gère le clavier dans la barre d’onglets  767ms
+     ✓ le bouton principal ouvre le workflow réel puis enregistre la preuve approuvée  930ms
+     ✓ ouvre directement la preuve sélectionnée avec une URL privée  366ms
+     ✓ laisse consulter une preuve non approuvée sans permettre son enregistrement  341ms
+     ✓ explique le dossier sans expédition et interdit l’enregistrement  361ms
+     ✓ présente les expéditions et résultats physiques multiples sans faux blocage  439ms
+     ✓ montre les écarts et conserve la distinction entre estimation, dette et versement  641ms
+     ✓ ne valide rien tant que le nouveau moteur fiscal serveur est indisponible  457ms
+     ✓ actualise les mesures affichées lorsqu’un autre certificat du même lot est sélectionné  729ms
+     ✓ vérifie le moteur fiscal avant de demander une validation au serveur  437ms
+ ✓ src/pages/conciliation/ConciliationsPage.test.tsx (10 tests) 7093ms
+     ✓ reproduit la vue dossiers avec des données relationnelles réelles  964ms
+     ✓ n’impose aucune période silencieuse et affiche les 16 dossiers en attente  1007ms
+     ✓ pagine tous les dossiers, exporte le périmètre complet et revient à la première page après filtrage  2906ms
+     ✓ synchronise les compteurs, la liste et la réinitialisation avec les filtres actifs  1184ms
+     ✓ change de file de travail et ouvre le détail  697ms
+     ✓ actualise depuis Supabase sans dupliquer les dossiers  322ms
+ ✓ src/pages/admin/usersAdmin.test.tsx (32 tests) 6745ms
+     ✓ affiche les comptes avec des libellés français  674ms
+     ✓ organise les comptes en onglets avec leurs décomptes  461ms
+     ✓ demande confirmation avant de désactiver un compte  354ms
+     ✓ refuse une confirmation de statut incohérente  380ms
+     ✓ présente le compte et ses sections  587ms
+     ✓ propose des actions au lieu d’un cul-de-sac  335ms
+     ✓ rend une source partielle indisponible et bloque son export  602ms
+     ✓ retire la note globale et conserve l’état indisponible dans les accès aux sites  351ms
+ ✓ src/pages/artisan-minier/VenteOrForm.test.tsx (18 tests) 5893ms
+     ✓ attribue et affiche le numéro de vente sans le laisser saisir  335ms
+     ✓ enregistre la vente sous le numéro annoncé à l’écran  1288ms
+     ✓ organise le formulaire en sections métier  325ms
+     ✓ affiche le montant total taxes comprises, identique à l’enregistrement  619ms
+     ✓ affiche les validations au bon endroit et bloque une soumission incomplète  622ms
+     ✓ lie la pureté en carats et le pourcentage  464ms
+     ✓ affiche le cours réel du hook et permet de le rafraîchir  315ms
+     ✓ ignore une double soumission pendant l’enregistrement  488ms
+     ✓ restitue une erreur de persistance sans redirection  440ms
+stderr | src/pages/shipping/ShippingPreparationNew.test.tsx > ShippingPreparationNew regression coverage > crée la préparation atomiquement (parent+enfants) et rejette un quota non confirmé
+Warning: An update to ShippingPreparationNew inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ShippingPreparationNew (F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.tsx:62:57)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/pages/shipping/ShippingPreparationNew.test.tsx > ShippingPreparationNew regression coverage > crée la préparation atomiquement (parent+enfants) et rejette un quota non confirmé
+Échec de la réservation du quota de licence : Error: La réservation du quota de licence n’a pas été confirmée.
+    at handleSavePreparation (F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.tsx:909:35)
+Erreur lors de l’enregistrement de la préparation : Error: Impossible de réserver le quota de licence : La réservation du quota de licence n’a pas été confirmée.
+    at handleSavePreparation (F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.tsx:913:15)
+
+stderr | src/pages/shipping/ShippingPreparationNew.test.tsx > ShippingPreparationNew regression coverage > rejoue la même préparation sans la recréer ni dupliquer ses enfants
+Warning: An update to ShippingPreparationNew inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ShippingPreparationNew (F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.tsx:62:57)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/pages/shipping/ShippingPreparationNew.test.tsx > ShippingPreparationNew regression coverage > rejoue la même préparation sans la recréer ni dupliquer ses enfants
+Échec de la réservation du quota de licence : Error: La réservation du quota de licence n’a pas été confirmée.
+    at handleSavePreparation (F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.tsx:909:35)
+Erreur lors de l’enregistrement de la préparation : Error: Impossible de réserver le quota de licence : La réservation du quota de licence n’a pas été confirmée.
+    at handleSavePreparation (F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.tsx:913:15)
+
+stderr | src/pages/shipping/ShippingPreparationNew.test.tsx > ShippingPreparationNew regression coverage > rejoue la même préparation sans la recréer ni dupliquer ses enfants
+Échec de la réservation du quota de licence : Error: La réservation du quota de licence n’a pas été confirmée.
+    at handleSavePreparation (F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.tsx:909:35)
+Erreur lors de l’enregistrement de la préparation : Error: Impossible de réserver le quota de licence : La réservation du quota de licence n’a pas été confirmée.
+    at handleSavePreparation (F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.tsx:913:15)
+
+ ✓ src/pages/shipping/ShippingPreparationNew.test.tsx (3 tests) 4983ms
+     ✓ crée la préparation atomiquement (parent+enfants) et rejette un quota non confirmé  2413ms
+     ✓ rejoue la même préparation sans la recréer ni dupliquer ses enfants  1825ms
+     ✓ excludes a physically invalid production and announces the reason accessibly  739ms
+ ✓ src/pages/customers/CustomerForm.test.tsx (9 tests) 5108ms
+     ✓ relit un crédit nul et conserve les identifiants bancaires dans le contrat de sauvegarde  559ms
+     ✓ rouvre une banque incomplète à chaque soumission puis accepte sa correction  891ms
+     ✓ conserve les valeurs historiques hors catalogue sans substitution implicite  2718ms
+ ✓ src/pages/artisan-minier/ArtisanMinierListe.test.tsx (8 tests) 6159ms
+     ✓ affiche l’en-tête, les filtres et la barre de résultats  1488ms
+     ✓ replie et deplie le panneau de filtres  516ms
+     ✓ filtre par type et affiche le filtre actif retirable  676ms
+     ✓ recherche à la validation puis bascule en vue tableau  1291ms
+     ✓ retire les colonnes région et téléphone du tableau  341ms
+     ✓ pagine le tableau par trente lignes  1747ms
+ ✓ src/pages/production/ExportLicenseRequestsInboxPage.test.tsx (6 tests) 5349ms
+     ✓ liste les demandes et ouvre le dossier complet  764ms
+     ✓ accorde via le seul contrat de service sans acteur, audit ni tenant client  2486ms
+     ✓ bloque un motif trop court et un volume supérieur à la demande avant le service  1083ms
+     ✓ affiche le refus de concurrence RPC, conserve le formulaire et recharge la file  921ms
+ ✓ src/pages/payments/InternationalPaymentsView.test.tsx (9 tests) 3069ms
+     ✓ combines status and search, then resets to all rows  460ms
+     ✓ paginates after filtering and returns to page one when filters change  589ms
+     ✓ offers working payment, sale and installment actions in a non-clipped popup  771ms
+     ✓ dismisses row actions with Escape and restores trigger focus  329ms
+ ✓ src/pages/payments/InternationalPaymentDetailView.test.tsx (11 tests) 3244ms
+     ✓ displays the five tabs and real settlement totals, not screenshot amounts  416ms
+     ✓ filters all upstream documents by stage and file name  340ms
+     ✓ keeps documents and filter state when returning to the tab  349ms
+     ✓ downloads the current proof through the provided private handler  381ms
+     ✓ opens and closes the functional actions menu  556ms
+ ✓ src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx (6 tests) 3009ms
+     ✓ affiche les blocs du tableau de bord de pilotage territorial  1019ms
+     ✓ distingue deux sites de la même localité par leur nom et ouvre la bonne fiche  559ms
+     ✓ filtre les catégories sans assimiler les dossiers historiques aux sites non formalisés  701ms
+     ✓ bascule la carte vers la vue par régions  379ms
+ ✓ src/pages/sales/InternationalSaleDetailView.test.tsx (14 tests) 3021ms
+     ✓ links the payment form to this sale and distinguishes pending funds  560ms
+     ✓ provides distinct working tabs and links each payment to its detail  659ms
+     ✓ moves keyboard focus with the selected tab  458ms
+ ✓ src/pages/artisan-minier/VentesOr.test.tsx (16 tests) 3281ms
+     ✓ affiche les indicateurs et le registre  512ms
+     ✓ ouvre les filtres dans un volet latéral  510ms
+     ✓ annonce le nombre de critères posés  712ms
+ ✓ src/pages/comptoir/SonaspComptoirSalesInboxPage.test.tsx (4 tests) 2588ms
+     ✓ expose les décisions selon la capacité, transmet le commentaire et affiche l’historique  1577ms
+     ✓ impose un motif de rejet sans appeler le RPC  458ms
+     ✓ signale un conflit de concurrence RPC et recharge la file  454ms
+ ✓ src/pages/customers/CustomerViews.test.tsx (8 tests) 2986ms
+     ✓ affiche les données relues, le crédit décimal et les banques  738ms
+     ✓ ouvre uniquement la vraie référence et aucun historique synthétique  334ms
+     ✓ calcule les compteurs avant pagination et combine recherche et statut  1011ms
+     ✓ relit les filtres et la pagination depuis l’URL  368ms
+ ✓ src/pages/admin/referentielForms.test.tsx (10 tests) 2672ms
+     ✓ bloque l’enregistrement tant que la fiche est incomplète  723ms
+     ✓ enregistre une nouvelle raffinerie en français  413ms
+     ✓ restitue l’erreur d’écriture  350ms
+     ✓ propose les trois segments en français  388ms
+     ✓ enregistre le segment retenu  382ms
+     ✓ met à jour une fiche existante  313ms
+ ✓ src/pages/payments/PaymentDetailsPage.test.tsx (8 tests) 2300ms
+     ✓ loads the actual payment and navigates to its associated sale  633ms
+     ✓ preserves the active tab and does not reload on focus or equivalent auth refresh  312ms
+     ✓ keeps the page visible during a manual refresh  624ms
+     ✓ aborts private downloads when the account is changed  352ms
+ ✓ src/pages/production/DailyProductionPage.test.tsx (18 tests) 2064ms
+     ✓ présente les cumuls de la période  388ms
+     ✓ filtre les déclarations sur la compagnie depuis le volet latéral  371ms
+     ✓ annonce le nombre de critères actifs et sait les remettre à zéro  359ms
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > affiche les indicateurs issus des données chargées
+Warning: The tag <stop> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at stop
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+Warning: The tag <linearGradient> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+Warning: The tag <defs> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > interroge la période effectivement retenue
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > n’affiche aucune donnée inventée quand tout est vide
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+ ✓ src/components/artisan/AffiliationDossier.test.tsx (9 tests) 2975ms
+     ✓ le chargement d’une carte payée ne déclenche aucune activation  598ms
+     ✓ génère après confirmation intégrale et attend toujours la validation et l’activation manuelles  387ms
+     ✓ ne génère pas lorsqu’un encaissement confirmé ne couvre qu’une partie des droits  421ms
+     ✓ reprend seulement le rendu après un paiement confirmé dont la génération échoue  563ms
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > annonce les sources indisponibles au lieu de les masquer
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > bascule le graphique et filtre les transactions à valider
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > ne relance pas le chargement sur une période inversée
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > ignore une réponse ancienne après un changement de période
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > change d’onglet sans recharger les données et conserve les unités
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > exporte uniquement les opérations du filtre actif dans le CSV
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+ ✓ src/pages/production/ExportLicenseForm.mine.test.tsx (3 tests) 3186ms
+     ✓ ne présente aucun champ de délivrance ou de quota accordé à la mine  366ms
+     ✓ soumet les seuls champs de demande puis confirme l’attente d’instruction  1691ms
+     ✓ affiche le refus RPC et ne simule aucun succès local  1122ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx (15 tests) 3661ms
+     ✓ affiche les indicateurs issus des données chargées  562ms
+     ✓ interroge la période effectivement retenue  357ms
+     ✓ bascule le graphique et filtre les transactions à valider  673ms
+     ✓ ne relance pas le chargement sur une période inversée  400ms
+     ✓ change d’onglet sans recharger les données et conserve les unités  468ms
+     ✓ exporte uniquement les opérations du filtre actif dans le CSV  501ms
+ ✓ src/pages/freight/FreightShipmentCreate.test.tsx (4 tests) 2896ms
+     ✓ distinguishes a failed load from a valid empty register and blocks creation  1017ms
+     ✓ creates once even when the submit action is activated twice  694ms
+     ✓ reuses the same idempotency key after an uncertain network failure  570ms
+     ✓ opens the existing shipment after a partial child write instead of offering a duplicate retry  605ms
+ ✓ src/pages/payments/PaymentsPage.test.tsx (10 tests) 2674ms
+     ✓ renders actual invoices and French currency without replacing source values  620ms
+     ✓ opens payment details through a keyboard-accessible action  518ms
+     ✓ preserves rows and filters during a manual refresh and does not fetch on focus  407ms
+ ✓ src/pages/production/ProductionInSafe.test.tsx (15 tests) 2288ms
+     ✓ n’expose aucun choix de compagnie au compte Mine  534ms
+     ✓ ouvre et referme le volet de filtres  462ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx (7 tests) 2984ms
+     ✓ affiche les indicateurs et panneaux de la vue territoriale  962ms
+     ✓ ouvre les filtres dans un volet et le referme à l’application  418ms
+     ✓ referme le volet au clic hors du panneau, par le bouton et par Échap  644ms
+     ✓ compte les filtres appliqués sur le bouton  374ms
+ ✓ src/components/customers/BankAccountForm.test.tsx (7 tests) 4848ms
+     ✓ affiche les banques ivoiriennes avec la valeur historique anglaise du pays  1521ms
+     ✓ ne propose pas les banques de Guinée à un compte de Papouasie-Nouvelle-Guinée  1106ms
+     ✓ permet de saisir et conserver intégralement une banque hors catalogue  935ms
+     ✓ traduit les libellés sans modifier les codes métier  830ms
+ ✓ src/pages/fiscalite/ReglesFiscalesPage.test.tsx (9 tests) 1914ms
+     ✓ calcule les compteurs d’onglets depuis les données chargées  369ms
+     ✓ sépare les onglets et n’offre « Abroger » que sur une règle en vigueur  365ms
+ ✓ src/pages/requisitions/RequisitionDetails.mine.test.tsx (3 tests) 2437ms
+     ✓ charge exclusivement le tenant et approuve avec un commentaire obligatoire  1128ms
+     ✓ transmet un rejet motivé par la même RPC contrôlée  691ms
+     ✓ affiche le refus serveur sans annoncer une transition réussie  611ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx (16 tests) 2032ms
+     ✓ configure l’année, le barème du titulaire et la période inclusive sans générer de carte  405ms
+ ✓ src/pages/collector/CollectorForm.test.tsx (5 tests) 1893ms
+     ✓ exige un organisme et des sites, sans choix de personne morale  591ms
+     ✓ calcule la complétion sur les champs réels et enregistre les données du collecteur  334ms
+     ✓ conserve les deux sites et retire uniquement le site demandé  419ms
+     ✓ reprend un dépôt échoué sans créer un second dossier  542ms
+ ✓ docs/amelioration/audit/customer-frontend-independent.test.tsx (11 tests) 1958ms
+     ✓ ignore une ancienne erreur de sauvegarde après changement du rôle d’accès  658ms
+ ✓ src/pages/artisan-minier/InfractionForm.test.tsx (12 tests) 1895ms
+     ✓ rappelle l’artisan mis en cause et ses antécédents  321ms
+     ✓ ne demande conclusion et date de clôture qu’à la clôture  699ms
+stderr | src/components/artisan/AffiliationDigitalCard.test.tsx > Carte numérique d’affiliation > reprend les jours serveur sans recalcul depuis la date du navigateur
+Warning: An update to AffiliationDigitalCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AffiliationDigitalCard (F:/Development/SONASP/src/components/artisan/AffiliationDigitalCard.tsx:15:3)
+
+ ✓ src/pages/artisan-minier/PaiementForm.test.tsx (13 tests) 1829ms
+     ✓ affiche la facture et le net à payer  516ms
+ ✓ src/components/artisan/AffiliationDigitalCard.test.tsx (12 tests) 1889ms
+     ✓ bascule au clic et au clavier, avec une seule face accessible  550ms
+     ✓ télécharge en mode détail le PNG de la face sélectionnée sans changer de face  522ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDetails.test.tsx (9 tests) 1796ms
+     ✓ présente l’identité, les indicateurs et les alertes du dossier  624ms
+     ✓ navigue entre les sections du dossier  474ms
+ ✓ src/pages/sales/SaleCreate.test.tsx (3 tests) 2074ms
+     ✓ affiche le formulaire institutionnel et ne fabrique aucune projection  676ms
+     ✓ recharge le contexte du seul client choisi puis active la validation après analyse  883ms
+     ✓ enregistre un brouillon sans déclencher la soumission  510ms
+ ✓ src/components/ui/ComboBox.test.tsx (5 tests) 2025ms
+     ✓ exposes its label, required state and popup relationship  495ms
+     ✓ navigates the options with arrows, Home, End and selects with Enter  389ms
+     ✓ filters the list and announces the empty state  479ms
+     ✓ provides a labelled custom input and preserves disabled state  542ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx (4 tests) 1630ms
+     ✓ affiche les références AEA uniquement pour un site formalisé et les conserve à la sauvegarde  1007ms
+     ✓ permet de compléter une fiche historique comme non formalisée sans AEA  336ms
+ ✓ src/pages/payments/InternationalPaymentFormView.test.tsx (10 tests) 1647ms
+     ✓ renders the reference sections, real bank coordinates and exact ledger totals  442ms
+ ✓ src/components/shipping/LogisticsRegister.test.tsx (3 tests) 1572ms
+     ✓ shows actionable loading failure, never a false empty register  1021ms
+     ✓ separates prepared shipments from shipments actually dispatched  538ms
+ ✓ src/pages/portals/DgmgRegulatoryDashboard.test.tsx (4 tests) 1915ms
+     ✓ rend la structure officielle, les données et les filtres réels  708ms
+     ✓ valide la période et relaie les filtres sans recharger le shell  863ms
+ ✓ src/pages/artisan-minier/PaiementsVentesDashboard.test.tsx (7 tests) 1675ms
+     ✓ affiche les indicateurs et les dossiers  515ms
+     ✓ émet la facture puis ouvre le dossier DGI en lecture seule  351ms
+ ✓ src/pages/admin/userPermissions.test.tsx (14 tests) 1242ms
+     ✓ présente les modules groupés et les droits en français  616ms
+ ✓ src/pages/production/AchatsMines.test.tsx (11 tests) 1206ms
+     ✓ enregistre un achat au prix du marché et recharge la liste  441ms
+ ✓ src/lib/routeAccessRegistry.test.ts (33 tests) 1534ms
+     ✓ applique la matrice déclarée à chaque route et chaque type de compte  898ms
+stderr | src/pages/sales/InternationalSaleSimulator.test.tsx > InternationalSaleSimulator > conserve le résultat si l’historisation échoue et affiche une erreur locale
+[Simulation] Historisation impossible Error: table indisponible
+    at F:/Development/SONASP/src/pages/sales/InternationalSaleSimulator.test.tsx:129:34
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+ ✓ src/pages/sales/InternationalSaleSimulator.test.tsx (7 tests) 1608ms
+     ✓ affiche les données réelles du contexte et les paramètres attendus  328ms
+     ✓ exporte le scénario calculé  308ms
+ ✓ src/pages/payments/VirtualPaymentsPage.security.test.tsx (5 tests) 1630ms
+     ✓ reste en lecture seule sans capability sensible et ne propose plus Quick Approve  412ms
+     ✓ approuve par RPC 4H avec version et clé idempotente pour un rapprochateur distinct  362ms
+     ✓ reste fermé pour une preuve non canonique, un auto-rapprochement ou un refus 23514  501ms
+ ✓ src/pages/collector/CollectionSalesPage.test.tsx (5 tests) 1408ms
+     ✓ ouvre uniquement les ventes du collecteur demandé depuis sa fiche  351ms
+     ✓ demande une décision explicite puis recharge le résultat  394ms
+     ✓ conserve une erreur serveur et ne simule pas une approbation  370ms
+ ✓ src/pages/admin/parametrage.test.tsx (11 tests) 1522ms
+     ✓ se présente en lecture seule, sans action factice  727ms
+ ✓ src/pages/artisan-minier/PaiementsHistorique.test.tsx (9 tests) 1489ms
+     ✓ affiche les indicateurs et les règlements  464ms
+stderr | src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > monte l’habillage une seule fois, même si la page en demande un
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at RenderedRoute (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6218:26)
+    at Routes (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7097:3)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > rend l’Outlet quand la page n’appelle pas la mise en page
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at RenderedRoute (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6218:26)
+    at Routes (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7097:3)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > conserve l’habillage d’une page à l’autre
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at RenderedRoute (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6218:26)
+    at Routes (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7097:3)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > garde l’en-tête et la barre hors du périmètre du repli de suspense
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at RenderedRoute (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6218:26)
+    at Routes (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7097:3)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+ ✓ src/components/layout/NationalDashboardChrome.test.tsx (4 tests) 1118ms
+     ✓ monte l’habillage une seule fois, même si la page en demande un  448ms
+     ✓ conserve l’habillage d’une page à l’autre  331ms
+ ✓ src/pages/artisan-minier/PaiementDetails.test.tsx (5 tests) 1256ms
+     ✓ présente un véritable dossier relié à la vente, à la facture et au bénéficiaire  485ms
+ ✓ src/pages/collector/CollectorDetails.test.tsx (5 tests) 1322ms
+     ✓ présente le dossier incomplet et une activité vide vérifiée sans inventer de référence  576ms
+ ✓ src/components/layout/AccordionSidebar.test.tsx (4 tests) 1341ms
+     ✓ affiche une navigation compacte sans la définition institutionnelle  492ms
+     ✓ garde une seule section ouverte et conserve la largeur pendant les clics  305ms
+stderr | src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx > BusinessIntelligenceWorkspace > sépare le pilotage, le diagnostic et les données au lieu de tout répéter
+Warning: The tag <stop> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at stop
+    at linearGradient
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:29:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:24:27)
+    at div
+    at article
+    at section
+    at main
+    at MainLayout (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:6:18)
+    at BusinessIntelligenceWorkspace (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.tsx:258:42)
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:29:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:24:27)
+    at div
+    at article
+    at section
+    at main
+    at MainLayout (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:6:18)
+    at BusinessIntelligenceWorkspace (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.tsx:258:42)
+Warning: The tag <linearGradient> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at linearGradient
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:29:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:24:27)
+    at div
+    at article
+    at section
+    at main
+    at MainLayout (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:6:18)
+    at BusinessIntelligenceWorkspace (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.tsx:258:42)
+Warning: The tag <defs> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:29:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:24:27)
+    at div
+    at article
+    at section
+    at main
+    at MainLayout (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:6:18)
+    at BusinessIntelligenceWorkspace (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.tsx:258:42)
+
+stderr | src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx > BusinessIntelligenceWorkspace > conserve les filtres avancés repliés jusqu’à leur ouverture
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:29:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:24:27)
+    at div
+    at article
+    at section
+    at main
+    at MainLayout (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx:6:18)
+    at BusinessIntelligenceWorkspace (F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.tsx:258:42)
+
+ ✓ src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx (2 tests) 1402ms
+     ✓ sépare le pilotage, le diagnostic et les données au lieu de tout répéter  1051ms
+     ✓ conserve les filtres avancés repliés jusqu’à leur ouverture  345ms
+ ✓ src/pages/admin/ModulesManagement.test.tsx (8 tests) 1253ms
+     ✓ présente la hiérarchie et ses états  483ms
+ ✓ src/pages/comptoir/ComptoirSonaspSalesPage.test.tsx (2 tests) 1352ms
+     ✓ affiche physique/réservé/libre et refuse une quantité supérieure au libre  778ms
+     ✓ affiche une course RPC sur le stock puis recharge les soldes  567ms
+ ✓ src/pages/artisan-minier/VenteOrDetails.test.tsx (9 tests) 1199ms
+     ✓ hiérarchise l’identité, les indicateurs et le détail fiscal  435ms
+ ✓ src/pages/production/ExportLicensesPage.test.tsx (14 tests) 1260ms
+     ✓ affiche les cumuls et les fiches  768ms
+stderr | src/components/layout/NationalDashboardMine.test.tsx > NationalDashboardLayout — espace Mine > affiche l’identité société dynamique et la navigation métier or/anthracite
+Warning: An update to MineGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at MineGoldSidebarCard (F:/Development/SONASP/src/components/layout/MineGoldSidebarCard.tsx:45:67)
+    at aside
+    at div
+    at div
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+Warning: An update to MineGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at MineGoldSidebarCard (F:/Development/SONASP/src/components/layout/MineGoldSidebarCard.tsx:45:67)
+    at aside
+    at div
+    at div
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardMine.test.tsx > NationalDashboardLayout — espace Mine > affiche l’identité société dynamique et la navigation métier or/anthracite
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardMine.test.tsx > NationalDashboardLayout — espace Mine > maintient l’ancienne URL du tableau de bord sur la même entrée active
+Warning: An update to MineGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at MineGoldSidebarCard (F:/Development/SONASP/src/components/layout/MineGoldSidebarCard.tsx:45:67)
+    at aside
+    at div
+    at div
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+Warning: An update to MineGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at MineGoldSidebarCard (F:/Development/SONASP/src/components/layout/MineGoldSidebarCard.tsx:45:67)
+    at aside
+    at div
+    at div
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardMine.test.tsx > NationalDashboardLayout — espace Mine > maintient l’ancienne URL du tableau de bord sur la même entrée active
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+ ✓ src/components/layout/NationalDashboardMine.test.tsx (2 tests) 863ms
+     ✓ affiche l’identité société dynamique et la navigation métier or/anthracite  755ms
+ ✓ src/pages/mine/MinePortalPage.test.tsx (4 tests) 1021ms
+     ✓ affiche la synthèse opérationnelle sans inventer de valeurs en cas de données vides  455ms
+     ✓ permet de relancer un chargement en échec  396ms
+ ✓ src/pages/public/PublicLayout.test.tsx (3 tests) 2470ms
+     ✓ relie les quatre sections, l’accès habilité et les informations légales  1345ms
+     ✓ ouvre le menu mobile au clavier, boucle le focus et ferme sur Échap  405ms
+     ✓ ferme la navigation après la sélection d’une section  711ms
+ ✓ src/pages/admin/RolesPermissionsPage.test.tsx (2 tests) 1721ms
+     ✓ affiche les rôles du portail et la matrice des seules permissions applicables  1710ms
+ ✓ src/pages/admin/GoldShippingWorkflow.test.tsx (11 tests) 2351ms
+     ✓ rend le diagramme et ses indicateurs  916ms
+     ✓ détaille une étape sélectionnée et permet de naviguer  652ms
+     ✓ borne le zoom  751ms
+ ✓ src/components/sales/LiveGoldMarketPanel.test.tsx (6 tests) 2024ms
+     ✓ est fermé par défaut et expose un déclencheur accessible  558ms
+     ✓ s’ouvre puis se ferme avec le bouton de fermeture en restaurant le focus  417ms
+     ✓ présente une erreur contrôlée et permet de relancer  322ms
+ ✓ src/pages/artisan-minier/CarteValidation.test.tsx (7 tests) 1878ms
+     ✓ affiche les indicateurs et les demandes en attente  1004ms
+     ✓ valide une carte et recharge les données  320ms
+     ✓ affiche le refus de double contrôle renvoyé par le serveur  345ms
+ ✓ src/pages/artisan-minier/rapports.test.tsx (17 tests) 1918ms
+     ✓ consolide les indicateurs de la période  737ms
+     ✓ propose les treize régions du référentiel national  367ms
+ ✓ src/pages/admin/ParametersPage.test.tsx (9 tests) 2246ms
+     ✓ enregistre réellement les préférences d’affichage  725ms
+     ✓ reflète et persiste les préférences de notification  342ms
+     ✓ n’enregistre les règles que si elles ont changé  473ms
+     ✓ présente la double authentification comme une obligation non désactivable  370ms
+ ✓ src/pages/stakeholders/ApprobateursPage.test.tsx (3 tests) 1751ms
+     ✓ affiche la page dans la gouttière standard et propose une désignation  943ms
+     ✓ désigne un compte autorisé via le service sécurisé  629ms
+stderr | src/pages/dashboards/ProductionDashboardModern.test.tsx > ProductionDashboardModern > présente production, expéditions et compagnies réelles
+Warning: The tag <stop> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at stop
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:16:31)
+    at ProductionDashboardModern (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.tsx:31:61)
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:16:31)
+    at ProductionDashboardModern (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.tsx:31:61)
+Warning: The tag <linearGradient> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:16:31)
+    at ProductionDashboardModern (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.tsx:31:61)
+Warning: The tag <defs> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:16:31)
+    at ProductionDashboardModern (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.tsx:31:61)
+
+stderr | src/pages/dashboards/ProductionDashboardModern.test.tsx > ProductionDashboardModern > filtre le graphique sur la compagnie sélectionnée
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:16:31)
+    at ProductionDashboardModern (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.tsx:31:61)
+
+stderr | src/pages/dashboards/ProductionDashboardModern.test.tsx > ProductionDashboardModern > annonce une source indisponible
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:23:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:16:31)
+    at ProductionDashboardModern (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.tsx:31:61)
+
+stderr | src/pages/dashboards/ProductionDashboardModern.test.tsx > ProductionDashboardModern > quitte le chargement et propose une reprise après un échec inattendu
+Production dashboard loading failed: Error: network unavailable
+    at Object.<anonymous> (F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx:162:49)
+    at Object.Mock (file:///F:/Development/SONASP/node_modules/@vitest/spy/dist/index.js:332:34)
+    at loadProductionDashboard (F:/Development/SONASP/src/pages/dashboards/productionDashboardData.ts:150:14)
+    at F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.tsx:45:21
+    at F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.tsx:56:10
+    at commitHookEffectListMount (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:23189:26)
+    at commitPassiveMountOnFiber (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:24970:11)
+    at commitPassiveMountEffects_complete (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:24930:9)
+    at commitPassiveMountEffects_begin (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:24917:7)
+    at commitPassiveMountEffects (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:24905:3)
+
+ ✓ src/pages/dashboards/ProductionDashboardModern.test.tsx (8 tests) 1026ms
+     ✓ présente production, expéditions et compagnies réelles  557ms
+ ✓ src/pages/achats/ComptesPaiementsOverviewPage.test.tsx (1 test) 1208ms
+     ✓ compose le pilotage depuis les services comptables existants  1202ms
+ ✓ src/pages/portals/DgiFiscalDashboard.test.tsx (4 tests) 1204ms
+     ✓ rend les agrégats réels sans objectif fictif ni compteur indisponible  409ms
+     ✓ affiche le refus serveur et permet une nouvelle tentative  326ms
+     ✓ valide la période avant de relancer la projection  329ms
+ ✓ src/pages/shipping/ShippingPreparationEdit.test.tsx (4 tests) 1458ms
+     ✓ affiche le statut en lecture seule sans choix arbitraire  634ms
+     ✓ redirige le bouton Annuler vers les détails canoniques  336ms
+     ✓ enregistre uniquement les informations générales puis revient aux détails canoniques  366ms
+ ✓ src/pages/artisan-minier/InfractionDetails.test.tsx (8 tests) 1015ms
+     ✓ présente le constat, ses pièces et le dossier concerné  586ms
+ ✓ src/components/dossier/DossierComplet.test.tsx (4 tests) 699ms
+     ✓ ouvre un document par URL signée et marque les références sans fichier  436ms
+ ✓ src/pages/artisan-minier/CarteExpirations.test.tsx (6 tests) 900ms
+     ✓ affiche les quatre fenêtres et la liste de la fenêtre active  584ms
+ ✓ src/pages/inventory/NationalReserveWorkspace.test.tsx (6 tests) 926ms
+     ✓ rend la page « Réserve nationale » avec les données du service  489ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx (3 tests) 990ms
+     ✓ explique pourquoi le site planifié n’est pas évalué et propose les quatre règles  618ms
+stderr | src/pages/dashboards/roleDashboards.test.tsx > tableaux de bord métier > l’usine consolide production et préparations réelles
+Warning: The tag <stop> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at stop
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at FactoryDashboard
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at FactoryDashboard
+Warning: The tag <linearGradient> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at FactoryDashboard
+Warning: The tag <defs> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at FactoryDashboard
+
+stderr | src/pages/dashboards/roleDashboards.test.tsx > tableaux de bord métier > l’aéroport lit les expéditions de fret
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at AirportDashboard
+
+stderr | src/pages/dashboards/roleDashboards.test.tsx > tableaux de bord métier > la raffinerie calcule le titre réellement constaté
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at RefineryDashboard
+
+stderr | src/pages/dashboards/roleDashboards.test.tsx > tableaux de bord métier > le client voit ses commandes en FCFA
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at CustomerDashboard
+
+stderr | src/pages/dashboards/roleDashboards.test.tsx > tableaux de bord métier > la direction agrège ventes, production, clients et stock
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at ManagementDashboard
+
+stderr | src/pages/manager/ManagerPortalPage.test.tsx > ManagerPortalPage > affiche un portail Direction distinct et explicitement consultatif
+react-i18next:: useTranslation: You will need to pass in an i18next instance by using initReactI18next { code: 'NO_I18NEXT_INSTANCE' }
+
+stderr | src/pages/dashboards/roleDashboards.test.tsx > tableaux de bord métier > annonce une source indisponible au lieu de la combler
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:24:20)
+    at div
+    at section
+    at Section (F:/Development/SONASP/src/components/ui/sn/index.tsx:189:20)
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx:17:31)
+    at RoleDashboardShell (F:/Development/SONASP/src/pages/dashboards/RoleDashboardShell.tsx:22:3)
+    at FactoryDashboard
+
+ ✓ src/pages/dashboards/roleDashboards.test.tsx (11 tests) 1067ms
+     ✓ l’usine consolide production et préparations réelles  513ms
+ ✓ src/pages/production/ProductionDetails.test.tsx (10 tests) 907ms
+     ✓ renvoie vers la déclaration à modifier, sur une route qui existe  457ms
+stderr | src/pages/manager/ManagerPortalPage.test.tsx > ManagerPortalPage > affiche un portail Direction distinct et explicitement consultatif
+[Modules] Catalogue de navigation indisponible : {
+  message: 'TypeError: fetch failed',
+  details: 'TypeError: fetch failed\n' +
+    '\n' +
+    'Caused by: Error: getaddrinfo ENOTFOUND yyverzuhkdonjjuficor.supabase.co (ENOTFOUND)\n' +
+    'Error: getaddrinfo ENOTFOUND yyverzuhkdonjjuficor.supabase.co\n' +
+    '    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)',
+  hint: '',
+  code: ''
+}
+
+stderr | src/pages/manager/ManagerPortalPage.test.tsx > ManagerPortalPage > présente les statuts persistés avec leur libellé français
+[Modules] Catalogue de navigation indisponible : {
+  message: 'TypeError: fetch failed',
+  details: 'TypeError: fetch failed\n' +
+    '\n' +
+    'Caused by: Error: getaddrinfo ENOTFOUND yyverzuhkdonjjuficor.supabase.co (ENOTFOUND)\n' +
+    'Error: getaddrinfo ENOTFOUND yyverzuhkdonjjuficor.supabase.co\n' +
+    '    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)',
+  hint: '',
+  code: ''
+}
+
+ ✓ src/pages/manager/ManagerPortalPage.test.tsx (2 tests) 1376ms
+     ✓ affiche un portail Direction distinct et explicitement consultatif  1255ms
+ ✓ src/pages/artisan-minier/CarteSuivi.test.tsx (5 tests) 934ms
+     ✓ affiche le parc de cartes, l’activité et le classement  606ms
+ ✓ src/pages/collector/CollectorPortalPage.test.tsx (1 test) 892ms
+     ✓ présente uniquement les données assignées et aucun raccourci international  885ms
+ ✓ src/pages/admin/referentiels.test.tsx (10 tests) 1020ms
+     ✓ liste les établissements en français  539ms
+ ✓ src/pages/portals/DgmgReserveValidationPage.test.tsx (2 tests) 946ms
+     ✓ ne lit que la projection minimale et valide via la RPC dédiée  736ms
+ ✓ src/pages/admin/ApprovalsDashboard.test.tsx (6 tests) 864ms
+     ✓ affiche des compteurs justes malgré le filtre actif  532ms
+ ✓ src/pages/Profile.test.tsx (3 tests) 715ms
+     ✓ n’enregistre que les champs personnels publiés, sans droits ni colonne fictive  507ms
+ ✓ src/contexts/AuthContext.fallback.test.tsx (13 tests) 871ms
+ ✓ src/pages/freight/FreightCustomsCreate.test.tsx (2 tests) 829ms
+     ✓ reste fail-closed sans capacité freight.prepare autoritative  406ms
+     ✓ crée par RPC puis enregistre la note avec la version composite reçue  416ms
+ ✓ src/components/admin/SessionsTab.test.tsx (5 tests) 757ms
+ ✓ src/pages/inventory/ReserveAllocationForm.test.tsx (1 test) 708ms
+     ✓ présente une synthèse progressive et repliable à la première étape  701ms
+ ✓ src/components/auth/LoginInstitutions.test.tsx (4 tests) 849ms
+     ✓ présente cinq institutions accessibles, sans commandes de défilement  439ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteProduction.test.tsx (2 tests) 716ms
+     ✓ ne présente pas des zéros comme des données réelles lorsque le chargement échoue  463ms
+ ✓ supabase/functions/create-user/index.runtime.test.ts (31 tests) 588ms
+ ✓ src/pages/auth/ActivateAccount.test.tsx (4 tests) 901ms
+     ✓ n’utilise plus de mot de passe provisoire ni de RPC d’activation côté client  585ms
+ ✓ src/pages/inventory/InventoryManagement.test.tsx (1 test) 892ms
+     ✓ masque l’origine redondante et ouvre le détail réel d’un poste  884ms
+ ✓ src/components/ui/Button.test.tsx (13 tests) 836ms
+     ✓ should render button with text  441ms
+Error: Failed to fetch dynamically imported module
+    at BrokenLazyRoute (F:/Development/SONASP/src/components/common/ErrorBoundary.test.tsx:16:9)
+    at renderWithHooks (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\generated\EventListener.js:26:30)
+    at innerInvokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+Error: Failed to fetch dynamically imported module
+    at BrokenLazyRoute (F:/Development/SONASP/src/components/common/ErrorBoundary.test.tsx:16:9)
+    at renderWithHooks (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\generated\EventListener.js:26:30)
+    at innerInvokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+TypeError: Failed to fetch
+    at BrokenApiRoute (F:/Development/SONASP/src/components/common/ErrorBoundary.test.tsx:20:9)
+    at renderWithHooks (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\generated\EventListener.js:26:30)
+    at innerInvokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+TypeError: Failed to fetch
+    at BrokenApiRoute (F:/Development/SONASP/src/components/common/ErrorBoundary.test.tsx:20:9)
+    at renderWithHooks (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\generated\EventListener.js:26:30)
+    at innerInvokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+TypeError: Cannot read properties of null (reading 'toLocaleString')
+    at BrokenRenderRoute (F:/Development/SONASP/src/components/common/ErrorBoundary.test.tsx:25:9)
+    at renderWithHooks (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\generated\EventListener.js:26:30)
+    at innerInvokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+TypeError: Cannot read properties of null (reading 'toLocaleString')
+    at BrokenRenderRoute (F:/Development/SONASP/src/components/common/ErrorBoundary.test.tsx:25:9)
+    at renderWithHooks (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (F:\Development\SONASP\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\generated\EventListener.js:26:30)
+    at innerInvokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (F:\Development\SONASP\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:114:17)
+ ✓ src/components/common/ErrorBoundary.test.tsx (4 tests) 768ms
+     ✓ passe hors ligne puis vérifie la version sans recharger au retour du réseau  617ms
+ ✓ src/components/layout/portalThemes.test.tsx (17 tests) 699ms
+     ✓ garde le monogramme réel quand un logo est absent ou inaccessible  405ms
+ ✓ src/components/common/PwaUpdatePrompt.test.tsx (5 tests) 790ms
+     ✓ n’active la version qu’après le clic explicite, jamais au retour online  560ms
+ ✓ src/components/freight/ChangeStatusModal.test.tsx (3 tests) 901ms
+     ✓ n’offre aucun choix arbitraire et appelle uniquement l’étape suivante attendue  667ms
+ ✓ src/pages/auth/UpdatePassword.test.tsx (4 tests) 739ms
+     ✓ finalise le mot de passe puis conduit à l’enrôlement 2FA  536ms
+ ✓ src/pages/inventory/StockHistoryDialog.test.tsx (2 tests) 495ms
+     ✓ affiche les références réelles du poste et se ferme avec Échap  462ms
+ ✓ src/components/ui/sn/Tabs.test.tsx (1 test) 661ms
+     ✓ moves both selection and focus with arrows, Home and End  650ms
+ ✓ src/components/ui/Modal.test.tsx (1 test) 705ms
+     ✓ names the dialog, traps focus, closes on Escape and restores focus  696ms
+ ✓ supabase/functions/resend-welcome-email/index.runtime.test.ts (3 tests) 330ms
+ ✓ src/lib/excelExport.test.ts (1 test) 391ms
+     ✓ génère un classeur xlsx sans parser de contenu externe  383ms
+ ✓ src/components/auth/MandatoryMfaGate.test.tsx (4 tests) 569ms
+     ✓ impose l’enrôlement sans option de report  318ms
+ ✓ src/pages/public/VerifyAffiliation.test.tsx (6 tests) 572ms
+     ✓ ne présente pas une indisponibilité comme une carte valide et permet un nouveau contrôle  461ms
+ ✓ src/pages/production/ExportLicenseDetails.mine.test.tsx (2 tests) 508ms
+     ✓ filtre la licence et ses expéditions par le tenant et masque Modifier  395ms
+ ✓ src/components/layout/sidebarNavigation.test.ts (41 tests) 522ms
+ ✓ src/components/auth/TwoFactorVerify.test.tsx (1 test) 459ms
+     ✓ présente les deux modes de vérification en français  452ms
+ ✓ src/components/ui/ProfileErrorBanner.test.tsx (2 tests) 440ms
+     ✓ shows an actionable offline message away from the header  348ms
+ ✓ src/components/auth/ProtectedRoute.admin.test.tsx (3 tests) 236ms
+ ✓ src/components/reports/DecompositionTree.test.tsx (2 tests) 522ms
+     ✓ présente les contributions comme un diagnostic sélectionnable  465ms
+ ✓ src/pages/production/BudgetManagementPage.test.tsx (1 test) 473ms
+     ✓ laisse une société minière ouvrir le Forecast sans budget annuel préalable  466ms
+ ✓ src/components/shipping/ShippingLicenseSelect.test.tsx (2 tests) 492ms
+     ✓ liste uniquement les licences actives, valides, libres et du tenant  465ms
+stderr | src/components/layout/DgiGoldSidebarCard.test.tsx > cours de l’or du portail DGI > ne fabrique aucune conversion en l’absence du taux de change
+Warning: An update to DgiGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DgiGoldSidebarCard (F:/Development/SONASP/src/components/layout/DgiGoldSidebarCard.tsx:48:67)
+Warning: An update to DgiGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DgiGoldSidebarCard (F:/Development/SONASP/src/components/layout/DgiGoldSidebarCard.tsx:48:67)
+
+stderr | src/components/layout/DgiGoldSidebarCard.test.tsx > cours de l’or du portail DGI > rend l’indisponibilité et une action de reprise
+Warning: An update to DgiGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DgiGoldSidebarCard (F:/Development/SONASP/src/components/layout/DgiGoldSidebarCard.tsx:48:67)
+Warning: An update to DgiGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DgiGoldSidebarCard (F:/Development/SONASP/src/components/layout/DgiGoldSidebarCard.tsx:48:67)
+
+ ✓ src/components/layout/DgiGoldSidebarCard.test.tsx (3 tests) 452ms
+     ✓ affiche la source, la fraîcheur et les conversions du référentiel  366ms
+ ✓ src/components/ui/sn/PageHeader.test.tsx (1 test) 324ms
+     ✓ exposes the page title as the unique level-one heading  316ms
+stderr | src/pages/public/PublicComponents.performance.test.tsx > MinePortalPreview - chargement différé des graphiques > préserve la structure visuelle pendant le chargement puis affiche le graphique
+Warning: The tag <stop> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at stop
+    at linearGradient
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx:4:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx:16:27)
+    at div
+    at div
+    at div
+    at PublicPortalCharts (F:/Development/SONASP/src/pages/public/PublicPortalCharts.tsx:20:31)
+    at Suspense
+    at div
+    at MinePortalPreview (F:/Development/SONASP/src/pages/public/PublicComponents.tsx:272:30)
+
+stderr | src/pages/public/PublicComponents.performance.test.tsx > MinePortalPreview - chargement différé des graphiques > préserve la structure visuelle pendant le chargement puis affiche le graphique
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx:4:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx:16:27)
+    at div
+    at div
+    at div
+    at PublicPortalCharts (F:/Development/SONASP/src/pages/public/PublicPortalCharts.tsx:20:31)
+    at Suspense
+    at div
+    at MinePortalPreview (F:/Development/SONASP/src/pages/public/PublicComponents.tsx:272:30)
+Warning: The tag <linearGradient> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at linearGradient
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx:4:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx:16:27)
+    at div
+    at div
+    at div
+    at PublicPortalCharts (F:/Development/SONASP/src/pages/public/PublicPortalCharts.tsx:20:31)
+    at Suspense
+    at div
+    at MinePortalPreview (F:/Development/SONASP/src/pages/public/PublicComponents.tsx:272:30)
+Warning: The tag <defs> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at defs
+    at div
+    at AreaChart (F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx:4:17)
+    at div
+    at ResponsiveContainer (F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx:16:27)
+    at div
+    at div
+    at div
+    at PublicPortalCharts (F:/Development/SONASP/src/pages/public/PublicPortalCharts.tsx:20:31)
+    at Suspense
+    at div
+    at MinePortalPreview (F:/Development/SONASP/src/pages/public/PublicComponents.tsx:272:30)
+
+ ✓ src/pages/public/PublicComponents.performance.test.tsx (1 test) 438ms
+     ✓ préserve la structure visuelle pendant le chargement puis affiche le graphique  431ms
+ ✓ src/pages/portals/DgiFiscalPaymentsPage.test.tsx (2 tests) 509ms
+     ✓ échoue fermé si la RPC refuse le périmètre  315ms
+ ✓ src/components/ui/ActionErrorDialog.test.tsx (3 tests) 519ms
+     ✓ names the dialog, traps keyboard focus and restores it on close  431ms
+ ✓ src/components/auth/TwoFactorSetup.test.tsx (1 test) 513ms
+     ✓ présente un parcours compact et finalise après vérification du code  506ms
+ ✓ src/components/ui/FieldDescriptions.test.tsx (4 tests) 357ms
+ ✓ src/components/ui/Input.test.tsx (1 test) 347ms
+     ✓ renders a forwardRef icon component without treating it as a React child  341ms
+ ✓ src/components/ui/FieldGuidePanel.test.tsx (1 test) 353ms
+     ✓ affiche tous les champs en format compact et respecte les exclusions  348ms
+ ✓ src/pages/sales/SaleDetails.test.tsx (3 tests) 415ms
+ ✓ src/pages/public/PublicLocaleContext.test.tsx (2 tests) 339ms
+     ✓ utilise le français par défaut et refuse une langue encore désactivée  329ms
+ ✓ src/hooks/useArtisanalSiteData.test.tsx (2 tests) 258ms
+ ✓ src/pages/portals/InstitutionalPortalPage.test.tsx (2 tests) 360ms
+     ✓ isole le tableau réglementaire DGMG du portail fiscal  325ms
+ ✓ src/components/auth/ProtectedRoute.portals.test.tsx (15 tests) 250ms
+ ✓ src/components/auth/ProfileGuard.test.tsx (5 tests) 377ms
+ ✓ supabase/functions/reset-user-password/index.runtime.test.ts (6 tests) 339ms
+ ✓ src/components/auth/CollectorPortalGuard.test.tsx (3 tests) 402ms
+     ✓ refuse explicitement une capacité sans rattachement serveur  303ms
+ ✓ supabase/functions/delete-user/index.runtime.test.ts (3 tests) 338ms
+ ✓ src/services/assayCertificateService.performance.test.ts (1 test) 279ms
+ ✓ src/components/production/ProductionTable.test.tsx (4 tests) 353ms
+ ✓ src/components/artisan/ArtisanDossierSummary.test.tsx (1 test) 231ms
+ ✓ src/components/auth/MinePortalGuard.test.tsx (12 tests) 242ms
+ ✓ src/components/ui/sn/DataTable.test.tsx (1 test) 172ms
+ ✓ supabase/functions/affiliation-payment-proof-upload/handler.test.ts (3 tests) 209ms
+ ✓ src/services/interPortalWorkflows.integration.test.ts (4 tests) 200ms
+ ✓ src/lib/platformModuleCatalog.test.ts (8 tests) 164ms
+ ✓ src/components/budget/BudgetMatrixTable.test.tsx (1 test) 155ms
+ ✓ src/components/auth/ProtectedRoute.collector.test.tsx (8 tests) 147ms
+ ✓ src/components/seo/PageMetadata.test.tsx (3 tests) 212ms
+ ✓ src/components/ui/PhoneInput.test.tsx (2 tests) 145ms
+ ✓ src/components/production/ProductionStatusWorkflow.security.test.tsx (2 tests) 145ms
+ ✓ src/components/auth/ProtectedRoute.capabilities.test.tsx (6 tests) 137ms
+ ✓ src/components/auth/PublicRoute.test.tsx (3 tests) 91ms
+ ✓ src/components/auth/ProtectedRoute.owner.test.tsx (1 test) 55ms
+ ✓ src/components/dashboard/StatusBadge.test.tsx (2 tests) 54ms
+ ✓ src/services/minePortalService.test.ts (9 tests) 73ms
+ ✓ supabase/functions/sensitive-upload/handler.test.ts (8 tests) 46ms
+ ✓ supabase/functions/_shared/artisan-document-upload.test.ts (9 tests) 49ms
+ ✓ supabase/functions/_shared/admin-account-edge.test.ts (18 tests) 49ms
+ ✓ supabase/functions/revoke-user-sessions/handler.test.ts (9 tests) 52ms
+ ✓ src/services/customerSaleDecisionService.test.ts (3 tests) 17ms
+ ✓ src/components/shipping/LegacyShippingPreparationEditRedirect.test.tsx (2 tests) 95ms
+ ✓ src/hooks/useArtisanUnsavedChanges.test.tsx (2 tests) 55ms
+ ✓ src/components/auth/ProtectedRoute.comptoir.test.tsx (2 tests) 96ms
+ ✓ src/services/affiliationService.test.ts (4 tests) 71ms
+ ✓ src/lib/sessionManager.test.ts (9 tests) 88ms
+ ✓ src/services/accountActivationService.test.ts (7 tests) 48ms
+ ✓ src/data/burkinaRegions.test.ts (7 tests) 48ms
+ ✓ src/services/userManagementService.test.ts (12 tests) 57ms
+ ✓ supabase/functions/_shared/comptoir-document-upload.test.ts (10 tests) 61ms
+ ✓ supabase/functions/activate-account/handler.test.ts (7 tests) 58ms
+ ✓ src/services/sensitiveUploadGateway.test.ts (14 tests) 47ms
+ ✓ supabase/functions/_shared/admin-account-contract.test.ts (25 tests) 41ms
+ ✓ src/services/rpcClientBinding.test.ts (7 tests) 53ms
+ ✓ src/pages/payments/internationalPaymentDetail.test.ts (9 tests) 29ms
+ ✓ supabase/functions/collection-notifications/handler.test.ts (8 tests) 36ms
+stderr | src/services/productionStatusService.test.ts > productionStatusService.updateStatus > refuse un saut de statut avant tout appel réseau
+Error updating production status: Error: Transition de statut non autorisée: cancelled → ready_for_customs
+    at ProductionStatusService.updateStatus (F:/Development/SONASP/src/services/productionStatusService.ts:87:15)
+    at F:/Development/SONASP/src/services/productionStatusService.test.ts:68:42
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///F:/Development/SONASP/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+
+stderr | src/services/productionStatusService.test.ts > productionStatusService.updateStatus > convertit SQLSTATE 40001 en conflit métier
+Error updating production status: ProductionStatusConflictError: Le statut de cette production a changé entre-temps. Actualisez le dossier avant de réessayer.
+    at ProductionStatusService.updateStatus (F:/Development/SONASP/src/services/productionStatusService.ts:104:48)
+
+stderr | src/services/productionStatusService.test.ts > productionStatusService.updateStatus > propage un refus capability/AAL2 sans fallback DML
+Error updating production status: { code: '42501', message: 'Capability et AAL2 requis' }
+
+stderr | src/services/productionStatusService.test.ts > productionStatusService.updateStatus > refuse une réponse RPC qui ne confirme pas le statut cible
+Error updating production status: Error: Le serveur n’a pas confirmé le nouveau statut de la production.
+    at ProductionStatusService.updateStatus (F:/Development/SONASP/src/services/productionStatusService.ts:109:15)
+
+ ✓ src/services/productionStatusService.test.ts (6 tests) 31ms
+ ✓ src/services/userPermissionsService.test.ts (4 tests) 29ms
+ ✓ src/services/dossierService.test.ts (7 tests) 21ms
+ ✓ src/services/relationsSonaspService.test.ts (6 tests) 26ms
+ ✓ src/services/artisanMoyenPaiementService.test.ts (19 tests) 52ms
+ ✓ src/services/userSessionService.test.ts (14 tests) 81ms
+ ✓ src/services/shippingPreparationService.test.ts (12 tests) 44ms
+ ✓ src/pages/public/PortalAccessButton.styles.test.ts (4 tests) 38ms
+ ✓ src/lib/mineAccess.test.ts (26 tests) 34ms
+ ✓ src/lib/comptoirAccess.test.ts (17 tests) 28ms
+ ✓ src/services/internationalPaymentDetailService.test.ts (10 tests) 95ms
+ ✓ src/services/exportLicenseService.test.ts (14 tests) 52ms
+ ✓ src/services/artisanalSiteSave.test.ts (4 tests) 32ms
+stderr | src/services/productionDocumentService.security.test.ts > productionDocumentService — upload privé > échoue fermé sur une confirmation de chemin hors parent
+Error uploading document: Error: La confirmation du dépôt est invalide.
+    at ProductionDocumentService.uploadDocument (F:/Development/SONASP/src/services/productionDocumentService.ts:46:17)
+
+ ✓ src/services/productionDocumentService.security.test.ts (5 tests) 43ms
+ ✓ src/services/artisanPaiementsService.security.test.ts (9 tests) 27ms
+ ✓ src/services/sensitiveUploadInventory.test.ts (15 tests) 34ms
+ ✓ src/services/tracabiliteVenteService.test.ts (29 tests) 46ms
+ ✓ src/services/saleCreationWorkspaceMigration.test.ts (6 tests) 17ms
+ ✓ src/pages/inventory/inventoryOverviewData.test.ts (19 tests) 29ms
+ ✓ src/services/certificationDgiService.test.ts (8 tests) 28ms

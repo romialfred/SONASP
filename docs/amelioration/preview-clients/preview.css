@@ -1,0 +1,4 @@
+:root { --preview-banner-height: 34px; }
+.clients-preview-banner { position: fixed; inset: 0 0 auto; height: var(--preview-banner-height); z-index: 1200; display: flex; align-items: center; justify-content: center; padding: 4px 12px; background: #fff4d6; color: #604205; border-bottom: 1px solid #d0ae53; font: 600 13px/1.25 'Source Sans 3', sans-serif; text-align: center; }
+#root .national-shell { margin-top: var(--preview-banner-height); height: calc(100dvh - var(--preview-banner-height)); }
+@media (max-width: 600px) { :root { --preview-banner-height: 46px; } }

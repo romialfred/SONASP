@@ -1,0 +1,68 @@
+{
+  "evidence_id": "AUD-CLI-FE-01",
+  "date_utc": "2026-09-07T06:26:50.703Z",
+  "finished_at_utc": "2026-09-07T06:28:02.252Z",
+  "evidence_kind": "COMPOSANTS_JSDOM_SERVICES_AUTH_LAYOUT_SIMULES",
+  "environment": {
+    "name": "Vitest jsdom local",
+    "production": false,
+    "network_backend": false,
+    "auth_simulated": true,
+    "actual_browser": false,
+    "layout_simulated": true
+  },
+  "application": {
+    "baseline_commit": "83f8c74ea83c81a2734ef9e086c2edd211573ebe",
+    "integrated_release_commit": null,
+    "source_file_hashes": {
+      "src/pages/customers/CustomerForm.test.tsx": "4bd7b5bc0ff52463858506a6c504177b9bbb26dbf0b6bf1de50715c393248d91",
+      "src/pages/customers/CustomerViews.test.tsx": "956225260effb01a3fa666a7dcabd1551c2fee5f21dea962f1f37fc7c4540900",
+      "src/components/customers/BankAccountForm.test.tsx": "1baaa19c2dcf493d58f9074cdf4ec203c713cc6b39ee79b9e11f9afb27258f92",
+      "src/services/customerDossierService.test.ts": "716c5938797808a85cfdd6865bfeef2b002a2b7ca8410982d11388405d8e8636",
+      "src/lib/customerCountryLabels.test.ts": "a9ccc95391dd9aa438bae3739fe2b3778ee10e14bb8e808c9ac3d19177314d52",
+      "docs/amelioration/audit/customer-frontend-independent.test.tsx": "eeefccb14b4244671fb71af152cb559fe3915f87ac92928f73958a78394fa385",
+      "src/pages/customers/CustomerForm.tsx": "d9924d71efe4bb30d78cb1e2b8debfa5123c8aa592fd6a1104b842ed64275d34",
+      "src/pages/customers/CustomerProfile.tsx": "baddbfc3e887bb8f081612d31279658397640bffc38e0eb9ca89b708cfffa089",
+      "src/pages/customers/CustomerListing.tsx": "1ce1504cc41476a0387e6a66367e9354837067c07e5de2c28fced8add64a6173",
+      "src/components/customers/BankAccountForm.tsx": "62a8ecdb9127aafb13d7e383f41c8b8a77b249cdb4d395373dda3e3f317f938e",
+      "src/services/customerDossierService.ts": "c8fe046329e2780d8a7883663906d9a6757e298af1b8c0edd0590631a2904a0d",
+      "src/lib/customerCountryLabels.ts": "872182dba20ea2510f2bbaed537d93300a464567454b757378abd2afa60e9ff2",
+      "src/constants/countries.ts": "c5a6fb812d637017df4714758c0f4e639b2fc1bf310b03431d5b692e621bbf54",
+      "src/pages/customers/customers.css": "5427580bf372a0f049c551734968ff1dcd15cf6c188efe22b2f1f03a0eeca3bc",
+      "src/types/database.ts": "1bbccf8b18de800cd2b44489942a5dcf81d07d88739132231e319412a4542fa7",
+      "src/components/ui/sn/index.tsx": "59a4619da4f7bab878eee262281eafafcab350124454d12fc5e9ef4acab8a92f",
+      "src/lib/routeAccessRegistry.ts": "9fa0b5fc87d9a1b21961960be4e0d88d0f806cdee4fa5c6a2bb364e54852c01d",
+      "src/hooks/useArtisanUnsavedChanges.ts": "2fe21042e3b111a417ba62f894e3c590f6d96934d50dd739c89f637d8d0b0d13",
+      "src/hooks/useAutoRefresh.ts": "3ef314bc3ed88f4421aed1064d38def21f24b6bd8fa620066988d633d9294872",
+      "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+      "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+      "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+    },
+    "stable_inputs_during_execution": true
+  },
+  "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=1 --reporter=verbose src/pages/customers/CustomerForm.test.tsx src/pages/customers/CustomerViews.test.tsx src/components/customers/BankAccountForm.test.tsx src/services/customerDossierService.test.ts src/lib/customerCountryLabels.test.ts docs/amelioration/audit/customer-frontend-independent.test.tsx",
+  "exit_code": 0,
+  "test_result": "RÉUSSI",
+  "summary": {
+    "passed": 46,
+    "test_files": 6,
+    "expected_original_cases": 32,
+    "expected_independent_cases": 14
+  },
+  "artifacts": [
+    {
+      "path": "docs/amelioration/audit/frontend-independent.txt",
+      "sha256": "c008793070f41c47c37a74e77ac4fc0ab9eb1ab8bc12072a3eaca1319a2ba86e",
+      "kind": "vitest-verbose-output"
+    }
+  ],
+  "executor": "audit_independant",
+  "limitations": [
+    "Auth et chargements/sauvegardes remplacés par des doubles.",
+    "Les liens sont inspectés sans envoi de courriel ni ouverture des workflows externes.",
+    "Aucun rendu navigateur, responsive, zoom natif ou persistance en base réelle.",
+    "Empreintes du lot contrôlé ; ce n’est pas un commit de livraison ni un audit de toute l’application."
+  ],
+  "ui_form_validated": false,
+  "deployment_authorised_by_this_evidence": false
+}

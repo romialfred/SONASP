@@ -1,0 +1,4111 @@
+{
+  "recordedAtUtc": "2026-09-07T05:49:49.804Z",
+  "defaultExcludes": [
+    "**/node_modules/**",
+    "**/.git/**"
+  ],
+  "newExclude": "backups/**",
+  "archiveCopies": [
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/activate-account/handler.test.ts",
+      "source": "supabase/functions/activate-account/handler.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "cd74c32af9626371afee132318ec5a50bc7d854f095ebcd617b6c9be47bb10a3",
+      "sourceSha256": "cd74c32af9626371afee132318ec5a50bc7d854f095ebcd617b6c9be47bb10a3"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/affiliation-card-render/handler.test.ts",
+      "source": "supabase/functions/affiliation-card-render/handler.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "867c5d71bf30b7b8fb93d52444c9c40b058d835907114cd0b6172afefb91de9d",
+      "sourceSha256": "867c5d71bf30b7b8fb93d52444c9c40b058d835907114cd0b6172afefb91de9d"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/collection-notifications/handler.test.ts",
+      "source": "supabase/functions/collection-notifications/handler.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "d32ff01a68618df58c3bcde3d7c408377b1328d012e6044d34b1ce10a4b0711c",
+      "sourceSha256": "d32ff01a68618df58c3bcde3d7c408377b1328d012e6044d34b1ce10a4b0711c"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/create-user/index.contract.test.ts",
+      "source": "supabase/functions/create-user/index.contract.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "b6dbc8957d11b5c7b8a65f4e4d6ae66a9502d00f8fd269b2d34a51ebd0e2ab3a",
+      "sourceSha256": "b6dbc8957d11b5c7b8a65f4e4d6ae66a9502d00f8fd269b2d34a51ebd0e2ab3a"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/create-user/index.runtime.test.ts",
+      "source": "supabase/functions/create-user/index.runtime.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "cf0006273554f9f5317853ac2147df6cfcd96ef011b02e8aab3813d761767cf6",
+      "sourceSha256": "cf0006273554f9f5317853ac2147df6cfcd96ef011b02e8aab3813d761767cf6"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/delete-user/index.runtime.test.ts",
+      "source": "supabase/functions/delete-user/index.runtime.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "f9a52798480a2169d9b1ad8a0cf2fee2f5ff7443590a3b19e6345a159e897cb4",
+      "sourceSha256": "f9a52798480a2169d9b1ad8a0cf2fee2f5ff7443590a3b19e6345a159e897cb4"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/delete-user/recreation.contract.test.ts",
+      "source": "supabase/functions/delete-user/recreation.contract.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "b2626e203ba000b5ffdd24eb36c1f41a512e212b8e131ac3997e6c147481289f",
+      "sourceSha256": "b2626e203ba000b5ffdd24eb36c1f41a512e212b8e131ac3997e6c147481289f"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/envoyer-courriel/gabarit.test.ts",
+      "source": "supabase/functions/envoyer-courriel/gabarit.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "34d5b72d7e5f660734999cc0ba7e5f6b9caae322487a485420b7bd66e89b07ed",
+      "sourceSha256": "34d5b72d7e5f660734999cc0ba7e5f6b9caae322487a485420b7bd66e89b07ed"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/resend-welcome-email/index.contract.test.ts",
+      "source": "supabase/functions/resend-welcome-email/index.contract.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "1d6ed2a926fa954bd5e59cfde64e2cea70c13fde95968d351bf6a9c31d9ead2e",
+      "sourceSha256": "1d6ed2a926fa954bd5e59cfde64e2cea70c13fde95968d351bf6a9c31d9ead2e"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/resend-welcome-email/index.runtime.test.ts",
+      "source": "supabase/functions/resend-welcome-email/index.runtime.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "f480b5bf2fdf84f89b7a6eb5625f995f6ebb04b7a22aa0147dd0e6a1ea7c3217",
+      "sourceSha256": "f480b5bf2fdf84f89b7a6eb5625f995f6ebb04b7a22aa0147dd0e6a1ea7c3217"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/reset-user-password/index.runtime.test.ts",
+      "source": "supabase/functions/reset-user-password/index.runtime.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "a7350a11721bed94cf6ad592e22766369dede6b8668066c6bf5eec6838aae588",
+      "sourceSha256": "a7350a11721bed94cf6ad592e22766369dede6b8668066c6bf5eec6838aae588"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/revoke-user-sessions/handler.test.ts",
+      "source": "supabase/functions/revoke-user-sessions/handler.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "bd596d5e64eba5336a73598ceefaf92f4ce5bde712409af21b2b813d345d3402",
+      "sourceSha256": "bd596d5e64eba5336a73598ceefaf92f4ce5bde712409af21b2b813d345d3402"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/sensitive-upload/handler.test.ts",
+      "source": "supabase/functions/sensitive-upload/handler.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "ed5a79de880d4887c4c39b8443744d1bec63772d67569395c02706c28a198634",
+      "sourceSha256": "ed5a79de880d4887c4c39b8443744d1bec63772d67569395c02706c28a198634"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/sensitive-upload/index.contract.test.ts",
+      "source": "supabase/functions/sensitive-upload/index.contract.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "fea19238bc2e4bee94b2f122d1f7f7aba16fcee378bdb0bb0083f4a01b212990",
+      "sourceSha256": "fea19238bc2e4bee94b2f122d1f7f7aba16fcee378bdb0bb0083f4a01b212990"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/account-deletion-policy.test.ts",
+      "source": "supabase/functions/_shared/account-deletion-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "bd4eb95e9b455e63ace100447fc2ebdf9822d8d094cf3d953eff7003e65f16c3",
+      "sourceSha256": "bd4eb95e9b455e63ace100447fc2ebdf9822d8d094cf3d953eff7003e65f16c3"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/account-role-policy.test.ts",
+      "source": "supabase/functions/_shared/account-role-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "f23753f7b38ce1a833178fb0fd177162fd07d95b6a6f63bde2af025b25eda544",
+      "sourceSha256": "f23753f7b38ce1a833178fb0fd177162fd07d95b6a6f63bde2af025b25eda544"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/admin-account-contract.test.ts",
+      "source": "supabase/functions/_shared/admin-account-contract.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "aa8c06d1715ee0cdcf873fdf1ce06777ee95fd3d840597de4dd867b665801466",
+      "sourceSha256": "aa8c06d1715ee0cdcf873fdf1ce06777ee95fd3d840597de4dd867b665801466"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/admin-account-edge.test.ts",
+      "source": "supabase/functions/_shared/admin-account-edge.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "0e5ae9163fdcc1789a5e68e9d9357ce16315ab0bb7e46a97252a875f62b106bc",
+      "sourceSha256": "0e5ae9163fdcc1789a5e68e9d9357ce16315ab0bb7e46a97252a875f62b106bc"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/application-url.test.ts",
+      "source": "supabase/functions/_shared/application-url.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "679d6c1c7d4e1a506f4d1633b33f1403fcdc5d2756c14de9945a3c67146fda62",
+      "sourceSha256": "679d6c1c7d4e1a506f4d1633b33f1403fcdc5d2756c14de9945a3c67146fda62"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/artisan-document-upload.test.ts",
+      "source": "supabase/functions/_shared/artisan-document-upload.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "8f514b1988050429a429ad68f4914cc919b7474aa8fbc75c222d17e06d007a75",
+      "sourceSha256": "8f514b1988050429a429ad68f4914cc919b7474aa8fbc75c222d17e06d007a75"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/assay-certificate-upload-policy.test.ts",
+      "source": "supabase/functions/_shared/assay-certificate-upload-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "78330d33edbf1313b3b755050b60cc7fd62efe8df53420a2a72166d211926b0a",
+      "sourceSha256": "78330d33edbf1313b3b755050b60cc7fd62efe8df53420a2a72166d211926b0a"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/company-document-upload-policy.test.ts",
+      "source": "supabase/functions/_shared/company-document-upload-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "52aa89cc806b2a95246690dbeb18d1c76517b4980b7a7d8ddaecaa20c8306136",
+      "sourceSha256": "52aa89cc806b2a95246690dbeb18d1c76517b4980b7a7d8ddaecaa20c8306136"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/compensated-storage-delete.test.ts",
+      "source": "supabase/functions/_shared/compensated-storage-delete.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "0ec5e5a2f70c15619ac052ac881a4b60a699de445a0f4d76dc266008de7b6c1a",
+      "sourceSha256": "0ec5e5a2f70c15619ac052ac881a4b60a699de445a0f4d76dc266008de7b6c1a"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/comptoir-document-upload.test.ts",
+      "source": "supabase/functions/_shared/comptoir-document-upload.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "88ad26e54c00f03f2697646361eff7e00181a48e4aa63d2937ca492a7aca7a42",
+      "sourceSha256": "88ad26e54c00f03f2697646361eff7e00181a48e4aa63d2937ca492a7aca7a42"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/freight-customs-upload-policy.test.ts",
+      "source": "supabase/functions/_shared/freight-customs-upload-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "26787d1661a76e5f2c5ebc92ad9241a49481987dc46fe7d913ef1072b57482e5",
+      "sourceSha256": "26787d1661a76e5f2c5ebc92ad9241a49481987dc46fe7d913ef1072b57482e5"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/mail-action-policy.test.ts",
+      "source": "supabase/functions/_shared/mail-action-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "cd00f030c63ccc53460d59802b3fdbe171879dc653c405804a6d95a01c4e53fd",
+      "sourceSha256": "cd00f030c63ccc53460d59802b3fdbe171879dc653c405804a6d95a01c4e53fd"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/payment-proof-upload-policy.test.ts",
+      "source": "supabase/functions/_shared/payment-proof-upload-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "eed07782658c9c3d295cc4234736d2fb469742d0f888c29f285b2309efb9710c",
+      "sourceSha256": "eed07782658c9c3d295cc4234736d2fb469742d0f888c29f285b2309efb9710c"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/secure-upload.test.ts",
+      "source": "supabase/functions/_shared/secure-upload.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "7c1ea3f0a0825b0fa8ce0fda4652d9bb2e5b3f4a2d4523669df439b14348c676",
+      "sourceSha256": "7c1ea3f0a0825b0fa8ce0fda4652d9bb2e5b3f4a2d4523669df439b14348c676"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/sensitive-document-delete-policy.test.ts",
+      "source": "supabase/functions/_shared/sensitive-document-delete-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "6033d7254c6e7b3b4faded758759e85cc2b3b388dd6370fe53633888eda404cc",
+      "sourceSha256": "6033d7254c6e7b3b4faded758759e85cc2b3b388dd6370fe53633888eda404cc"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/session-revocation-policy.test.ts",
+      "source": "supabase/functions/_shared/session-revocation-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "3320af17568bd4571cc2944868e2bf2853d2d87d22f2ee2d6188500488c7d8b0",
+      "sourceSha256": "3320af17568bd4571cc2944868e2bf2853d2d87d22f2ee2d6188500488c7d8b0"
+    },
+    {
+      "archive": "backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/workflow-document-upload-policy.test.ts",
+      "source": "supabase/functions/_shared/workflow-document-upload-policy.test.ts",
+      "sourceExists": true,
+      "identical": true,
+      "archiveSha256": "1392fb071e27c74aed04fc629c27354e93529aea85c79f10cf59278c5fbef28e",
+      "sourceSha256": "1392fb071e27c74aed04fc629c27354e93529aea85c79f10cf59278c5fbef28e"
+    }
+  ],
+  "previous": [
+    {
+      "file": "docs/amelioration/audit/vitest-all.json",
+      "success": false,
+      "total": 2851,
+      "passed": 2851,
+      "failed": 0,
+      "pending": 0,
+      "files": 382,
+      "archiveFiles": [
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/activate-account/handler.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/affiliation-card-render/handler.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/delete-user/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/delete-user/recreation.contract.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/collection-notifications/handler.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/envoyer-courriel/gabarit.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/create-user/index.contract.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/create-user/index.runtime.test.ts",
+          "status": "failed",
+          "tests": 0
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/reset-user-password/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/resend-welcome-email/index.contract.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/resend-welcome-email/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/revoke-user-sessions/handler.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/sensitive-upload/handler.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/sensitive-upload/index.contract.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/account-deletion-policy.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/account-role-policy.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/admin-account-contract.test.ts",
+          "status": "passed",
+          "tests": 25
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/admin-account-edge.test.ts",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/application-url.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/artisan-document-upload.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/assay-certificate-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/company-document-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/compensated-storage-delete.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/comptoir-document-upload.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/freight-customs-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/mail-action-policy.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/payment-proof-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/secure-upload.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/sensitive-document-delete-policy.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/session-revocation-policy.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/workflow-document-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 10
+        }
+      ],
+      "canonicalFiles": [
+        {
+          "name": "F:/Development/SONASP/src/constants/goldConstants.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/constants/salesStatuses.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/contexts/AuthContext.fallback.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/contexts/AuthContext.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/data/burkinaRegions.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/data/businessLabels.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/hooks/useArtisanalSiteData.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/hooks/useArtisanUnsavedChanges.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/hooks/useCoursOr.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/i18n/interfaceLanguages.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/i18n/navigationLabels.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/accessControl.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/artisanDossier.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/auditLog.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/capabilities.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/cardPdfPreview.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/collectorAccess.test.ts",
+          "status": "passed",
+          "tests": 21
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/comptoirAccess.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/dgiFiscalDashboard.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/dgmgRegulatoryDashboard.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/effectiveAccess.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/excelExport.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/freightCustomsAccess.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/localRuntimeConfig.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/mineAccess.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/permissions.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/platformModuleCatalog.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/presentError.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/privateStorage.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/pwaConfig.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/pwaUpdate.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/roleHierarchy.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/routeAccessRegistry.test.ts",
+          "status": "passed",
+          "tests": 33
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/secureRandom.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/sessionManager.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/sessionPolicy.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/siteFormalization.test.ts",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/supabase.persistence.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/uploadValidation.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/vercelSecurityHeaders.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/Login.component.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/Login.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/Profile.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/accessGovernanceAuditMigration.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/accessGovernanceMigration.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/accessGovernanceService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/accountActivationService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/achatMineService.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/achatsFinancialOverview.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/achatsIndustrielsCalculs.test.ts",
+          "status": "passed",
+          "tests": 28
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/achatsIndustrielsService.test.ts",
+          "status": "passed",
+          "tests": 20
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/affiliationService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/alertesContractuellesService.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/analysesTeneurService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/approvalService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanalSiteCode.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanalSiteInsights.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanalSiteSave.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanalSiteService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanAnalyticsService.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanMoyenPaiementService.test.ts",
+          "status": "passed",
+          "tests": 19
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanPaiementsService.security.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanTerritoryInsights.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/assayCertificateService.performance.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/assayCertificateService.security.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/businessIntelligenceService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/carteNumberService.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/carteProfessionnelleService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/certificationDgiService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/coherenceStockService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/comptoirPortalService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/conciliationContext.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/conciliationLogisticsMigration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/contratsService.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/customerDossierService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/customerSaleDecisionService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/dailyProductionService.security.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/dgiFiscalDashboardService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/dgmgRegulatoryDashboardService.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/dossierService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/eligibleExportSaleLotsMigration.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/engagedProductionMigration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/exportLicenseService.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/exportSalePhysicalBackingMigration.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/factureVenteService.test.ts",
+          "status": "passed",
+          "tests": 16
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/freightCustomsBinaryGateway.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/freightCustomsService.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/freightDocumentService.security.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/freightShipmentService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/fxRateAggregationService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/fxRateReferential.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalPaymentBalance.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalPaymentDetailService.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalPaymentEligibility.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalPaymentsListService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalSaleDetailService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalSalesListService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/interPortalWorkflows.integration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/inventoryService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/inventoryTransactionService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/liveGoldPriceService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/managerPortalService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/minePortalService.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/mineStockService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/miningCompanyDocumentService.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/modulesService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/nationalReserveDashboardService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/notificationsService.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/organizationService.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/paymentDocumentsService.security.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/paymentService.security.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/paymentSummaryMigration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/productionDocumentService.security.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/productionStatusService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/reglementsAchatService.test.ts",
+          "status": "passed",
+          "tests": 28
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/reglesFiscalesService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/regulatedWorkflowMigrations.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/relationsSonaspService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/requisitionsService.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/reserveAllocationService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/reserveValuationActivationMigration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/rpcClientBinding.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleCreationService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleCreationWorkspaceMigration.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleCreationWorkspaceService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleDocumentsService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/salesApproverService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleSimulationService.test.ts",
+          "status": "passed",
+          "tests": 16
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/sensitiveUploadGateway.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/sensitiveUploadInventory.test.ts",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/shippingLegacyScopeReconciliationMigration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/shippingPhysicalAllocationMigration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/shippingPreparationService.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/shippingStatusService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/stockSonaspService.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/tracabiliteVenteContext.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/tracabiliteVenteService.test.ts",
+          "status": "passed",
+          "tests": 29
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/unifiedStatusService.production.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/unifiedStatusService.shipping.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/userAdministrationDetailsService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/userManagementService.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/userPermissionsService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/userSessionService.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/venteRecuNumberService.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/virtualPaymentService.security.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/utils/salesUtils.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/utils/statusFormatter.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/utils/weightConversion.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/admin/SessionsTab.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/AffiliationDigitalCard.test.tsx",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/AffiliationDossier.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/AffiliationPaymentPanel.test.tsx",
+          "status": "passed",
+          "tests": 16
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/ArtisanDossierSummary.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/ArtisanMinierForm.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/CollectorPortalGuard.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/LoginInstitutions.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/MandatoryMfaGate.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/MinePortalGuard.test.tsx",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/PortalEntry.integration.test.tsx",
+          "status": "passed",
+          "tests": 36
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProfileGuard.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.admin.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.capabilities.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.collector.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.comptoir.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.owner.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.portals.test.tsx",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/PublicRoute.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/TwoFactorSetup.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/TwoFactorVerify.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/budget/BudgetMatrixTable.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/common/ErrorBoundary.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/common/PwaUpdatePrompt.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/customers/BankAccountForm.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/dashboard/StatusBadge.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/dossier/DossierComplet.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/freight/ChangeStatusModal.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/AccordionSidebar.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/DgiGoldSidebarCard.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/national-dashboard-layout.styles.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/NationalDashboardChrome.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/NationalDashboardLayout.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/NationalDashboardMine.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/portalThemes.test.tsx",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/sidebarNavigation.test.ts",
+          "status": "passed",
+          "tests": 41
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/reports/DecompositionTree.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/production/ProductionStatusWorkflow.security.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/production/ProductionTable.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/sales/LiveGoldMarketPanel.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/seo/PageMetadata.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/shipping/LegacyShippingPreparationEditRedirect.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/shipping/LogisticsRegister.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/shipping/ShippingLicenseSelect.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/ActionErrorDialog.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/Button.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/ComboBox.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/FieldDescriptions.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/FieldGuidePanel.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/Input.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/Modal.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/PhoneInput.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/ProfileErrorBanner.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/achats/ComptesPaiementsOverviewPage.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/AccessPortalsPage.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/AccessUserWizardPage.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/ApprovalsDashboard.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/GoldShippingWorkflow.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/ModulesManagement.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/ParametersPage.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/parametrage.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/referentielForms.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/referentiels.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/RolesPermissionsPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/UserManagementModern.test.tsx",
+          "status": "passed",
+          "tests": 37
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/userPermissions.test.tsx",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/usersAdmin.test.tsx",
+          "status": "passed",
+          "tests": 32
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/UsersListPage.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/AffiliationsCartes.test.tsx",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/ArtisanMinierListe.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/CarteExpirations.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/CarteSuivi.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/CarteValidation.test.tsx",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/InfractionDetails.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/InfractionForm.test.tsx",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/PaiementDetails.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/PaiementForm.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/PaiementsHistorique.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/PaiementsVentesDashboard.test.tsx",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/rapports.test.tsx",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/VenteOrDetails.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/VenteOrForm.test.tsx",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/VentesOr.test.tsx",
+          "status": "passed",
+          "tests": 16
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisanal-sites/ArtisanalSiteProduction.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/auth/ActivateAccount.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/auth/UpdatePassword.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/CollectionSalesPage.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/collectorActivity.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/CollectorDetails.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/CollectorForm.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/CollectorPortalPage.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/ComptoirForm.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/comptoir/ComptoirSonaspSalesPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/comptoir/SonaspComptoirSalesInboxPage.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/conciliation/conciliationImpact.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/conciliation/ConciliationsPage.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/contrats/contratForm.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/customers/CustomerForm.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/customers/CustomerViews.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/fiscalite/ReglesFiscalesPage.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/freight/FreightCustomsCreate.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/freight/FreightShipmentCreate.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/manager/ManagerPortalPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/mine/mineDashboardData.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/mine/MinePortalPage.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/AddInventoryEntry.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/InventoryManagement.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/inventoryOverviewData.test.ts",
+          "status": "passed",
+          "tests": 19
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/NationalReserveWorkspace.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/reserve-allocation-form.styles.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/ReserveAllocationForm.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/reserveAllocationPresentation.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/silverInventoryData.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/StockHistoryDialog.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/internationalPaymentDetail.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/InternationalPaymentDetailView.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/InternationalPaymentFormView.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/internationalPaymentsList.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/InternationalPaymentsView.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/PaymentCreate.security.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/PaymentDetailsPage.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/PaymentsPage.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/VirtualPaymentsPage.security.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/DgiFiscalDashboard.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/DgiFiscalPaymentsPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/DgmgRegulatoryDashboard.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/DgmgReserveValidationPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/InstitutionalPortalPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/prices/GoldPricesPage.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/AchatsMines.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/BudgetManagementPage.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/DailyProductionPage.test.tsx",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ExportLicenseDetails.mine.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ExportLicenseForm.mine.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ExportLicenseRequestsInboxPage.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ExportLicensesPage.test.tsx",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ProductionDetails.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/productionDetailsData.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ProductionInSafe.test.tsx",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/productionInSafeData.test.ts",
+          "status": "passed",
+          "tests": 23
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PortalAccessButton.styles.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PublicHomePage.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PublicLayout.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PublicLocaleContext.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/publicSupport.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/VerifyAffiliation.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/requisitions/RequisitionDetails.mine.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/InternationalSaleDetailView.test.tsx",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/InternationalSaleSimulator.test.tsx",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/internationalSalesList.test.ts",
+          "status": "passed",
+          "tests": 21
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/SaleCreate.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/SaleDetails.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/SalesDashboard.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/shipping/ShippingPreparationEdit.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/shipping/shippingPreparationValidation.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/stakeholders/ApprobateursPage.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/activate-account/handler.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/affiliation-payment-proof-upload/handler.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/affiliation-card-render/handler.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/collection-notifications/handler.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/create-user/index.contract.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/create-user/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 31
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/delete-user/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/delete-user/recreation.contract.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/envoyer-courriel/gabarit.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/resend-welcome-email/index.contract.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/resend-welcome-email/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/reset-user-password/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/revoke-user-sessions/handler.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/sensitive-upload/handler.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/sensitive-upload/index.contract.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/account-deletion-policy.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/account-role-policy.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/admin-account-contract.test.ts",
+          "status": "passed",
+          "tests": 25
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/admin-account-edge.test.ts",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/application-url.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/artisan-document-upload.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/assay-certificate-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/company-document-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/compensated-storage-delete.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/comptoir-document-upload.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/freight-customs-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/mail-action-policy.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/payment-proof-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/secure-upload.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/sensitive-document-delete-policy.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/session-revocation-policy.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/workflow-document-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/sn/DataTable.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/sn/PageHeader.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/sn/Tabs.test.tsx",
+          "status": "passed",
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/amelioration/audit/vitest-application.json",
+      "success": false,
+      "total": 2862,
+      "passed": 2862,
+      "failed": 0,
+      "pending": 0,
+      "files": 383,
+      "archiveFiles": [
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/activate-account/handler.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/affiliation-card-render/handler.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/delete-user/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/delete-user/recreation.contract.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/create-user/index.contract.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/create-user/index.runtime.test.ts",
+          "status": "failed",
+          "tests": 0
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/collection-notifications/handler.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/envoyer-courriel/gabarit.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/resend-welcome-email/index.contract.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/resend-welcome-email/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/reset-user-password/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/revoke-user-sessions/handler.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/sensitive-upload/handler.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/sensitive-upload/index.contract.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/account-deletion-policy.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/account-role-policy.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/admin-account-contract.test.ts",
+          "status": "passed",
+          "tests": 25
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/admin-account-edge.test.ts",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/application-url.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/artisan-document-upload.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/assay-certificate-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/company-document-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/compensated-storage-delete.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/comptoir-document-upload.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/freight-customs-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/mail-action-policy.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/payment-proof-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/secure-upload.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/sensitive-document-delete-policy.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/session-revocation-policy.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/backups/artisan-regression-20260906/live-qa/supabase/functions/_shared/workflow-document-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 10
+        }
+      ],
+      "canonicalFiles": [
+        {
+          "name": "F:/Development/SONASP/src/constants/goldConstants.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/constants/salesStatuses.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/contexts/AuthContext.fallback.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/contexts/AuthContext.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/data/burkinaRegions.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/data/businessLabels.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/hooks/useArtisanalSiteData.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/hooks/useArtisanUnsavedChanges.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/hooks/useCoursOr.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/accessControl.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/artisanDossier.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/auditLog.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/capabilities.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/cardPdfPreview.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/collectorAccess.test.ts",
+          "status": "passed",
+          "tests": 21
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/comptoirAccess.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/dgiFiscalDashboard.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/dgmgRegulatoryDashboard.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/effectiveAccess.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/excelExport.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/freightCustomsAccess.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/localRuntimeConfig.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/mineAccess.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/permissions.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/platformModuleCatalog.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/presentError.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/privateStorage.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/pwaConfig.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/pwaUpdate.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/roleHierarchy.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/routeAccessRegistry.test.ts",
+          "status": "passed",
+          "tests": 33
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/secureRandom.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/sessionManager.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/sessionPolicy.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/siteFormalization.test.ts",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/supabase.persistence.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/uploadValidation.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/lib/vercelSecurityHeaders.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/Login.component.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/Login.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/Profile.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/i18n/interfaceLanguages.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/i18n/navigationLabels.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/accessGovernanceAuditMigration.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/accessGovernanceMigration.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/accessGovernanceService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/accountActivationService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/achatMineService.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/achatsFinancialOverview.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/achatsIndustrielsCalculs.test.ts",
+          "status": "passed",
+          "tests": 28
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/achatsIndustrielsService.test.ts",
+          "status": "passed",
+          "tests": 20
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/affiliationService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/alertesContractuellesService.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/analysesTeneurService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/approvalService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanalSiteCode.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanalSiteInsights.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanalSiteSave.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanalSiteService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanAnalyticsService.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanMoyenPaiementService.test.ts",
+          "status": "passed",
+          "tests": 19
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanPaiementsService.security.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/artisanTerritoryInsights.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/assayCertificateService.performance.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/assayCertificateService.security.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/businessIntelligenceService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/carteNumberService.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/carteProfessionnelleService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/certificationDgiService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/coherenceStockService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/comptoirPortalService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/conciliationContext.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/conciliationLogisticsMigration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/contratsService.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/customerDossierService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/customerSaleDecisionService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/dailyProductionService.security.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/dgiFiscalDashboardService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/dgmgRegulatoryDashboardService.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/dossierService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/eligibleExportSaleLotsMigration.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/engagedProductionMigration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/exportLicenseService.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/exportSalePhysicalBackingMigration.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/factureVenteService.test.ts",
+          "status": "passed",
+          "tests": 16
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/freightCustomsBinaryGateway.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/freightCustomsService.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/freightDocumentService.security.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/freightShipmentService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/fxRateAggregationService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/fxRateReferential.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalPaymentBalance.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalPaymentDetailService.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalPaymentEligibility.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalPaymentsListService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalSaleDetailService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/internationalSalesListService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/interPortalWorkflows.integration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/inventoryService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/inventoryTransactionService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/liveGoldPriceService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/managerPortalService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/minePortalService.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/mineStockService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/miningCompanyDocumentService.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/modulesService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/nationalReserveDashboardService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/notificationsService.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/organizationService.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/paymentDocumentsService.security.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/paymentService.security.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/paymentSummaryMigration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/productionDocumentService.security.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/productionStatusService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/reglementsAchatService.test.ts",
+          "status": "passed",
+          "tests": 28
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/reglesFiscalesService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/regulatedWorkflowMigrations.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/relationsSonaspService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/requisitionsService.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/reserveAllocationService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/reserveValuationActivationMigration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/rpcClientBinding.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleCreationService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleCreationWorkspaceMigration.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleCreationWorkspaceService.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleDocumentsService.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/salesApproverService.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/saleSimulationService.test.ts",
+          "status": "passed",
+          "tests": 16
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/sensitiveUploadGateway.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/sensitiveUploadInventory.test.ts",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/shippingLegacyScopeReconciliationMigration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/shippingPhysicalAllocationMigration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/shippingPreparationService.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/shippingStatusService.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/stockSonaspService.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/tracabiliteVenteContext.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/tracabiliteVenteService.test.ts",
+          "status": "passed",
+          "tests": 29
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/unifiedStatusService.production.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/unifiedStatusService.shipping.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/userAdministrationDetailsService.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/userManagementService.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/userPermissionsService.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/userSessionService.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/venteRecuNumberService.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/services/virtualPaymentService.security.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/utils/salesUtils.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/utils/statusFormatter.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/utils/weightConversion.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/docs/amelioration/audit/customer-frontend-independent.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/activate-account/handler.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/affiliation-card-render/handler.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/affiliation-payment-proof-upload/handler.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/collection-notifications/handler.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/delete-user/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/delete-user/recreation.contract.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/create-user/index.contract.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/create-user/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 31
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/envoyer-courriel/gabarit.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/reset-user-password/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/resend-welcome-email/index.contract.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/resend-welcome-email/index.runtime.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/revoke-user-sessions/handler.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/sensitive-upload/handler.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/sensitive-upload/index.contract.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/account-deletion-policy.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/account-role-policy.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/admin-account-contract.test.ts",
+          "status": "passed",
+          "tests": 25
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/admin-account-edge.test.ts",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/application-url.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/artisan-document-upload.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/assay-certificate-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/company-document-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/compensated-storage-delete.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/comptoir-document-upload.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/freight-customs-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/mail-action-policy.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/payment-proof-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/secure-upload.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/sensitive-document-delete-policy.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/session-revocation-policy.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/supabase/functions/_shared/workflow-document-upload-policy.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/admin/SessionsTab.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/AffiliationDigitalCard.test.tsx",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/AffiliationDossier.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/AffiliationPaymentPanel.test.tsx",
+          "status": "passed",
+          "tests": 16
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/ArtisanDossierSummary.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/artisan/ArtisanMinierForm.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/budget/BudgetMatrixTable.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/CollectorPortalGuard.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/LoginInstitutions.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/MandatoryMfaGate.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/MinePortalGuard.test.tsx",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/PortalEntry.integration.test.tsx",
+          "status": "passed",
+          "tests": 36
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProfileGuard.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.admin.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.capabilities.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.collector.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.comptoir.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.owner.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/ProtectedRoute.portals.test.tsx",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/PublicRoute.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/TwoFactorSetup.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/auth/TwoFactorVerify.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/common/ErrorBoundary.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/common/PwaUpdatePrompt.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/customers/BankAccountForm.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/dashboard/StatusBadge.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/freight/ChangeStatusModal.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/dossier/DossierComplet.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/production/ProductionStatusWorkflow.security.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/production/ProductionTable.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/AccordionSidebar.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/DgiGoldSidebarCard.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/national-dashboard-layout.styles.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/NationalDashboardChrome.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/NationalDashboardLayout.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/NationalDashboardMine.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/portalThemes.test.tsx",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/layout/sidebarNavigation.test.ts",
+          "status": "passed",
+          "tests": 41
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/reports/DecompositionTree.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/seo/PageMetadata.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/sales/LiveGoldMarketPanel.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/shipping/LegacyShippingPreparationEditRedirect.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/shipping/LogisticsRegister.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/shipping/ShippingLicenseSelect.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/ActionErrorDialog.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/Button.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/ComboBox.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/FieldDescriptions.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/FieldGuidePanel.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/Input.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/Modal.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/PhoneInput.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/ProfileErrorBanner.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/achats/ComptesPaiementsOverviewPage.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/AccessPortalsPage.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/AccessUserWizardPage.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/ApprovalsDashboard.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/GoldShippingWorkflow.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/ModulesManagement.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/ParametersPage.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/parametrage.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/referentielForms.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/referentiels.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/RolesPermissionsPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/UserManagementModern.test.tsx",
+          "status": "passed",
+          "tests": 37
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/userPermissions.test.tsx",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/usersAdmin.test.tsx",
+          "status": "passed",
+          "tests": 32
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/admin/UsersListPage.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisanal-sites/ArtisanalSiteProduction.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/AffiliationsCartes.test.tsx",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/ArtisanMinierListe.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/CarteExpirations.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/CarteSuivi.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/CarteValidation.test.tsx",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/InfractionDetails.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/InfractionForm.test.tsx",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/PaiementDetails.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/PaiementForm.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/PaiementsHistorique.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/PaiementsVentesDashboard.test.tsx",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/rapports.test.tsx",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/VenteOrDetails.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/VenteOrForm.test.tsx",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/artisan-minier/VentesOr.test.tsx",
+          "status": "passed",
+          "tests": 16
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/CollectionSalesPage.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/collectorActivity.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/CollectorDetails.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/CollectorForm.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/CollectorPortalPage.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/collector/ComptoirForm.test.tsx",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/auth/ActivateAccount.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/auth/UpdatePassword.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/comptoir/ComptoirSonaspSalesPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/comptoir/SonaspComptoirSalesInboxPage.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/conciliation/ConciliationDetails.test.tsx",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/conciliation/conciliationImpact.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/conciliation/ConciliationsPage.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/contrats/contratForm.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/dashboards/ProductionDashboardModern.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/dashboards/roleDashboards.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/customers/CustomerForm.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/customers/CustomerViews.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/fiscalite/ReglesFiscalesPage.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/manager/ManagerPortalPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/AddInventoryEntry.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/InventoryManagement.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/inventoryOverviewData.test.ts",
+          "status": "passed",
+          "tests": 19
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/NationalReserveWorkspace.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/reserve-allocation-form.styles.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/ReserveAllocationForm.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/reserveAllocationPresentation.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/silverInventoryData.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/inventory/StockHistoryDialog.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/freight/FreightCustomsCreate.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/freight/FreightShipmentCreate.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/mine/mineDashboardData.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/mine/MinePortalPage.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/internationalPaymentDetail.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/InternationalPaymentDetailView.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/InternationalPaymentFormView.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/internationalPaymentsList.test.ts",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/InternationalPaymentsView.test.tsx",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/PaymentCreate.security.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/PaymentDetailsPage.test.tsx",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/PaymentsPage.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/payments/VirtualPaymentsPage.security.test.tsx",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/prices/GoldPricesPage.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/DgiFiscalDashboard.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/DgiFiscalPaymentsPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/DgmgRegulatoryDashboard.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/DgmgReserveValidationPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/portals/InstitutionalPortalPage.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/AchatsMines.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/BudgetManagementPage.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/DailyProductionPage.test.tsx",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ExportLicenseDetails.mine.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ExportLicenseForm.mine.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ExportLicenseRequestsInboxPage.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ExportLicensesPage.test.tsx",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ProductionDetails.test.tsx",
+          "status": "passed",
+          "tests": 10
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/productionDetailsData.test.ts",
+          "status": "passed",
+          "tests": 9
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/ProductionInSafe.test.tsx",
+          "status": "passed",
+          "tests": 15
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/production/productionInSafeData.test.ts",
+          "status": "passed",
+          "tests": 23
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PortalAccessButton.styles.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PublicComponents.performance.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PublicHomePage.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PublicLayout.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/PublicLocaleContext.test.tsx",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/publicSupport.test.ts",
+          "status": "passed",
+          "tests": 2
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/public/VerifyAffiliation.test.tsx",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/requisitions/RequisitionDetails.mine.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/InternationalSaleDetailView.test.tsx",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/InternationalSaleSimulator.test.tsx",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/internationalSalesList.test.ts",
+          "status": "passed",
+          "tests": 21
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/SaleCreate.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/SaleDetails.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/sales/SalesDashboard.test.tsx",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/stakeholders/ApprobateursPage.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/shipping/ShippingPreparationEdit.test.tsx",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/shipping/ShippingPreparationNew.test.tsx",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "name": "F:/Development/SONASP/src/pages/shipping/shippingPreparationValidation.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/sn/DataTable.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/sn/PageHeader.test.tsx",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "name": "F:/Development/SONASP/src/components/ui/sn/Tabs.test.tsx",
+          "status": "passed",
+          "tests": 1
+        }
+      ]
+    }
+  ]
+}

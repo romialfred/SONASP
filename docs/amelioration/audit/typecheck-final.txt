@@ -1,0 +1,13 @@
+
+> vite-react-typescript-starter@0.0.0 typecheck
+> npm run typecheck:database && npm run typecheck:compiler
+
+
+> vite-react-typescript-starter@0.0.0 typecheck:database
+> node scripts/check-database-type-coverage.mjs
+
+Couverture des types Supabase valide : toutes les relations directes sont typées.
+
+> vite-react-typescript-starter@0.0.0 typecheck:compiler
+> tsc --noEmit -p tsconfig.app.json
+

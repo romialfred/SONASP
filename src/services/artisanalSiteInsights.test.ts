@@ -159,6 +159,18 @@ describe('artisanalSiteInsights', () => {
     expect(monthly.every((point) => point.objective === 375)).toBe(true);
   });
 
+  it('ne fournit aucun objectif si aucune référence annuelle n’est transmise', () => {
+    const monthly = buildMonthlyProduction(DEMO_SITE_PRODUCTIONS, 2026);
+    expect(monthly).toHaveLength(12);
+    expect(monthly[7].production).toBeCloseTo(80.3, 1);
+    expect(monthly.every(point => point.objective === null)).toBe(true);
+  });
+
+  it.each([null, Number.NaN, Number.POSITIVE_INFINITY, -1])('écarte une référence d’objectif indisponible ou invalide : %s', target => {
+    const monthly = buildMonthlyProduction([], 2026, target);
+    expect(monthly.every(point => point.objective === null)).toBe(true);
+  });
+
   it('répartit la contribution régionale et regroupe la traîne dans « Autres »', () => {
     const contributions = computeRegionContributions(insights);
     const total = contributions.reduce((sum, row) => sum + row.share, 0);

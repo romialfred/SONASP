@@ -35,7 +35,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
 import { FORMALIZATION_LABELS } from '@/lib/siteFormalization';
 import {
-  ANNUAL_PRODUCTION_TARGET_KG,
   buildMonthlyProduction,
   buildSiteInsights,
   computeGlobalCompliance,
@@ -205,9 +204,7 @@ export default function ArtisanalSitesOverview() {
       taxes,
       activeSites: insights.filter((item) => item.site.status === 'active').length,
       occupancy: authorized > 0 ? Math.round((active / authorized) * 100) : 0,
-      targetShare: Math.round((productionKg / ANNUAL_PRODUCTION_TARGET_KG) * 100),
       revenuePerMiner: active > 0 ? revenue / active : 0,
-      recovery: revenue > 0 ? Math.min(100, Math.round((taxes / (revenue * 0.03)) * 100)) : 0,
     };
   }, [insights]);
 
@@ -386,7 +383,7 @@ export default function ArtisanalSitesOverview() {
               <strong>{integer.format(insights.length)}</strong>
               <small>{integer.format(totals.activeSites)} actifs</small>
             </div>
-            <p className="is-positive"><TrendingUp aria-hidden="true" /> +8,2 % <span>vs année précédente</span></p>
+            <p><span>Comparaison annuelle : référence non disponible</span></p>
           </article>
 
           <article className="sites-metric">
@@ -396,7 +393,7 @@ export default function ArtisanalSitesOverview() {
               <strong>{integer.format(totals.authorized)}</strong>
               <small>{totals.occupancy} % de la capacité</small>
             </div>
-            <p className="is-positive"><TrendingUp aria-hidden="true" /> +4,6 % <span>vs année précédente</span></p>
+            <p><span>Comparaison annuelle : référence non disponible</span></p>
           </article>
 
           <article className="sites-metric">
@@ -404,7 +401,7 @@ export default function ArtisanalSitesOverview() {
             <div>
               <h3>Production déclarée</h3>
               <strong>{decimal(totals.productionKg)} kg</strong>
-              <small>Objectif {totals.targetShare} %</small>
+              <small>Objectif de production : référence non disponible</small>
             </div>
             <div className="sites-metric__spark">
               <ResponsiveContainer width="100%" height="100%">
@@ -429,7 +426,7 @@ export default function ArtisanalSitesOverview() {
             <div>
               <h3>Taxes et redevances</h3>
               <strong>{formatFcfa(totals.taxes)}</strong>
-              <small>Taux de recouvrement {totals.recovery} %</small>
+              <small>Recouvrement : référence non disponible</small>
             </div>
           </article>
         </section>
@@ -502,9 +499,9 @@ export default function ArtisanalSitesOverview() {
               </div>
 
               <div className="sites-vigilance__alerts">
-                <button type="button" onClick={() => { setScope('all'); setPage(1); }}>
+                <button type="button" title="Fiches dont la dernière mise à jour du dossier remonte à plus de 365 jours." onClick={() => { setScope('all'); setPage(1); }}>
                   <span className="sites-vigilance__icon is-gold"><Clock3 aria-hidden="true" /></span>
-                  <span><b>{vigilance.permitsToRenew}</b> autorisations à renouveler</span>
+                  <span><b>{vigilance.permitsToRenew}</b> Fiches à actualiser</span>
                   <ChevronRight aria-hidden="true" />
                 </button>
                 <button type="button" onClick={() => { setScope('watch'); setPage(1); }}>
@@ -538,7 +535,7 @@ export default function ArtisanalSitesOverview() {
             </div>
             <div className="sites-chart-legend">
               <span><i className="is-line" style={{ background: '#0f7a56' }} aria-hidden="true" /> Production déclarée (kg)</span>
-              <span><i className="is-dashed" aria-hidden="true" /> Objectif mensuel (kg)</span>
+              <span>Objectif mensuel : référence non disponible</span>
             </div>
             <div className="sites-chart">
               <ResponsiveContainer width="100%" height="100%">
@@ -551,7 +548,6 @@ export default function ArtisanalSitesOverview() {
                     contentStyle={{ borderRadius: 8, border: '1px solid #e2eaf0', fontSize: 11 }}
                   />
                   <Line type="monotone" name="Production déclarée" dataKey="production" stroke="#0f7a56" strokeWidth={2} dot={{ r: 2.6, fill: '#0f7a56', strokeWidth: 0 }} />
-                  <Line type="monotone" name="Objectif mensuel" dataKey="objective" stroke="#e2a000" strokeWidth={1.8} strokeDasharray="5 4" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

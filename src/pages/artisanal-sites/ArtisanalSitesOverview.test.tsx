@@ -7,6 +7,8 @@ import ArtisanalSitesOverview from './ArtisanalSitesOverview';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   loadSiteData: vi.fn(),
+  chartData: vi.fn(),
+  line: vi.fn(),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -31,9 +33,9 @@ vi.mock('@/services/artisanalSiteService', () => ({
 vi.mock('@/lib/recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   AreaChart: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  LineChart: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  LineChart: ({ children, data }: { children: ReactNode; data: unknown }) => { mocks.chartData(data); return <div>{children}</div>; },
   Area: () => null,
-  Line: () => null,
+  Line: ({ dataKey }: { dataKey: string }) => { mocks.line(dataKey); return null; },
   CartesianGrid: () => null,
   XAxis: () => null,
   YAxis: () => null,
@@ -73,6 +75,12 @@ describe('ArtisanalSitesOverview', () => {
 
     await waitFor(() => expect(within(screen.getByRole('table')).getByText(DEMO_ARTISANAL_SITES.find(site => site.locality === 'Poura')!.name)).toBeInTheDocument());
     expect(screen.getByText('6 sites')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Fiches à actualiser/ })).toHaveAccessibleDescription(
+      'Fiches dont la dernière mise à jour du dossier remonte à plus de 365 jours.'
+    );
+    expect(screen.queryByText(/autorisations à renouveler/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Taxes déclarées' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Taxes recouvrées' })).not.toBeInTheDocument();
   });
 
   it('filtre le tableau via les onglets de périmètre', async () => {
@@ -159,5 +167,34 @@ describe('ArtisanalSitesOverview', () => {
 
     expect(screen.getByRole('columnheader', { name: 'Part CA' })).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: /Carte des régions/ })).not.toBeInTheDocument();
+  });
+
+  it('ne présente ni progression annuelle ni objectif de démonstration en l’absence de référence', async () => {
+    mocks.loadSiteData.mockResolvedValue({ sites: [DEMO_ARTISANAL_SITES[0]], productions: [] });
+    render(<ArtisanalSitesOverview />);
+    await waitFor(() => expect(within(screen.getByRole('table')).getByText(DEMO_ARTISANAL_SITES[0].name)).toBeInTheDocument());
+    expect(screen.queryByText(/\+8,2|\+4,6|vs année précédente/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('Comparaison annuelle : référence non disponible')).toHaveLength(2);
+    expect(screen.getByText('Objectif de production : référence non disponible')).toBeInTheDocument();
+    expect(screen.getByText('Objectif mensuel : référence non disponible')).toBeInTheDocument();
+    expect(mocks.line).not.toHaveBeenCalledWith('objective');
+    const points = mocks.chartData.mock.calls.at(-1)?.[0] as { production: number; objective: number | null }[];
+    expect(points).toHaveLength(12);
+    expect(points.every(point => point.objective === null && point.production === 0)).toBe(true);
+  });
+
+  it('préserve les montants chargés sans fabriquer un recouvrement à partir d’un taux de 3 %', async () => {
+    mocks.loadSiteData.mockResolvedValue({ sites: [DEMO_ARTISANAL_SITES[0]], productions: [{
+      ...DEMO_SITE_PRODUCTIONS[0], siteId: DEMO_ARTISANAL_SITES[0].id, productionDate: `${new Date().getFullYear()}-08-10`,
+      goldWeightGrams: 2500, revenueFcfa: 6000, taxesFcfa: 120,
+    }] });
+    render(<ArtisanalSitesOverview />);
+    const taxesTile = screen.getByText('Taxes et redevances').closest('article')!;
+    await waitFor(() => expect(within(taxesTile).getByText('120 FCFA')).toBeInTheDocument());
+    expect(screen.queryByText(/Taux de recouvrement \d/)).not.toBeInTheDocument();
+    expect(within(taxesTile).getByText('Recouvrement : référence non disponible')).toBeInTheDocument();
+    const productionTile = screen.getByText('Production déclarée').closest('article')!;
+    expect(within(productionTile).getByText('2,5 kg')).toBeInTheDocument();
+    expect(mocks.line).toHaveBeenCalledWith('production');
   });
 });

@@ -9,9 +9,6 @@ export const COMPLIANCE_WATCH_THRESHOLD = 80;
 /** Nombre de jours au-delà duquel une déclaration de production est considérée en retard. */
 export const DECLARATION_GRACE_DAYS = 30;
 
-/** Objectif national annuel de production artisanale déclarée (kg). */
-export const ANNUAL_PRODUCTION_TARGET_KG = 4_500;
-
 export interface SiteInsight {
   site: ArtisanalSite;
   productionKg: number;
@@ -212,21 +209,24 @@ export function computeGlobalCompliance(insights: SiteInsight[]): number {
 export interface MonthlyProductionPoint {
   month: string;
   production: number;
-  objective: number;
+  /** Aucun objectif n'est déduit des déclarations en l'absence de référence fournie. */
+  objective: number | null;
 }
 
 const MONTH_LABELS = ['Jan.', 'Fév.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
 
-/** Série mensuelle production déclarée vs objectif, sur l'année civile de référence. */
+/** Série mensuelle déclarée ; comparaison uniquement si une référence annuelle est fournie. */
 export function buildMonthlyProduction(
   productions: SiteProduction[],
   year: number,
-  annualTargetKg: number = ANNUAL_PRODUCTION_TARGET_KG
+  annualTargetKg: number | null = null
 ): MonthlyProductionPoint[] {
+  const objective = typeof annualTargetKg === 'number' && Number.isFinite(annualTargetKg) && annualTargetKg >= 0
+    ? Math.round((annualTargetKg / 12) * 10) / 10 : null;
   const monthly = MONTH_LABELS.map((month) => ({
     month,
     production: 0,
-    objective: Math.round((annualTargetKg / 12) * 10) / 10,
+    objective,
   }));
 
   productions.forEach((production) => {

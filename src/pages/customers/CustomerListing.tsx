@@ -1,337 +1,90 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { Users, Plus, TrendingUp, DollarSign } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { customerCountryLabel } from '@/lib/customerCountryLabels';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Building2, Plus, RefreshCw, Search, TrendingUp, Users, Wallet } from 'lucide-react';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { Badge, Card, PageHeader, StatGrid, Tabs } from '@/components/ui/sn';
 import { Button } from '@/components/ui/Button';
-import { Table } from '@/components/ui/Table';
-import { StatusBadge } from '@/components/dashboard/StatusBadge';
-import { MetricCard } from '@/components/dashboard/MetricCard';
-import { formatCurrency } from '@/utils/salesUtils';
-import { supabase } from '@/lib/supabase';
+import { Alert } from '@/components/ui/Alert';
 import { Loading } from '@/components/ui/Loading';
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  country: string;
-  phone: string;
-  totalPurchases: number;
-  totalSpent: number;
-  lastPurchaseDate: string;
-  status: 'active' | 'inactive' | 'pending';
-  paymentRate?: number;
-}
+import { useAuth } from '@/contexts/AuthContext';
+import { canAccessPrivateRoute } from '@/lib/routeAccessRegistry';
+import { messageErreurUtilisateur } from '@/lib/presentError';
+import { customerActivity, customerStatusLabels, loadCustomerDirectory, loadCustomerSales, type CustomerRow, type CustomerSale } from '@/services/customerDossierService';
+import './customers.css';
 
 export function CustomerListing() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [countryFilter, setCountryFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-
+  const { user } = useAuth();
+  const scope = JSON.stringify([user?.id, user?.organization_id, user?.mining_company_id, user?.access_role_id, user?.role, user?.organization_type, user?.is_active, user?.capabilities, user?.module_codes]);
+  const [reload, setReload] = useState(0);
+  const [state, setState] = useState<{ scope: string; customers: CustomerRow[]; sales: CustomerSale[] | null; loading: boolean; error: string; salesError: string }>({ scope: '', customers: [], sales: null, loading: true, error: '', salesError: '' });
+  const [params, setParams] = useSearchParams();
+  const search = params.get('q') ?? '';
+  const country = params.get('country') ?? 'all';
+  const statusParam = params.get('status') ?? 'all';
+  const status = ['all', 'active', 'inactive', 'pending', 'unknown'].includes(statusParam) ? statusParam : 'all';
+  const page = Math.max(1, Number.parseInt(params.get('page') ?? '1', 10) || 1);
+  const size = Number(params.get('size') ?? 10);
+  const pageSize = [10, 25, 50].includes(size) ? size : 10;
+  const changeFilter = (changes: Record<string, string | number>) => setParams(previous => {
+    const next = new URLSearchParams(previous);
+    Object.entries(changes).forEach(([key, value]) => { if (value === '' || value === 'all') next.delete(key); else next.set(key, String(value)); });
+    return next;
+  }, { replace: true });
+  const returnTo = `/customers${params.size ? `?${params.toString()}` : ''}`;
   useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  const fetchCustomers = async () => {
-    try {
-      setLoading(true);
-
-      // Fetch customers from database
-      const { data: customersData, error: customersError } = await supabase
-        .from('customers')
-        .select('id, name, email, phone, country, address, status')
-        .order('name');
-
-      if (customersError) {
-        console.error('Error fetching customers:', customersError);
-        throw customersError;
-      }
-
-      console.log('Fetched customers:', customersData);
-
-      // Fetch sales data to calculate metrics
-      const { data: salesData, error: salesError } = await supabase
-        .from('sales')
-        .select('customer_id, quantity_oz, final_proceeds, created_at, status')
-        .in('status', ['management_approved', 'customer_approved', 'payment_received', 'completed']);
-
-      if (salesError) {
-        console.error('Error fetching sales:', salesError);
-      }
-
-      console.log('Fetched sales:', salesData);
-
-      // Calculate customer metrics
-      const customersWithMetrics = (customersData || []).map(customer => {
-        const customerSales = (salesData || []).filter(s => s.customer_id === customer.id);
-        const totalPurchases = customerSales.length;
-
-        // Calculate total spent with proper error handling
-        let totalSpent = 0;
-        customerSales.forEach(sale => {
-          if (sale.final_proceeds !== null && sale.final_proceeds !== undefined) {
-            const proceeds = Number(sale.final_proceeds);
-            if (!isNaN(proceeds) && isFinite(proceeds)) {
-              totalSpent += proceeds;
-            }
-          }
-        });
-
-        // Find last purchase date
-        const sortedSales = customerSales.sort((a, b) =>
-          (b.created_at ? new Date(b.created_at).getTime() : 0)
-          - (a.created_at ? new Date(a.created_at).getTime() : 0)
-        );
-        const lastPurchaseDate = sortedSales[0]?.created_at ?? '';
-
-        // Calculate payment rate based on completed sales
-        const completedSales = customerSales.filter(s => s.status === 'completed' || s.status === 'payment_received');
-        const paymentRate = totalPurchases > 0 ? (completedSales.length / totalPurchases) * 100 : 0;
-
-        // Ensure status is valid with strict type checking
-        let validStatus: 'active' | 'inactive' | 'pending' = 'active';
-        const statusValue = customer.status as any;
-
-        if (statusValue === 'active') {
-          validStatus = 'active';
-        } else if (statusValue === 'inactive') {
-          validStatus = 'inactive';
-        } else if (statusValue === 'pending') {
-          validStatus = 'pending';
-        } else {
-          // Default to active for any other value (null, undefined, invalid)
-          validStatus = 'active';
-          console.warn(`Invalid status '${statusValue}' for customer ${customer.name}, defaulting to 'active'`);
-        }
-
-        // Ensure all numeric values are valid
-        const finalTotalSpent = isNaN(totalSpent) || !isFinite(totalSpent) ? 0 : totalSpent;
-        const finalPaymentRate = isNaN(paymentRate) || !isFinite(paymentRate) ? 0 : paymentRate;
-
-        // Debug log for troubleshooting
-        console.log(`Customer ${customer.name}:`, {
-          rawStatus: customer.status,
-          validStatus,
-          totalPurchases,
-          rawTotalSpent: totalSpent,
-          finalTotalSpent,
-          paymentRate: finalPaymentRate,
-          salesCount: customerSales.length
-        });
-
-        if (finalTotalSpent === 0 && customerSales.length > 0) {
-          console.log(`⚠️ Customer ${customer.name} has ${customerSales.length} sales but totalSpent is 0`, customerSales);
-        }
-
-        const customerResult = {
-          id: customer.id,
-          name: customer.name,
-          email: customer.email,
-          country: customer.country,
-          phone: customer.phone || 'N/D',
-          totalPurchases,
-          totalSpent: finalTotalSpent,
-          lastPurchaseDate,
-          status: validStatus,
-          paymentRate: finalPaymentRate,
-        } as Customer;
-
-        return customerResult;
-      });
-
-      console.log('Customers with metrics:', customersWithMetrics);
-      setCustomers(customersWithMetrics);
-    } catch (error) {
-      console.error('Error loading customers:', error);
-    } finally {
-      setLoading(false);
-    }
+    let current = true;
+    setState({ scope, customers: [], sales: null, loading: true, error: '', salesError: '' });
+    void Promise.allSettled([loadCustomerDirectory(), loadCustomerSales()]).then(([customers, sales]) => {
+      if (!current) return;
+      setState({ scope, customers: customers.status === 'fulfilled' ? customers.value : [], sales: sales.status === 'fulfilled' ? sales.value : null, loading: false,
+        error: customers.status === 'rejected' ? messageErreurUtilisateur(customers.reason, 'Impossible de charger les clients.') : '',
+        salesError: sales.status === 'rejected' ? messageErreurUtilisateur(sales.reason, 'Impossible de charger les ventes.') : '' });
+    });
+    return () => { current = false; };
+  }, [scope, reload]);
+  const reset = () => setParams({});
+  const base = state.customers.filter(customer => `${customer.name} ${customer.email}`.toLocaleLowerCase('fr').includes(search.trim().toLocaleLowerCase('fr')) && (country === 'all' || customer.country === country));
+  const filtered = base.filter(customer => status === 'all' || (customer.status ?? 'unknown') === status);
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, pages);
+  const rows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const customerIds = new Set(state.customers.map(customer => customer.id));
+  const activity = state.sales ? customerActivity(state.sales.filter(sale => sale.customer_id && customerIds.has(sale.customer_id))) : null;
+  const activityByCustomer = new Map(state.customers.map(customer => [customer.id, state.sales ? customerActivity(state.sales.filter(sale => sale.customer_id === customer.id)) : null]));
+  const totalLabel = (total: number | null | undefined, currency: string | null | undefined) => {
+    if (total == null || !currency) return 'Non disponible';
+    try { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(total); } catch { return 'Devise à vérifier'; }
   };
-
-  // Calculate metrics from real data
-  const totalCustomers = customers.length;
-  const activeCustomers = customers.filter(c => c.status === 'active').length;
-  const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
-  const avgOrderValue = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
-  const activePercentage = totalCustomers > 0 ? Math.round((activeCustomers / totalCustomers) * 100) : 0;
-
-  const metrics = [
-    {
-      title: 'Nombre total de clients',
-      value: totalCustomers.toString(),
-      change: '+3 ce trimestre',
-      changeType: 'positive' as const,
-      icon: Users,
-      iconColor: 'text-blue-500',
-    },
-    {
-      title: 'Clients actifs',
-      value: activeCustomers.toString(),
-      change: `${activePercentage} % du total`,
-      changeType: 'positive' as const,
-      icon: TrendingUp,
-      iconColor: 'text-accent-500',
-    },
-    {
-      title: 'Chiffre d’affaires cumulé',
-      value: formatCurrency(totalRevenue),
-      change: '+24 % par rapport à l’année précédente',
-      changeType: 'positive' as const,
-      icon: DollarSign,
-      iconColor: 'text-primary-500',
-    },
-    {
-      title: 'Valeur moyenne des commandes',
-      value: formatCurrency(avgOrderValue),
-      change: '+8 % ce trimestre',
-      changeType: 'positive' as const,
-      icon: DollarSign,
-      iconColor: 'text-accent-500',
-    },
-  ];
-
-  const columns = [
-    { key: 'name', label: 'Nom du client' },
-    { key: 'country', label: 'Pays' },
-    { key: 'email', label: 'Adresse électronique' },
-    {
-      key: 'totalPurchases',
-      label: 'Achats',
-      render: (customer: Customer) => (
-        <span className="font-medium">{customer.totalPurchases}</span>
-      ),
-    },
-    {
-      key: 'totalSpent',
-      label: 'Montant total',
-      render: (customer: Customer) => formatCurrency(customer.totalSpent),
-    },
-    {
-      key: 'paymentRate',
-      label: 'Taux de paiement',
-      render: (customer: Customer) => {
-        const rate = customer.paymentRate ?? 0;
-        return (
-          <span className={rate >= 95 ? 'text-accent-600' : 'text-orange-600'}>
-            {rate.toFixed(1)}%
-          </span>
-        );
-      },
-    },
-    {
-      key: 'status',
-      label: 'Statut',
-      render: (customer: Customer) => {
-        const statusMap = {
-          active: { label: 'Actif', variant: 'success' as const },
-          inactive: { label: 'Inactif', variant: 'neutral' as const },
-          pending: { label: 'En attente', variant: 'warning' as const },
-        };
-        const status = statusMap[customer.status] || { label: 'Non renseigné', variant: 'neutral' as const };
-        return <StatusBadge label={status.label} variant={status.variant} />;
-      },
-    },
-  ];
-
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch =
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCountry = countryFilter === 'all' || customer.country === countryFilter;
-    const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
-    return matchesSearch && matchesCountry && matchesStatus;
-  });
-
-  const countries = Array.from(new Set(customers.map((c) => c.country)));
-
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loading />
+  const ready = state.scope === scope && !state.loading;
+  return <NationalDashboardLayout><div className="sn-page customer-page">
+    <PageHeader title="Clients internationaux" subtitle="Répertoire des partenaires commerciaux et suivi des ventes." icon={Building2}
+      breadcrumb={[{ label: 'Accueil', to: '/dashboard' }, { label: 'Clients internationaux' }]}
+      actions={<><Button variant="outline" disabled={!ready} onClick={() => setReload(value => value + 1)}><RefreshCw className="h-4 w-4" />Actualiser</Button>{canAccessPrivateRoute(user, '/customers/new') && <Link to="/customers/new" className="sn-btn sn-btn--primary"><Plus />Ajouter un client</Link>}</>} />
+    {!ready ? <Loading /> : state.error ? <Alert type="error" title="Répertoire indisponible">{state.error} Utilisez Actualiser pour réessayer.</Alert> : <>
+      {state.salesError && <Alert type="error" title="Indicateurs indisponibles">{state.salesError} Les données commerciales restent indisponibles jusqu’au prochain chargement réussi.</Alert>}
+      <StatGrid sober ariaLabel="Synthèse des clients" items={[
+        { label: 'Clients enregistrés', value: state.customers.length, icon: Users, hint: 'Répertoire accessible' },
+        { label: 'Clients actifs', value: state.customers.filter(customer => customer.status === 'active').length, icon: Building2, hint: 'Statut actif enregistré' },
+        { label: 'Ventes approuvées', value: activity?.count ?? '—', icon: TrendingUp, hint: 'Clients du répertoire' },
+        { label: 'Montant des ventes', value: totalLabel(activity?.total, activity?.currency), icon: Wallet, hint: activity?.count === 0 ? 'Aucune vente approuvée' : 'Sans conversion entre devises' },
+        { label: 'Moyenne par vente', value: totalLabel(activity?.average, activity?.currency), icon: Wallet, hint: 'Sans conversion entre devises' },
+      ]} />
+      <Card className="customer-surface" title="Répertoire des clients" hint={`${filtered.length} résultat${filtered.length > 1 ? 's' : ''}`}>
+        <div className="customer-filters"><label className="customer-search"><Search aria-hidden="true" /><span className="sr-only">Rechercher un client</span><input value={search} onChange={event => { changeFilter({ q: event.target.value, page: 1 }); }} placeholder="Nom ou adresse électronique…" /></label>
+          <label><span className="sr-only">Pays du client</span><select value={country} onChange={event => { changeFilter({ country: event.target.value, page: 1 }); }}><option value="all">Tous les pays</option>{[...new Set(state.customers.map(customer => customer.country))].sort().map(value => <option key={value} value={value}>{customerCountryLabel(value) || 'Non renseigné'}</option>)}</select></label>
+          <Button variant="outline" onClick={reset}>Réinitialiser</Button>
         </div>
-      </MainLayout>
-    );
-  }
-
-  return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-gray-900">
-              {t('nav.customers')}
-            </h1>
-            <p className="text-gray-600 mt-1">Gestion de la relation client</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={() => navigate('/customers/new')}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter un client
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {metrics.map((metric) => (
-            <MetricCard key={metric.title} {...metric} />
-          ))}
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Répertoire des clients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 flex flex-wrap gap-4">
-              <input
-                type="text"
-                placeholder="Rechercher par nom ou adresse électronique…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              <select
-                value={countryFilter}
-                onChange={(e) => setCountryFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="all">Tous les pays</option>
-                {countries.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="all">Tous les statuts</option>
-                <option value="active">Actif</option>
-                <option value="inactive">Inactif</option>
-                <option value="pending">En attente</option>
-              </select>
-            </div>
-            <Table
-              columns={columns}
-              data={filteredCustomers}
-              onRowClick={(customer) => navigate(`/customers/${customer.id}`)}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    </MainLayout>
-  );
+        <Tabs value={status} onChange={value => { changeFilter({ status: value, page: 1 }); }} ariaLabel="Filtrer les clients par statut" options={[
+          { value: 'all', label: `Tous (${base.length})` }, ...Object.entries(customerStatusLabels).map(([value, label]) => ({ value, label: `${label} (${base.filter(customer => customer.status === value).length})` })),
+          ...((status === 'unknown' || state.customers.some(customer => !customer.status)) ? [{ value: 'unknown', label: `Non renseigné (${base.filter(customer => !customer.status).length})` }] : []),
+        ]} />
+        <div id={`sn-panneau-${status}`} role="tabpanel" aria-labelledby={`sn-tab-${status}`} className="sn-table-wrap"><table className="sn-table"><thead><tr><th>Client</th><th>Pays</th><th className="sn-table__num">Ventes approuvées</th><th className="sn-table__num">Montant des ventes</th><th>Statut</th><th>Action</th></tr></thead><tbody>
+          {rows.map(customer => { const metrics = activityByCustomer.get(customer.id); return <tr key={customer.id}><td><Link className="customer-name" to={`/customers/${customer.id}`} state={{ customersReturnTo: returnTo }}>{customer.name}</Link><small className="block text-gray-500">{customer.email}</small></td><td>{customerCountryLabel(customer.country) || 'Non renseigné'}</td><td className="sn-table__num">{metrics?.count ?? '—'}</td><td className="sn-table__num">{metrics?.count === 0 ? 'Aucune vente approuvée' : totalLabel(metrics?.total, metrics?.currency)}</td><td><Badge tone={customer.status === 'active' ? 'success' : customer.status === 'pending' ? 'warning' : 'neutral'}>{customerStatusLabels[customer.status ?? ''] ?? 'Non renseigné'}</Badge></td><td><Link className="customer-link" aria-label={`Consulter ${customer.name}`} to={`/customers/${customer.id}`} state={{ customersReturnTo: returnTo }}>Consulter</Link></td></tr>; })}
+          {!rows.length && <tr><td colSpan={6} className="customer-empty">{state.customers.length ? 'Aucun client ne correspond aux filtres.' : 'Aucun client enregistré dans votre périmètre.'}</td></tr>}
+        </tbody></table></div>
+        <div className="customer-pagination"><label>Afficher <select aria-label="Clients par page" value={pageSize} onChange={event => { changeFilter({ size: Number(event.target.value), page: 1 }); }}>{[10,25,50].map(value => <option key={value}>{value}</option>)}</select></label><span aria-live="polite">{filtered.length ? (currentPage-1)*pageSize+1 : 0}–{Math.min(currentPage*pageSize,filtered.length)} sur {filtered.length}</span><div className="customer-actions"><Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => changeFilter({ page: currentPage-1 })}>Précédent</Button><span>{currentPage} / {pages}</span><Button variant="outline" size="sm" disabled={currentPage === pages} onClick={() => changeFilter({ page: currentPage+1 })}>Suivant</Button></div></div>
+      </Card>
+    </>}
+  </div></NationalDashboardLayout>;
 }

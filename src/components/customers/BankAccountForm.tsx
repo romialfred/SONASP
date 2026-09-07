@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Building2, Plus, Trash2, Star } from 'lucide-react';
+import { Field } from '@/components/ui/sn';
 import { COUNTRIES } from '@/constants/countries';
+import { CUSTOMER_COUNTRY_OPTIONS, customerCountryLabel } from '@/lib/customerCountryLabels';
 
 export interface BankAccount {
   id?: string;
@@ -23,6 +25,8 @@ interface BankAccountFormProps {
   banks: BankAccount[];
   onChange: (banks: BankAccount[]) => void;
   readOnly?: boolean;
+  validate?: boolean;
+  validationAttempt?: number;
 }
 
 const CURRENCIES = [
@@ -89,356 +93,93 @@ const BANKS_GUINEA = [
 const getBanksByCountry = (country: string): string[] => {
   const countryLower = country.toLowerCase();
 
-  if (countryLower.includes('ivoire') || countryLower.includes('côte')) {
+  if (['ivory coast', "côte d'ivoire", 'côte d’ivoire'].includes(countryLower)) {
     return BANKS_COTE_IVOIRE;
-  } else if (countryLower.includes('burkina')) {
+  } else if (countryLower === 'burkina faso') {
     return BANKS_BURKINA_FASO;
-  } else if (countryLower.includes('guinea') || countryLower.includes('guinée')) {
+  } else if (['guinea', 'guinée'].includes(countryLower)) {
     return BANKS_GUINEA;
   }
 
   return [];
 };
 
-export function BankAccountForm({ banks, onChange, readOnly = false }: BankAccountFormProps) {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(banks.length > 0 ? 0 : null);
-
-  const handleAddBank = () => {
-    const newBank: BankAccount = {
-      bankName: '',
-      country: 'Burkina Faso',
-      city: '',
-      accountNumber: '',
-      iban: '',
-      swiftCode: '',
-      currency: 'XOF',
-      isPrimary: banks.length === 0,
-      isActive: true,
-    };
-    onChange([...banks, newBank]);
+export function BankAccountForm({ banks, onChange, readOnly = false, validate = false, validationAttempt = 0 }: BankAccountFormProps) {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(banks.length ? 0 : null);
+  const formId = useId();
+  const [customChoices, setCustomChoices] = useState<Set<number>>(new Set());
+  const invalidIndex = validate ? banks.findIndex(bank => !bank.bankName.trim() || bank.bankName === '__other__' || !bank.country.trim() || !bank.city.trim() || !bank.currency.trim()) : -1;
+  useEffect(() => { if (invalidIndex >= 0) setExpandedIndex(invalidIndex); }, [invalidIndex, validationAttempt]);
+  useEffect(() => { if (invalidIndex >= 0 && expandedIndex === invalidIndex) document.getElementById(`${formId}-bank-${invalidIndex}`)?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(); }, [expandedIndex, invalidIndex, validationAttempt, formId]);
+  const update = (index: number, field: keyof BankAccount, value: string | boolean) => {
+    onChange(banks.map((bank, i) => i === index ? { ...bank, [field]: value } :
+      field === 'isPrimary' && value === true ? { ...bank, isPrimary: false } : bank));
+  };
+  const add = () => {
+    onChange([...banks, { bankName: '', country: 'Burkina Faso', city: '', accountNumber: '',
+      iban: '', swiftCode: '', currency: 'XOF', isPrimary: banks.length === 0, isActive: true }]);
     setExpandedIndex(banks.length);
   };
-
-  const handleUpdateBank = (index: number, field: keyof BankAccount, value: any) => {
-    const updatedBanks = [...banks];
-    updatedBanks[index] = { ...updatedBanks[index], [field]: value };
-
-    if (field === 'isPrimary' && value === true) {
-      updatedBanks.forEach((bank, i) => {
-        if (i !== index) {
-          bank.isPrimary = false;
-        }
-      });
-    }
-
-    onChange(updatedBanks);
+  const remove = (index: number) => {
+    const remaining = banks.filter((_, i) => i !== index).map((bank, i) =>
+      banks[index].isPrimary && i === 0 ? { ...bank, isPrimary: true } : bank);
+    setCustomChoices(previous => new Set([...previous].filter(i => i !== index).map(i => i > index ? i - 1 : i)));
+    onChange(remaining);
+    setExpandedIndex(remaining.length ? 0 : null);
   };
-
-  const handleDeleteBank = (index: number) => {
-    const updatedBanks = banks.filter((_, i) => i !== index);
-
-    if (banks[index].isPrimary && updatedBanks.length > 0) {
-      updatedBanks[0].isPrimary = true;
-    }
-
-    onChange(updatedBanks);
-    setExpandedIndex(updatedBanks.length > 0 ? 0 : null);
-  };
-
-  const toggleExpanded = (index: number) => {
-    setExpandedIndex(expandedIndex === index ? null : index);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Comptes bancaires</h3>
-          <span className="text-sm text-gray-500">({banks.length})</span>
-        </div>
-        {!readOnly && (
-          <Button
-            type="button"
-            onClick={handleAddBank}
-            variant="secondary"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Ajouter un compte
-          </Button>
-        )}
-      </div>
-
-      {banks.length === 0 && (
-        <Card className="bg-gray-50 border-dashed">
-          <div className="p-8 text-center">
-            <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 mb-2">Aucun compte bancaire ajouté</p>
-            <p className="text-sm text-gray-500 mb-4">
-              Ajoutez au moins un compte bancaire pour le traitement des paiements.
-            </p>
-            {!readOnly && (
-              <Button type="button" onClick={handleAddBank} variant="primary" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter le premier compte bancaire
-              </Button>
-            )}
-          </div>
-        </Card>
-      )}
-
-      <div className="space-y-3">
-        {banks.map((bank, index) => {
-          const availableBanks = getBanksByCountry(bank.country);
-
-          return (
-            <Card
-              key={index}
-              className={`transition-all ${
-                bank.isPrimary
-                  ? 'border-amber-500 bg-amber-50/30'
-                  : 'border-gray-200 bg-white'
-              }`}
-            >
-              <div className="p-4">
-                <div
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => toggleExpanded(index)}
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        bank.isPrimary ? 'bg-amber-100' : 'bg-blue-100'
-                      }`}
-                    >
-                      <Building2
-                        className={`w-5 h-5 ${
-                          bank.isPrimary ? 'text-amber-600' : 'text-blue-600'
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-gray-900">
-                          {bank.bankName || `Compte bancaire ${index + 1}`}
-                        </h4>
-                        {bank.isPrimary && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-                            <Star className="w-3 h-3 fill-current" />
-                            Principal
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {bank.country && bank.city
-                          ? `${bank.city}, ${bank.country}`
-                          : bank.country || 'Localisation non renseignée'}
-                        {bank.currency && ` • ${bank.currency}`}
-                      </p>
-                    </div>
-                  </div>
-                  {!readOnly && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteBank(index);
-                        }}
-                        variant="secondary"
-                        size="sm"
-                        className="text-red-600 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {expandedIndex === index && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Pays <span className="text-red-500">*</span>
-                        </label>
-                        <Select
-                          value={bank.country}
-                          onChange={(e) =>
-                            handleUpdateBank(index, 'country', e.target.value)
-                          }
-                          disabled={readOnly}
-                        >
-                          <option value="">Sélectionnez un pays</option>
-                          {COUNTRIES.map((country) => (
-                            <option key={country} value={country}>
-                              {country}
-                            </option>
-                          ))}
-                        </Select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Ville <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          value={bank.city}
-                          onChange={(e) =>
-                            handleUpdateBank(index, 'city', e.target.value)
-                          }
-                          placeholder="Ex. : Abidjan, Ouagadougou"
-                          disabled={readOnly}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Nom de la banque <span className="text-red-500">*</span>
-                        </label>
-                        {availableBanks.length > 0 ? (
-                          <Select
-                            value={bank.bankName}
-                            onChange={(e) =>
-                              handleUpdateBank(index, 'bankName', e.target.value)
-                            }
-                            disabled={readOnly}
-                          >
-                            <option value="">Sélectionnez une banque</option>
-                            {availableBanks.map((bankName) => (
-                              <option key={bankName} value={bankName}>
-                                {bankName}
-                              </option>
-                            ))}
-                            <option value="__other__">Autre (à préciser ci-dessous)</option>
-                          </Select>
-                        ) : (
-                          <Input
-                            value={bank.bankName}
-                            onChange={(e) =>
-                              handleUpdateBank(index, 'bankName', e.target.value)
-                            }
-                            placeholder="Ex. : UBS, Credit Suisse"
-                            disabled={readOnly}
-                          />
-                        )}
-                        {bank.bankName === '__other__' && (
-                          <Input
-                            className="mt-2"
-                            value=""
-                            onChange={(e) =>
-                              handleUpdateBank(index, 'bankName', e.target.value)
-                            }
-                            placeholder="Saisissez le nom de la banque"
-                            disabled={readOnly}
-                          />
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Devise <span className="text-red-500">*</span>
-                        </label>
-                        <Select
-                          value={bank.currency}
-                          onChange={(e) =>
-                            handleUpdateBank(index, 'currency', e.target.value)
-                          }
-                          disabled={readOnly}
-                        >
-                          <option value="">Sélectionnez une devise</option>
-                          {CURRENCIES.map((curr) => (
-                            <option key={curr.value} value={curr.value}>
-                              {curr.label}
-                            </option>
-                          ))}
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Numéro de compte
-                        </label>
-                        <Input
-                          value={bank.accountNumber}
-                          onChange={(e) =>
-                            handleUpdateBank(index, 'accountNumber', e.target.value)
-                          }
-                          placeholder="Numéro de compte"
-                          disabled={readOnly}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          IBAN
-                        </label>
-                        <Input
-                          value={bank.iban}
-                          onChange={(e) =>
-                            handleUpdateBank(index, 'iban', e.target.value.toUpperCase())
-                          }
-                          placeholder="CI93 0076 2011 6238 5295 7"
-                          disabled={readOnly}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Code SWIFT/BIC
-                      </label>
-                      <Input
-                        value={bank.swiftCode}
-                        onChange={(e) =>
-                          handleUpdateBank(index, 'swiftCode', e.target.value.toUpperCase())
-                        }
-                        placeholder="Ex. : SGBFCIAB"
-                        disabled={readOnly}
-                      />
-                    </div>
-
-                    {!readOnly && (
-                      <div className="flex items-center gap-2 pt-2">
-                        <input
-                          type="checkbox"
-                          id={`primary-${index}`}
-                          checked={bank.isPrimary}
-                          onChange={(e) =>
-                            handleUpdateBank(index, 'isPrimary', e.target.checked)
-                          }
-                          className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
-                        />
-                        <label
-                          htmlFor={`primary-${index}`}
-                          className="text-sm font-medium text-gray-700 cursor-pointer"
-                        >
-                          Définir comme compte bancaire principal
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      {banks.length > 0 && !readOnly && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-800">
-            <strong>Remarque :</strong> le compte bancaire principal sera utilisé par défaut pour le traitement des
-            paiements. Vous pouvez ajouter plusieurs comptes bancaires dans différentes devises.
-          </p>
-        </div>
-      )}
+  return <div className="space-y-4">
+    <div className="flex items-center justify-between flex-wrap gap-3">
+      <h3 className="font-semibold">Comptes bancaires <span className="text-gray-500">({banks.length})</span></h3>
+      {!readOnly && <Button type="button" size="sm" variant="outline" onClick={add}><Plus className="w-4 h-4" />Ajouter un compte</Button>}
     </div>
-  );
+    {!banks.length && <div className="rounded-lg border border-dashed p-6 text-center">
+      <Building2 className="mx-auto mb-2 h-8 w-8 text-gray-400" />
+      <p>Aucun compte bancaire ajouté</p>
+      {!readOnly && <Button type="button" variant="outline" size="sm" className="mt-3" onClick={add}>Ajouter le premier compte bancaire</Button>}
+    </div>}
+    {banks.map((bank, index) => {
+      const available = getBanksByCountry(bank.country);
+      const custom = customChoices.has(index) || bank.bankName === '__other__' || (!!bank.bankName && !available.includes(bank.bankName));
+      const open = expandedIndex === index;
+      const panelId = `${formId}-bank-${index}`;
+      return <Card key={bank.id ?? index} className={bank.isPrimary ? 'border-amber-300' : ''}>
+        <div className="p-4">
+          <div className="flex items-center gap-3">
+            <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"
+              aria-label={`${open ? 'Fermer' : 'Ouvrir'} le compte bancaire ${index + 1}`} aria-expanded={open} aria-controls={panelId}
+              onClick={() => setExpandedIndex(open ? null : index)}>
+              <Building2 className="h-5 w-5 shrink-0 text-emerald-700" />
+              <span className="min-w-0"><strong className="block break-words">{bank.bankName && bank.bankName !== '__other__' ? bank.bankName : `Compte bancaire ${index + 1}`}</strong>
+                <small className="text-gray-500">{[bank.city, customerCountryLabel(bank.country), bank.currency].filter(Boolean).join(' · ')}</small></span>
+              {bank.isPrimary && <span className="inline-flex items-center gap-1 text-xs text-amber-800"><Star className="h-3 w-3" />Principal</span>}
+            </button>
+            {!readOnly && <Button type="button" variant="outline" size="sm" aria-label={`Retirer le compte bancaire ${index + 1}`} onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-red-700" /></Button>}
+          </div>
+          {open && <div id={panelId} className="mt-4 space-y-4 border-t pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Pays" required error={validate && (!bank.country.trim()) ? "Champ obligatoire." : undefined}><Select aria-invalid={validate && (!bank.country.trim())} value={bank.country} disabled={readOnly} onChange={e => update(index, 'country', e.target.value)}>
+                <option value="">Sélectionnez un pays</option>{bank.country && !COUNTRIES.includes(bank.country) && <option value={bank.country}>{bank.country} (valeur enregistrée)</option>}{CUSTOMER_COUNTRY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </Select></Field>
+              <Field label="Ville" required error={validate && (!bank.city.trim()) ? "Champ obligatoire." : undefined}><Input aria-invalid={validate && (!bank.city.trim())} value={bank.city} disabled={readOnly} onChange={e => update(index, 'city', e.target.value)} placeholder="Ville de l’agence" /></Field>
+              <div><Field label="Nom de la banque" required error={validate && (!bank.bankName.trim() || bank.bankName === '__other__') ? "Champ obligatoire." : undefined}>
+                {available.length ? <Select aria-invalid={validate && (!bank.bankName.trim() || bank.bankName === '__other__')} value={custom ? '__other__' : bank.bankName} disabled={readOnly} onChange={e => { setCustomChoices(previous => { const next = new Set(previous); if (e.target.value === '__other__') next.add(index); else next.delete(index); return next; }); update(index, 'bankName', e.target.value); }}>
+                  <option value="">Sélectionnez une banque</option>{available.map(name => <option key={name}>{name}</option>)}<option value="__other__">Autre (à préciser ci-dessous)</option>
+                </Select> : <Input aria-invalid={validate && (!bank.bankName.trim() || bank.bankName === '__other__')} value={bank.bankName === '__other__' ? '' : bank.bankName} disabled={readOnly} onChange={e => update(index, 'bankName', e.target.value)} />}
+              </Field>
+              {available.length > 0 && custom && <div className="mt-2"><Field label="Nom de la banque hors catalogue" required error={validate && bank.bankName === '__other__' ? "Précisez le nom de la banque." : undefined}><Input aria-invalid={validate && (!bank.bankName.trim() || bank.bankName === '__other__')} value={bank.bankName === '__other__' ? '' : bank.bankName} disabled={readOnly}
+                onChange={e => update(index, 'bankName', e.target.value || '__other__')} placeholder="Saisissez le nom de la banque" /></Field></div>}
+              </div>
+              <Field label="Devise" required error={validate && (!bank.currency.trim()) ? "Champ obligatoire." : undefined}><Select aria-invalid={validate && (!bank.currency.trim())} value={bank.currency} disabled={readOnly} onChange={e => update(index, 'currency', e.target.value)}>
+                <option value="">Sélectionnez une devise</option>{bank.currency && !CURRENCIES.some(currency => currency.value === bank.currency) && <option value={bank.currency}>{bank.currency} (valeur enregistrée)</option>}{CURRENCIES.map(currency => <option key={currency.value} value={currency.value}>{currency.label}</option>)}
+              </Select></Field>
+              <Field label="Numéro de compte"><Input value={bank.accountNumber} disabled={readOnly} onChange={e => update(index, 'accountNumber', e.target.value)} /></Field>
+              <Field label="IBAN"><Input value={bank.iban} disabled={readOnly} onChange={e => update(index, 'iban', e.target.value.toUpperCase())} /></Field>
+              <Field label="Code SWIFT/BIC"><Input value={bank.swiftCode} disabled={readOnly} onChange={e => update(index, 'swiftCode', e.target.value.toUpperCase())} /></Field>
+            </div>
+            {!readOnly && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={bank.isPrimary} onChange={e => update(index, 'isPrimary', e.target.checked)} />Définir comme compte bancaire principal</label>}
+          </div>}
+        </div>
+      </Card>;
+    })}
+  </div>;
 }

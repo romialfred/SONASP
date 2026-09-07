@@ -14679,6 +14679,7 @@ export type Database = {
       }
     }
     Functions: {
+      save_customer_dossier: { Args: { p_customer_id: string | null; p_customer: Json; p_banks: Json }; Returns: string }
       snp_save_artisanal_site: { Args: { p_site: Json; p_assignments: Json }; Returns: Json }
       snp_save_artisan_dossier: { Args: { p_id: string | null; p_creation_id: string; p_expected_updated_at: string | null; p_dossier: Json; p_confirm_transition?: boolean }; Returns: Json }
       snp_search_exploitants: { Args: { p_query: string; p_exclude_id?: string | null }; Returns: { id: string; nom: string | null; prenoms: string | null; raison_sociale: string | null; type_personne: string; numero_carte: string | null; artisanal_site_id: string | null; site_name: string | null }[] }

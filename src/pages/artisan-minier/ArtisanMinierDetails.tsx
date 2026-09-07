@@ -13,6 +13,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  RefreshCw,
   Scale,
   ShieldAlert,
   UserRound,
@@ -107,15 +108,106 @@ export function carteActive(cartes: CarteProfessionnelle[]): CarteProfessionnell
   );
 }
 
+type RelatedData<T> = {
+  key: string;
+  rows: T[] | null;
+  loading: boolean;
+  error: string | null;
+};
+
+const EMPTY_VENTES: ArtisanGoldSale[] = [];
+const EMPTY_INFRACTIONS: ArtisanInfraction[] = [];
+const fetchVentes = (artisanId: string) => artisanGoldSalesService.getByArtisan(artisanId);
+const fetchInfractions = (artisanId: string) => artisanInfractionsService.getByArtisanId(artisanId);
+
+/** Une source indisponible n'est jamais interprétée comme une liste vide. */
+function useRelatedData<T>(
+  artisanId: string | undefined,
+  enabled: boolean,
+  fetchRows: (id: string) => Promise<T[] | null>,
+  failureMessage: string,
+) {
+  const key = `${artisanId || ''}:${enabled}`;
+  const [attempt, setAttempt] = useState(0);
+  const [state, setState] = useState<RelatedData<T>>({ key, rows: null, loading: true, error: null });
+
+  useEffect(() => {
+    let current = true;
+    if (!artisanId || !enabled) {
+      setState({ key, rows: [], loading: false, error: null });
+      return;
+    }
+    setState({ key, rows: null, loading: true, error: null });
+    void fetchRows(artisanId).then(
+      (rows) => {
+        if (current) setState({ key, rows: rows || [], loading: false, error: null });
+      },
+      () => {
+        if (current) setState({ key, rows: null, loading: false, error: failureMessage });
+      },
+    );
+    return () => { current = false; };
+  }, [artisanId, enabled, fetchRows, failureMessage, key, attempt]);
+
+  const visible = state.key === key ? state : { key, rows: null, loading: true, error: null };
+  return { ...visible, retry: () => setAttempt((value) => value + 1) };
+}
+
+function RelatedDataFeedback({ loading, error, label, onRetry }: {
+  loading: boolean;
+  error: string | null;
+  label: string;
+  onRetry: () => void;
+}) {
+  if (loading) return <p role="status"><Loader2 className="sn-spin" aria-hidden="true" /> Chargement des {label}…</p>;
+  if (!error) return null;
+  return <div role="alert" style={{ marginTop: 16 }}>
+    <Note tone="warning">{error}</Note>
+    <button type="button" className="sn-btn" onClick={onRetry}>
+      <RefreshCw aria-hidden="true" /> Réessayer les {label}
+    </button>
+  </div>;
+}
+
+/** Le dossier ne conserve aucun état issu d'un autre périmètre de lecture. */
 export default function ArtisanMinierDetails() {
+  const { user } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const scopeKey = JSON.stringify([
+    id,
+    user?.id,
+    user?.organization_id,
+    user?.mining_company_id,
+    user?.access_role_id,
+    user?.role,
+    user && 'account_type' in user ? user.account_type : undefined,
+    user?.organization_type,
+    user?.is_active,
+    [...(user?.capabilities || [])].sort(),
+    [...(user?.module_codes || [])].sort(),
+    [...(user?.site_ids || [])].sort(),
+    [...(user?.responsibilities || [])].sort(),
+    [...(user?.module_domains || [])].sort(),
+    user?.access_portal_id,
+    user?.access_portal_code,
+    user?.actor_category_code,
+  ]);
+  return <ArtisanMinierDetailsContent key={scopeKey} />;
+}
+
+function ArtisanMinierDetailsContent() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const isCollector = isCollectorScopedUser(user);
 
   const [artisan, setArtisan] = useState<ArtisanMinier | null>(null);
-  const [ventes, setVentes] = useState<ArtisanGoldSale[]>([]);
-  const [infractions, setInfractions] = useState<ArtisanInfraction[]>([]);
+  const ventesSource = useRelatedData(id, true, fetchVentes,
+    'Les ventes n’ont pas pu être chargées. Leurs indicateurs sont indisponibles.');
+  const infractionsSource = useRelatedData(id, !isCollector, fetchInfractions,
+    'Les infractions n’ont pas pu être chargées. Leur nombre et leur état restent inconnus.');
+  const ventes = ventesSource.rows || EMPTY_VENTES;
+  const infractions = infractionsSource.rows || EMPTY_INFRACTIONS;
   const [loading, setLoading] = useState(true);
   const [onglet, setOnglet] = useState<Onglet>('informations');
   const [rechercheVente, setRechercheVente] = useState('');
@@ -128,13 +220,7 @@ export default function ArtisanMinierDetails() {
     setLoading(true);
 
     const charger = async () => {
-      // Chaque source est indépendante : l'absence d'infractions ou de ventes ne doit
-      // pas empêcher l'affichage du dossier.
-      const [artisanResult, ventesResult, infractionsResult] = await Promise.allSettled([
-        artisanMinierService.getById(id),
-        artisanGoldSalesService.getByArtisan(id),
-        isCollector ? Promise.resolve([]) : artisanInfractionsService.getByArtisanId(id),
-      ]);
+      const [artisanResult] = await Promise.allSettled([artisanMinierService.getById(id)]);
       if (!mounted) return;
 
       if (artisanResult.status === 'fulfilled' && artisanResult.value) {
@@ -144,10 +230,6 @@ export default function ArtisanMinierDetails() {
         showError("Impossible de charger le dossier de l'artisan");
       }
 
-      setVentes(ventesResult.status === 'fulfilled' ? ((ventesResult.value || []) as ArtisanGoldSale[]) : []);
-      setInfractions(
-        infractionsResult.status === 'fulfilled' ? ((infractionsResult.value || []) as ArtisanInfraction[]) : []
-      );
       setLoading(false);
     };
 
@@ -168,6 +250,8 @@ export default function ArtisanMinierDetails() {
   );
 
   const infractionTone: StatItem['tone'] = totaux.infractionsOuvertes > 0 ? 'red' : 'violet';
+  const ventesUnavailable = ventesSource.loading ? 'Chargement…' : 'Indisponible';
+  const infractionsUnavailable = infractionsSource.loading ? 'Chargement…' : 'Indisponible';
 
   const ventesFiltrees = useMemo(() => {
     const query = rechercheVente.trim().toLocaleLowerCase('fr');
@@ -295,7 +379,7 @@ export default function ArtisanMinierDetails() {
               <Badge tone={artisan.actif === false ? 'danger' : 'success'}>
                 {artisan.actif === false ? 'Inactif' : 'Actif'}
               </Badge>
-              {!isCollector && totaux.infractionsOuvertes > 0 && (
+              {!isCollector && infractionsSource.rows !== null && totaux.infractionsOuvertes > 0 && (
                 <Badge tone="warning" icon={AlertTriangle}>
                   {integer.format(totaux.infractionsOuvertes)} infraction(s) en cours
                 </Badge>
@@ -329,13 +413,16 @@ export default function ArtisanMinierDetails() {
           <StatGrid
             ariaLabel="Indicateurs du dossier"
             items={[
-              { label: 'Ventes déclarées', value: integer.format(ventes.length), icon: Coins, tone: 'gold' },
-              { label: 'Quantité collectée', value: `${decimal.format(totaux.quantite)} g`, icon: Scale, tone: 'green' },
-              { label: "Chiffre d'affaires", value: formatFcfa(totaux.montant), icon: Banknote, tone: 'blue' },
-              ...(isCollector ? [] : [{ label: 'Infractions', value: integer.format(infractions.length), hint: `${integer.format(totaux.infractionsOuvertes)} en cours`, icon: AlertTriangle, tone: infractionTone }]),
+              { label: 'Ventes déclarées', value: ventesSource.rows === null ? ventesUnavailable : integer.format(ventes.length), icon: Coins, tone: 'gold' },
+              { label: 'Quantité collectée', value: ventesSource.rows === null ? ventesUnavailable : `${decimal.format(totaux.quantite)} g`, icon: Scale, tone: 'green' },
+              { label: "Chiffre d'affaires", value: ventesSource.rows === null ? ventesUnavailable : formatFcfa(totaux.montant), icon: Banknote, tone: 'blue' },
+              ...(isCollector ? [] : [{ label: 'Infractions', value: infractionsSource.rows === null ? infractionsUnavailable : integer.format(infractions.length), hint: infractionsSource.rows === null ? 'Données non confirmées' : `${integer.format(totaux.infractionsOuvertes)} en cours`, icon: AlertTriangle, tone: infractionTone }]),
             ]}
           />
         </div>
+
+        <RelatedDataFeedback loading={ventesSource.loading} error={ventesSource.error} label="ventes" onRetry={ventesSource.retry} />
+        {!isCollector && <RelatedDataFeedback loading={infractionsSource.loading} error={infractionsSource.error} label="infractions" onRetry={infractionsSource.retry} />}
 
         {isCollector && (
           <div style={{ marginTop: 16 }}>
@@ -356,8 +443,8 @@ export default function ArtisanMinierDetails() {
               onClick={() => setOnglet(item.id)}
             >
               {item.label}
-              {item.id === 'transactions' && ventes.length > 0 && <span className="sn-count">{ventes.length}</span>}
-              {item.id === 'infractions' && infractions.length > 0 && <span className="sn-count">{infractions.length}</span>}
+              {item.id === 'transactions' && ventesSource.rows !== null && ventes.length > 0 && <span className="sn-count">{ventes.length}</span>}
+              {item.id === 'infractions' && infractionsSource.rows !== null && infractions.length > 0 && <span className="sn-count">{infractions.length}</span>}
             </button>
           ))}
         </nav>
@@ -392,7 +479,9 @@ export default function ArtisanMinierDetails() {
                 <Plus aria-hidden="true" /> Nouvelle vente
               </button>}
             </div>
-            {ventes.length === 0 ? (
+            {ventesSource.rows === null ? (
+              <p>{ventesSource.loading ? 'Chargement des ventes…' : 'Les ventes sont indisponibles. Utilisez « Réessayer les ventes » pour reprendre le chargement.'}</p>
+            ) : ventes.length === 0 ? (
               <EmptyState
                 title="Aucune vente déclarée"
                 description="Les collectes enregistrées pour cet artisan apparaîtront ici."
@@ -431,7 +520,9 @@ export default function ArtisanMinierDetails() {
                 <Plus aria-hidden="true" /> Signaler une infraction
               </button>
             </div>
-            {infractions.length === 0 ? (
+            {infractionsSource.rows === null ? (
+              <p>{infractionsSource.loading ? 'Chargement des infractions…' : 'Les infractions sont indisponibles. Utilisez « Réessayer les infractions » pour reprendre le chargement.'}</p>
+            ) : infractions.length === 0 ? (
               <EmptyState
                 title="Aucune infraction enregistrée"
                 description="Le dossier de cet artisan est vierge de tout manquement constaté."

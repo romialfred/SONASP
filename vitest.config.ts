@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +12,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     css: true,
+    // Les sauvegardes contiennent des copies historiques, parfois privées de leurs
+    // imports relatifs. Tester les sources canoniques sans redécouvrir ces archives.
+    exclude: [...configDefaults.exclude, 'backups/**'],
     // Les tests de rendu (jsdom + Testing Library) dépassent parfois les 5 s par défaut
     // lorsque la suite complète s'exécute en parallèle : le délai est relevé pour éviter
     // des échecs qui ne traduisent aucune régression.

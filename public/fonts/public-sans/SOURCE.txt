@@ -1,0 +1,1 @@
+Public Sans - https://github.com/uswds/public-sans/tree/d3df3455fb94643925f816276e81b231bc31619f/fonts/variable - PublicSans[wght].ttf converted losslessly to WOFF2 with fontTools. Licensed under SIL OFL 1.1.

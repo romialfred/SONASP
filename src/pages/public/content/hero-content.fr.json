@@ -1,0 +1,140 @@
+{
+  "locale": "fr-BF",
+  "brand": "FASO SANAMA",
+  "contentStatus": "proposition-editoriale-a-integrer",
+  "typography": {
+    "family": "Public Sans",
+    "bodyWeight": 400,
+    "navWeight": 500,
+    "headingWeight": 600,
+    "numberWeight": 650
+  },
+  "carousel": {
+    "intervalMs": 8000,
+    "transition": "fade",
+    "transitionMs": 450,
+    "startIndex": 0,
+    "pauseOnHover": true,
+    "pauseOnFocus": true,
+    "pauseWhenDocumentHidden": true,
+    "manualInteractionRequiresExplicitResume": true,
+    "respectReducedMotion": true
+  },
+  "slides": [
+    {
+      "id": "recettes-fiscales",
+      "tabLabel": "Recettes fiscales",
+      "eyebrow": "Mobilisation des recettes publiques",
+      "title": "Mieux recouvrer les taxes.\nMieux financer le pays.",
+      "description": "Relier les données de production, les ventes et les obligations fiscales pour mieux suivre les montants à recouvrer.",
+      "projection": {
+        "display": "+15 à +35 %",
+        "label": "Projection de hausse des taxes recouvrées",
+        "qualification": "Scénario indicatif à valider. Référence et horizon à préciser.",
+        "source": "Hypothèse fournie par le porteur du projet dans la demande ; aucune étude justificative jointe.",
+        "status": "indicative-unvalidated",
+        "type": "relative_increase_in_collected_tax_amount",
+        "minimumPercent": 15,
+        "maximumPercent": 35,
+        "baselineCollectedAmount": null,
+        "baselinePeriod": null,
+        "horizon": null,
+        "taxScope": null,
+        "validatedModel": null
+      },
+      "cta": {
+        "label": "Découvrir la plateforme",
+        "targetSection": "plateforme"
+      },
+      "image": {
+        "src": "images/ia/hero-01-recouvrement-taxes-ia.png",
+        "width": 1672,
+        "height": 941,
+        "objectPosition": "60% 50%",
+        "alt": "Illustration générée : deux professionnels examinent un dossier aurifère ; un égaliseur circulaire fin et des chiffres décoratifs évoquent l’IA.",
+        "originalWithoutHologram": "images/hero-01-recouvrement-taxes.png"
+      },
+      "aiVisual": {
+        "defaultMode": "static-composite",
+        "staticComposite": "images/ia/hero-01-recouvrement-taxes-ia.png",
+        "style": "circular-audio-equalizer",
+        "subtle": true,
+        "decorativeDigitsOnly": true,
+        "droneIncluded": false,
+        "transparentOverlayAvailable": false,
+        "note": "Effet intégré au PNG. Ne pas superposer les anciens orbes."
+      }
+    },
+    {
+      "id": "controle-flux",
+      "tabLabel": "Contrôle des flux",
+      "eyebrow": "Lutte contre la contrebande",
+      "title": "Préserver l’or du Burkina.\nMieux contrôler ses circuits.",
+      "description": "Documenter l’origine des lots, rapprocher les mouvements et faciliter l’identification des écarts.",
+      "benefits": [
+        "Origine documentée",
+        "Lots et mouvements suivis",
+        "Contrôles mieux coordonnés"
+      ],
+      "qualification": "Des objectifs à mesurer dans la durée.",
+      "quantifiedReduction": null,
+      "cta": {
+        "label": "Comprendre la traçabilité",
+        "targetSection": "tracabilite"
+      },
+      "image": {
+        "src": "images/ia/hero-02-controle-contrebande-ia.png",
+        "width": 1672,
+        "height": 941,
+        "objectPosition": "60% 50%",
+        "alt": "Illustration générée : vérification d’un lot aurifère avec une onde numérique discrète près du matériel de contrôle.",
+        "originalWithoutHologram": "images/hero-02-controle-contrebande.png"
+      },
+      "aiVisual": {
+        "defaultMode": "static-composite",
+        "staticComposite": "images/ia/hero-02-controle-contrebande-ia.png",
+        "style": "horizontal-waveform",
+        "subtle": true,
+        "decorativeDigitsOnly": true,
+        "droneIncluded": false,
+        "transparentOverlayAvailable": false,
+        "note": "Effet intégré au PNG. Ne pas superposer les anciens orbes."
+      }
+    },
+    {
+      "id": "tracabilite-origine",
+      "tabLabel": "Traçabilité",
+      "eyebrow": "Traçabilité de la filière aurifère",
+      "title": "De la mine à la vente,\nune traçabilité continue.",
+      "description": "Connecter les institutions et les opérateurs pour suivre l’origine, les échanges et les informations de chaque lot.",
+      "benefits": [
+        "Identifier l’origine",
+        "Suivre les échanges",
+        "Éclairer les décisions"
+      ],
+      "cta": {
+        "label": "Découvrir les portails",
+        "targetSection": "portails"
+      },
+      "image": {
+        "src": "images/ia/hero-03-tracabilite-origine-ia.png",
+        "width": 1672,
+        "height": 941,
+        "objectPosition": "60% 50%",
+        "alt": "Illustration générée : deux professionnels sur un site minier, un drone civil en vol et quelques arcs de données près de la tablette.",
+        "originalWithoutHologram": "images/hero-03-tracabilite-origine.png"
+      },
+      "aiVisual": {
+        "defaultMode": "static-composite",
+        "staticComposite": "images/ia/hero-03-tracabilite-origine-ia.png",
+        "style": "open-data-arcs-with-drone",
+        "subtle": true,
+        "decorativeDigitsOnly": true,
+        "droneIncluded": true,
+        "transparentOverlayAvailable": false,
+        "note": "Effet intégré au PNG. Ne pas superposer les anciens orbes."
+      }
+    }
+  ],
+  "revision": "effets-ia-distincts-subtils-drone"
+}

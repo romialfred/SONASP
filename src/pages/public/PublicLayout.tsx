@@ -1,301 +1,253 @@
-import { ChevronDown, Menu, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useCoursOr } from '@/hooks/useCoursOr';
-import { PublicLocaleProvider, usePublicLocale } from './PublicLocaleContext';
-import { PortalAccessButton } from './PortalAccessButton';
-import type { PublicLocale } from './publicContent';
-import { INTERFACE_LANGUAGES } from '@/i18n/interfaceLanguages';
-import './public-site.css';
-import './faso-vitrine.css';
+import { ArrowRight, Globe2, Menu, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { PublicLocaleProvider } from "./PublicLocaleContext";
+import "./public-site.css";
+import "./faso-vitrine.css";
 
 const publicLinks = [
-  { key: 'platform', href: '/#plateforme' },
-  { key: 'mines', href: '/#acteurs' },
-  { key: 'process', href: '/#processus' },
-  { key: 'security', href: '/#securite' },
-] as const;
-
-type PublicSectionKey = (typeof publicLinks)[number]['key'];
+  { label: "La plateforme", id: "plateforme" },
+  { label: "Les portails", id: "portails" },
+  { label: "La traçabilité", id: "tracabilite" },
+  { label: "Impact national", id: "impact" },
+];
 
 function PublicLayoutInner() {
-  const { content, locale, setLocale } = usePublicLocale();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [condensed, setCondensed] = useState(false);
-  const [activeSection, setActiveSection] = useState<PublicSectionKey>('platform');
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const mobileNavRef = useRef<HTMLElement>(null);
-  const { cours, prixGrammeFcfa, derniereMaj, chargement: coursEnChargement } = useCoursOr({
-    actualisationAutomatique: false,
-  });
+  const [activeSection, setActiveSection] = useState("");
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const mobileNav = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setMenuOpen(false);
     if (!location.hash) {
-      setActiveSection('platform');
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      setActiveSection("");
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }
   }, [location.pathname, location.hash, location.key]);
 
   useEffect(() => {
-    let animationFrame = 0;
-    const updateScrollState = () => {
-      const availableScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
-      setCondensed(window.scrollY > 24);
-      if (window.scrollY <= 24) setActiveSection('platform');
-      setScrollProgress(Math.min(100, Math.max(0, (window.scrollY / availableScroll) * 100)));
-    };
-    const onScroll = () => {
-      window.cancelAnimationFrame(animationFrame);
-      animationFrame = window.requestAnimationFrame(updateScrollState);
-    };
-    const onResize = () => {
-      if (window.innerWidth > 920) setMenuOpen(false);
-      updateScrollState();
-    };
-    updateScrollState();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
-    return () => {
-      window.cancelAnimationFrame(animationFrame);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (location.pathname !== '/') return undefined;
-    const hashSection = publicLinks.find(({ href }) => href.endsWith(location.hash));
-    if (hashSection) setActiveSection(hashSection.key);
-
-    const sectionMap = new Map<Element, PublicSectionKey>();
-    publicLinks.forEach(({ key, href }) => {
-      const section = document.getElementById(href.split('#')[1]);
-      if (section) sectionMap.set(section, key);
+    if (
+      location.pathname !== "/" ||
+      typeof IntersectionObserver === "undefined"
+    )
+      return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.find((entry) => entry.isIntersecting);
+        if (visible) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-90px 0px -60% 0px" },
+    );
+    publicLinks.forEach(({ id }) => {
+      const node = document.getElementById(id);
+      if (node) observer.observe(node);
     });
-    if (sectionMap.size === 0 || typeof IntersectionObserver === 'undefined') return undefined;
-
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      const section = visible ? sectionMap.get(visible.target) : undefined;
-      if (section) setActiveSection(section);
-    }, { rootMargin: '-18% 0px -58% 0px', threshold: [0.05, 0.18, 0.35] });
-
-    sectionMap.forEach((_key, section) => observer.observe(section));
     return () => observer.disconnect();
-  }, [location.hash, location.pathname]);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
     const previousOverflow = document.body.style.overflow;
-    const firstLink = mobileNavRef.current?.querySelector<HTMLElement>('a');
-    firstLink?.focus();
-    document.body.style.overflow = 'hidden';
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      setMenuOpen(false);
-      menuButtonRef.current?.focus();
+    document.body.style.overflow = "hidden";
+    mobileNav.current?.querySelector<HTMLElement>("a")?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        menuButton.current?.focus();
+      }
+      if (event.key === "Tab") {
+        const links = Array.from(
+          mobileNav.current?.querySelectorAll<HTMLAnchorElement>("a") ?? [],
+        );
+        const first = links[0],
+          last = links[links.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          menuButton.current?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          menuButton.current?.focus();
+        } else if (document.activeElement === menuButton.current) {
+          event.preventDefault();
+          (event.shiftKey ? last : first)?.focus();
+        }
+      }
     };
-    document.addEventListener('keydown', onKeyDown);
+    const onResize = () => {
+      if (window.innerWidth > 1100) setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
     return () => {
       document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
     };
   }, [menuOpen]);
 
-  const navigationLabel = locale === 'fr' ? 'Navigation principale' : 'Main navigation';
-  const valeurCours = prixGrammeFcfa ?? cours?.price ?? null;
-  const coursFormate = valeurCours === null
-    ? '—'
-    : new Intl.NumberFormat(locale === 'fr' ? 'fr-FR' : 'en-US', {
-      minimumFractionDigits: prixGrammeFcfa === null ? 2 : 0,
-      maximumFractionDigits: prixGrammeFcfa === null ? 2 : 0,
-    }).format(valeurCours);
-  const uniteCours = prixGrammeFcfa === null && cours ? `${cours.currency} / oz` : 'FCFA / g';
-  const variation = cours?.changePercent24h;
-  const heureCours = derniereMaj?.toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  function navigate(id: string) {
+    setActiveSection(id);
+    setMenuOpen(false);
+  }
 
   return (
     <div className="public-site faso-public">
       <a className="public-site__skip-link" href="#contenu-principal">
-        {locale === 'fr' ? 'Aller au contenu' : 'Skip to content'}
+        Aller au contenu
       </a>
-
-      <div className="institutional-bar">
-        <div className="public-shell institutional-bar__inner">
-          <div className="institutional-bar__identity">
-            <img src="/institutional/armoiries-burkina-faso.png" alt="" aria-hidden="true" />
-            <span className="institutional-bar__copy">
-              <strong>BURKINA FASO</strong>
-              <small>PRÉSIDENCE DU FASO</small>
+      <div className="fs-institutional">
+        <div className="public-shell">
+          <div className="fs-institutional__identity">
+            <span className="fs-flag" aria-hidden="true">
+              ★
             </span>
+            <strong>
+              BURKINA FASO <span>/</span> PRÉSIDENCE DU FASO
+            </strong>
           </div>
-          <div className="institutional-bar__ticker" aria-label={locale === 'fr' ? 'Cours indicatif de l’or 24 carats' : 'Indicative 24-carat gold price'}>
-            <svg className="institutional-bar__gold" viewBox="0 0 44 32" aria-hidden="true">
-              <path d="M8 10 24 3l12 7-7 14H3L8 10Z" fill="currentColor" />
-              <path d="m8 10 21 14M24 3l5 21M8 10h28" fill="none" stroke="rgba(255,255,255,.38)" strokeWidth="1.25" />
-            </svg>
-            <strong>{locale === 'fr' ? 'Cours de l’or' : 'Gold price'} <span>• 24K</span></strong>
-            <data value={valeurCours ?? undefined} className={valeurCours === null ? 'is-unavailable' : undefined}>
-              {coursFormate} <small>{uniteCours}</small>
-            </data>
-            {typeof variation === 'number' && (
-              <span className={`institutional-bar__change${variation < 0 ? ' is-negative' : ''}`}>
-                <i aria-hidden="true" />
-                {variation >= 0 ? '+' : ''}{variation.toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })} %
-              </span>
-            )}
-            <small className="institutional-bar__updated">
-              {coursEnChargement
-                ? (locale === 'fr' ? 'Actualisation…' : 'Updating…')
-                : valeurCours !== null && heureCours
-                  ? `${locale === 'fr' ? 'Mis à jour à' : 'Updated at'} ${heureCours}`
-                  : (locale === 'fr' ? 'Cours indisponible' : 'Price unavailable')}
-            </small>
-          </div>
-          <div className="institutional-bar__actions">
-            <a href="/#apropos">{content.navigation.about}</a>
-            <Link to="/assistance">{content.navigation.assistance}</Link>
-            <label className="institutional-bar__language">
-              <span className="sr-only">{locale === 'fr' ? 'Langue' : 'Language'}</span>
-              <select
-                value={locale}
-                onChange={(event) => setLocale(event.target.value as PublicLocale)}
-                aria-label={locale === 'fr' ? 'Choisir la langue' : 'Choose language'}
-              >
-                {INTERFACE_LANGUAGES.map((option) => (
-                  <option key={option.code} value={option.code} disabled={!option.enabled}>
-                    {option.code.toUpperCase()}{option.enabled ? '' : ' — bientôt disponible'}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown aria-hidden="true" />
-            </label>
-          </div>
+          <span className="fs-language" aria-label="Langue : français">
+            <Globe2 aria-hidden="true" /> Français
+          </span>
         </div>
       </div>
-
-      <header className={`public-header${condensed ? ' public-header--condensed' : ''}`}>
-        <div className="public-shell public-header__inner">
-          <Link className="public-brand" to="/" aria-label="Faso SANAMA — Accueil">
-            <img className="fs-brand__arms" src="/institutional/armoiries-burkina-faso.png" alt="Armoiries du Burkina Faso" width="500" height="587" />
-            <span className="fs-brand__divider" aria-hidden="true" />
-            <img src="/login-faso/faso-sanama.png" alt="Faso SANAMA" width="1536" height="1024" />
+      <header className="fs-header">
+        <div className="public-shell fs-header__inner">
+          <Link className="fs-brand" to="/" aria-label="Faso SANAMA — Accueil">
+            <img
+              src="/login-faso/faso-sanama.png"
+              alt="Faso SANAMA"
+              width="1536"
+              height="1024"
+            />
           </Link>
-
-          <nav className="public-nav" aria-label={navigationLabel}>
-            {publicLinks.map(({ key, href }) => (
-              href.startsWith('/#') ? (
-                <a
-                  className={activeSection === key ? 'is-active' : undefined}
-                  href={href}
-                  key={key}
-                  aria-current={location.pathname === '/' && activeSection === key ? 'location' : undefined}
-                  onClick={() => setActiveSection(key)}
-                >
-                  {content.navigation[key]}
-                </a>
-              ) : (
-                <Link to={href} key={key}>{content.navigation[key]}</Link>
-              )
+          <nav className="fs-nav" aria-label="Navigation principale">
+            {publicLinks.map(({ label, id }) => (
+              <a
+                key={id}
+                href={`/#${id}`}
+                aria-current={
+                  location.pathname === "/" && activeSection === id
+                    ? "location"
+                    : undefined
+                }
+                onClick={() => navigate(id)}
+              >
+                {label}
+              </a>
             ))}
           </nav>
-
-          <div className="public-header__actions">
-            <PortalAccessButton label={content.navigation.portal} compact />
+          <div className="fs-header__actions">
+            <Link className="fs-header__assistance" to="/assistance">
+              Assistance
+            </Link>
+            <Link
+              to="/login"
+              className="fs-button fs-button--gold fs-header__access"
+            >
+              <span className="fs-header__full-label">
+                Accéder à mon espace
+              </span>
+              <span className="fs-header__short-label">Mon espace</span>
+              <ArrowRight aria-hidden="true" />
+            </Link>
             <button
-              ref={menuButtonRef}
-              className="public-menu-button"
+              ref={menuButton}
+              className="fs-menu-button"
               type="button"
               aria-expanded={menuOpen}
               aria-controls="navigation-mobile"
-              aria-label={menuOpen
-                ? (locale === 'fr' ? 'Fermer le menu' : 'Close menu')
-                : (locale === 'fr' ? 'Ouvrir le menu' : 'Open menu')}
+              aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
               onClick={() => setMenuOpen((open) => !open)}
             >
-              {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+              {menuOpen ? (
+                <X aria-hidden="true" />
+              ) : (
+                <Menu aria-hidden="true" />
+              )}
             </button>
           </div>
         </div>
-
-        <div className="public-header__scroll-progress" aria-hidden="true">
-          <span style={{ width: `${scrollProgress}%` }} />
-        </div>
-
         {menuOpen && (
           <>
             <button
-              className="public-mobile-overlay"
+              className="fs-menu-overlay"
               type="button"
-              aria-label={locale === 'fr' ? 'Fermer le menu' : 'Close menu'}
+              tabIndex={-1}
+              aria-label="Fermer la navigation"
               onClick={() => {
                 setMenuOpen(false);
-                menuButtonRef.current?.focus();
+                menuButton.current?.focus();
               }}
             />
-            <nav ref={mobileNavRef} id="navigation-mobile" className="public-mobile-nav" aria-label={navigationLabel}>
-              {publicLinks.map(({ key, href }) => (
-                <a
-                  className={activeSection === key ? 'is-active' : undefined}
-                  href={href}
-                  key={key}
-                  aria-current={location.pathname === '/' && activeSection === key ? 'location' : undefined}
-                  onClick={() => setActiveSection(key)}
-                >
-                  {content.navigation[key]}
+            <nav
+              id="navigation-mobile"
+              ref={mobileNav}
+              className="fs-mobile-nav"
+              aria-label="Navigation mobile"
+            >
+              {publicLinks.map(({ label, id }) => (
+                <a key={id} href={`/#${id}`} onClick={() => navigate(id)}>
+                  {label}
+                  <ArrowRight aria-hidden="true" />
                 </a>
               ))}
-              <PortalAccessButton label={content.navigation.portal} />
+              <Link to="/assistance" onClick={() => setMenuOpen(false)}>
+                Assistance
+                <ArrowRight aria-hidden="true" />
+              </Link>
+              <Link to="/login" onClick={() => setMenuOpen(false)}>
+                Accéder à mon espace
+                <ArrowRight aria-hidden="true" />
+              </Link>
             </nav>
           </>
         )}
       </header>
-
       <main id="contenu-principal" tabIndex={-1}>
         <Outlet />
       </main>
-
-      <footer className="public-footer">
-        <div className="public-shell public-footer__grid">
-          <div className="public-footer__brand">
-            <img src="/login-faso/faso-sanama.png" alt="Faso SANAMA" width="1536" height="1024" loading="lazy" />
-            <p>{content.footer.description}</p>
+      <footer className="fs-footer">
+        <div className="public-shell fs-footer__grid">
+          <div className="fs-footer__brand">
+            <Link to="/" aria-label="Faso SANAMA — Accueil">
+              <img
+                src="/login-faso/faso-sanama.png"
+                alt="Faso SANAMA"
+                width="1536"
+                height="1024"
+                loading="lazy"
+              />
+            </Link>
+            <p>
+              Une plateforme de la Présidence du Faso au service de la
+              traçabilité du secteur minier.
+            </p>
           </div>
           <div>
-            <h2>{content.footer.institution}</h2>
-            <a href="/#apropos">{content.navigation.about}</a>
-
-            <Link to="/assistance">{content.navigation.assistance}</Link>
+            <h2>La plateforme</h2>
+            <a href="/#plateforme">À propos</a>
+            <a href="/#tracabilite">Traçabilité</a>
           </div>
           <div>
-            <h2>{content.footer.platform}</h2>
-            <a href="/#plateforme">{content.navigation.platform}</a>
-            <a href="/#processus">{content.navigation.process}</a>
-            <a href="/#acteurs">Les acteurs et leurs portails</a>
-            <Link to="/login">Connexion sécurisée</Link>
+            <h2>Les portails</h2>
+            <a href="/#portails">Présidence du Faso</a>
+            <a href="/#portails">Acteurs du secteur</a>
           </div>
           <div>
-            <h2>{content.footer.legal}</h2>
+            <h2>Informations utiles</h2>
+            <Link to="/assistance">Assistance</Link>
             <Link to="/mentions-legales">Mentions légales</Link>
             <Link to="/confidentialite">Politique de confidentialité</Link>
             <Link to="/conditions-utilisation">Conditions d’utilisation</Link>
-            <Link to="/securite">Sécurité</Link>
           </div>
         </div>
-        <div className="public-shell public-footer__bottom">
-          <span>© {new Date().getFullYear()} Présidence du Burkina Faso. {content.footer.rights}</span>
+        <div className="public-shell fs-footer__bottom">
+          <span>
+            © {new Date().getFullYear()} Présidence du Burkina Faso. Tous
+            droits réservés.
+          </span>
           <span>Conception &amp; support : Quantix Solutions Burkina Faso</span>
         </div>
       </footer>

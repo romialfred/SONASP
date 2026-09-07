@@ -1,0 +1,1412 @@
+{
+  "date": "2026-09-07",
+  "global": {
+    "command": "npx vitest run --maxWorkers=6 --exclude 'backups/**'",
+    "files": 347,
+    "tests": 2541,
+    "passed": 2541,
+    "failed": 0,
+    "note": "Copies de sauvegarde locales exclues ; aucun test applicatif exclu. Exécuté avant le dernier correctif clavier du hero."
+  },
+  "focused": {
+    "command": "npx vitest run --maxWorkers=2 src/pages/public src/components/auth/PortalEntry.integration.test.tsx",
+    "tests": 65,
+    "passed": 65,
+    "failed": 0,
+    "note": "Après le correctif clavier ; inclut 36 scénarios de routage et autorisation."
+  },
+  "initialFailures": [
+    "30 scénarios attendaient le libellé Connexion remplacé par Accéder à mon espace : sélecteur actualisé, assertions de sécurité conservées.",
+    "Une copie locale sous backups chargeait des imports inexistants : dossier de sauvegarde exclu du lancement final."
+  ],
+  "globalFiles": [
+    {
+      "name": "src/constants/goldConstants.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/constants/salesStatuses.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/contexts/AuthContext.fallback.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/contexts/AuthContext.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/data/burkinaRegions.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/data/businessLabels.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/hooks/useArtisanalSiteData.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/hooks/useArtisanUnsavedChanges.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/hooks/useCoursOr.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/accessControl.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/artisanDossier.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/auditLog.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/capabilities.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/cardPdfPreview.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/collectorAccess.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/comptoirAccess.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/dgiFiscalDashboard.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/dgmgRegulatoryDashboard.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/effectiveAccess.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/excelExport.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/freightCustomsAccess.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/localRuntimeConfig.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/mineAccess.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/permissions.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/platformModuleCatalog.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/presentError.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/privateStorage.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/pwaConfig.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/pwaUpdate.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/roleHierarchy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/routeAccessRegistry.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/secureRandom.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/sessionManager.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/sessionPolicy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/siteFormalization.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/supabase.persistence.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/uploadValidation.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/lib/vercelSecurityHeaders.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/i18n/interfaceLanguages.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/i18n/navigationLabels.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/Login.component.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/Login.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/Profile.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/accessGovernanceAuditMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/accessGovernanceMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/accessGovernanceService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/accountActivationService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/achatMineService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/achatsFinancialOverview.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/achatsIndustrielsCalculs.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/achatsIndustrielsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/affiliationService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/alertesContractuellesService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/analysesTeneurService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/approvalService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/artisanalSiteCode.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/artisanalSiteInsights.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/artisanalSiteSave.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/artisanalSiteService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/artisanAnalyticsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/artisanMoyenPaiementService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/artisanPaiementsService.security.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/artisanTerritoryInsights.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/assayCertificateService.performance.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/assayCertificateService.security.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/businessIntelligenceService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/carteNumberService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/carteProfessionnelleService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/certificationDgiService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/coherenceStockService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/comptoirPortalService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/conciliationContext.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/conciliationLogisticsMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/contratsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/customerSaleDecisionService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/dailyProductionService.security.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/dgiFiscalDashboardService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/dgmgRegulatoryDashboardService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/dossierService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/eligibleExportSaleLotsMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/engagedProductionMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/exportLicenseService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/exportSalePhysicalBackingMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/factureVenteService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/freightCustomsBinaryGateway.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/freightCustomsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/freightDocumentService.security.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/freightShipmentService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/fxRateAggregationService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/fxRateReferential.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/internationalPaymentBalance.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/internationalPaymentDetailService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/internationalPaymentEligibility.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/internationalPaymentsListService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/internationalSaleDetailService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/internationalSalesListService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/interPortalWorkflows.integration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/inventoryService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/inventoryTransactionService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/liveGoldPriceService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/managerPortalService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/minePortalService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/mineStockService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/miningCompanyDocumentService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/modulesService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/nationalReserveDashboardService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/notificationsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/organizationService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/paymentDocumentsService.security.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/paymentService.security.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/paymentSummaryMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/productionDocumentService.security.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/productionStatusService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/reglementsAchatService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/reglesFiscalesService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/regulatedWorkflowMigrations.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/relationsSonaspService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/requisitionsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/reserveAllocationService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/reserveValuationActivationMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/rpcClientBinding.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/saleCreationService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/saleCreationWorkspaceMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/saleCreationWorkspaceService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/saleDocumentsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/salesApproverService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/saleSimulationService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/sensitiveUploadGateway.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/sensitiveUploadInventory.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/shippingLegacyScopeReconciliationMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/shippingPhysicalAllocationMigration.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/shippingPreparationService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/shippingStatusService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/stockSonaspService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/tracabiliteVenteContext.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/tracabiliteVenteService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/unifiedStatusService.production.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/unifiedStatusService.shipping.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/userAdministrationDetailsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/userManagementService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/userPermissionsService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/userSessionService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/venteRecuNumberService.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/services/virtualPaymentService.security.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/utils/salesUtils.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/utils/statusFormatter.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/utils/weightConversion.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/activate-account/handler.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/affiliation-payment-proof-upload/handler.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/collection-notifications/handler.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/affiliation-card-render/handler.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/create-user/index.contract.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/create-user/index.runtime.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/delete-user/index.runtime.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/delete-user/recreation.contract.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/envoyer-courriel/gabarit.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/reset-user-password/index.runtime.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/revoke-user-sessions/handler.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/resend-welcome-email/index.contract.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/resend-welcome-email/index.runtime.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/account-deletion-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/account-role-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/admin-account-contract.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/admin-account-edge.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/application-url.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/artisan-document-upload.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/assay-certificate-upload-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/company-document-upload-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/compensated-storage-delete.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/comptoir-document-upload.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/freight-customs-upload-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/mail-action-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/payment-proof-upload-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/secure-upload.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/sensitive-document-delete-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/session-revocation-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/_shared/workflow-document-upload-policy.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/sensitive-upload/handler.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "supabase/functions/sensitive-upload/index.contract.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/admin/SessionsTab.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/artisan/AffiliationDigitalCard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/artisan/AffiliationDossier.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/artisan/AffiliationPaymentPanel.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/artisan/ArtisanDossierSummary.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/artisan/ArtisanMinierForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/CollectorPortalGuard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/LoginInstitutions.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/MandatoryMfaGate.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/MinePortalGuard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/PortalEntry.integration.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/ProfileGuard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/ProtectedRoute.admin.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/ProtectedRoute.capabilities.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/ProtectedRoute.collector.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/ProtectedRoute.comptoir.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/ProtectedRoute.owner.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/ProtectedRoute.portals.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/PublicRoute.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/TwoFactorSetup.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/auth/TwoFactorVerify.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/budget/BudgetMatrixTable.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/customers/BankAccountForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/dashboard/StatusBadge.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/common/ErrorBoundary.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/common/PwaUpdatePrompt.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/dossier/DossierComplet.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/layout/AccordionSidebar.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/layout/DgiGoldSidebarCard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/layout/national-dashboard-layout.styles.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/layout/NationalDashboardChrome.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/layout/NationalDashboardLayout.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/layout/NationalDashboardMine.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/layout/sidebarNavigation.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/freight/ChangeStatusModal.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/production/ProductionStatusWorkflow.security.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/production/ProductionTable.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/reports/DecompositionTree.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/sales/LiveGoldMarketPanel.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/seo/PageMetadata.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/shipping/LegacyShippingPreparationEditRedirect.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/shipping/LogisticsRegister.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/shipping/ShippingLicenseSelect.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/ActionErrorDialog.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/Button.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/ComboBox.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/FieldDescriptions.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/FieldGuidePanel.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/Input.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/Modal.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/PhoneInput.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/ProfileErrorBanner.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/achats/ComptesPaiementsOverviewPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/AccessPortalsPage.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/AccessUserWizardPage.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/ApprovalsDashboard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/GoldShippingWorkflow.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/ModulesManagement.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/ParametersPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/parametrage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/referentielForms.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/referentiels.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/RolesPermissionsPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/UserManagementModern.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/userPermissions.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/usersAdmin.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/admin/UsersListPage.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/analytics/BusinessIntelligenceWorkspace.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisanal-sites/ArtisanalSiteProduction.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/AffiliationsCartes.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/ArtisanMinierDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/ArtisanMinierListe.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/CarteExpirations.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/CarteSuivi.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/CarteValidation.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/InfractionDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/InfractionForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/PaiementDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/PaiementForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/PaiementsHistorique.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/PaiementsVentesDashboard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/rapports.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/VenteOrDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/VenteOrForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/artisan-minier/VentesOr.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/auth/ActivateAccount.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/auth/UpdatePassword.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/comptoir/ComptoirSonaspSalesPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/comptoir/SonaspComptoirSalesInboxPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/conciliation/ConciliationDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/conciliation/conciliationImpact.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/conciliation/ConciliationsPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/collector/CollectionSalesPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/collector/collectorActivity.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/collector/CollectorDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/collector/CollectorForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/collector/CollectorPortalPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/collector/ComptoirForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/contrats/contratForm.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/dashboards/GlobalDashboardEnhanced.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/dashboards/ProductionDashboardModern.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/dashboards/roleDashboards.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/fiscalite/ReglesFiscalesPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/freight/FreightCustomsCreate.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/freight/FreightShipmentCreate.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/AddInventoryEntry.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/InventoryManagement.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/inventoryOverviewData.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/NationalReserveWorkspace.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/reserve-allocation-form.styles.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/ReserveAllocationForm.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/reserveAllocationPresentation.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/silverInventoryData.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/inventory/StockHistoryDialog.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/manager/ManagerPortalPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/internationalPaymentDetail.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/InternationalPaymentDetailView.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/InternationalPaymentFormView.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/internationalPaymentsList.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/InternationalPaymentsView.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/PaymentCreate.security.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/PaymentDetailsPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/PaymentsPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/payments/VirtualPaymentsPage.security.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/portals/DgiFiscalDashboard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/portals/DgiFiscalPaymentsPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/portals/DgmgRegulatoryDashboard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/portals/DgmgReserveValidationPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/portals/InstitutionalPortalPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/mine/mineDashboardData.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/mine/MinePortalPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/prices/GoldPricesPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/AchatsMines.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/BudgetManagementPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/DailyProductionPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/ExportLicenseDetails.mine.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/ExportLicenseForm.mine.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/ExportLicenseRequestsInboxPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/ExportLicensesPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/ProductionDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/productionDetailsData.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/ProductionInSafe.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/production/productionInSafeData.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/public/PortalAccessButton.styles.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/public/PublicComponents.performance.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/public/PublicHomePage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/public/PublicLayout.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/public/PublicLocaleContext.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/public/publicSupport.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/public/VerifyAffiliation.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/requisitions/RequisitionDetails.mine.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/sales/InternationalSaleDetailView.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/sales/InternationalSaleSimulator.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/sales/internationalSalesList.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/sales/SaleCreate.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/sales/SaleDetails.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/sales/SalesDashboard.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/shipping/ShippingPreparationEdit.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/shipping/ShippingPreparationNew.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/shipping/shippingPreparationValidation.test.ts",
+      "status": "passed"
+    },
+    {
+      "name": "src/pages/stakeholders/ApprobateursPage.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/sn/DataTable.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/sn/PageHeader.test.tsx",
+      "status": "passed"
+    },
+    {
+      "name": "src/components/ui/sn/Tabs.test.tsx",
+      "status": "passed"
+    }
+  ]
+}

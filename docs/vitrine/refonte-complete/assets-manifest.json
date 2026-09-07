@@ -1,0 +1,74 @@
+[
+  {
+    "path": "public/vitrine/origine-or.png",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "bytes": 1805040,
+    "sha256": "59b0d0dceed4f9b95f2b13e9f228eb086c30f2a53c946c7b2baea88395e65032"
+  },
+  {
+    "path": "public/vitrine/origine-or.webp",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "bytes": 135820,
+    "sha256": "3e85b3b36980c65295413958afe5747617101b904964ceb76eb071b0103d0d43"
+  },
+  {
+    "path": "public/vitrine/ia/hero-01-recouvrement-taxes-ia.png",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "bytes": 1799128,
+    "sha256": "51ff0a5ad452a4192497fab90cdd2aa77a4af93334673e65be48e0890d41e038"
+  },
+  {
+    "path": "public/vitrine/ia/hero-01-recouvrement-taxes-ia.webp",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "bytes": 143756,
+    "sha256": "ae61ba11e93bf7dcbfc6584b8007645ae75210e7d635509e98e8abaf046ff314"
+  },
+  {
+    "path": "public/vitrine/ia/hero-02-controle-contrebande-ia.png",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "bytes": 1906715,
+    "sha256": "b179ffd73b202630c82f6b8d5aad58c48a20c1e7fe08545602a8ac5be4674d97"
+  },
+  {
+    "path": "public/vitrine/ia/hero-02-controle-contrebande-ia.webp",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "bytes": 168882,
+    "sha256": "77db2ea76cfc9f18c131da7434d090b92e536d8f78c7b629c0323cd21866c26d"
+  },
+  {
+    "path": "public/vitrine/ia/hero-03-tracabilite-origine-ia.png",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "bytes": 1990344,
+    "sha256": "6ce840ce459d12c5b9f4dff9eefe267186366af333e910d06729e20b8cedeb2f"
+  },
+  {
+    "path": "public/vitrine/ia/hero-03-tracabilite-origine-ia.webp",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "bytes": 206372,
+    "sha256": "60cdb864bd5575a350c5e857e591ba6d9ea61342be9b9aed6d70ede2efc6a134"
+  }
+]

@@ -189,7 +189,7 @@ export default defineConfig(({ mode }) => {
         globPatterns: [
           'build-version.json',
           'assets/Public*.js',
-          'assets/public-*.css',
+          'assets/Public*.css',
           '**/*.{ico,woff,woff2}',
         ],
         // Le shell authentifié et son index ne sont jamais servis depuis le

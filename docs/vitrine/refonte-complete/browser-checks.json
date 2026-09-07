@@ -1,0 +1,474 @@
+{
+  "date": "2026-09-07",
+  "checks": [
+    {
+      "check": "mobile-anchor",
+      "documentWidth": 375,
+      "header": 79,
+      "menuClosed": true,
+      "target": 93.9375,
+      "width": 390
+    },
+    {
+      "check": "portal",
+      "link": "/login",
+      "name": "Présidence du Faso",
+      "scrollY": 2111.5,
+      "title": "Une lecture claire pour décider."
+    },
+    {
+      "check": "portal",
+      "link": "/login",
+      "name": "Ministère des Mines",
+      "scrollY": 2111.5,
+      "title": "Relier les registres à la réalité des opérations."
+    },
+    {
+      "check": "portal",
+      "link": "/login",
+      "name": "Finances & DGI",
+      "scrollY": 2111.5,
+      "title": "Rapprocher l’activité minière et les recettes."
+    },
+    {
+      "check": "portal",
+      "link": "/login",
+      "name": "SONASP",
+      "scrollY": 2111.5,
+      "title": "Acheter, consolider et valoriser l’or du Burkina."
+    },
+    {
+      "check": "portal",
+      "link": "/login",
+      "name": "Sociétés minières",
+      "scrollY": 2111.5,
+      "title": "De la production à l’expédition, un dossier continu."
+    },
+    {
+      "check": "portal",
+      "link": "/login",
+      "name": "Comptoirs d’achat",
+      "scrollY": 2111.5,
+      "title": "Structurer les achats et suivre chaque lot."
+    },
+    {
+      "check": "portal",
+      "link": "/login",
+      "name": "Collecteurs",
+      "scrollY": 2111.5,
+      "title": "Documenter la transaction dès la collecte."
+    },
+    {
+      "check": "trace",
+      "name": "01Production",
+      "points": [
+        "Site d’extraction",
+        "Acteurs concernés",
+        "Informations de production"
+      ],
+      "scrollY": 3208,
+      "title": "Identifier l’origine"
+    },
+    {
+      "check": "trace",
+      "name": "02Collecte",
+      "points": [
+        "Collecteur concerné",
+        "Origine du lot",
+        "Quantités déclarées"
+      ],
+      "scrollY": 3208,
+      "title": "Documenter la collecte"
+    },
+    {
+      "check": "trace",
+      "name": "03Contrôle",
+      "points": [
+        "Pièces disponibles",
+        "Mesures et analyses",
+        "Écarts constatés"
+      ],
+      "scrollY": 3290,
+      "title": "Vérifier les informations du lot"
+    },
+    {
+      "check": "trace",
+      "name": "04Achat & vente",
+      "points": [
+        "Parties concernées",
+        "Lot échangé",
+        "Documents associés"
+      ],
+      "scrollY": 3290,
+      "title": "Relier les transactions"
+    },
+    {
+      "check": "trace",
+      "name": "05Stockage & lots",
+      "points": [
+        "Identifiant du lot",
+        "Emplacement autorisé",
+        "Mouvements enregistrés"
+      ],
+      "scrollY": 3372,
+      "title": "Suivre les lots"
+    },
+    {
+      "check": "trace",
+      "name": "06Expédition",
+      "points": [
+        "Lot expédié",
+        "Destination",
+        "Pièces de suivi"
+      ],
+      "scrollY": 3372,
+      "title": "Documenter l’expédition"
+    },
+    {
+      "check": "trace",
+      "name": "07Raffinage",
+      "points": [
+        "Résultats disponibles",
+        "Quantités et teneurs",
+        "Écarts à examiner"
+      ],
+      "scrollY": 3454,
+      "title": "Rapprocher les résultats"
+    },
+    {
+      "check": "trace",
+      "name": "08Fiscalité",
+      "points": [
+        "Taxes applicables",
+        "Montants déclarés",
+        "Règlements suivis"
+      ],
+      "scrollY": 3454,
+      "title": "Relier les obligations et les règlements"
+    },
+    {
+      "check": "responsive",
+      "clientWidth": 753,
+      "documentWidth": 753,
+      "heading": "34px",
+      "height": 1024,
+      "sections": [
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 753
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 753
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "plateforme",
+          "width": 753
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "portails",
+          "width": 753
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "tracabilite",
+          "width": 753
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "impact",
+          "width": 753
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "securite",
+          "width": 753
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 753
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 753
+        }
+      ],
+      "width": 768
+    },
+    {
+      "check": "responsive",
+      "clientWidth": 1009,
+      "documentWidth": 1009,
+      "height": 900,
+      "sections": [
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 1009
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 1009
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "plateforme",
+          "width": 1009
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "portails",
+          "width": 1009
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "tracabilite",
+          "width": 1009
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "impact",
+          "width": 1009
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "securite",
+          "width": 1009
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 1009
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 1009
+        }
+      ],
+      "width": 1024
+    },
+    {
+      "check": "responsive",
+      "clientWidth": 305,
+      "documentWidth": 305,
+      "height": 800,
+      "sections": [
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 305
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 305
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "plateforme",
+          "width": 305
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "portails",
+          "width": 305
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "tracabilite",
+          "width": 305
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "impact",
+          "width": 305
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "securite",
+          "width": 305
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 305
+        },
+        {
+          "font": "\"Public Sans\", Arial, sans-serif",
+          "id": "",
+          "width": 305
+        }
+      ],
+      "targets": [
+        {
+          "height": 44,
+          "label": "Accéder à mon espaceMon espace"
+        },
+        {
+          "height": 44,
+          "label": "Ouvrir le menu"
+        },
+        {
+          "height": 48,
+          "label": "Découvrir la plateforme"
+        },
+        {
+          "height": 48,
+          "label": "01 Recettes fiscales"
+        },
+        {
+          "height": 48,
+          "label": "02 Contrôle des flux"
+        },
+        {
+          "height": 48,
+          "label": "03 Traçabilité"
+        },
+        {
+          "height": 44,
+          "label": "Diapositive précédente"
+        },
+        {
+          "height": 44,
+          "label": "Mettre le défilement en pause"
+        },
+        {
+          "height": 44,
+          "label": "Diapositive suivante"
+        },
+        {
+          "height": 64.796875,
+          "label": "Sources, dates et périmètres des indicateurs"
+        },
+        {
+          "height": 52,
+          "label": "Présidence du Faso"
+        },
+        {
+          "height": 52,
+          "label": "Ministère des Mines"
+        },
+        {
+          "height": 52,
+          "label": "Finances & DGI"
+        },
+        {
+          "height": 52,
+          "label": "SONASP"
+        },
+        {
+          "height": 52,
+          "label": "Sociétés minières"
+        },
+        {
+          "height": 52,
+          "label": "Comptoirs d’achat"
+        },
+        {
+          "height": 52,
+          "label": "Collecteurs"
+        },
+        {
+          "height": 72,
+          "label": "01Production"
+        },
+        {
+          "height": 72,
+          "label": "02Collecte"
+        },
+        {
+          "height": 72,
+          "label": "03Contrôle"
+        },
+        {
+          "height": 72,
+          "label": "04Achat & vente"
+        },
+        {
+          "height": 72,
+          "label": "05Stockage & lots"
+        },
+        {
+          "height": 72,
+          "label": "06Expédition"
+        },
+        {
+          "height": 72,
+          "label": "07Raffinage"
+        },
+        {
+          "height": 72,
+          "label": "08Fiscalité"
+        },
+        {
+          "height": 48,
+          "label": "Accéder à mon espace"
+        }
+      ],
+      "width": 320
+    },
+    {
+      "check": "hero-second",
+      "height": 658.671875,
+      "src": "http://127.0.0.1:5181/vitrine/ia/hero-02-controle-contrebande-ia.webp",
+      "title": "Préserver l’or du Burkina. Mieux contrôler ses circuits."
+    },
+    {
+      "check": "sources",
+      "definitions": 5,
+      "open": true,
+      "text": "Aucune source nationale validée n’est disponible à ce jour pour ces cinq indicateurs. Les dossiers enregistrés sur FASO SANAMA ne constituent pas un recensement national."
+    },
+    {
+      "check": "route",
+      "path": "/securite",
+      "title": "Sécurité de la plateforme"
+    },
+    {
+      "check": "route",
+      "path": "/mentions-legales",
+      "title": "Mentions légales"
+    },
+    {
+      "check": "route",
+      "path": "/confidentialite",
+      "title": "Politique de confidentialité"
+    },
+    {
+      "check": "route",
+      "path": "/conditions-utilisation",
+      "title": "Conditions d’utilisation"
+    },
+    {
+      "check": "route",
+      "path": "/assistance",
+      "title": "Assistance aux utilisateurs de la plateforme"
+    },
+    {
+      "check": "login-access",
+      "form": null,
+      "path": "/login",
+      "publicLayoutAbsent": true
+    },
+    {
+      "check": "compiled-playback-keyboard-enter",
+      "font": "\"Public Sans\", Arial, sans-serif",
+      "label": "Reprendre le défilement",
+      "loadedFont": true,
+      "priority": "high"
+    }
+  ],
+  "compiledConsole": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "screenshotMethod": "Native viewport screenshot, with height fitted to footer; no stitching"
+}

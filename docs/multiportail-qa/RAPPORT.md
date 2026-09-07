@@ -93,3 +93,13 @@ Le clic d’export a été effectué, mais la réception du téléchargement par
 Le zoom natif à 200 % n’a pas été confirmé par l’outil ; les six dimensions responsive ont été contrôlées séparément. Ne pas assimiler ces mesures à un test de zoom natif.
 
 Ces réserves empêchent d’affirmer une validation exhaustive de tous les workflows métier en production. Elles n’impliquent aucun changement de leurs données ni de leurs permissions.
+
+## Publication et contrôles distants
+
+L’implémentation est enregistrée dans le commit **8e801ed053e6** sur **SONASP_2026**. La compilation locale `npm run build:release` est réussie ; le point d’entrée local est http://127.0.0.1:5180/ (HTTP 200, police auto-hébergée HTTP 200).
+
+Les [contrôles GitHub du commit applicatif](https://github.com/romialfred/SONASP/actions/runs/34082469694) sont tous réussis : lint et TypeScript, **2 562 tests dans 348 fichiers**, compilation de production et audit des dépendances.
+
+Vercel a publié le commit applicatif sur https://sonasp.data-univers.com/ ; `/build-version.json` a renvoyé `8e801ed053e6-mtqqdslx`. Les mises à jour ultérieures de ce dossier de preuves ne changent pas les fichiers applicatifs.
+
+Le nouvel onglet de vérification en ligne affiche la connexion et ne rapporte pas d’erreur JavaScript. L’ancien onglet authentifié n’est plus contrôlable par l’outil. Une connexion de l’utilisateur a donc été demandée pour terminer le contrôle authentifié réel ; ce contrôle et la navigation vers un dossier métier réel ne sont **pas déclarés réussis**.

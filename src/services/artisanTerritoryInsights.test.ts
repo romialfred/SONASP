@@ -9,6 +9,8 @@ import {
   buildSiteRows,
   buildTypeShares,
   latestCardByArtisan,
+  artisansOfSite,
+  siteIdOfArtisan,
 } from './artisanTerritoryInsights';
 
 const artisan = (id: string, overrides: Partial<ArtisanMinier> = {}): ArtisanMinier => ({
@@ -19,6 +21,7 @@ const artisan = (id: string, overrides: Partial<ArtisanMinier> = {}): ArtisanMin
   telephone: '+226 70 00 00 00',
   region: 'Nord',
   commune: 'Kalsaka',
+  artisanal_site_id: 'site-kalsaka',
   created_at: '2026-03-04T10:00:00.000Z',
   ...overrides,
 });
@@ -40,8 +43,8 @@ const card = (
 const artisans = [
   artisan('a1'),
   artisan('a2'),
-  artisan('a3', { commune: 'Poura', region: 'Boucle du Mouhoun', type_artisan: 'collecteur' }),
-  artisan('a4', { commune: 'Gaoua', region: 'Sud-Ouest', type_artisan: 'fournisseur' }),
+  artisan('a3', { commune: 'Poura', artisanal_site_id: 'site-poura', region: 'Boucle du Mouhoun', type_artisan: 'collecteur' }),
+  artisan('a4', { commune: 'Gaoua', artisanal_site_id: 'site-gaoua', region: 'Sud-Ouest', type_artisan: 'fournisseur' }),
 ];
 
 const cards = [
@@ -69,7 +72,7 @@ describe('artisanTerritoryInsights', () => {
     expect(stats.find((stat) => stat.region === 'Sahel')?.sites).toBeUndefined();
   });
 
-  it('rattache les artisans aux sites par la localité et note l’état du site', () => {
+  it('rattache les artisans aux sites par leur identifiant et note l’état du site', () => {
     const rows = buildSiteRows(DEMO_ARTISANAL_SITES, artisans, latestCardByArtisan(cards));
     const kalsaka = rows.find((row) => row.site.id === 'site-kalsaka');
     const gorom = rows.find((row) => row.site.id === 'site-gorom');
@@ -81,6 +84,33 @@ describe('artisanTerritoryInsights', () => {
     expect(kalsaka?.health).toBe('watch');
     expect(gaoua?.health).toBe('watch');
     expect(gorom?.health).toBe('control');
+  });
+
+  it('ne rattache pas les homonymes, les anciennes fiches sans site ni les artisans d’un autre site', () => {
+    const site = DEMO_ARTISANAL_SITES[0];
+    const records = [
+      artisan('direct', { commune: 'Autre commune' }),
+      artisan('other-site', { artisanal_site_id: 'other-site' }),
+      artisan('legacy', { artisanal_site_id: undefined }),
+      artisan('unassigned', { artisanal_site_id: null }),
+    ];
+    expect(artisansOfSite(site, records).map((record) => record.id)).toEqual(['direct']);
+  });
+
+  it('utilise le lien exploitant des aides et conserve cette jointure après filtrage par type', () => {
+    const parent = artisan('parent');
+    const aide = artisan('aide', { type_artisan: 'aide_exploitant', exploitant_id: parent.id, artisanal_site_id: null, commune: 'Autre commune' });
+    const index = new Map([parent, aide].map((record) => [record.id, record]));
+    expect(siteIdOfArtisan(aide, index)).toBe('site-kalsaka');
+    const rows = buildSiteRows([DEMO_ARTISANAL_SITES[0]], [aide], new Map(), index);
+    expect(rows[0].artisans).toBe(1);
+  });
+
+  it('laisse le site inconnu si l’exploitant est absent du périmètre ou n’est pas un exploitant', () => {
+    const aide = artisan('aide', { type_artisan: 'aide_exploitant', exploitant_id: 'parent', artisanal_site_id: null });
+    expect(siteIdOfArtisan(aide, new Map())).toBeNull();
+    expect(siteIdOfArtisan(aide, new Map([['parent', artisan('parent', { type_artisan: 'collecteur' })]]))).toBeNull();
+    expect(siteIdOfArtisan(aide, new Map([['parent', artisan('parent', { artisanal_site_id: null })]]))).toBeNull();
   });
 
   it('calcule la répartition par type d’artisan', () => {

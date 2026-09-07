@@ -42,14 +42,23 @@ const normalize = (value?: string | null) =>
     .trim()
     .toLocaleLowerCase('fr');
 
-/**
- * Rattache un artisan à un site : la commune de l'artisan doit correspondre à la
- * localité du site. C'est la seule clé de jointure disponible dans le modèle actuel
- * (`snp_artisans_miniers` ne porte pas encore de `site_id`).
- */
-export function artisansOfSite(site: ArtisanalSite, artisans: ArtisanMinier[]): ArtisanMinier[] {
-  const locality = normalize(site.locality);
-  return artisans.filter((artisan) => normalize(artisan.commune) === locality);
+/** L'aide exploite le site de son exploitant ; aucune commune ne vaut rattachement. */
+export function siteIdOfArtisan(
+  artisan: ArtisanMinier,
+  artisansById: ReadonlyMap<string, ArtisanMinier>,
+): string | null {
+  if (artisan.type_artisan !== 'aide_exploitant') return artisan.artisanal_site_id || null;
+  const exploitant = artisan.exploitant_id ? artisansById.get(artisan.exploitant_id) : undefined;
+  return exploitant?.type_artisan === 'exploitant' ? exploitant.artisanal_site_id || null : null;
+}
+
+/** Rattachement explicite, limité aux relations présentes dans le périmètre de lecture. */
+export function artisansOfSite(
+  site: ArtisanalSite,
+  artisans: ArtisanMinier[],
+  artisansById: ReadonlyMap<string, ArtisanMinier> = new Map(artisans.map((artisan) => [artisan.id, artisan])),
+): ArtisanMinier[] {
+  return artisans.filter((artisan) => siteIdOfArtisan(artisan, artisansById) === site.id);
 }
 
 /**
@@ -114,11 +123,12 @@ export function buildRegionStats(artisans: ArtisanMinier[], sites: ArtisanalSite
 export function buildSiteRows(
   sites: ArtisanalSite[],
   artisans: ArtisanMinier[],
-  cards: Map<string, CarteProfessionnelle>
+  cards: Map<string, CarteProfessionnelle>,
+  artisansById: ReadonlyMap<string, ArtisanMinier> = new Map(artisans.map((artisan) => [artisan.id, artisan])),
 ): ArtisanSiteRow[] {
   return sites
     .map((site) => {
-      const attached = artisansOfSite(site, artisans);
+      const attached = artisansOfSite(site, artisans, artisansById);
       const validCards = attached.filter((artisan) => isValidCard(cards.get(artisan.id))).length;
       const pending = attached.filter((artisan) => cards.get(artisan.id)?.statut === 'en_cours').length;
       const validRatio = attached.length > 0 ? validCards / attached.length : 1;

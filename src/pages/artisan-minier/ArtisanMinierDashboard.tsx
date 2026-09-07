@@ -28,6 +28,7 @@ import {
   YAxis,
 } from '@/lib/recharts';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { BurkinaTerritoryMap } from '@/components/artisanal-sites/BurkinaTerritoryMap';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { carteProfessionnelleService, type CarteProfessionnelle } from '@/services/carteProfessionnelleService';
@@ -42,6 +43,7 @@ import {
   buildTypeShares,
   isValidCard,
   latestCardByArtisan,
+  siteIdOfArtisan,
 } from '@/services/artisanTerritoryInsights';
 import type { ArtisanalSite } from '@/types/artisanalSite';
 import './artisan-minier-dashboard.css';
@@ -66,12 +68,37 @@ function formatUpdatedAt(value?: string) {
 }
 
 export default function ArtisanMinierDashboard() {
+  const { user } = useAuth();
+  // Un changement de périmètre ne doit jamais réutiliser les données de la session précédente.
+  const scopeKey = JSON.stringify([
+    user?.id,
+    user?.organization_id,
+    user?.mining_company_id,
+    user?.access_role_id,
+    user?.role,
+    user && 'account_type' in user ? user.account_type : undefined,
+    user?.organization_type,
+    user?.is_active,
+    [...(user?.capabilities || [])].sort(),
+    [...(user?.module_codes || [])].sort(),
+    [...(user?.site_ids || [])].sort(),
+    [...(user?.responsibilities || [])].sort(),
+    [...(user?.module_domains || [])].sort(),
+    user?.access_portal_id,
+    user?.access_portal_code,
+    user?.actor_category_code,
+  ]);
+  return <NationalDashboardLayout><ArtisanMinierDashboardContent key={scopeKey} /></NationalDashboardLayout>;
+}
+
+function ArtisanMinierDashboardContent() {
   const navigate = useNavigate();
   const [artisans, setArtisans] = useState<ArtisanMinier[]>([]);
   const [cards, setCards] = useState<CarteProfessionnelle[]>([]);
   const [sites, setSites] = useState<ArtisanalSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   const [region, setRegion] = useState('all');
   const [province, setProvince] = useState('all');
@@ -97,27 +124,30 @@ export default function ArtisanMinierDashboard() {
   useEffect(() => {
     let mounted = true;
     Promise.all([
-      artisanMinierService.getAll().catch(() => [] as ArtisanMinier[]),
-      carteProfessionnelleService.getAllCartes().catch(() => [] as CarteProfessionnelle[]),
-      artisanalSiteService.listSites().catch(() => [] as ArtisanalSite[]),
+      artisanMinierService.getAll(),
+      carteProfessionnelleService.getAllCartes(),
+      artisanalSiteService.listSites(),
     ])
       .then(([artisanData, cardData, siteData]) => {
         if (!mounted) return;
-        setArtisans((artisanData || []) as ArtisanMinier[]);
-        setCards((cardData || []) as CarteProfessionnelle[]);
-        setSites(siteData || []);
+        // Seules des listes effectivement reçues permettent d'afficher des zéros.
+        if (![artisanData, cardData, siteData].every(Array.isArray)) throw new Error('Incomplete dashboard data');
+        setArtisans(artisanData as ArtisanMinier[]);
+        setCards(cardData as CarteProfessionnelle[]);
+        setSites(siteData);
       })
-      .catch((reason: unknown) => {
+      .catch(() => {
         if (!mounted) return;
-        setError(reason instanceof Error ? reason.message : 'Impossible de charger les données des artisans.');
+        setError('Le tableau de bord n’a pas pu être chargé. Les indicateurs sont indisponibles.');
       })
       .finally(() => mounted && setLoading(false));
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [attempt]);
 
   const cardsByArtisan = useMemo(() => latestCardByArtisan(cards), [cards]);
+  const artisansById = useMemo(() => new Map(artisans.map((artisan) => [artisan.id, artisan])), [artisans]);
 
   const siteOptions = useMemo(
     () => [...sites].sort((a, b) => a.name.localeCompare(b.name, 'fr')),
@@ -146,7 +176,7 @@ export default function ArtisanMinierDashboard() {
   );
 
   const filteredArtisans = useMemo(() => {
-    const localities = new Set(filteredSites.map((site) => site.locality.toLocaleLowerCase('fr')));
+    const siteIds = new Set(filteredSites.map((site) => site.id));
 
     return artisans.filter((artisan) => {
       const card = cardsByArtisan.get(artisan.id);
@@ -157,10 +187,10 @@ export default function ArtisanMinierDashboard() {
         (status === 'valide' ? isValidCard(card) : card?.statut === status);
       const matchesSite =
         (province === 'all' && siteId === 'all') ||
-        localities.has((artisan.commune || '').toLocaleLowerCase('fr'));
+        siteIds.has(siteIdOfArtisan(artisan, artisansById) || '');
       return matchesRegion && matchesType && matchesStatus && matchesSite;
     });
-  }, [artisans, cardsByArtisan, filteredSites, province, region, siteId, status, type]);
+  }, [artisans, artisansById, cardsByArtisan, filteredSites, province, region, siteId, status, type]);
 
   const filteredCards = useMemo(() => {
     const ids = new Set(filteredArtisans.map((artisan) => artisan.id));
@@ -172,8 +202,8 @@ export default function ArtisanMinierDashboard() {
     [filteredArtisans, filteredSites]
   );
   const siteRows = useMemo(
-    () => buildSiteRows(filteredSites, filteredArtisans, cardsByArtisan),
-    [cardsByArtisan, filteredArtisans, filteredSites]
+    () => buildSiteRows(filteredSites, filteredArtisans, cardsByArtisan, artisansById),
+    [artisansById, cardsByArtisan, filteredArtisans, filteredSites]
   );
   const typeShares = useMemo(() => buildTypeShares(filteredArtisans), [filteredArtisans]);
   const administrative = useMemo(() => buildAdministrativeState(filteredCards), [filteredCards]);
@@ -235,7 +265,6 @@ export default function ArtisanMinierDashboard() {
   };
 
   return (
-    <NationalDashboardLayout>
       <div className="artisans-dashboard">
         <header className="artisans-dashboard__intro">
           <div>
@@ -248,6 +277,7 @@ export default function ArtisanMinierDashboard() {
               className={`artisans-button${filtresActifs > 0 ? ' is-filtered' : ''}`}
               onClick={() => setFiltresOuverts(true)}
               aria-expanded={filtresOuverts}
+              disabled={loading || Boolean(error)}
             >
               <SlidersHorizontal aria-hidden="true" /> Filtres
               {filtresActifs > 0 && <em>{filtresActifs}</em>}
@@ -305,7 +335,7 @@ export default function ArtisanMinierDashboard() {
                   <span>Site minier</span>
                   <select value={siteId} onChange={(event) => setSiteId(event.target.value)}>
                     <option value="all">Tous</option>
-                    {siteOptions.map((item) => <option key={item.id} value={item.id}>{item.locality}</option>)}
+                    {siteOptions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                   </select>
                 </label>
 
@@ -345,9 +375,7 @@ export default function ArtisanMinierDashboard() {
           </div>
         )}
 
-        {error && <div className="artisans-dashboard__error" role="alert">{error}</div>}
-
-        <section className="artisans-dashboard__metrics" aria-label="Indicateurs des artisans miniers">
+        <section className="artisans-dashboard__metrics" aria-label="Indicateurs des artisans miniers" aria-busy={loading}>
           {[
             { key: 'registered', label: 'Artisans enregistrés', value: integer.format(metrics.registered), icon: Users, tone: 'green' },
             { key: 'regions', label: 'Régions couvertes', value: `${metrics.regionsCovered} / ${TOTAL_REGIONS}`, icon: MapIcon, tone: 'blue' },
@@ -360,12 +388,28 @@ export default function ArtisanMinierDashboard() {
               <span className="artisans-metric__icon"><Icon aria-hidden="true" /></span>
               <div>
                 <h3>{label}</h3>
-                <strong>{value}</strong>
+                <strong>{loading || error ? '—' : value}</strong>
               </div>
             </article>
           ))}
         </section>
 
+        {loading || error ? (
+          <section className="artisans-panel" style={{ marginTop: 18, padding: 24, minHeight: 440 }} aria-label="Chargement du tableau de bord">
+            {loading ? <p role="status">Chargement des artisans, des cartes et des sites…</p> : (
+              <div className="artisans-dashboard__error" role="alert">
+                <p>{error}</p>
+                <button type="button" className="artisans-button" onClick={() => {
+                  setLoading(true);
+                  setError(null);
+                  setAttempt((value) => value + 1);
+                }}>
+                  <RotateCcw aria-hidden="true" /> Réessayer
+                </button>
+              </div>
+            )}
+          </section>
+        ) : <>
         <section className="artisans-dashboard__territory">
           <article className="artisans-panel">
             <div className="artisans-panel__header">
@@ -445,7 +489,7 @@ export default function ArtisanMinierDashboard() {
                   <tr key={row.site.id}>
                     <td>
                       <span className="artisans-table__site">
-                        <MapPin aria-hidden="true" /> {row.site.locality}
+                        <MapPin aria-hidden="true" /> {row.site.name}
                       </span>
                     </td>
                     <td>{row.site.region}</td>
@@ -459,10 +503,9 @@ export default function ArtisanMinierDashboard() {
                 ))}
               </tbody>
             </table>
-            {!loading && siteRows.length === 0 && (
+            {siteRows.length === 0 && (
               <p className="artisans-table__empty">Aucun site ne correspond aux filtres sélectionnés.</p>
             )}
-            {loading && <p className="artisans-table__empty">Chargement des données…</p>}
           </div>
         </section>
 
@@ -532,7 +575,7 @@ export default function ArtisanMinierDashboard() {
             </div>
           </article>
         </section>
+        </>}
       </div>
-    </NationalDashboardLayout>
   );
 }

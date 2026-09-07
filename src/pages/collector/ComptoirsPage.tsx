@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2,
   FileCheck2,
@@ -26,31 +26,51 @@ import {
   type ComptoirRecord,
 } from "@/services/comptoirService";
 import "./comptoir.css";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ROOT = "/artisan-minier/comptoirs";
 export default function ComptoirsPage() {
+  const { user } = useAuth();
+  const contextKey = JSON.stringify([
+    user?.id, user?.organization_id, user?.mining_company_id,
+    user?.access_role_id, user?.role, user?.organization_type, user?.is_active,
+    user?.access_portal_id, user?.access_portal_code, user?.actor_category_code,
+    user && 'account_type' in user ? user.account_type : undefined,
+    [...(user?.capabilities || [])].sort(), [...(user?.module_codes || [])].sort(),
+    [...(user?.site_ids || [])].sort(), [...(user?.responsibilities || [])].sort(),
+    [...(user?.module_domains || [])].sort(),
+  ]);
+  return <ComptoirsPageContent key={contextKey} />;
+}
+
+function ComptoirsPageContent() {
   const [rows, setRows] = useState<ComptoirRecord[]>([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const readRequest = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
   const load = useCallback(async () => {
+    const request = ++readRequest.current;
     setLoading(true);
     setError("");
     try {
-      setRows(await comptoirService.list());
+      const result = await comptoirService.list();
+      if (request === readRequest.current) setRows(result);
     } catch (e) {
-      setError(
-        messageErreurUtilisateur(e, "Impossible de charger les comptoirs."),
-      );
+      if (request === readRequest.current) {
+        setRows([]);
+        setError(messageErreurUtilisateur(e, "Impossible de charger les comptoirs."));
+      }
     } finally {
-      setLoading(false);
+      if (request === readRequest.current) setLoading(false);
     }
   }, []);
   useEffect(() => {
     void load();
+    return () => { readRequest.current += 1; };
   }, [load, location.key]);
   const complete = (row: ComptoirRecord) =>
     comptoirCompletion(
@@ -183,11 +203,14 @@ export default function ComptoirsPage() {
           }
         />
         {error && (
-          <div role="alert">
-            <Note tone="danger">{error}</Note>
-          </div>
+            <Note tone="danger">
+              <span>{error} </span>
+              <button className="sn-btn sn-btn--secondary" type="button" onClick={() => void load()}>
+                Réessayer
+              </button>
+            </Note>
         )}
-        <StatGrid
+        {!loading && !error && <StatGrid
           ariaLabel="Synthèse des comptoirs"
           sober
           items={[
@@ -210,7 +233,7 @@ export default function ComptoirsPage() {
               tone: "gold",
             },
           ]}
-        />
+        />}
         <section
           className="sn-card comptoir-list-filters"
           aria-label="Rechercher et filtrer les comptoirs"

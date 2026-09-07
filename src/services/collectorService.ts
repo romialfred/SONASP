@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import type { Json } from "@/types/database";
 import type { ArtisanMinier } from "./artisanMinierService";
+import { readAllPages } from "@/lib/readAllPages";
+import { messageErreurUtilisateur } from "@/lib/presentError";
 import {
   collectorPayload,
   type CollectorFormValues,
@@ -88,10 +90,35 @@ async function rpc<T>(
   if (error) throw new Error(error.message);
   return data;
 }
+interface CollectorPageQuery extends PromiseLike<{
+  data: CollectorRecord[] | null;
+  error: { message: string; code?: string } | null;
+  count: number | null;
+}> {
+  order(column: string): CollectorPageQuery;
+  range(from: number, to: number): CollectorPageQuery;
+}
+
+async function listCollectors(): Promise<CollectorRecord[]> {
+  const call = supabase.rpc.bind(supabase) as unknown as (
+    name: "snp_list_collectors", args: Record<string, never>, options: { count: "exact" },
+  ) => CollectorPageQuery;
+  // SETOF jsonb exposes a scalar value, not table columns. PostgREST names
+  // that value pgrst_scalar; keep the name order, then break ties by UUID.
+  return readAllPages(async (from, to) => {
+    const result = await call("snp_list_collectors", {}, { count: "exact" })
+      .order("pgrst_scalar->identity->>nom")
+      .order("pgrst_scalar->identity->>prenoms")
+      .order("pgrst_scalar->>id")
+      .range(from, to);
+    if (result.error) throw new Error(messageErreurUtilisateur(result.error, "Impossible de charger les collecteurs."));
+    return result;
+  });
+}
 export const collectorService = {
   workspaceArtisanIds: () => rpc<string[]>("snp_collector_workspace_artisans"),
   references: () => rpc<CollectionReference>("snp_collector_references"),
-  list: () => rpc<CollectorRecord[]>("snp_list_collectors"),
+  list: listCollectors,
   async save(
     values: CollectorFormValues,
     id: string,

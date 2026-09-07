@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Building2,
@@ -30,8 +30,26 @@ import { artisanFullName } from "@/utils/artisanIdentity";
 import { CAPABILITIES, hasSensitiveCapability } from "@/lib/capabilities";
 import "./collector.css";
 import { CollectorDetails } from "./CollectorDetails";
+import { messageErreurUtilisateur } from "@/lib/presentError";
 
 export default function CollectorsPage() {
+  const { id } = useParams();
+  const { user } = useAuth();
+  // Un changement d’habilitations du même compte constitue une nouvelle lecture.
+  // La frontière remet aussi à zéro la justification et l’échéance de délégation.
+  const contextKey = JSON.stringify([
+    id, user?.id, user?.organization_id, user?.mining_company_id,
+    user?.access_role_id, user?.role, user?.organization_type, user?.is_active,
+    user?.access_portal_id, user?.access_portal_code, user?.actor_category_code,
+    user && 'account_type' in user ? user.account_type : undefined,
+    [...(user?.capabilities || [])].sort(), [...(user?.module_codes || [])].sort(),
+    [...(user?.site_ids || [])].sort(), [...(user?.responsibilities || [])].sort(),
+    [...(user?.module_domains || [])].sort(),
+  ]);
+  return <CollectorsPageContent key={contextKey} />;
+}
+
+function CollectorsPageContent() {
   const { id } = useParams();
   const { user } = useAuth();
   const location = useLocation();
@@ -39,6 +57,8 @@ export default function CollectorsPage() {
   const [rows, setRows] = useState<CollectorRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [readError, setReadError] = useState("");
+  const readRequest = useRef(0);
   const [query, setQuery] = useState("");
   const [organization, setOrganization] = useState("");
   const [until, setUntil] = useState("");
@@ -50,19 +70,25 @@ export default function CollectorsPage() {
     hasSensitiveCapability(user, CAPABILITIES.COMPTOIR_PAYMENTS_EXECUTE) ||
     hasSensitiveCapability(user, CAPABILITIES.FINANCE_EXECUTE);
   const load = useCallback(async () => {
+    const request = ++readRequest.current;
     setLoading(true);
-    setError("");
+    setReadError("");
     try {
-      setRows(await collectorService.list());
+      const result = await collectorService.list();
+      if (request === readRequest.current) setRows(result);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Chargement impossible.");
+      if (request === readRequest.current) {
+        setRows([]);
+        setReadError(messageErreurUtilisateur(e, "Impossible de charger les collecteurs."));
+      }
     } finally {
-      setLoading(false);
+      if (request === readRequest.current) setLoading(false);
     }
   }, []);
   useEffect(() => {
     void load();
-  }, [load, location.key]);
+    return () => { readRequest.current += 1; };
+  }, [load, location.key, user?.id]);
   const selected = rows.find((r) => r.id === id);
   const filtered = useMemo(
     () =>
@@ -220,6 +246,14 @@ export default function CollectorsPage() {
             <Note tone="danger">{error}</Note>
           </div>
         )}
+        {readError && (
+            <Note tone="danger">
+              <span>{readError} </span>
+              <button className="sn-btn sn-btn--secondary" type="button" onClick={() => void load()}>
+                Réessayer
+              </button>
+            </Note>
+        )}
         {notice && (
           <div role="status">
             <Note tone="success">{notice}</Note>
@@ -230,7 +264,7 @@ export default function CollectorsPage() {
         )}
         {loading ? (
           <p role="status">Chargement des collecteurs…</p>
-        ) : id ? (
+        ) : readError ? null : id ? (
           selected ? (
             <CollectorDetails
               showCollectionSales={

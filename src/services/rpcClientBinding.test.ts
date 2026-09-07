@@ -67,10 +67,15 @@ describe("liaison des services au véritable client Supabase", () => {
     http.fetch.mockReset();
     http.response = [];
     http.fetch.mockImplementation(
-      async () =>
+      async (_url, options) =>
         new Response(JSON.stringify(http.response), {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(new Headers(options?.headers).get("Prefer")?.includes("count=exact")
+              ? { "Content-Range": `*/${Array.isArray(http.response) ? http.response.length : 1}` }
+              : {}),
+          },
         }),
     );
   });
@@ -78,10 +83,14 @@ describe("liaison des services au véritable client Supabase", () => {
     await expect(collectorService.list()).resolves.toEqual([]);
     http.response = { sites: [], organizations: [] };
     await expect(collectorService.references()).resolves.toEqual(http.response);
-    expect(http.fetch.mock.calls.map(([url]) => String(url))).toEqual([
+    expect(http.fetch.mock.calls.map(([url]) => String(url).split("?")[0])).toEqual([
       "https://rpc-contract.invalid/rest/v1/rpc/snp_list_collectors",
       "https://rpc-contract.invalid/rest/v1/rpc/snp_collector_references",
     ]);
+    const query = new URL(String(http.fetch.mock.calls[0][0])).searchParams;
+    expect(query.get("offset")).toBe("0");
+    expect(query.get("limit")).toBe("500");
+    expect(query.get("order")).toBe("pgrst_scalar->identity->>nom.asc,pgrst_scalar->identity->>prenoms.asc,pgrst_scalar->>id.asc");
   });
   it("transmet un refus serveur sans planter avant la requête", async () => {
     http.fetch.mockResolvedValue(
@@ -90,7 +99,7 @@ describe("liaison des services au véritable client Supabase", () => {
         { status: 403 },
       ),
     );
-    await expect(collectorService.list()).rejects.toThrow("Accès refusé.");
+    await expect(collectorService.list()).rejects.toThrow("Votre session actuelle ne permet pas d’effectuer cette opération.");
     expect(http.fetch).toHaveBeenCalledTimes(1);
   });
   it("conserve le contexte pour l’enregistrement de stock", async () => {

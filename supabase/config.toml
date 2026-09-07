@@ -59,6 +59,10 @@ verify_jwt = false
 verify_jwt = false
 static_files = ["./functions/affiliation-card-render/assets/*"]
 
+# JWT verified by GoTrue, AAL2, session and dossier capability enforced before private upload.
+[functions.affiliation-payment-proof-upload]
+verify_jwt = false
+
 # Autorisation forte et périmètre de vente vérifiés par le RPC du handler.
 [functions.collection-notifications]
 verify_jwt = false

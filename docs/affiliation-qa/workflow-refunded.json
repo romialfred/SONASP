@@ -1,0 +1,179 @@
+{
+  "environment": "Disposable local PGlite. No remote data.",
+  "cards": [
+    {
+      "id": "c1000000-0000-4000-8000-000000000001",
+      "numero_affiliation": "QA-AFFILIATION-2026-0001",
+      "statut": "en_exploitation",
+      "render_status": "ready",
+      "valid_from": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-12-31T00:00:00Z",
+      "activated_at": "2026-09-07T00:44:44.002Z",
+      "effective_status": "a_reexaminer"
+    }
+  ],
+  "dues": [
+    {
+      "id": "84e8f981-d44f-40e6-8ae0-8a541a1fe4a7",
+      "montant": "10000.00",
+      "devise": "XOF",
+      "debut": "2026-01-01T00:00:00Z",
+      "fin": "2026-12-31T00:00:00Z",
+      "statut": "ouvert"
+    }
+  ],
+  "receipts": [
+    {
+      "id": "5225c729-b9a6-40df-93dc-719467aff066",
+      "montant": "10000.00",
+      "reference": "QA-ADH-20260907-002",
+      "date_paiement": "2026-09-07T00:00:00Z",
+      "annee_adhesion": 2026,
+      "lieu_paiement": "Caisse de recette — Ouagadougou",
+      "preuve_path": "b1000000-0000-4000-8000-000000000001/84e8f981-d44f-40e6-8ae0-8a541a1fe4a7/5225c729-b9a6-40df-93dc-719467aff066.pdf",
+      "statut": "rembourse",
+      "created_by": "a1000000-0000-4000-8000-000000000001",
+      "confirmed_by": "a1000000-0000-4000-8000-000000000002"
+    }
+  ],
+  "proofs": [
+    {
+      "paiement_id": "5225c729-b9a6-40df-93dc-719467aff066",
+      "file_name": "pdf.pdf",
+      "mime_type": "application/pdf",
+      "file_size": 662069,
+      "sha256": "986931080058ee5d5320b9329e76ba25923a04ee444fc5d7aa91f47547b50157"
+    }
+  ],
+  "storage": [
+    {
+      "bucket_id": "affiliation-payment-proofs",
+      "name": "b1000000-0000-4000-8000-000000000001/84e8f981-d44f-40e6-8ae0-8a541a1fe4a7/5225c729-b9a6-40df-93dc-719467aff066.pdf",
+      "metadata": {
+        "size": 662069,
+        "mimetype": "application/pdf"
+      }
+    },
+    {
+      "bucket_id": "affiliation-cards",
+      "name": "b1000000-0000-4000-8000-000000000001/c1000000-0000-4000-8000-000000000001/v1-r1/8b451d29-421f-4bf3-8967-d856a993f787/recto.png",
+      "metadata": {
+        "size": 409163,
+        "mimetype": "image/png"
+      }
+    },
+    {
+      "bucket_id": "affiliation-cards",
+      "name": "b1000000-0000-4000-8000-000000000001/c1000000-0000-4000-8000-000000000001/v1-r1/8b451d29-421f-4bf3-8967-d856a993f787/verso.png",
+      "metadata": {
+        "size": 435539,
+        "mimetype": "image/png"
+      }
+    },
+    {
+      "bucket_id": "affiliation-cards",
+      "name": "b1000000-0000-4000-8000-000000000001/c1000000-0000-4000-8000-000000000001/v1-r1/8b451d29-421f-4bf3-8967-d856a993f787/pdf.pdf",
+      "metadata": {
+        "size": 659509,
+        "mimetype": "application/pdf"
+      }
+    },
+    {
+      "bucket_id": "affiliation-cards",
+      "name": "b1000000-0000-4000-8000-000000000001/c1000000-0000-4000-8000-000000000001/v1-r1/8b451d29-421f-4bf3-8967-d856a993f787/portrait.png",
+      "metadata": {
+        "size": 23619,
+        "mimetype": "image/png"
+      }
+    },
+    {
+      "bucket_id": "affiliation-cards",
+      "name": "b1000000-0000-4000-8000-000000000001/c1000000-0000-4000-8000-000000000001/v1-r2/9efed0ba-feb4-45d4-bc09-1487d8395e57/recto.png",
+      "metadata": {
+        "size": 406899,
+        "mimetype": "image/png"
+      }
+    },
+    {
+      "bucket_id": "affiliation-cards",
+      "name": "b1000000-0000-4000-8000-000000000001/c1000000-0000-4000-8000-000000000001/v1-r2/9efed0ba-feb4-45d4-bc09-1487d8395e57/verso.png",
+      "metadata": {
+        "size": 435280,
+        "mimetype": "image/png"
+      }
+    },
+    {
+      "bucket_id": "affiliation-cards",
+      "name": "b1000000-0000-4000-8000-000000000001/c1000000-0000-4000-8000-000000000001/v1-r2/9efed0ba-feb4-45d4-bc09-1487d8395e57/pdf.pdf",
+      "metadata": {
+        "size": 657988,
+        "mimetype": "application/pdf"
+      }
+    },
+    {
+      "bucket_id": "affiliation-cards",
+      "name": "b1000000-0000-4000-8000-000000000001/c1000000-0000-4000-8000-000000000001/v1-r2/9efed0ba-feb4-45d4-bc09-1487d8395e57/portrait.png",
+      "metadata": {
+        "size": 23619,
+        "mimetype": "image/png"
+      }
+    }
+  ],
+  "audit": [
+    {
+      "action": "prepared",
+      "status_after": "en_cours",
+      "actor_id": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "action": "dues-established",
+      "status_after": "ouvert",
+      "actor_id": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "action": "payment-recorded",
+      "status_after": "en_attente",
+      "actor_id": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "action": "payment-confirme",
+      "status_after": "confirme",
+      "actor_id": "a1000000-0000-4000-8000-000000000002"
+    },
+    {
+      "action": "render-requested",
+      "status_after": "rendering",
+      "actor_id": "a1000000-0000-4000-8000-000000000002"
+    },
+    {
+      "action": "rendered",
+      "status_after": "ready",
+      "actor_id": "a1000000-0000-4000-8000-000000000002"
+    },
+    {
+      "action": "status-changed",
+      "status_after": "validee",
+      "actor_id": "a1000000-0000-4000-8000-000000000002"
+    },
+    {
+      "action": "activated",
+      "status_after": "en_exploitation",
+      "actor_id": "a1000000-0000-4000-8000-000000000002"
+    },
+    {
+      "action": "render-requested",
+      "status_after": "rendering",
+      "actor_id": "a1000000-0000-4000-8000-000000000002"
+    },
+    {
+      "action": "rendered",
+      "status_after": "ready",
+      "actor_id": "a1000000-0000-4000-8000-000000000002"
+    },
+    {
+      "action": "payment-rembourse",
+      "status_after": "rembourse",
+      "actor_id": "a1000000-0000-4000-8000-000000000002"
+    }
+  ]
+}

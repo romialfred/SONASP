@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import { checkPaidAffiliationWorkflow } from './test-affiliation-paid-workflow.mjs';
 const { PGlite } = await import(process.env.PGLITE_MODULE || '@electric-sql/pglite');
 const db = new PGlite(); let checks = 0;
 const query = (sql,args=[]) => db.query(sql,args);
@@ -145,5 +146,6 @@ try {
  await query("SELECT snp_annuler_adhesion_droit($1,'Période saisie par erreur, correction requise')",[aideDues]);
  await query("SELECT snp_annuler_adhesion_droit($1,'Période saisie par erreur, correction requise')",[aideDues]);
  assert.equal((await one('SELECT statut FROM snp_adhesion_droits WHERE id=$1',[aideDues])).statut,'annule');checks++;
+ checks += await checkPaidAffiliationWorkflow(db,maker,checker,outsider,price);
  console.log(`${checks} contrats SQL affiliation validés (base isolée, aucune donnée distante modifiée).`);
 } finally { await db.close(); }

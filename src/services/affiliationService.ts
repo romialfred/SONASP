@@ -5,6 +5,7 @@ import type {
   AdhesionBareme,
   AdhesionDroit,
   AdhesionEncaissement,
+  AdhesionPaymentProof,
   AffiliationEvent,
 } from "@/types/affiliations";
 import type { ArtisanMinier } from "./artisanMinierService";
@@ -61,6 +62,9 @@ type RpcContracts = {
       p_reference: string;
       p_mode: string;
       p_date: string;
+      p_annee: number;
+      p_lieu: string;
+      p_preuve: string;
     };
     result: AdhesionEncaissement;
   };
@@ -153,6 +157,22 @@ export const affiliationService = {
   recordReceipt: (
     args: RpcContracts["snp_enregistrer_adhesion_encaissement"]["args"],
   ) => rpc("snp_enregistrer_adhesion_encaissement", args),
+  async uploadPaymentProof(file: File, duesId: string, receiptId: string): Promise<AdhesionPaymentProof> {
+    const formats: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
+    if (!formats[file.type] || file.size < 1 || file.size > 5 * 1024 * 1024)
+      throw new Error("Joignez un fichier PDF, JPG ou PNG de 5 Mo maximum.");
+    const payload = new FormData();
+    payload.append("duesId", duesId);
+    payload.append("receiptId", receiptId);
+    payload.append("file", file);
+    const { data, error } = await supabase.functions.invoke("affiliation-payment-proof-upload", { body: payload });
+    const proof = data?.proof as AdhesionPaymentProof | undefined;
+    if (error || !proof || typeof proof.path !== "string" || !proof.path.endsWith(`/${duesId}/${receiptId}.${formats[file.type]}`)
+      || proof.file_size !== file.size || proof.mime_type !== file.type || !/^[a-f0-9]{64}$/.test(proof.sha256))
+      throw new Error("La preuve du paiement n’a pas pu être déposée. Vérifiez votre accès puis réessayez.");
+    return proof;
+  },
+  signedPaymentProof: (path: string) => createPrivateSignedUrl("affiliation-payment-proofs", path),
   reviewReceipt: (id: string, status: string, reason?: string) =>
     rpc("snp_controler_adhesion_encaissement", {
       p_id: id,

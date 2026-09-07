@@ -4,6 +4,8 @@ import {
   CreditCard,
   Download,
   Loader2,
+  LockKeyhole,
+  Printer,
   QrCode,
   RefreshCw,
   ShieldCheck,
@@ -21,10 +23,12 @@ export function AffiliationDigitalCard({
   card,
   onRetry,
   busy = false,
+  presentation = "default",
 }: {
   card: AffiliationCard;
   onRetry?: () => void;
   busy?: boolean;
+  presentation?: "default" | "detail";
 }) {
   const [face, setFace] = useState<"recto" | "verso">("recto");
   const [sources, setSources] = useState<{
@@ -40,7 +44,12 @@ export function AffiliationDigitalCard({
     setSources(null);
     setImageError(false);
     setFace("recto");
-    if (card.render_status === "ready" && card.recto_path && card.verso_path) {
+    if (
+      card.render_status === "ready" &&
+      card.recto_path &&
+      card.verso_path &&
+      (card.adhesion_status === undefined || card.adhesion_status === "paye")
+    ) {
       Promise.all([
         affiliationService.signedFile(card.recto_path),
         affiliationService.signedFile(card.verso_path),
@@ -61,9 +70,12 @@ export function AffiliationDigitalCard({
     card.render_status,
     card.recto_path,
     card.verso_path,
+    card.adhesion_status,
     reloadImages,
   ]);
-  const downloadable = card.render_status === "ready";
+  const paymentPending =
+    card.adhesion_status !== undefined && card.adhesion_status !== "paye";
+  const downloadable = card.render_status === "ready" && !paymentPending;
   const download = async (side: "recto" | "verso" | "pdf", path: string) => {
     if (downloading) return;
     setDownloading(true);
@@ -83,24 +95,49 @@ export function AffiliationDigitalCard({
     setFace((value) => (value === "recto" ? "verso" : "recto"));
   return (
     <section
-      className="affiliation-digital"
+      className={`affiliation-digital${presentation === "detail" ? " affiliation-digital--detail" : ""}`}
       aria-label="Carte numérique d’affiliation"
     >
       <div className="affiliation-digital__status">
-        <span
-          className={`affiliation-state affiliation-state--${card.statut_effectif}`}
-        >
-          <ShieldCheck size={16} aria-hidden="true" />
-          {AFFILIATION_STATUS_LABELS[card.statut_effectif]}
-        </span>
+        {presentation !== "detail" && (
+          <span
+            className={`affiliation-state affiliation-state--${card.statut_effectif}`}
+          >
+            <ShieldCheck size={16} aria-hidden="true" />
+            {AFFILIATION_STATUS_LABELS[card.statut_effectif]}
+          </span>
+        )}
         <strong>
           {card.statut_effectif === "active"
             ? affiliationCountdown(card)
             : `Émission ${card.version}`}
         </strong>
       </div>
+      {presentation === "detail" && (
+        <div
+          className="affiliation-digital__face-tabs"
+          aria-label="Face de la carte"
+        >
+          <button
+            type="button"
+            aria-pressed={face === "recto"}
+            disabled={!sources || paymentPending || imageError}
+            onClick={() => setFace("recto")}
+          >
+            Recto
+          </button>
+          <button
+            type="button"
+            aria-pressed={face === "verso"}
+            disabled={!sources || paymentPending || imageError}
+            onClick={() => setFace("verso")}
+          >
+            Verso
+          </button>
+        </div>
+      )}
       <div className="affiliation-digital__stage">
-        {sources && !imageError ? (
+        {sources && !imageError && !paymentPending ? (
           <button
             className="affiliation-digital__surface"
             type="button"
@@ -124,27 +161,39 @@ export function AffiliationDigitalCard({
           </button>
         ) : (
           <div className="affiliation-digital__placeholder">
-            {card.render_status === "rendering" ||
-            (downloadable && !imageError) ? (
+            {paymentPending ? (
+              <LockKeyhole size={36} aria-hidden="true" />
+            ) : card.render_status === "rendering" ||
+              (downloadable && !imageError) ? (
               <Loader2 className="sn-spin" size={32} aria-hidden="true" />
             ) : (
               <CreditCard size={36} aria-hidden="true" />
             )}
             <strong>
-              {imageError
-                ? "Image momentanément indisponible"
-                : card.render_status === "failed"
-                  ? "La génération a échoué"
-                  : card.render_status === "rendering"
-                    ? "Génération des deux faces…"
-                    : downloadable
-                      ? "Chargement de la carte…"
-                      : "Carte à générer"}
+              {paymentPending
+                ? "Votre carte sera générée après paiement"
+                : imageError
+                  ? "Image momentanément indisponible"
+                  : card.render_status === "failed"
+                    ? "La génération a échoué"
+                    : card.render_status === "rendering"
+                      ? "Génération des deux faces…"
+                      : downloadable
+                        ? "Chargement de la carte…"
+                        : "Carte à générer"}
             </strong>
             <span>
               {card.numero_affiliation} · Émission {card.version}
             </span>
+            {paymentPending && (
+              <p className="affiliation-digital__held-note">
+                Enregistrez les droits d’affiliation et leur justificatif. La
+                confirmation du règlement intégral permettra de générer cette
+                carte.
+              </p>
+            )}
             {!busy &&
+              !paymentPending &&
               (imageError ||
                 (onRetry &&
                   (card.render_status === "failed" ||
@@ -165,37 +214,44 @@ export function AffiliationDigitalCard({
           </div>
         )}
       </div>
-      <div className="affiliation-digital__face-control">
-        <span aria-live="polite">
-          {face === "recto" ? "Recto" : "Verso"} · Format ID-1
-        </span>
-        <button
-          type="button"
-          className="sn-btn sn-btn--ghost"
-          onClick={switchFace}
-          disabled={!sources || imageError}
-        >
-          <ArrowLeftRight size={16} />
-          {face === "recto" ? "Voir le verso" : "Voir le recto"}
-        </button>
-      </div>
-      <dl className="affiliation-digital__dates">
-        <div>
-          <dt>Numéro d’affiliation</dt>
-          <dd>{card.numero_affiliation}</dd>
+      {presentation !== "detail" && (
+        <div className="affiliation-digital__face-control">
+          <span aria-live="polite">
+            {face === "recto" ? "Recto" : "Verso"} · Format ID-1
+          </span>
+          <button
+            type="button"
+            className="sn-btn sn-btn--ghost"
+            onClick={switchFace}
+            disabled={!sources || imageError}
+          >
+            <ArrowLeftRight size={16} />
+            {face === "recto" ? "Voir le verso" : "Voir le recto"}
+          </button>
         </div>
-        <div>
-          <dt>Début de validité</dt>
-          <dd>{affiliationDate(card.valid_from)}</dd>
-        </div>
-        <div>
-          <dt>Valable jusqu’au inclus</dt>
-          <dd>{affiliationDate(card.valid_until)}</dd>
-        </div>
-      </dl>
+      )}
+      {presentation !== "detail" && (
+        <dl className="affiliation-digital__dates">
+          <div>
+            <dt>Numéro d’affiliation</dt>
+            <dd>{card.numero_affiliation}</dd>
+          </div>
+          <div>
+            <dt>Début de validité</dt>
+            <dd>{affiliationDate(card.valid_from)}</dd>
+          </div>
+          <div>
+            <dt>Valable jusqu’au inclus</dt>
+            <dd>{affiliationDate(card.valid_until)}</dd>
+          </div>
+        </dl>
+      )}
       {downloadable && (
         <div className="affiliation-digital__downloads">
-          {(["recto", "verso", "pdf"] as const).map((side) => {
+          {(presentation === "detail"
+            ? ([face, "pdf"] as const)
+            : (["recto", "verso", "pdf"] as const)
+          ).map((side) => {
             const path = card[`${side}_path`];
             return path ? (
               <button
@@ -206,12 +262,57 @@ export function AffiliationDigitalCard({
                 onClick={() => void download(side, path)}
               >
                 <Download size={15} />
-                {side === "pdf"
-                  ? "PDF pour impression"
-                  : `Télécharger le ${side}`}
+                {presentation === "detail"
+                  ? side === "pdf"
+                    ? "Télécharger PDF"
+                    : "Télécharger PNG"
+                  : side === "pdf"
+                    ? "PDF pour impression"
+                    : `Télécharger le ${side}`}
               </button>
             ) : null;
           })}
+          {presentation === "detail" && card.pdf_path && (
+            <button
+              type="button"
+              className="sn-btn"
+              disabled={downloading}
+              onClick={async () => {
+                const popup = window.open("", "_blank");
+                if (!popup) {
+                  setDownloadError(
+                    "Autorisez l’ouverture du PDF pour l’imprimer.",
+                  );
+                  return;
+                }
+                popup.opener = null;
+                try {
+                  popup.location.href = await affiliationService.signedFile(
+                    card.pdf_path!,
+                  );
+                } catch {
+                  popup.close();
+                  setDownloadError(
+                    "Le PDF n’a pas pu être ouvert pour impression.",
+                  );
+                }
+              }}
+            >
+              <Printer size={15} />
+              Imprimer
+            </button>
+          )}
+          {presentation === "detail" && onRetry && (
+            <button
+              type="button"
+              className="sn-btn"
+              disabled={busy}
+              onClick={onRetry}
+            >
+              <RefreshCw size={15} />
+              Régénérer
+            </button>
+          )}
         </div>
       )}
       {downloadError && (
@@ -219,7 +320,7 @@ export function AffiliationDigitalCard({
           {downloadError}
         </p>
       )}
-      {card.verification_token && (
+      {card.verification_token && downloadable && (
         <a
           className="sn-btn sn-btn--ghost"
           style={{ marginTop: 12 }}
@@ -232,8 +333,8 @@ export function AffiliationDigitalCard({
       )}
       {!card.activated_at && (
         <p className="affiliation-help">
-          Cette carte est inactive. La validation du titre et le paiement
-          confirmé précèdent son activation manuelle.
+          La carte reste inactive jusqu’au paiement intégral confirmé, au
+          contrôle documentaire et à son activation manuelle.
         </p>
       )}
     </section>

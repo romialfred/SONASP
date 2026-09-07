@@ -1,0 +1,75 @@
+{
+  "environment": "Disposable local PGlite. No remote data.",
+  "cards": [
+    {
+      "id": "c1000000-0000-4000-8000-000000000001",
+      "numero_affiliation": "QA-AFFILIATION-2026-0001",
+      "statut": "en_cours",
+      "render_status": "pending",
+      "valid_from": null,
+      "valid_until": null,
+      "activated_at": null,
+      "effective_status": "non_validee"
+    }
+  ],
+  "dues": [
+    {
+      "id": "3bae12f5-0110-4462-ae41-9fedd057953b",
+      "montant": "10000.00",
+      "devise": "XOF",
+      "debut": "2026-01-01T00:00:00Z",
+      "fin": "2026-12-31T00:00:00Z",
+      "statut": "ouvert"
+    }
+  ],
+  "receipts": [
+    {
+      "id": "b6e88a5e-f65c-4b03-a402-fdaa1f9d7fb3",
+      "montant": "10000.00",
+      "reference": "QA-ADH-20260907-001",
+      "date_paiement": "2026-09-07T00:00:00Z",
+      "annee_adhesion": 2026,
+      "lieu_paiement": "Caisse de recette — Ouagadougou",
+      "preuve_path": "b1000000-0000-4000-8000-000000000001/3bae12f5-0110-4462-ae41-9fedd057953b/b6e88a5e-f65c-4b03-a402-fdaa1f9d7fb3.pdf",
+      "statut": "en_attente",
+      "created_by": "a1000000-0000-4000-8000-000000000001",
+      "confirmed_by": null
+    }
+  ],
+  "proofs": [
+    {
+      "paiement_id": "b6e88a5e-f65c-4b03-a402-fdaa1f9d7fb3",
+      "file_name": "pdf.pdf",
+      "mime_type": "application/pdf",
+      "file_size": 662069,
+      "sha256": "986931080058ee5d5320b9329e76ba25923a04ee444fc5d7aa91f47547b50157"
+    }
+  ],
+  "storage": [
+    {
+      "bucket_id": "affiliation-payment-proofs",
+      "name": "b1000000-0000-4000-8000-000000000001/3bae12f5-0110-4462-ae41-9fedd057953b/b6e88a5e-f65c-4b03-a402-fdaa1f9d7fb3.pdf",
+      "metadata": {
+        "size": 662069,
+        "mimetype": "application/pdf"
+      }
+    }
+  ],
+  "audit": [
+    {
+      "action": "prepared",
+      "status_after": "en_cours",
+      "actor_id": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "action": "dues-established",
+      "status_after": "ouvert",
+      "actor_id": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "action": "payment-recorded",
+      "status_after": "en_attente",
+      "actor_id": "a1000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

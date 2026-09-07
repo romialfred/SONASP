@@ -28,6 +28,17 @@ export interface AffiliationCard {
   version: number;
   dues_card_id?: string;
   holder_name?: string;
+  site_name?: string;
+  artisan_role?: string;
+  identity_ready?: boolean;
+  adhesion_status?: "non_renseigne" | "en_attente" | "partiel" | "paye" | "annule";
+  adhesion_amount?: number | null;
+  adhesion_paid?: number | null;
+  adhesion_pending?: number | null;
+  adhesion_currency?: string | null;
+  adhesion_year?: number | null;
+  adhesion_start?: string | null;
+  adhesion_end?: string | null;
   template_version: string;
   statut: string;
   statut_effectif: AffiliationStatus;

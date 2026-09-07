@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AffiliationDigitalCard } from './AffiliationDigitalCard';
 import { affiliationCountdown, type AffiliationCard } from '@/lib/affiliationCard';
@@ -13,7 +13,7 @@ export const cardFixture: AffiliationCard = {
   render_status: 'ready', render_revision: 2, recto_path: 'recto.png', verso_path: 'verso.png', pdf_path: 'card.pdf', verification_token: 'opaque', created_at: '2026-01-01', replaced_by: null,
 };
 describe('Carte numérique d’affiliation', () => {
-  beforeEach(() => { mocks.signed.mockImplementation(async (path: string) => `/private/${path}`); mocks.download.mockResolvedValue(undefined); });
+  beforeEach(() => { vi.clearAllMocks(); mocks.signed.mockImplementation(async (path: string) => `/private/${path}`); mocks.download.mockResolvedValue(undefined); });
   it('bascule au clic et au clavier, avec une seule face accessible', async () => {
     render(<AffiliationDigitalCard card={cardFixture} />);
     const recto = await screen.findByRole('img', { name: /Recto de la carte/ });
@@ -50,5 +50,60 @@ describe('Carte numérique d’affiliation', () => {
     render(<AffiliationDigitalCard card={cardFixture} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Recharger les fichiers' }));
     await screen.findByRole('img', { name: /Recto de la carte/ });
+  });
+  it.each(['non_renseigne', 'en_attente', 'partiel', 'annule'] as const)(
+    'interdit les anciens fichiers prêts si les droits sont %s',
+    async (adhesion_status) => {
+      const retry = vi.fn();
+      render(<AffiliationDigitalCard card={{ ...cardFixture, adhesion_status }} presentation="detail" onRetry={retry} />);
+      expect(screen.getByText('Votre carte sera générée après paiement')).toBeInTheDocument();
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Télécharger|Imprimer|Régénérer|Générer les deux faces/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Vérifier le statut/ })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Recto' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Verso' })).toBeDisabled();
+      await userEvent.click(screen.getByRole('button', { name: 'Verso' }));
+      expect(mocks.signed).not.toHaveBeenCalled();
+      expect(mocks.download).not.toHaveBeenCalled();
+      expect(retry).not.toHaveBeenCalled();
+    },
+  );
+  it('ignore un ancien chargement de fichiers quand le paiement est révisé', async () => {
+    const pending: Array<(value: string) => void> = [];
+    mocks.signed.mockImplementation(() => new Promise<string>((resolve) => pending.push(resolve)));
+    const { rerender } = render(<AffiliationDigitalCard card={{ ...cardFixture, adhesion_status: 'paye' }} presentation="detail" />);
+    expect(mocks.signed).toHaveBeenCalledTimes(2);
+    rerender(<AffiliationDigitalCard card={{ ...cardFixture, adhesion_status: 'partiel', statut_effectif: 'a_reexaminer' }} presentation="detail" />);
+    await act(async () => { pending[0]('/private/old-recto.png'); pending[1]('/private/old-verso.png'); });
+    expect(screen.getByText('Votre carte sera générée après paiement')).toBeInTheDocument();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Télécharger/ })).not.toBeInTheDocument();
+    expect(mocks.download).not.toHaveBeenCalled();
+  });
+  it('télécharge en mode détail le PNG de la face sélectionnée sans changer de face', async () => {
+    render(<AffiliationDigitalCard card={{ ...cardFixture, adhesion_status: 'paye' }} presentation="detail" />);
+    await screen.findByRole('img', { name: /Recto de la carte/ });
+    expect(screen.getByRole('button', { name: 'Recto' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'Télécharger PNG' }));
+    await waitFor(() => expect(mocks.download).toHaveBeenLastCalledWith('recto.png', 'affiliation-FS-TEST-v1-r2-recto.png'));
+    await userEvent.click(screen.getByRole('button', { name: 'Verso' }));
+    expect(screen.getByRole('button', { name: 'Verso' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('img', { name: /Verso de la carte/ })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /Recto de la carte/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Télécharger PNG' }));
+    await waitFor(() => expect(mocks.download).toHaveBeenLastCalledWith('verso.png', 'affiliation-FS-TEST-v1-r2-verso.png'));
+    expect(screen.getByRole('img', { name: /Verso de la carte/ })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Télécharger PDF' }));
+    await waitFor(() => expect(mocks.download).toHaveBeenLastCalledWith('card.pdf', 'affiliation-FS-TEST-v1-r2-pdf.pdf'));
+    expect(screen.getByRole('img', { name: /Verso de la carte/ })).toBeInTheDocument();
+  });
+  it('actualise le compteur du détail depuis le statut serveur sans prolonger une carte expirée', async () => {
+    const { rerender } = render(<AffiliationDigitalCard card={{ ...cardFixture, adhesion_status: 'paye' }} presentation="detail" />);
+    await screen.findByRole('img', { name: /Recto de la carte/ });
+    expect(screen.getByText('8 jours restants')).toBeInTheDocument();
+    rerender(<AffiliationDigitalCard card={{ ...cardFixture, adhesion_status: 'paye', jours_restants: 0 }} presentation="detail" />);
+    expect(screen.getByText('Expire aujourd’hui')).toBeInTheDocument();
+    rerender(<AffiliationDigitalCard card={{ ...cardFixture, adhesion_status: 'paye', statut_effectif: 'expiree', jours_restants: -1 }} presentation="detail" />);
+    expect(screen.queryByText(/jours? restants?|Expire aujourd’hui/)).not.toBeInTheDocument();
   });
 });

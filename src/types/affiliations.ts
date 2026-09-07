@@ -34,6 +34,9 @@ export type AdhesionEncaissement = {
   reference: string;
   mode: string;
   date_paiement: string;
+  annee_adhesion?: number | null;
+  lieu_paiement?: string | null;
+  preuve_path?: string | null;
   statut: "en_attente" | "confirme" | "annule" | "rembourse";
   created_by: string | null;
   created_at: string;
@@ -42,6 +45,13 @@ export type AdhesionEncaissement = {
   revised_by: string | null;
   revised_at: string | null;
   motif: string | null;
+};
+export type AdhesionPaymentProof = {
+  path: string;
+  file_name: string;
+  mime_type: "application/pdf" | "image/jpeg" | "image/png";
+  file_size: number;
+  sha256: string;
 };
 export type AffiliationEvent = {
   id: number;

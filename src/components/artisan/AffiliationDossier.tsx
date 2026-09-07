@@ -57,19 +57,36 @@ const EVENTS: Record<string, string> = {
   expired: "Expiration de la carte",
 };
 
-export function AffiliationDossier({
-  artisanId,
-  initialCardId,
-  standalone = false,
-  onBack,
-  onCardChange,
-}: {
+type AffiliationDossierProps = {
   artisanId: string;
   initialCardId?: string;
   standalone?: boolean;
   onBack?: () => void;
   onCardChange?: (id: string) => void;
-}) {
+};
+
+export function AffiliationDossier(props: AffiliationDossierProps) {
+  const { user } = useAuth();
+  const contextKey = JSON.stringify([
+    props.artisanId, props.initialCardId, user?.id, user?.organization_id,
+    user?.mining_company_id, user?.access_role_id, user?.role,
+    user && 'account_type' in user ? user.account_type : undefined,
+    user?.organization_type, user?.is_active,
+    [...(user?.capabilities || [])].sort(),
+    [...(user?.module_codes || [])].sort(), [...(user?.site_ids || [])].sort(),
+    [...(user?.responsibilities || [])].sort(), [...(user?.module_domains || [])].sort(),
+    user?.access_portal_id, user?.access_portal_code, user?.actor_category_code,
+  ]);
+  return <AffiliationDossierContent key={contextKey} {...props} />;
+}
+
+function AffiliationDossierContent({
+  artisanId,
+  initialCardId,
+  standalone = false,
+  onBack,
+  onCardChange,
+}: AffiliationDossierProps) {
   const { user } = useAuth();
   const manage = hasSensitiveCapability(
     user,
@@ -99,6 +116,7 @@ export function AffiliationDossier({
   const [detailsError, setDetailsError] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [cardsReadError, setCardsReadError] = useState(false);
   const [success, setSuccess] = useState("");
   const [tab, setTab] = useState("controle");
   const [checks, setChecks] = useState<string[]>([]);
@@ -106,6 +124,9 @@ export function AffiliationDossier({
   const mutationLock = useRef(false);
   const generation = useRef(0);
   const detailGeneration = useRef(0);
+  const lifecycle = useRef(0);
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
   const card = cards.find((c) => c.id === selected) || cards[0];
   const activeCard = useRef<string>();
   activeCard.current = card?.id;
@@ -116,24 +137,29 @@ export function AffiliationDossier({
       if (request === generation.current) {
         setCards(next);
         setError("");
+        setCardsReadError(false);
       }
       return next;
     } catch (reason) {
-      if (request === generation.current)
+      if (request === generation.current) {
+        setCardsReadError(true);
         setError(
           messageErreurUtilisateur(
             reason,
             "Impossible de lire le statut des cartes.",
           ),
         );
+      }
       return null;
     } finally {
       if (request === generation.current) setLoading(false);
     }
   }, [artisanId]);
   useEffect(() => {
+    selectedRef.current = initialCardId || "";
     setSelected(initialCardId || "");
   }, [initialCardId]);
+  useEffect(() => () => { lifecycle.current++; }, []);
   useEffect(() => {
     void load();
     const refresh = () => {
@@ -149,27 +175,29 @@ export function AffiliationDossier({
       document.removeEventListener("visibilitychange", refresh);
     };
   }, [load]);
-  const loadDetails = useCallback(async () => {
-    if (!card) return;
+  const loadDetails = useCallback(async (target = card) => {
+    if (!target) return false;
     const request = ++detailGeneration.current;
+    setDetailsLoading(true);
     try {
       const [history, finance, prices] = await Promise.all([
-        affiliationService.history(card.id),
+        affiliationService.history(target.id),
         canFinance
-          ? affiliationService.dues(card.dues_card_id || card.id)
+          ? affiliationService.dues(target.dues_card_id || target.id)
           : Promise.resolve({ droit: null, encaissements: [] }),
         duesManage ? affiliationService.tariffs() : Promise.resolve([]),
       ]);
       if (
         request !== detailGeneration.current ||
-        activeCard.current !== card.id
+        (!mutationLock.current && activeCard.current !== target.id)
       )
-        return;
+        return false;
       setEvents(history);
       setDues(finance.droit);
       setReceipts(finance.encaissements);
       setTariffs(prices);
       setDetailsError("");
+      return true;
     } catch (reason) {
       if (request === detailGeneration.current)
         setDetailsError(
@@ -178,11 +206,14 @@ export function AffiliationDossier({
             "Les droits d’adhésion n’ont pas pu être chargés.",
           ),
         );
+      return false;
     } finally {
       if (request === detailGeneration.current) setDetailsLoading(false);
     }
   }, [card?.id, card?.dues_card_id, canFinance, duesManage]);
   useEffect(() => {
+    // A manual operation refreshes its returned card and relations together.
+    if (mutationLock.current) return;
     setDues(null);
     setReceipts([]);
     setEvents([]);
@@ -194,27 +225,41 @@ export function AffiliationDossier({
       detailGeneration.current++;
     };
   }, [loadDetails]);
-  const run = async (action: () => Promise<unknown>, message: string) => {
+  const refreshDossier = async () => {
+    const next = await load();
+    if (!next) return false;
+    const current = next.find((item) => item.id === selectedRef.current) || next[0];
+    return loadDetails(current);
+  };
+  const run = async (action: (() => Promise<unknown>) | null, message: string) => {
     if (mutationLock.current) return;
+    const context = lifecycle.current;
     mutationLock.current = true;
+    detailGeneration.current++;
     setBusy(true);
     setError("");
     setSuccess("");
     try {
-      await action();
-      await load();
-      await loadDetails();
-      setSuccess(message);
+      if (action) await action();
+      if (context !== lifecycle.current) return false;
+      const refreshed = await refreshDossier();
+      if (context !== lifecycle.current) return false;
+      if (refreshed) setSuccess(message);
+      else if (action) setError(
+        "L’opération est enregistrée, mais les informations à jour n’ont pas pu être relues. Utilisez « Actualiser » pour vérifier le dossier sans répéter l’opération.",
+      );
       setActivationConfirmed(false);
-      return true;
+      // A confirmed write must not be submitted again just because reading failed.
+      return Boolean(action) || refreshed;
     } catch (reason) {
-      await load();
-      await loadDetails();
+      if (context !== lifecycle.current) return false;
+      await refreshDossier();
+      if (context !== lifecycle.current) return false;
       setError(messageErreurUtilisateur(reason));
       return false;
     } finally {
       mutationLock.current = false;
-      setBusy(false);
+      if (context === lifecycle.current) setBusy(false);
     }
   };
   if (loading)
@@ -227,8 +272,8 @@ export function AffiliationDossier({
   if (!card)
     return (
       <section className="affiliation-panel">
-        <h2>Aucun dossier d’affiliation disponible</h2>
-        <p>Enregistrez d’abord le dossier de l’artisan.</p>
+        <h2>{error ? "Affiliation indisponible" : "Aucun dossier d’affiliation disponible"}</h2>
+        {!error && <p>Enregistrez d’abord le dossier de l’artisan.</p>}
         {error && (
           <p role="alert" className="affiliation-error">
             {error}
@@ -243,9 +288,10 @@ export function AffiliationDossier({
     .filter((r) => r.statut === "confirme")
     .reduce((n, r) => n + Number(r.montant), 0);
   const settled = dues?.statut === "ouvert" && paid >= Number(dues.montant);
-  const fullyPaid = canFinance ? settled : card.adhesion_status === "paye";
+  const unverified = cardsReadError || detailsLoading || Boolean(detailsError);
+  const fullyPaid = !unverified && (canFinance ? settled : card.adhesion_status === "paye");
   const eligible =
-    card.statut === "validee" &&
+    !unverified && card.statut === "validee" &&
     !!card.validated_at &&
     settled &&
     !card.replaced_by &&
@@ -280,6 +326,7 @@ export function AffiliationDossier({
       }
     }, "Paiement confirmé. La carte peut être contrôlée puis activée pour sa période de validité.");
   const changeCard = (id: string) => {
+    selectedRef.current = id;
     setSelected(id);
     onCardChange?.(id);
     setError("");
@@ -344,7 +391,7 @@ export function AffiliationDossier({
           <button
             className="sn-btn sn-btn--secondary"
             disabled={busy}
-            onClick={() => void run(async () => undefined, "Statut actualisé.")}
+            onClick={() => void run(null, "Statut actualisé.")}
           >
             <RefreshCw size={17} />
             Actualiser
@@ -411,7 +458,7 @@ export function AffiliationDossier({
             {detailsError ? (
               <div className="affiliation-error" role="alert">
                 {detailsError}
-                <button className="sn-btn" onClick={() => void loadDetails()}>
+                <button className="sn-btn" disabled={busy} onClick={() => void run(null, "Statut actualisé.")}>
                   Réessayer le chargement des droits
                 </button>
               </div>
@@ -427,7 +474,7 @@ export function AffiliationDossier({
                 manage={duesManage}
                 confirm={confirm}
                 userId={user?.id}
-                busy={busy}
+                busy={busy || unverified}
                 run={run}
                 onConfirm={confirmPayment}
               />
@@ -679,7 +726,7 @@ export function AffiliationDossier({
                 La décision est réservée aux agents habilités.
               </p>
             ))}
-          {tab === "historique" && <HistoryList events={events} />}
+          {tab === "historique" && <HistoryList events={events} loading={detailsLoading} error={detailsError} />}
         </section>
         {tab !== "historique" && (
           <section className="affiliation-detail__history">
@@ -687,7 +734,7 @@ export function AffiliationDossier({
               <History size={21} />
               Chronologie de cette émission
             </h2>
-            <HistoryList events={events.slice(0, 3)} />
+            <HistoryList events={events.slice(0, 3)} loading={detailsLoading} error={detailsError} />
             {events.length > 3 && (
               <button
                 className="affiliation-detail__text-link"
@@ -706,6 +753,7 @@ export function AffiliationDossier({
               onClick={() =>
                 void run(async () => {
                   await carteProfessionnelleService.renouveler(artisanId);
+                  selectedRef.current = "";
                   setSelected("");
                   onCardChange?.("");
                 }, "Nouvelle période à préparer. L’ancienne émission est conservée.")
@@ -720,7 +768,8 @@ export function AffiliationDossier({
     </article>
   );
 }
-function HistoryList({ events }: { events: AffiliationEvent[] }) {
+function HistoryList({ events, loading, error }: { events: AffiliationEvent[]; loading?: boolean; error?: string }) {
+  if (loading || error) return <p className="affiliation-help">{loading ? "Chargement de l’historique…" : "Historique indisponible. Actualisez le dossier pour réessayer."}</p>;
   return events.length ? (
     <ol className="affiliation-timeline">
       {events.map((event) => (

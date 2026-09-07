@@ -11,10 +11,60 @@ const card = { id: 'card', artisan_id: 'artisan', numero_affiliation: 'FS-TEST',
 const dues = { id: 'dues', carte_id: 'card', montant: 100, devise: 'XOF', statut: 'ouvert', debut: '2026-09-01', fin: '2027-08-31' };
 describe('Dossier d’affiliation et activation', () => {
   beforeEach(() => {
-    vi.clearAllMocks(); mocks.caps = ['artisan.cards.manage', 'artisan.membership.manage', 'artisan.membership.confirm', 'artisan.cards.activate'];
+    vi.resetAllMocks(); mocks.caps = ['artisan.cards.manage', 'artisan.membership.manage', 'artisan.membership.confirm', 'artisan.cards.activate'];
     mocks.list.mockResolvedValue([card]); mocks.history.mockResolvedValue([]); mocks.tariffs.mockResolvedValue([]);
     mocks.dues.mockResolvedValue({ droit: dues, encaissements: [{ id: 'receipt', montant: 100, statut: 'confirme', reference: 'RC-TEST', date_paiement: '2026-09-01', created_by: 'maker' }] });
     mocks.activate.mockResolvedValue({ ...card, statut_effectif: 'active' }); mocks.renderCard.mockResolvedValue(undefined); mocks.review.mockResolvedValue(undefined);
+  });
+  it('ne présente pas une lecture initiale échouée comme une absence de dossier', async () => {
+    mocks.list.mockRejectedValueOnce(new Error('lecture indisponible'));
+    render(<MemoryRouter><AffiliationDossier artisanId="artisan" /></MemoryRouter>);
+    await screen.findByRole('alert');
+    expect(screen.queryByText('Aucun dossier d’affiliation disponible')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enregistrez d’abord le dossier de l’artisan.')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+    await screen.findByText('Carte numérique');
+  });
+  it('ne confirme pas une actualisation si la liste des cartes est inaccessible', async () => {
+    render(<MemoryRouter><AffiliationDossier artisanId="artisan" /></MemoryRouter>);
+    await screen.findByText('RC-TEST');
+    mocks.list.mockRejectedValueOnce(new Error('lecture indisponible'));
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser' }));
+    await screen.findByRole('alert');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Actualiser' })).toBeEnabled());
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Activer la carte' })).toBeDisabled();
+  });
+  it('ne confirme pas une actualisation si la relecture des droits échoue', async () => {
+    render(<MemoryRouter><AffiliationDossier artisanId="artisan" /></MemoryRouter>);
+    await screen.findByText('RC-TEST');
+    mocks.dues.mockRejectedValueOnce(new Error('droits indisponibles'));
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser' }));
+    await screen.findAllByRole('alert');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Actualiser' })).toBeEnabled());
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune opération tracée pour cette émission.')).not.toBeInTheDocument();
+  });
+  it('distingue une action enregistrée de sa relecture échouée et reprend sans la rejouer', async () => {
+    render(<MemoryRouter><AffiliationDossier artisanId="artisan" /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Je confirme/ }));
+    mocks.list.mockRejectedValueOnce(new Error('lecture indisponible'));
+    fireEvent.click(screen.getByRole('button', { name: 'Activer la carte' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('L’opération est enregistrée');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(mocks.activate).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Statut actualisé');
+    expect(mocks.activate).toHaveBeenCalledTimes(1);
+    expect(mocks.renderCard).toHaveBeenCalledTimes(1);
+  });
+  it('relit les droits liés à la carte retournée par la dernière actualisation', async () => {
+    render(<MemoryRouter><AffiliationDossier artisanId="artisan" /></MemoryRouter>);
+    await screen.findByText('RC-TEST');
+    mocks.list.mockResolvedValue([{ ...card, dues_card_id: 'renewed-dues-card' }]);
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser' }));
+    await screen.findByRole('status');
+    expect(mocks.dues).toHaveBeenLastCalledWith('renewed-dues-card');
   });
   it('le chargement d’une carte payée ne déclenche aucune activation', async () => {
     render(<MemoryRouter><AffiliationDossier artisanId="artisan" /></MemoryRouter>);

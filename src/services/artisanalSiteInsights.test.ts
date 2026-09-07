@@ -151,6 +151,37 @@ describe('artisanalSiteInsights', () => {
     expect(global).toBeLessThanOrEqual(100);
   });
 
+  it('laisse l’indice global non évalué quand aucun site n’est chargé', () => {
+    expect(computeGlobalCompliance([])).toBeNull();
+  });
+
+  it('laisse l’indice global non évalué quand tous les sites sont planifiés', () => {
+    const planned = buildSiteInsights([
+      { ...DEMO_ARTISANAL_SITES[0], status: 'planned', activeMiners: 100 },
+      { ...DEMO_ARTISANAL_SITES[1], status: 'planned', activeMiners: 0 },
+    ], [], REFERENCE);
+    expect(planned.every(item => item.compliance === null)).toBe(true);
+    expect(computeGlobalCompliance(planned)).toBeNull();
+  });
+
+  it('conserve zéro quand un site évalué totalise réellement zéro point', () => {
+    const scored = buildSiteInsights([
+      { ...DEMO_ARTISANAL_SITES[0], status: 'suspended', authorizedMiners: 1, activeMiners: 2 },
+    ], [], REFERENCE);
+    expect(scored[0].compliance).toBe(0);
+    expect(computeGlobalCompliance(scored)).toBe(0);
+  });
+
+  it('exclut seulement les sites non évalués de la moyenne, sans exclure une note nulle', () => {
+    const mixed = buildSiteInsights([
+      { ...DEMO_ARTISANAL_SITES[0], id: 'planned', status: 'planned', activeMiners: 1000 },
+      { ...DEMO_ARTISANAL_SITES[0], id: 'zero', status: 'suspended', authorizedMiners: 1, activeMiners: 2 },
+      { ...DEMO_ARTISANAL_SITES[0], id: 'active', status: 'active', authorizedMiners: 2, activeMiners: 2 },
+    ], [], REFERENCE);
+    expect(mixed.map(item => item.compliance)).toEqual([null, 0, 70]);
+    expect(computeGlobalCompliance(mixed)).toBe(35);
+  });
+
   it('produit 12 points mensuels avec un objectif constant', () => {
     const monthly = buildMonthlyProduction(DEMO_SITE_PRODUCTIONS, 2026, 4_500);
 

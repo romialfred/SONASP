@@ -190,10 +190,10 @@ export function computeVigilance(
   };
 }
 
-/** Indice de conformité global : moyenne des sites notés, pondérée par les artisans actifs. */
-export function computeGlobalCompliance(insights: SiteInsight[]): number {
+/** Moyenne pondérée des sites notés ; `null` si aucun site du périmètre n'est évalué. */
+export function computeGlobalCompliance(insights: SiteInsight[]): number | null {
   const scored = insights.filter((insight) => insight.compliance !== null);
-  if (scored.length === 0) return 0;
+  if (scored.length === 0) return null;
 
   const totalWeight = scored.reduce(
     (total, insight) => total + Math.max(1, insight.site.activeMiners),

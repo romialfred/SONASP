@@ -32,7 +32,7 @@ function ArtisanalSiteDetailsContent({ photoContext }: { photoContext: string })
   const [tab, setTab] = useState<string>('overview');
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [documentError, setDocumentError] = useState(false);
-  const site = sites.find(item => item.id === siteId);
+  const site = !loading && !error ? sites.find(item => item.id === siteId) : undefined;
   const reference = useMemo(() => new Date(), [sites, productions]);
   const insight = useMemo(() => site ? buildSiteInsights([site], productions, reference)[0] : null, [site, productions, reference]);
 
@@ -59,7 +59,6 @@ function ArtisanalSiteDetailsContent({ photoContext }: { photoContext: string })
   return <NationalDashboardLayout><div className="site-detail">
     <Link to="/artisan-sites" className="site-detail-back"><ArrowLeft size={16} aria-hidden="true" /> Tous les sites artisanaux</Link>
     {Boolean(location.state?.saved) && <p className="site-detail-success" role="status"><CheckCircle2 size={18} aria-hidden="true" /> Le site et ses responsables ont été enregistrés.</p>}
-    {error && <p className="site-detail-error" role="alert">{error}</p>}
     <header className="site-detail-header">
       <span className="site-detail-icon"><Pickaxe aria-hidden="true" /></span>
       <div className="site-detail-heading"><p className="site-detail-eyebrow">Référentiel des sites artisanaux · {site.code}</p><h1>{site.name}</h1>

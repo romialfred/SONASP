@@ -135,6 +135,20 @@ function ComplianceGauge({ score }: { score: number }) {
 }
 
 export default function ArtisanalSitesOverview() {
+  const { user } = useAuth();
+  // Remonter aussi le hook de lecture : sa portée ne dépend pas uniquement de la route.
+  const contextKey = JSON.stringify([
+    user?.id, user?.organization_id, user?.mining_company_id, user?.access_role_id,
+    user?.role, user?.organization_type, user?.is_active, user?.access_portal_id,
+    user?.access_portal_code, user?.actor_category_code,
+    [...(user?.capabilities || [])].sort(), [...(user?.module_codes || [])].sort(),
+    [...(user?.site_ids || [])].sort(), [...(user?.responsibilities || [])].sort(),
+    [...(user?.module_domains || [])].sort(), user && 'account_type' in user ? user.account_type : undefined,
+  ]);
+  return <ArtisanalSitesOverviewContent key={contextKey} />;
+}
+
+function ArtisanalSitesOverviewContent() {
   const navigate = useNavigate();
   const { sites, productions, loading, error, refresh } = useArtisanalSiteData();
   const { user } = useAuth();
@@ -303,6 +317,18 @@ export default function ArtisanalSitesOverview() {
           </div>
         </header>
 
+        {loading ? (
+          <section className="sites-panel" role="status" aria-live="polite" aria-busy="true">
+            <p className="sites-table__empty">Chargement des données des sites…</p>
+          </section>
+        ) : error ? (
+          <div className="sites-dashboard__error" role="alert">
+            <span>{error}</span>
+            <button type="button" className="sites-button" onClick={refresh}>
+              <RotateCcw aria-hidden="true" /> Réessayer
+            </button>
+          </div>
+        ) : <>
         <section className="sites-filters" aria-label="Filtres de supervision">
           <div className="sites-filters__date">
             <button type="button" className="sites-filter" onClick={() => setDatePanelOpen((open) => !open)} aria-expanded={datePanelOpen}>
@@ -372,8 +398,6 @@ export default function ArtisanalSitesOverview() {
             <RotateCcw aria-hidden="true" /> Réinitialiser
           </button>
         </section>
-
-        {error && <div className="sites-dashboard__error" role="alert">{error}</div>}
 
         <section className="sites-dashboard__metrics" aria-label="Indicateurs des sites artisanaux">
           <article className="sites-metric">
@@ -493,9 +517,14 @@ export default function ArtisanalSitesOverview() {
             <div className="sites-vigilance__body">
               <div className="sites-gauge">
                 <p>Indice de conformité <Info aria-hidden="true" /></p>
-                <strong>{globalCompliance} <span>/ 100</span></strong>
-                <ComplianceGauge score={globalCompliance} />
-                <small>Niveau de conformité global</small>
+                {globalCompliance === null ? <>
+                  <strong>Non évalué</strong>
+                  <small>Aucun site évalué dans le périmètre sélectionné.</small>
+                </> : <>
+                  <strong>{globalCompliance} <span>/ 100</span></strong>
+                  <ComplianceGauge score={globalCompliance} />
+                  <small>Niveau de conformité global</small>
+                </>}
               </div>
 
               <div className="sites-vigilance__alerts">
@@ -683,10 +712,9 @@ export default function ArtisanalSitesOverview() {
                 ))}
               </tbody>
             </table>
-            {!loading && visibleSites.length === 0 && (
+            {visibleSites.length === 0 && (
               <p className="sites-table__empty">Aucun site ne correspond aux filtres sélectionnés.</p>
             )}
-            {loading && <p className="sites-table__empty">Chargement des sites…</p>}
           </div>
 
           <div className="sites-table-footer">
@@ -715,6 +743,7 @@ export default function ArtisanalSitesOverview() {
             </button>
           </div>
         </section>
+        </>}
       </div>
     </NationalDashboardLayout>
   );

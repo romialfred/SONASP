@@ -27,6 +27,12 @@ const decimal = (value: number, digits = 1) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
 
 export default function ArtisanalSiteProduction() {
+  const { user } = useAuth();
+  const contextKey = JSON.stringify([user?.id, user?.organization_id, user?.mining_company_id, user?.access_role_id, user?.role, user?.organization_type, user?.is_active, user?.access_portal_id, user?.access_portal_code, user?.actor_category_code, [...(user?.capabilities || [])].sort(), [...(user?.module_codes || [])].sort(), [...(user?.site_ids || [])].sort(), [...(user?.responsibilities || [])].sort(), [...(user?.module_domains || [])].sort(), user && 'account_type' in user ? user.account_type : undefined]);
+  return <ArtisanalSiteProductionContent key={contextKey} />;
+}
+
+function ArtisanalSiteProductionContent() {
   const navigate = useNavigate();
   const { sites, productions, loading, error, refresh } = useArtisanalSiteData('Les données de production sont momentanément indisponibles.');
   const { user } = useAuth();
@@ -65,7 +71,9 @@ export default function ArtisanalSiteProduction() {
           </div>
         </header>
 
-        {error ? (
+        {loading ? (
+          <div className="sites-panel sites-table__empty" role="status">Chargement des productions…</div>
+        ) : error ? (
           <div className="sites-dashboard__error" role="alert">
             <span>{error}</span>
             <button type="button" className="sites-button" onClick={refresh}>

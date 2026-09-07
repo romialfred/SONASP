@@ -102,6 +102,36 @@ describe('ArtisanalSitesOverview', () => {
     expect(screen.getByText(/1 – 1 sur 1/)).toBeInTheDocument();
   });
 
+  it('garde le même champ de recherche, les filtres et la vue au retour d’onglet', async () => {
+    render(<ArtisanalSitesOverview />);
+    const search = await screen.findByRole('searchbox', { name: 'Rechercher un site' });
+    fireEvent.change(search, { target: { value: DEMO_ARTISANAL_SITES[0].name } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Région' }), {
+      target: { value: DEMO_ARTISANAL_SITES[0].region },
+    });
+    fireEvent.click(screen.getByRole('tab', { name: 'Régions' }));
+    mocks.loadSiteData.mockImplementation(() => new Promise(() => undefined));
+
+    for (let index = 0; index < 3; index += 1) {
+      act(() => {
+        fireEvent(window, new Event('blur'));
+        fireEvent(document, new Event('visibilitychange'));
+        fireEvent(window, new Event('focus'));
+        fireEvent(window, new Event('pageshow'));
+      });
+      expect(screen.getByRole('searchbox', { name: 'Rechercher un site' })).toBe(search);
+      expect(search).toHaveValue(DEMO_ARTISANAL_SITES[0].name);
+      expect(screen.getByRole('combobox', { name: 'Région' })).toHaveValue(DEMO_ARTISANAL_SITES[0].region);
+      expect(screen.getByRole('tab', { name: 'Régions', selected: true })).toBeInTheDocument();
+      expect(screen.queryByText('Chargement des données des sites…')).not.toBeInTheDocument();
+    }
+    expect(mocks.loadSiteData).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser' }));
+    expect(mocks.loadSiteData).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Chargement des données des sites…')).toBeInTheDocument();
+  });
+
   it('distingue deux sites de la même localité par leur nom et ouvre la bonne fiche', async () => {
     const sites = [
       { ...DEMO_ARTISANAL_SITES[0], id: 'gorom-n1', name: 'Kan-ŋe Gorom N1', locality: 'Gorom-Gorom', region: 'Sahel', code: 'SA-001' },
@@ -362,13 +392,14 @@ describe('ArtisanalSitesOverview', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
-    it.each(['navigation', 'mutation', 'focus'])('conserve la relecture par %s et masque les données jusqu’à sa réponse', async trigger => {
+    it.each(['navigation', 'mutation', 'bouton'])('conserve la relecture par %s et masque les données jusqu’à sa réponse', async trigger => {
       const next = deferred();
       mocks.loadSiteData.mockResolvedValueOnce(dataset('AVANT RELECTURE')).mockReturnValueOnce(next.promise);
       const { container, rerender } = render(<ArtisanalSitesOverview />);
       await expectSite('AVANT RELECTURE');
       if (trigger === 'navigation') { mocks.locationKey = 'return'; rerender(<ArtisanalSitesOverview />); }
-      else act(() => window.dispatchEvent(new Event(trigger === 'mutation' ? 'sonasp:artisanal-site-changed' : 'focus')));
+      else if (trigger === 'mutation') act(() => window.dispatchEvent(new Event('sonasp:artisanal-site-changed')));
+      else fireEvent.click(screen.getByRole('button', { name: 'Actualiser' }));
       expectDataHidden(container);
       expect(mocks.loadSiteData).toHaveBeenCalledTimes(2);
       await act(async () => next.resolve(dataset('APRÈS RELECTURE')));
@@ -381,7 +412,7 @@ describe('ArtisanalSitesOverview', () => {
       render(<ArtisanalSitesOverview />);
       await expectSite('INITIAL');
       fireEvent.click(screen.getByRole('button', { name: 'Actualiser' }));
-      act(() => window.dispatchEvent(new Event('focus')));
+      act(() => window.dispatchEvent(new Event('sonasp:artisanal-site-changed')));
       await expectSite('DERNIÈRE LECTURE');
       await act(async () => oldRequest.resolve(dataset('RÉPONSE OBSOLÈTE')));
       expect(screen.queryByText('RÉPONSE OBSOLÈTE')).not.toBeInTheDocument();

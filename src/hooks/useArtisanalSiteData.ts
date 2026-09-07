@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { artisanalSiteService, SITE_DATA_CHANGED } from '@/services/artisanalSiteService';
 import type { ArtisanalSite, SiteProduction } from '@/types/artisanalSite';
 
-/** Recharge au retour de navigation, au retour dans l'onglet et après une mutation. */
+/** Recharge après navigation, mutation ou demande explicite, sans interrompre un retour d’onglet. */
 export function useArtisanalSiteData(errorMessage = 'Les données des sites sont momentanément indisponibles.') {
   const location = useLocation();
   const [revision, setRevision] = useState(0);
@@ -15,10 +15,8 @@ export function useArtisanalSiteData(errorMessage = 'Les données des sites sont
 
   useEffect(() => {
     window.addEventListener(SITE_DATA_CHANGED, refresh);
-    window.addEventListener('focus', refresh);
     return () => {
       window.removeEventListener(SITE_DATA_CHANGED, refresh);
-      window.removeEventListener('focus', refresh);
     };
   }, [refresh]);
 

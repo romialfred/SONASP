@@ -33,6 +33,12 @@ function BenchControls() {
     {(['uploadError', 'readError', 'removeError', 'saveError'] as const).map((name, index) => <label key={name}><input type="checkbox" checked={simulation[name]} onChange={event => { simulation[name] = event.target.checked; update(value => value + 1); }} /> {['Refuser les dépôts simulés', 'Refuser la seconde lecture simulée', 'Refuser les retraits simulés', 'Refuser la sauvegarde simulée'][index]}</label>)}
     {(['dataError', 'dataDelay', 'emptySites'] as const).map((name, index) => <label key={name}><input type="checkbox" checked={simulation[name]} onChange={event => { simulation[name] = event.target.checked; update(value => value + 1); }} /> {['Refuser la lecture du dossier simulé', 'Retarder la lecture du dossier de 5 secondes', 'Retourner une liste de sites vide'][index]}</label>)}
     <button onClick={() => window.dispatchEvent(new Event(SITE_DATA_CHANGED))}>Relire les données simulées</button>
+    <button onClick={() => {
+      window.dispatchEvent(new Event('blur'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      window.dispatchEvent(new Event('focus'));
+      window.dispatchEvent(new Event('pageshow'));
+    }}>Retour d’onglet simulé</button>
     <button onClick={() => void selectFixtureFiles()}>Sélection QA : photo valide</button>
     <button onClick={() => void selectFixtureFiles(true)}>Sélection QA : valide + illisible</button>
     <p>Transport en mémoire : {simulation.objects.size} objet(s). Aucun serveur de données.</p>

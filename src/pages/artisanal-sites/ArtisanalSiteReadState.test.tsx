@@ -75,7 +75,7 @@ describe('Production : vrai hook, disponibilité et périmètre', () => {
       .mockResolvedValueOnce({ sites: [], productions: [] });
     render(<ArtisanalSiteProduction />);
     expect((await screen.findAllByText('Site A confidentiel')).length).toBeGreaterThan(0);
-    fireEvent(window, new Event('focus'));
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser' }));
     expect(screen.queryAllByText('Site A confidentiel')).toHaveLength(0);
     expect(screen.queryByRole('region', { name: 'Indicateurs de production' })).not.toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();

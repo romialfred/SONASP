@@ -65,6 +65,9 @@ function ArtisanalSiteProductionContent() {
             </p>
           </div>
           <div className="sites-dashboard__actions">
+            <button type="button" className="sites-button" onClick={refresh} disabled={loading}>
+              <RotateCw aria-hidden="true" /> Actualiser
+            </button>
             {canManageMiningRegistry(user) && <button type="button" className="sites-button sites-button--gold" onClick={() => navigate('/artisan-sites/nouveau')}>
               <Plus aria-hidden="true" /> Ajouter un site
             </button>}

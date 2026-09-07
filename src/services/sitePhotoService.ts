@@ -17,17 +17,21 @@ export function compressImage(file: File): Promise<string> {
       const image = new Image();
       image.onerror = () => reject(new Error('Image illisible.'));
       image.onload = () => {
-        const ratio = Math.min(1, MAX_DIMENSION / Math.max(image.width, image.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(image.width * ratio);
-        canvas.height = Math.round(image.height * ratio);
-        const context = canvas.getContext('2d');
-        if (!context) {
-          reject(new Error('Compression indisponible sur ce navigateur.'));
-          return;
+        try {
+          const ratio = Math.min(1, MAX_DIMENSION / Math.max(image.width, image.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(image.width * ratio);
+          canvas.height = Math.round(image.height * ratio);
+          const context = canvas.getContext('2d');
+          if (!context) {
+            reject(new Error('Compression indisponible sur ce navigateur.'));
+            return;
+          }
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
+        } catch {
+          reject(new Error('La préparation de la photo a échoué. Choisissez une image lisible.'));
         }
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
       };
       image.src = String(reader.result);
     };
@@ -39,13 +43,17 @@ const createPath = () => `sites/${secureRandomId()}.jpg`;
 
 /**
  * Téléverse une photo dans le bucket privé et renvoie la **référence** à stocker.
- * En l'absence de bucket (environnement local, migration non appliquée), la photo
- * compressée est conservée telle quelle en data URL.
+ * Un échec Storage n'est jamais remplacé par une référence locale présentée comme déposée.
  */
 export async function uploadSitePhoto(file: File): Promise<string> {
   const dataUrl = await compressImage(file);
   try {
-    const blob = await (await fetch(dataUrl)).blob();
+    // Conversion locale : fetch(data:) est soumis à connect-src et peut être interdit.
+    const prefix = 'data:image/jpeg;base64,';
+    if (!dataUrl.startsWith(prefix)) throw new Error('JPEG compressé invalide.');
+    const binary = atob(dataUrl.slice(prefix.length));
+    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+    const blob = new Blob([bytes], { type: 'image/jpeg' });
     const path = createPath();
     const { error } = await supabase.storage
       .from(BUCKET)
@@ -53,18 +61,30 @@ export async function uploadSitePhoto(file: File): Promise<string> {
     if (error) throw error;
     return path;
   } catch {
-    return dataUrl;
+    throw new Error('Le dépôt de la photo a échoué. Réessayez ou retirez le fichier.');
   }
 }
 
 /** Transforme une référence stockée en URL affichable (URL signée pour le bucket privé). */
 export async function resolvePhotoUrl(reference: string): Promise<string> {
-  if (!reference) return '';
+  if (!reference) throw new Error('La photo est momentanément indisponible.');
   if (reference.startsWith('data:') || reference.startsWith('http')) return reference;
   try {
-    const { data } = await supabase.storage.from(BUCKET).createSignedUrl(reference, 3600);
-    return data?.signedUrl || '';
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(reference, 3600);
+    if (error || !data?.signedUrl) throw new Error('Photo unavailable');
+    return data.signedUrl;
   } catch {
-    return '';
+    throw new Error('La photo est momentanément indisponible. Réessayez.');
+  }
+}
+
+/** Compensation des seuls dépôts créés par le formulaire courant, jamais des références historiques. */
+export async function removeUnattachedSitePhoto(reference: string): Promise<void> {
+  if (!/^sites\/[a-zA-Z0-9-]+\.jpg$/.test(reference)) throw new Error('Cette référence de photo ne peut pas être retirée du dépôt.');
+  try {
+    const { error } = await supabase.storage.from(BUCKET).remove([reference]);
+    if (error) throw error;
+  } catch {
+    throw new Error('Le retrait de la photo du dépôt a échoué. Réessayez avant de quitter.');
   }
 }

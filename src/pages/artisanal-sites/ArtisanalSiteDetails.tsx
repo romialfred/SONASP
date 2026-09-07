@@ -8,7 +8,7 @@ import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
 import { aeaExpiryDate, FORMALIZATION_LABELS, siteAeaState } from '@/lib/siteFormalization';
 import { buildSiteInsights, explainSiteCompliance } from '@/services/artisanalSiteInsights';
 import { siteAeaDocumentService } from '@/services/siteAeaDocumentService';
-import { resolvePhotoUrl } from '@/services/sitePhotoService';
+import { SitePhotoPreview } from '@/components/artisanal-sites/SitePhotoPreview';
 import './artisanal-site-details.css';
 
 const dateLabel = (value: string | null | undefined) => value && Number.isFinite(Date.parse(value))
@@ -19,13 +19,19 @@ const TABS = [{ id: 'overview', label: 'Vue d’ensemble' }, { id: 'aea', label:
 
 export default function ArtisanalSiteDetails() {
   const { siteId } = useParams();
+  const { user } = useAuth();
+  const contextKey = JSON.stringify([siteId, user?.id, user?.organization_id, user?.mining_company_id, user?.access_role_id, user?.role, user?.organization_type, user?.is_active, user?.access_portal_id, user?.access_portal_code, user?.actor_category_code, [...(user?.capabilities || [])].sort(), [...(user?.module_codes || [])].sort(), [...(user?.site_ids || [])].sort(), [...(user?.responsibilities || [])].sort(), [...(user?.module_domains || [])].sort(), user && 'account_type' in user ? user.account_type : undefined]);
+  return <ArtisanalSiteDetailsContent key={contextKey} photoContext={contextKey} />;
+}
+
+function ArtisanalSiteDetailsContent({ photoContext }: { photoContext: string }) {
+  const { siteId } = useParams();
   const location = useLocation();
   const { user } = useAuth();
   const { sites, productions, loading, error, refresh } = useArtisanalSiteData();
   const [tab, setTab] = useState<string>('overview');
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [documentError, setDocumentError] = useState(false);
-  const [photos, setPhotos] = useState<string[]>([]);
   const site = sites.find(item => item.id === siteId);
   const reference = useMemo(() => new Date(), [sites, productions]);
   const insight = useMemo(() => site ? buildSiteInsights([site], productions, reference)[0] : null, [site, productions, reference]);
@@ -33,11 +39,9 @@ export default function ArtisanalSiteDetails() {
   useEffect(() => { setTab('overview'); }, [siteId]);
   useEffect(() => {
     let current = true;
-    setDocumentUrl(null); setDocumentError(false); setPhotos([]);
+    setDocumentUrl(null); setDocumentError(false);
     if (site?.aea?.documentPath) siteAeaDocumentService.url(site.aea.documentPath)
       .then(url => { if (current) setDocumentUrl(url); }).catch(() => { if (current) setDocumentError(true); });
-    if (site?.photos.length) Promise.all(site.photos.map(resolvePhotoUrl))
-      .then(urls => { if (current) setPhotos(urls.filter(Boolean)); }).catch(() => undefined);
     return () => { current = false; };
   }, [site]);
 
@@ -82,7 +86,7 @@ export default function ArtisanalSiteDetails() {
         </article>
         <article className="site-detail-card"><h2><Users size={20} aria-hidden="true" /> Responsables du site</h2>{[site.manager, site.collectionOfficer].map(contact => <div className="site-detail-contact" key={contact.role}><small>{contact.role === 'site_manager' ? 'Responsable du site' : 'Chargé de la collecte'}</small><strong>{contact.fullName || 'Non renseigné'}</strong><span>{contact.phone || 'Téléphone non renseigné'}</span>{contact.email && <span>{contact.email}</span>}</div>)}</article>
       </div>
-      {photos.length > 0 && <article className="site-detail-card"><h2>Photos du site</h2><div className="site-detail-photos">{photos.map((url, index) => <img key={url} src={url} alt={`Vue ${index + 1} du site ${site.name}`} />)}</div></article>}
+      {site.photos.length > 0 && <article className="site-detail-card"><h2>Photos du site</h2><div className="site-detail-photos">{site.photos.map((reference, index) => <SitePhotoPreview key={`${reference}:${index}`} reference={reference} label={`Photo ${index + 1} du site ${site.name}`} contextKey={photoContext} height={190} />)}</div></article>}
       {site.notes && <article className="site-detail-card"><h2>Observations</h2><p className="site-detail-notes">{site.notes}</p></article>}
       <p className="site-detail-footnote">Créé le {dateLabel(site.createdAt)} · Mis à jour le {dateLabel(site.updatedAt)}</p>
     </section>

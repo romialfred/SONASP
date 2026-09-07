@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Ban,
@@ -22,6 +22,7 @@ import {
   Search,
   StickyNote,
   Trash2,
+  RefreshCw,
   UserRoundCog,
 } from 'lucide-react';
 import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
@@ -30,7 +31,8 @@ import { BURKINA_FASO_REGIONS } from '@/data/burkinaFasoData';
 import { artisanalSiteService } from '@/services/artisanalSiteService';
 import { generateSiteCode } from '@/services/artisanalSiteCode';
 import { messageErreurUtilisateur } from '@/lib/presentError';
-import { MAX_SITE_PHOTOS, resolvePhotoUrl, uploadSitePhoto } from '@/services/sitePhotoService';
+import { MAX_SITE_PHOTOS, removeUnattachedSitePhoto, uploadSitePhoto } from '@/services/sitePhotoService';
+import { SitePhotoPreview } from '@/components/artisanal-sites/SitePhotoPreview';
 import type { ArtisanalSite, ArtisanalSiteInput, ArtisanalSiteStatus } from '@/types/artisanalSite';
 import { useAuth } from '@/contexts/AuthContext';
 import { canManageMiningRegistry } from '@/lib/miningRegistryAccess';
@@ -149,6 +151,15 @@ const createDefaultForm = (): ArtisanalSiteInput => ({
 
 export default function ArtisanalSiteForm() {
   const { siteId } = useParams<{ siteId: string }>();
+  const { user } = useAuth();
+  const contextKey = JSON.stringify([siteId, user?.id, user?.organization_id, user?.mining_company_id, user?.access_role_id, user?.role, user?.organization_type, user?.is_active, user?.access_portal_id, user?.access_portal_code, user?.actor_category_code, [...(user?.capabilities || [])].sort(), [...(user?.module_codes || [])].sort(), [...(user?.site_ids || [])].sort(), [...(user?.responsibilities || [])].sort(), [...(user?.module_domains || [])].sort(), user && 'account_type' in user ? user.account_type : undefined]);
+  return <ArtisanalSiteFormContent key={contextKey} />;
+}
+
+type PendingPhoto = { id: number; file: File; failed: boolean };
+
+function ArtisanalSiteFormContent() {
+  const { siteId } = useParams<{ siteId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [aeaFile, setAeaFile] = useState<File | null>(null);
@@ -156,12 +167,34 @@ export default function ArtisanalSiteForm() {
   const [form, setForm] = useState<ArtisanalSiteInput>(createDefaultForm);
   const [sites, setSites] = useState<ArtisanalSite[]>([]);
   const [siteSearch, setSiteSearch] = useState('');
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [cleaningPhotos, setCleaningPhotos] = useState(false);
+  const photoOperation = useRef(false);
+  const nextPhotoId = useRef(0);
+  const mounted = useRef(true);
+  const freshPhotos = useRef(new Set<string>());
+  // Après un appel de sauvegarde, un échec réseau ne prouve pas l'absence de rattachement.
+  const submittedPhotos = useRef(new Set<string>());
   const [loading, setLoading] = useState(Boolean(siteId));
   const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    mounted.current = true;
+    const fresh = freshPhotos.current;
+    const submitted = submittedPhotos.current;
+    return () => {
+      mounted.current = false;
+      for (const path of fresh) if (!submitted.has(path)) {
+        void removeUnattachedSitePhoto(path).catch(() => {
+          console.warn('Le nettoyage d’une photo non enregistrée n’a pas pu être confirmé.');
+        });
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -236,16 +269,6 @@ export default function ArtisanalSiteForm() {
   }, [form.region, siteId, sites]);
 
   useEffect(() => {
-    let mounted = true;
-    Promise.all(form.photos.map((photo) => resolvePhotoUrl(photo)))
-      .then((urls) => mounted && setPhotoPreviews(urls))
-      .catch(() => mounted && setPhotoPreviews([]));
-    return () => {
-      mounted = false;
-    };
-  }, [form.photos]);
-
-  useEffect(() => {
     let current = true;
     setAeaUrl(null);
     if (form.aea?.documentPath) siteAeaDocumentService.url(form.aea.documentPath)
@@ -303,31 +326,76 @@ export default function ArtisanalSiteForm() {
     });
   };
 
-  const addPhotos = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = [...(event.target.files || [])];
-    event.target.value = '';
-    if (files.length === 0) return;
-
-    const room = MAX_SITE_PHOTOS - form.photos.length;
-    if (room <= 0) {
-      setError(`Trois photos au maximum par site.`);
+  const uploadPhotos = async (entries: PendingPhoto[]) => {
+    if (photoOperation.current || saving || loading || loadFailed || !canManageMiningRegistry(user)) return;
+    photoOperation.current = true;
+    setUploading(true); setPhotoError(null);
+    const selected = new Set(entries.map(entry => entry.id));
+    setPendingPhotos(current => current.map(entry => selected.has(entry.id) ? { ...entry, failed: false } : entry));
+    const results = await Promise.allSettled(entries.map(entry => uploadSitePhoto(entry.file)));
+    const successes = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
+    if (!mounted.current) {
+      await Promise.allSettled(successes.map(path => removeUnattachedSitePhoto(path).catch(() => {
+        console.warn('Le nettoyage d’une photo non enregistrée n’a pas pu être confirmé.');
+      })));
       return;
     }
+    successes.forEach(path => freshPhotos.current.add(path));
+    setForm(current => ({ ...current, photos: [...current.photos, ...successes] }));
+    const succeeded = new Set(entries.filter((_, index) => results[index].status === 'fulfilled').map(entry => entry.id));
+    setPendingPhotos(current => current.filter(entry => !succeeded.has(entry.id)).map(entry => selected.has(entry.id) ? { ...entry, failed: true } : entry));
+    if (results.some(result => result.status === 'rejected')) setPhotoError('Certaines photos n’ont pas été déposées. Réessayez ou retirez les fichiers en échec avant d’enregistrer le site.');
+    photoOperation.current = false;
+    setUploading(false);
+  };
 
-    setUploading(true);
-    setError(null);
+  const addPhotos = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = [...(event.target.files || [])];
+    event.target.value = '';
+    if (files.length === 0 || photoOperation.current || saving || loading || loadFailed || !canManageMiningRegistry(user)) return;
+
+    const room = MAX_SITE_PHOTOS - form.photos.length - pendingPhotos.length;
+    if (files.length > room) {
+      setPhotoError(`Trois photos au maximum par site. Sélectionnez au plus ${Math.max(0, room)} fichier(s) supplémentaire(s).`);
+      return;
+    }
+    const entries = files.map(file => ({ id: ++nextPhotoId.current, file, failed: false }));
+    setPendingPhotos(current => [...current, ...entries]);
+    void uploadPhotos(entries);
+  };
+
+  const removePhoto = async (reference: string, index: number) => {
+    if (photoOperation.current || saving) return;
+    photoOperation.current = true; setCleaningPhotos(true); setPhotoError(null);
     try {
-      const references = await Promise.all(files.slice(0, room).map((file) => uploadSitePhoto(file)));
-      setForm((current) => ({ ...current, photos: [...current.photos, ...references].slice(0, MAX_SITE_PHOTOS) }));
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "L'ajout de la photo a échoué.");
+      if (freshPhotos.current.has(reference) && !submittedPhotos.current.has(reference)) {
+        await removeUnattachedSitePhoto(reference);
+        freshPhotos.current.delete(reference);
+      }
+      if (mounted.current) setForm(current => ({ ...current, photos: current.photos.filter((_, position) => position !== index) }));
+    } catch {
+      if (mounted.current) setPhotoError('Le retrait de la photo a échoué. Elle est conservée dans le formulaire ; réessayez.');
     } finally {
-      setUploading(false);
+      photoOperation.current = false;
+      if (mounted.current) setCleaningPhotos(false);
     }
   };
 
-  const removePhoto = (index: number) => {
-    setForm((current) => ({ ...current, photos: current.photos.filter((_, position) => position !== index) }));
+  const leaveForm = async (destination: string) => {
+    if (photoOperation.current || saving) return;
+    photoOperation.current = true; setCleaningPhotos(true); setPhotoError(null);
+    const paths = [...freshPhotos.current].filter(path => !submittedPhotos.current.has(path));
+    const outcomes = await Promise.allSettled(paths.map(removeUnattachedSitePhoto));
+    const removed = new Set(paths.filter((_, index) => outcomes[index].status === 'fulfilled'));
+    removed.forEach(path => freshPhotos.current.delete(path));
+    if (!mounted.current) return;
+    setForm(current => ({ ...current, photos: current.photos.filter(path => !removed.has(path)) }));
+    photoOperation.current = false; setCleaningPhotos(false);
+    if (outcomes.some(result => result.status === 'rejected')) {
+      setPhotoError('Le retrait des photos non enregistrées a échoué. Réessayez avant de quitter.');
+      return;
+    }
+    navigate(destination);
   };
 
   const validate = () => {
@@ -355,7 +423,11 @@ export default function ArtisanalSiteForm() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (saving || uploading || loading || loadFailed || !canManageMiningRegistry(user)) return;
+    if (saving || photoOperation.current || loading || loadFailed || !canManageMiningRegistry(user)) return;
+    if (pendingPhotos.length) {
+      setError('Réessayez ou retirez les photos en échec avant d’enregistrer le site.');
+      return;
+    }
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -365,13 +437,17 @@ export default function ArtisanalSiteForm() {
     setSaving(true);
     setError(null);
     try {
+      form.photos.forEach(path => { if (freshPhotos.current.has(path)) submittedPhotos.current.add(path); });
       const saved = await artisanalSiteService.saveSite(form, aeaFile);
+      freshPhotos.current.clear();
+      if (!mounted.current) return;
       navigate(`/artisan-sites/${saved.id}`, { state: { saved: true } });
     } catch (reason) {
+      if (!mounted.current) return;
       setError(messageErreurUtilisateur(reason));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   };
 
@@ -652,24 +728,34 @@ export default function ArtisanalSiteForm() {
                   tone="slate"
                 >
                   <div className="site-form__photos">
-                    {photoPreviews.map((preview, index) => (
-                      <figure key={form.photos[index] || index} className="site-form__photo">
-                        {preview ? <img src={preview} alt={`Photo ${index + 1} du site`} /> : <span className="site-form__photo-missing">Aperçu indisponible</span>}
-                        <button type="button" onClick={() => removePhoto(index)} aria-label={`Retirer la photo ${index + 1}`}>
+                    {form.photos.map((reference, index) => (
+                      <figure key={`${reference}:${index}`} className="site-form__photo">
+                        <SitePhotoPreview reference={reference} label={`Photo ${index + 1} du site`} contextKey={siteId || 'new'} />
+                        <button type="button" onClick={() => void removePhoto(reference, index)} aria-label={`Retirer la photo ${index + 1}`} disabled={uploading || cleaningPhotos || saving}>
                           <Trash2 aria-hidden="true" />
                         </button>
                       </figure>
                     ))}
 
-                    {form.photos.length < MAX_SITE_PHOTOS && (
+                    {pendingPhotos.map(entry => <div key={entry.id} className="site-form__photo-add" style={{ cursor: 'default', minWidth: 0, padding: 8, borderColor: entry.failed ? '#b3261e' : undefined }}>
+                      <span title={entry.file.name} style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.file.name}</span>
+                      <small role={entry.failed ? 'alert' : 'status'}>{entry.failed ? 'Dépôt échoué' : 'Dépôt en cours…'}</small>
+                      {entry.failed && <div style={{ display: 'flex', gap: 8 }}>
+                        <button type="button" className="site-text-button" onClick={() => void uploadPhotos([entry])} disabled={uploading || cleaningPhotos || saving} aria-label={`Réessayer le dépôt de ${entry.file.name}`}><RefreshCw size={14} aria-hidden="true" /> Réessayer</button>
+                        <button type="button" className="site-text-button" disabled={uploading || cleaningPhotos || saving} onClick={() => { setPendingPhotos(current => current.filter(photo => photo.id !== entry.id)); setPhotoError(null); }} aria-label={`Retirer le fichier ${entry.file.name}`}>Retirer</button>
+                      </div>}
+                    </div>)}
+                    {form.photos.length + pendingPhotos.length < MAX_SITE_PHOTOS && (
                       <label className="site-form__photo-add">
                         {uploading ? <Loader2 className="is-spinning" aria-hidden="true" /> : <ImagePlus aria-hidden="true" />}
                         <span>{uploading ? 'Traitement…' : 'Ajouter une photo'}</span>
                         <small>JPEG ou PNG · {form.photos.length}/{MAX_SITE_PHOTOS}</small>
-                        <input type="file" accept="image/*" multiple onChange={addPhotos} disabled={uploading} />
+                        <input type="file" accept="image/*" multiple aria-label="Ajouter des photos du site" onChange={addPhotos} disabled={uploading || cleaningPhotos || saving || loading || loadFailed} />
                       </label>
                     )}
                   </div>
+                  {photoError && <p className="site-form__error" role="alert">{photoError}</p>}
+                  {pendingPhotos.length > 0 && <p className="site-form__note">Les photos réussies sont conservées. Les fichiers en échec doivent être repris ou retirés avant la sauvegarde.</p>}
                 </Section>
 
                 <Section
@@ -721,8 +807,8 @@ export default function ArtisanalSiteForm() {
                 </Section>
 
                 <footer className="site-form__actions">
-                  <button type="button" onClick={() => navigate('/artisan-sites')}>Annuler</button>
-                  <button type="submit" className="is-primary" disabled={saving || uploading || loading || loadFailed}>
+                  <button type="button" onClick={() => void leaveForm('/artisan-sites')} disabled={saving || uploading || cleaningPhotos}>Annuler</button>
+                  <button type="submit" className="is-primary" disabled={saving || uploading || cleaningPhotos || loading || loadFailed}>
                     {saving ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Save aria-hidden="true" />}
                     {saving ? 'Enregistrement…' : 'Enregistrer le site'}
                   </button>
@@ -756,7 +842,7 @@ export default function ArtisanalSiteForm() {
                     <button
                       type="button"
                       className={site.id === siteId ? 'is-current' : ''}
-                      onClick={() => navigate(`/artisan-sites/${site.id}`)}
+                      onClick={() => void leaveForm(`/artisan-sites/${site.id}`)}
                     >
                       <span className="site-form__site-head">
                         <strong>{site.name}</strong>

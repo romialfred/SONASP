@@ -214,11 +214,16 @@
     {
       "file": "src/services/sitePhotoService.ts",
       "bucket": "artisanal-sites",
-      "callers": [],
+      "callers": [
+        "src/pages/artisanal-sites/ArtisanalSiteForm.tsx",
+        "src/components/artisanal-sites/SitePhotoPreview.tsx"
+      ],
       "priority": "P3",
-      "status": "browser-reencoded-jpeg-private-signed-read-but-upload-still-direct",
+      "status": "browser-reencoded-jpeg-private-signed-read-upload-and-unattached-compensation-delete-still-direct",
+      "reviewedAt": "2026-09-07",
+      "reviewNote": "SITE-DOC-007 : retrait compensatoire direct des seuls nouveaux dépôts du formulaire jamais soumis à une sauvegarde ; références historiques et sauvegardes au résultat incertain protégées. Politiques Storage inchangées.",
       "directClientUpload": true,
-      "directClientDelete": false,
+      "directClientDelete": true,
       "getPublicUrl": false
     },
     {

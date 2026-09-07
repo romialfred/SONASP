@@ -1,0 +1,62 @@
+[
+  {
+    "profile": "collector",
+    "brand": "FASO SANAMA — SONASP",
+    "brokenImages": [],
+    "main": "Collecteur\nCollecteur de vérification\n\nArtisans et sites assignés · SONASP\n\nEnregistrer une vente\nActualiser\n\nVos ventes sont soumises à l’approbation",
+    "scroll": 1536,
+    "size": [
+      1536,
+      1024
+    ],
+    "theme": "collector"
+  },
+  {
+    "profile": "customer",
+    "brand": "FASO SANAMA — SONASP",
+    "brokenImages": [],
+    "main": "Tableaux de bord\n/\nTableau de bord client\nTableau de bord client\n\nCommandes passées, validations attendues et montants engagés.\n\nOuvrir les ventes\nCom",
+    "scroll": 1536,
+    "size": [
+      1536,
+      1024
+    ],
+    "theme": "customer"
+  },
+  {
+    "profile": "factory",
+    "brand": "FASO SANAMA — SONASP",
+    "brokenImages": [],
+    "main": "Tableaux de bord\n/\nTableau de bord usine\nTableau de bord usine\n\nProduction journalière déclarée et préparations d’expédition en cours.\n\nOuvrir les exp",
+    "scroll": 1536,
+    "size": [
+      1536,
+      1024
+    ],
+    "theme": "factory"
+  },
+  {
+    "profile": "airport",
+    "brand": "FASO SANAMA — SONASP",
+    "brokenImages": [],
+    "main": "Tableaux de bord\n/\nTableau de bord aéroportuaire\nTableau de bord aéroportuaire\n\nExpéditions de fret au départ et réceptions à confirmer.\n\nOuvrir le fr",
+    "scroll": 1536,
+    "size": [
+      1536,
+      1024
+    ],
+    "theme": "airport"
+  },
+  {
+    "profile": "refinery",
+    "brand": "FASO SANAMA — SONASP",
+    "brokenImages": [],
+    "main": "Tableaux de bord\n/\nTableau de bord raffinerie\nTableau de bord raffinerie\n\nLots reçus à traiter, teneur constatée et stock affiné disponible.\n\nOuvrir l",
+    "scroll": 1536,
+    "size": [
+      1536,
+      1024
+    ],
+    "theme": "refinery"
+  }
+]

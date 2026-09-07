@@ -5,6 +5,7 @@ import { TROY_OZ_GRAMS } from '@/constants/goldConstants';
 export type TransactionStatus = 'validated' | 'control' | 'pending';
 
 export interface DashboardTransaction {
+  id?: string;
   reference: string;
   actor: string;
   type: string;
@@ -53,6 +54,7 @@ export interface NationalDashboardData {
 }
 
 export interface RawSale {
+  id?: string;
   sale_number?: string | null;
   quantity_oz?: number | null;
   total_amount?: number | null;
@@ -80,8 +82,8 @@ export const PENDING_STATUSES = new Set(['draft', 'pending', 'pending_approval',
 
 const ORIGIN_LABELS: Array<{ key: string; name: string; color: string }> = [
   { key: 'mining_company', name: 'Mines industrielles', color: '#dda000' },
-  { key: 'stakeholder', name: 'Comptoirs', color: '#10976b' },
-  { key: 'artisan', name: 'Artisans miniers', color: '#3975d6' },
+  { key: 'stakeholder', name: 'Comptoirs', color: '#f6dfaa' },
+  { key: 'artisan', name: 'Artisans miniers', color: '#cbd3de' },
 ];
 
 export const EMPTY_DASHBOARD: NationalDashboardData = {
@@ -202,8 +204,9 @@ export function originShares(sales: RawSale[]): OriginShare[] {
 }
 
 export function buildTransactions(sales: RawSale[], limit = 6): DashboardTransaction[] {
-  return sales.slice(0, limit).map((sale, index) => ({
-    reference: sale.sale_number || `VTE-${String(index + 1).padStart(4, '0')}`,
+  return sales.slice(0, limit).map((sale) => ({
+    id: sale.id,
+    reference: sale.sale_number || 'Référence non renseignée',
     actor: customerName(sale.customers),
     type: sale.seller_type === 'artisan' ? 'Collecte' : 'Vente locale',
     quantity: Number(sale.quantity_oz || 0),
@@ -214,7 +217,7 @@ export function buildTransactions(sales: RawSale[], limit = 6): DashboardTransac
 }
 
 const SALE_COLUMNS =
-  'sale_number, quantity_oz, total_amount, gross_proceeds, royalty_amount, sale_date, created_at, status, seller_type, customers(name)';
+  'id, sale_number, quantity_oz, total_amount, gross_proceeds, royalty_amount, sale_date, created_at, status, seller_type, customers(name)';
 
 /**
  * Charge le tableau de bord national.
@@ -223,8 +226,6 @@ const SALE_COLUMNS =
  * l'écran affichait comme s'il s'agissait de statistiques nationales réelles.
  */
 export async function loadNationalDashboard(debut: string, fin: string): Promise<NationalDashboardData> {
-  const debutGraphique = new Date(`${fin}T00:00:00`);
-  debutGraphique.setMonth(debutGraphique.getMonth() - 11, 1);
   const precedente = previousWindow(debut, fin);
 
   const [ventes, productions, stock, ventesPrecedentes, productionsPrecedentes, cartes, artisans] =
@@ -233,7 +234,7 @@ export async function loadNationalDashboard(debut: string, fin: string): Promise
     supabase
       .from('daily_production')
       .select('production_date, estimated_oz, pure_gold_grams')
-      .gte('production_date', debutGraphique.toISOString().slice(0, 10))
+      .gte('production_date', debut)
       .lte('production_date', fin)
       .order('production_date', { ascending: true }),
     supabase.from('gold_inventory').select('quantity_available_oz').gt('quantity_available_oz', 0),
@@ -275,12 +276,19 @@ export async function loadNationalDashboard(debut: string, fin: string): Promise
   const productionsRetenues = lignesProduction || [];
 
   // Seules les productions comprises dans la période retenue alimentent l'indicateur ;
-  // la requête remonte douze mois pour le graphique d'évolution.
+  // le graphique utilise exactement les mêmes bornes que les indicateurs.
   const productionsPeriode = productionsRetenues.filter(
     (production) => (production.production_date || '') >= debut && (production.production_date || '') <= fin
   );
 
-  const mois = createEmptyMonths(new Date(`${fin}T00:00:00`));
+  const mois: MonthlyMetric[] = [];
+  const cursor = new Date(`${debut}T00:00:00`);
+  cursor.setDate(1);
+  const last = new Date(`${fin}T00:00:00`);
+  while (cursor <= last) {
+    mois.push({ month: monthKey(cursor.toISOString())!, volume: 0, value: 0 });
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
   const indexMois = new Map(mois.map((metrique) => [metrique.month, metrique]));
   ventesRetenues.forEach((vente) => {
     const metrique = indexMois.get(monthKey(vente.sale_date || vente.created_at) || '');
@@ -313,7 +321,7 @@ export async function loadNationalDashboard(debut: string, fin: string): Promise
     transactionsCount: ventesRetenues.length,
     pendingCount: ventesRetenues.filter((vente) => PENDING_STATUSES.has(vente.status || '')).length,
     monthlyMetrics: mois,
-    transactions: buildTransactions(ventesRetenues),
+    transactions: buildTransactions(ventesRetenues, ventesRetenues.length),
     origins: originShares(ventesRetenues),
     collectedGoldTrend: lignesProductionPrecedente === null ? null : variation(collectedGold, collecteePrecedente),
     salesValueTrend: lignesVentesPrecedentes === null ? null : variation(salesValue, ventesValeurPrecedente),

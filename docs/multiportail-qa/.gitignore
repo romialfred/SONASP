@@ -1,0 +1,7 @@
+*.log
+*-tests.json
+focused*.json
+final-*.json
+captures/collector.png
+captures/live-*.png
+publication.local.json

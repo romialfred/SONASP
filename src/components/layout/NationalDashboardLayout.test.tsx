@@ -94,7 +94,7 @@ describe('NationalDashboardLayout', () => {
     });
   });
 
-  it('utilise le logo seul et une sidebar réduisible', async () => {
+  it('aligne les deux identités au-dessus de la sidebar réduisible', async () => {
     const user = userEvent.setup();
     const { container } = render(
       <MemoryRouter initialEntries={['/dashboard']}>
@@ -107,13 +107,13 @@ describe('NationalDashboardLayout', () => {
     expect(screen.getAllByTestId('app-sidebar')[0]).toBeInTheDocument();
     expect(screen.getByTestId('app-header')).toBeInTheDocument();
     expect(screen.getByTestId('app-footer')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Plateforme SONASP' })).toBeInTheDocument();
-    expect(screen.getByText('Collecte, traçabilité et valorisation de l’or')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Plateforme Nationale de Traçabilité de l’Or' })).toBeInTheDocument();
+    expect(screen.getByText('Production, collecte, commercialisation et suivi des recettes')).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: /société minière/i })).not.toBeInTheDocument();
     // La barre laterale n'affiche que le logo : la raison sociale appartient au pied de page.
     const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
     expect(within(sidebar).queryByText(/Société Nationale/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('contentinfo')).toHaveTextContent(/Société Nationale des Substances Précieuses/i);
+    expect(screen.getByRole('contentinfo')).toHaveTextContent(/FASO SANAMA/i);
     expect(screen.getByText('Direction SONASP')).toBeInTheDocument();
     // Les sections métier autorisées structurent la navigation Direction.
     ['Sites artisanaux & Artisans', 'Mine industrielle', 'Vente & achat d’or', 'Raffinage & stocks',
@@ -212,10 +212,8 @@ describe('NationalDashboardLayout', () => {
 
     expect(screen.getByTestId('app-shell')).toHaveClass('is-dgi');
     expect(screen.getAllByTestId('app-sidebar')[0]).toHaveClass('is-dgi');
-    expect(screen.getAllByRole('img', { name: 'SONASP' })[0]).toHaveAttribute('src', '/sonasp-logo-clair.png');
-    expect(screen.getByText('PORTAIL DGI')).toBeInTheDocument();
-    expect(screen.getByText('Direction Générale des Impôts')).toBeInTheDocument();
-    expect(screen.getByText(/MINISTÈRE DE L’ÉCONOMIE/)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Finances · DGI' })).toHaveAttribute('src', '/institutional/armoiries-burkina-faso.png');
+    expect(screen.getByLabelText('Portail Finances · DGI')).toBeInTheDocument();
     expect(screen.getByText('Contrôleur fiscal DGI')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Contrôle fiscal' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Paiements & recettes' })).toBeInTheDocument();
@@ -246,17 +244,15 @@ describe('NationalDashboardLayout', () => {
 
     expect(screen.getByTestId('app-shell')).toHaveClass('is-dgmg');
     expect(screen.getAllByTestId('app-sidebar')[0]).toHaveClass('is-dgmg');
-    expect(screen.getAllByRole('img', { name: 'SONASP' })[0]).toHaveAttribute('src', '/sonasp_logo.png');
-    expect(screen.getByText('PORTAIL DGMG')).toBeInTheDocument();
-    expect(screen.getByText('Direction Générale des Mines et de la Géologie')).toBeInTheDocument();
-    expect(screen.getByText('MINISTÈRE DES MINES')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Mines · DGMG' })).toHaveAttribute('src', '/institutional/armoiries-burkina-faso.png');
+    expect(screen.getByLabelText('Portail Mines · DGMG')).toBeInTheDocument();
     expect(screen.getByText('Agent DGMG de test')).toBeInTheDocument();
     expect(screen.getByText('Superviseur réglementaire')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Supervision & régulation' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Vue d’ensemble' })).toHaveClass('is-current');
     expect(screen.queryByRole('link', { name: 'Tableau de bord' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Cours de l’or' })).toBeInTheDocument();
-    expect(screen.getByRole('contentinfo')).toHaveTextContent('Plateforme nationale de traçabilité de l’or');
+    expect(screen.getByRole('contentinfo')).toHaveTextContent('FASO SANAMA');
   });
 
   it('rend tous les modules au Owner même sans périmètre explicite', () => {

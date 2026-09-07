@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   AlertCircle, AlertTriangle, ArrowDown, ArrowUp, Bell, Boxes, CalendarDays, ChevronDown,
-  ChevronRight, Coins, Download, FileCheck2, Filter, Percent, RefreshCw,
-  SlidersHorizontal, Users, Workflow, X,
+  ChevronRight, Download, FileCheck2, Filter, Percent, RefreshCw,
+  SlidersHorizontal, Users, X,
 } from 'lucide-react';
 import {
   Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
@@ -16,8 +16,10 @@ import {
   type NationalDashboardData,
 } from './nationalDashboardData';
 import './global-dashboard-enhanced.css';
+import { GoldBarsIcon } from '@/components/layout/PortalIdentity';
 
 type ChartMode = 'volume' | 'value';
+const DASHBOARD_TABS = ['Vue d’ensemble', 'Production & collecte', 'Ventes & recettes', 'Traçabilité'] as const;
 
 function formatNumber(value: number, digits = 2) {
   return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
@@ -90,6 +92,7 @@ export function GlobalDashboardEnhanced() {
 
   const [data, setData] = useState<NationalDashboardData>(EMPTY_DASHBOARD);
   const [isRefreshing, setIsRefreshing] = useState(true);
+  const [activeTab, setActiveTab] = useState(0);
   const [chartMode, setChartMode] = useState<ChartMode>('volume');
   const [startDate, setStartDate] = useState(periode.debut);
   const [endDate, setEndDate] = useState(periode.fin);
@@ -97,22 +100,30 @@ export function GlobalDashboardEnhanced() {
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [pendingOnly, setPendingOnly] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const requestVersion = useRef(0);
 
   const loadDashboardData = useCallback(async () => {
+    const version = ++requestVersion.current;
     if (startDate > endDate) return;
     setIsRefreshing(true);
     const resultat = await loadNationalDashboard(startDate, endDate);
+    if (version !== requestVersion.current) return;
     setData(resultat);
     setUpdatedAt(new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date()));
     setIsRefreshing(false);
   }, [endDate, startDate]);
 
-  useEffect(() => { void loadDashboardData(); }, [loadDashboardData]);
+  useEffect(() => {
+    void loadDashboardData();
+    return () => { requestVersion.current += 1; };
+  }, [loadDashboardData]);
 
   const visibleTransactions = useMemo(
     () => pendingOnly ? data.transactions.filter((transaction) => transaction.status === 'pending') : data.transactions,
     [data.transactions, pendingOnly],
   );
+  const displayMetric = (source: string, value: string) => isRefreshing || data.unavailable.includes(source) ? '—' : value;
+  const chartUnavailable = isRefreshing || data.unavailable.includes(chartMode === 'volume' ? 'la production' : 'les ventes');
   const chartDataKey = chartMode === 'volume' ? 'volume' : 'value';
   const periodeInvalide = startDate > endDate;
 
@@ -124,14 +135,21 @@ export function GlobalDashboardEnhanced() {
     const csv = rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(';')).join('\n');
     const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
-    link.href = url; link.download = `tableau-de-bord-national-${endDate}.csv`; link.click(); URL.revokeObjectURL(url);
+    link.href = url;
+    link.download = `tableau-de-bord-national-${endDate}.csv`;
+    link.hidden = true;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
     <NationalDashboardLayout>
       <div className="national-dashboard">
+        <nav className="national-dashboard__breadcrumb" aria-label="Fil d’Ariane"><Link to="/dashboard">Accueil</Link><span>/</span><span>Tableau de bord</span></nav>
         <section className="national-dashboard__intro" aria-labelledby="national-dashboard-title">
-          <div><h2 id="national-dashboard-title">Tableau de bord national</h2><p>Vue consolidée de la collecte, des stocks et des ventes d’or</p></div>
+          <div><h2 id="national-dashboard-title">Tableau de bord national</h2><p>Production, collecte, ventes et redevances du secteur minier</p></div>
           <div className="national-dashboard__controls">
             <div className="national-dashboard__control-popover">
               <button type="button" className="national-dashboard__control national-dashboard__date-control" onClick={() => { setDatePanelOpen((open) => !open); setFilterPanelOpen(false); }} aria-expanded={datePanelOpen}>
@@ -168,62 +186,70 @@ export function GlobalDashboardEnhanced() {
         )}
 
         <section className="national-dashboard__metrics" aria-label="Indicateurs nationaux">
-          <article className="national-metric-card national-metric-card--gold"><span className="national-metric-card__icon"><Workflow aria-hidden="true" /></span><div><h3>Or collecté</h3><strong>{formatNumber(data.collectedGold)} oz</strong></div><Tendance valeur={data.collectedGoldTrend} legende="vs période précédente" /></article>
-          <article className="national-metric-card national-metric-card--green"><span className="national-metric-card__icon"><FileCheck2 aria-hidden="true" /></span><div><h3>Valeur des ventes</h3><strong>{formatCompactFcfa(data.salesValue)}</strong></div><Tendance valeur={data.salesValueTrend} legende="vs période précédente" /></article>
-          <article className="national-metric-card national-metric-card--gold"><span className="national-metric-card__icon"><Boxes aria-hidden="true" /></span><div><h3>Stock disponible</h3><strong>{formatNumber(data.availableStock)} oz</strong></div>
-            {data.stockShare === null
+          <article className="national-metric-card national-metric-card--gold"><span className="national-metric-card__icon"><GoldBarsIcon /></span><div><h3>Or collecté</h3><strong>{displayMetric('la production', formatNumber(data.collectedGold))}<small>oz</small></strong></div><Tendance valeur={data.collectedGoldTrend} legende="vs période précédente" /></article>
+          <article className="national-metric-card national-metric-card--green"><span className="national-metric-card__icon"><FileCheck2 aria-hidden="true" /></span><div><h3>Valeur des ventes</h3><strong>{displayMetric('les ventes', formatCompactFcfa(data.salesValue).replace(' FCFA', ''))}<small>FCFA</small></strong></div><Tendance valeur={data.salesValueTrend} legende="vs période précédente" /></article>
+          <article className="national-metric-card national-metric-card--gold"><span className="national-metric-card__icon"><Boxes aria-hidden="true" /></span><div><h3>Stock disponible</h3><strong>{displayMetric('le stock', formatNumber(data.availableStock))}<small>oz</small></strong></div>
+            {data.unavailable.includes('le stock') || data.unavailable.includes('la production')
+              ? <p className="is-muted">Source indisponible</p>
+              : data.stockShare === null
               ? <p className="is-muted">Part non calculable sans collecte</p>
               : <p className="is-gold">{new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(data.stockShare)} % <span>de la collecte</span></p>}
           </article>
-          <article className="national-metric-card national-metric-card--green"><span className="national-metric-card__icon"><Percent aria-hidden="true" /></span><div><h3>Redevances dues</h3><strong>{formatCompactFcfa(data.royalties)}</strong></div>
+          <article className="national-metric-card national-metric-card--green"><span className="national-metric-card__icon"><Percent aria-hidden="true" /></span><div><h3>Redevances dues</h3><strong>{displayMetric('les ventes', formatCompactFcfa(data.royalties).replace(' FCFA', ''))}<small>FCFA</small></strong></div>
             {/* Taux constaté sur les ventes de la période, et non un taux annoncé de 3 %. */}
-            {data.royaltyRate === null
+            {data.unavailable.includes('les ventes')
+              ? <p className="is-muted">Source indisponible</p>
+              : data.royaltyRate === null
               ? <p className="is-muted">Aucune vente sur la période</p>
               : <p className="is-positive">Taux constaté {new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(data.royaltyRate)} %</p>}
           </article>
-          <article className="national-metric-card national-metric-card--green"><span className="national-metric-card__icon"><Users aria-hidden="true" /></span><div><h3>Artisans miniers</h3><strong>{new Intl.NumberFormat('fr-FR').format(data.artisansTotal)}</strong></div><p className={data.artisansActifs < data.artisansTotal ? 'is-gold' : 'is-muted'}>{new Intl.NumberFormat('fr-FR').format(data.artisansActifs)} actifs</p></article>
-          <article className="national-metric-card national-metric-card--blue"><span className="national-metric-card__icon"><Coins aria-hidden="true" /></span><div><h3>Transactions</h3><strong>{new Intl.NumberFormat('fr-FR').format(data.transactionsCount)}</strong></div><p className={data.pendingCount > 0 ? 'is-danger' : 'is-muted'}>{data.pendingCount} à valider</p></article>
+          <article className="national-metric-card national-metric-card--green"><span className="national-metric-card__icon"><Users aria-hidden="true" /></span><div><h3>Artisans miniers</h3><strong>{displayMetric('les artisans miniers', new Intl.NumberFormat('fr-FR').format(data.artisansTotal))}</strong></div><p className={data.artisansActifs < data.artisansTotal ? 'is-gold' : 'is-muted'}>{new Intl.NumberFormat('fr-FR').format(data.artisansActifs)} actifs</p></article>
+
         </section>
 
-        <section className="national-dashboard__analytics-grid">
+        <div className="national-dashboard__tabs" role="tablist" aria-label="Vues du tableau de bord">{DASHBOARD_TABS.map((tab, index) => <button type="button" key={tab} id={`dashboard-tab-${index}`} role="tab" aria-selected={activeTab === index} aria-controls="dashboard-panel" tabIndex={activeTab === index ? 0 : -1} onKeyDown={(event) => { if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : (index + (event.key === 'ArrowRight' ? 1 : 3)) % 4; setActiveTab(next); document.getElementById(`dashboard-tab-${next}`)?.focus(); if (next === 1) setChartMode('volume'); if (next === 2) setChartMode('value'); } }} onClick={() => { setActiveTab(index); if (index === 1) setChartMode('volume'); if (index === 2) setChartMode('value'); }}>{tab}</button>)}</div>
+        <div id="dashboard-panel" role="tabpanel" aria-labelledby={`dashboard-tab-${activeTab}`}>
+        {activeTab !== 3 && <section className="national-dashboard__analytics-grid">
           <article className="national-panel national-volume-panel">
-            <div className="national-panel__header"><h3>Évolution des volumes collectés</h3><div className="national-chart-toggle" aria-label="Donnée du graphique">
+            <div className="national-panel__header"><div><h3>{chartMode === 'volume' ? 'Évolution des volumes collectés' : 'Évolution de la valeur des ventes'}</h3><p className="national-panel__subtitle">{chartMode === 'volume' ? 'Volumes mensuels • en oz' : 'Ventes mensuelles • en millions de FCFA'}</p></div><div className="national-chart-toggle" aria-label="Donnée du graphique">
               <button type="button" className={chartMode === 'volume' ? 'is-active' : ''} onClick={() => setChartMode('volume')}>Volume</button>
               <button type="button" className={chartMode === 'value' ? 'is-active' : ''} onClick={() => setChartMode('value')}>Valeur</button>
             </div></div>
-            <div className="national-volume-chart"><ResponsiveContainer width="100%" height="100%"><AreaChart data={data.monthlyMetrics} margin={{ top: 24, right: 18, left: 1, bottom: 0 }}>
+            <div className="national-volume-chart">{chartUnavailable ? <p className="national-chart-state" role="status">{isRefreshing ? 'Chargement des données…' : 'Cette mesure est temporairement indisponible.'}</p> : <ResponsiveContainer width="100%" height="100%"><AreaChart data={data.monthlyMetrics} margin={{ top: 24, right: 18, left: 1, bottom: 0 }}>
               <defs><linearGradient id="nationalVolumeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e2a000" stopOpacity={0.2} /><stop offset="100%" stopColor="#e2a000" stopOpacity={0.015} /></linearGradient></defs>
               <CartesianGrid vertical={false} stroke="#dde5ec" strokeDasharray="2 3" />
               <XAxis dataKey="month" tickLine={false} axisLine={{ stroke: '#aab8c7' }} tick={{ fill: '#61748a', fontSize: 10 }} />
               <YAxis domain={[0, 'auto']} tickLine={false} axisLine={false} width={38} tick={{ fill: '#51657d', fontSize: 10 }} tickFormatter={(value: number) => value >= 1000 ? `${Math.round(value / 1000)}k` : String(value)} label={{ value: chartMode === 'volume' ? 'oz' : 'M', position: 'top', offset: 12, fill: '#10243e', fontSize: 10, fontWeight: 700 }} />
               <Tooltip content={({ active, payload, label }) => <ChartTooltipContent active={active} payload={payload?.map((item) => ({ value: Number(item.value || 0) }))} label={label} mode={chartMode} />} cursor={{ stroke: '#dda000', strokeDasharray: '3 3' }} />
               <Area type="monotone" dataKey={chartDataKey} stroke="#dda000" strokeWidth={2} fill="url(#nationalVolumeFill)" activeDot={{ r: 5, fill: '#dda000', stroke: '#fff', strokeWidth: 2 }} dot={{ r: 3.5, fill: '#fff', stroke: '#dda000', strokeWidth: 2 }} />
-            </AreaChart></ResponsiveContainer></div>
+            </AreaChart></ResponsiveContainer>}</div>
           </article>
 
           <article className="national-panel national-origin-panel">
-            <div className="national-panel__header"><h3>Répartition par origine</h3></div>
+            <div className="national-panel__header"><div><h3>Répartition par origine</h3><p className="national-panel__subtitle">Or vendu • période sélectionnée</p></div></div>
             {/* Répartition calculée sur les ventes de la période ; auparavant figée à 62/24/14 %. */}
-            {data.origins.length === 0 ? (
+            {isRefreshing || data.unavailable.includes('les ventes') ? (
+              <p className="national-origin-panel__empty">{isRefreshing ? 'Chargement des données…' : 'La répartition est temporairement indisponible.'}</p>
+            ) : data.origins.length === 0 ? (
               <p className="national-origin-panel__empty">Aucune vente sur la période : la répartition par origine ne peut pas être établie.</p>
             ) : (
-              <div className="national-origin-panel__content"><div className="national-donut"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={data.origins} dataKey="value" innerRadius={66} outerRadius={100} startAngle={90} endAngle={-270} paddingAngle={1} stroke="#fff" strokeWidth={1}>{data.origins.map((origin) => <Cell key={origin.name} fill={origin.color} />)}</Pie><Tooltip formatter={(value) => `${value}%`} /></PieChart></ResponsiveContainer><div className="national-donut__center"><strong>{new Intl.NumberFormat('fr-FR').format(Math.round(data.collectedGold))}</strong><span>oz</span><small>Total</small></div></div>
+              <div className="national-origin-panel__content"><div className="national-donut"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={data.origins} dataKey="value" innerRadius="63%" outerRadius="95%" startAngle={90} endAngle={-270} paddingAngle={1} stroke="#fff" strokeWidth={1}>{data.origins.map((origin) => <Cell key={origin.name} fill={origin.color} />)}</Pie><Tooltip formatter={(value) => `${value}%`} /></PieChart></ResponsiveContainer><div className="national-donut__center"><strong>{new Intl.NumberFormat('fr-FR').format(Math.round(data.origins.reduce((total, origin) => total + origin.ounces, 0)))}</strong><span>oz</span><small>Or vendu</small></div></div>
                 <ul className="national-origin-legend">{data.origins.map((origin) => <li key={origin.name}><span className="national-origin-legend__dot" style={{ background: origin.color }} /><span>{origin.name}</span><strong>{origin.value} %</strong></li>)}</ul>
               </div>
             )}
           </article>
-        </section>
+        </section>}
 
         <section className="national-dashboard__bottom-grid">
           <article className="national-panel national-transactions-panel">
-            <div className="national-panel__header"><h3>Dernières transactions</h3></div>
-            <div className="national-transactions-table-wrap"><table className="national-transactions-table"><thead><tr><th>Référence</th><th>Acteur</th><th>Type</th><th>Quantité</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>
-              {visibleTransactions.map((item) => <tr key={item.reference}><td><strong>{item.reference}</strong></td><td>{item.actor}</td><td>{item.type}</td><td>{formatNumber(item.quantity)} oz</td><td>{formatTableAmount(item.amount)}</td><td><span className={`national-status national-status--${item.status}`}>{item.status === 'validated' ? 'Validée' : item.status === 'control' ? 'En contrôle' : 'À valider'}</span></td><td>{item.date}</td></tr>)}
-            </tbody></table>{visibleTransactions.length === 0 && <p className="national-transactions-empty">Aucune transaction à afficher.</p>}</div>
+            <div className="national-panel__header"><h3>Suivi des opérations</h3><span>{displayMetric('les ventes', String(data.transactionsCount))} transactions · {data.pendingCount} à valider</span></div>
+            <div className="national-transactions-table-wrap"><table className="national-transactions-table"><thead><tr><th>Référence</th><th>Acteur</th><th>Type</th><th>Quantité</th><th>Montant</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead><tbody>
+              {visibleTransactions.map((item) => <tr key={item.id || item.reference}><td><strong>{item.reference}</strong></td><td>{item.actor}</td><td>{item.type}</td><td>{formatNumber(item.quantity)} oz</td><td>{formatTableAmount(item.amount)}</td><td><span className={`national-status national-status--${item.status}`}>{item.status === 'validated' ? 'Validée' : item.status === 'control' ? 'En contrôle' : 'À valider'}</span></td><td>{item.date}</td><td>{item.id ? <Link className="national-operation-link" to={`/sales/${item.id}`}>Consulter <ChevronRight aria-hidden="true" /></Link> : '—'}</td></tr>)}
+            </tbody></table>{visibleTransactions.length === 0 && <p className="national-transactions-empty">{data.unavailable.includes('les ventes') ? 'Le suivi des opérations est temporairement indisponible.' : 'Aucune transaction à afficher.'}</p>}</div>
             <button type="button" className="national-transactions-panel__link" onClick={() => navigate('/sales')}>Voir toutes les transactions <ChevronRight aria-hidden="true" /></button>
           </article>
 
-          <article className="national-panel national-alerts-panel">
+          {(activeTab === 3 || data.pendingCount > 0 || data.expiringCards > 0 || data.unavailable.length > 0) && <article className="national-panel national-alerts-panel">
             <div className="national-panel__header"><h3>Points d’attention</h3></div>
             {/* Chaque alerte est adossée à un décompte réel ; celles qui ne le sont pas ne s'affichent plus. */}
             <div className="national-alerts-list">
@@ -240,8 +266,9 @@ export function GlobalDashboardEnhanced() {
                 <p className="national-alerts-empty">Aucun point d’attention sur la période.</p>
               )}
             </div>
-          </article>
+          </article>}
         </section>
+        </div>
 
         {(datePanelOpen || filterPanelOpen) && <button type="button" className="national-dashboard__popover-backdrop" aria-label="Fermer les options" onClick={() => { setDatePanelOpen(false); setFilterPanelOpen(false); }}><X aria-hidden="true" /></button>}
       </div>

@@ -32,7 +32,6 @@ import {
   HelpCircle,
   ChevronDown,
   Languages,
-  Landmark,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -41,8 +40,6 @@ import {
   PanelLeftOpen,
   Plus,
   Settings,
-  UserRound,
-  Mountain,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,6 +58,10 @@ import {
 import type { ModuleAvailabilityMap } from '@/lib/platformModuleCatalog';
 import { DgiGoldSidebarCard } from './DgiGoldSidebarCard';
 import { MineGoldSidebarCard } from './MineGoldSidebarCard';
+import { PORTAL_THEMES, portalThemeVariables } from './portalThemes';
+import { usePortalBrand } from './usePortalBrand';
+import { PortalBrandPair } from './PortalBrandPair';
+import { PortalIdentity, PlatformTraceIcon, HeaderWaves } from './PortalIdentity';
 import './national-dashboard-layout.css';
 
 interface NationalDashboardLayoutProps {
@@ -103,13 +104,16 @@ export function reinitialiserEtatBarre() {
 
 function getRoleLabel(role?: string) {
   const labels: Record<string, string> = {
-    owner: 'Owner',
+    owner: 'Administrateur',
     admin: 'Administrateur',
-    management: 'Direction',
+    management: 'Agent SONASP',
+    manager: 'Direction SONASP',
     factory: 'Site de production',
     airport: 'Expéditions',
     refinery: 'Raffinerie',
-    customer: 'Utilisateur',
+    customer: 'Client',
+    collector: 'Agent collecteur',
+    comptoir: 'Comptoir',
     mine: 'Société minière',
     dgi: 'Agent fiscal DGI',
     dgmg: 'Agent de supervision DGMG',
@@ -135,14 +139,25 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isMine, companyName, companyCode } = useMineWorkspace();
-  const {
-    isComptoir,
-    workspace: comptoirWorkspace,
-    displayName: comptoirDisplayName,
-  } = useComptoirWorkspace();
-  const { isCollector, workspace: collectorWorkspace } = useCollectorWorkspace();
+  const { isMine, companyName } = useMineWorkspace();
+  const { isComptoir } = useComptoirWorkspace();
+  const { isCollector } = useCollectorWorkspace();
   const accountType = accountTypeFor(user);
+  const theme = PORTAL_THEMES[accountType];
+  const scopeKey = [user?.id, user?.organization_id, user?.mining_company_id, accountType, user?.access_role_id, user?.capabilities?.join(',')].join(':');
+  const scopeRef = useRef(scopeKey);
+  scopeRef.current = scopeKey;
+  const brand = usePortalBrand(user, accountType, companyName);
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.dataset.portalTheme = theme.id;
+    const variables = portalThemeVariables(theme);
+    Object.entries(variables).forEach(([name, value]) => root.style.setProperty(name, String(value)));
+    return () => {
+      delete root.dataset.portalTheme;
+      Object.keys(variables).forEach((name) => root.style.removeProperty(name));
+    };
+  }, [theme]);
   const isDgi = accountType === 'dgi';
   const isDgmg = accountType === 'dgmg';
   const [moduleAvailability, setModuleAvailability] = useState<ModuleAvailabilityMap | null>(null);
@@ -166,8 +181,6 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     return () => window.removeEventListener(MODULE_CATALOG_UPDATED_EVENT, actualiser);
   }, [chargerDisponibiliteModules]);
 
-  const mineDisplayName = companyName || companyCode || 'Société non identifiée';
-  const collectorDisplayName = collectorWorkspace?.collectorName || 'Collecteur d’or';
   const navigationSections = useMemo(() => {
     const sections = getNavigationSectionsForUser(user, moduleAvailability);
     if (!isMine) return sections;
@@ -251,30 +264,21 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
   );
   const [languageOpen, setLanguageOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  /* La cloche ne dit que ce que la base contient. Un compteur inventé, affiché
-     sur chaque écran, est le plus visible des indicateurs faux. */
+  const emptyResume: ResumeNotifications = { non_lues: 0, urgentes: 0, hautes: 0, plus_ancienne: null };
+  const [notificationResult, setNotificationResult] = useState<{ scope: string; list: Notification[]; summary: ResumeNotifications } | null>(null);
+  const notifications = notificationResult?.scope === scopeKey ? notificationResult.list : [];
+  const resumeNotifications = notificationResult?.scope === scopeKey ? notificationResult.summary : emptyResume;
   const chargerNotifications = useCallback(async () => {
     try {
-      const [liste, resume] = await Promise.all([
-        notificationsService.lister({ limite: 8 }),
-        notificationsService.resume(),
+      const [list, summary] = await Promise.all([
+        notificationsService.lister({ limite: 8 }), notificationsService.resume(),
       ]);
-      setNotifications(liste);
-      setResumeNotifications(resume);
+      if (scopeRef.current === scopeKey) setNotificationResult({ scope: scopeKey, list, summary });
     } catch {
-      // Une cloche muette vaut mieux qu'une cloche qui ment.
-      setNotifications([]);
-      setResumeNotifications({ non_lues: 0, urgentes: 0, hautes: 0, plus_ancienne: null });
+      if (scopeRef.current === scopeKey) setNotificationResult(null);
     }
-  }, []);
-
-  useEffect(() => {
-    void chargerNotifications();
-  }, [chargerNotifications]);
-  const [resumeNotifications, setResumeNotifications] = useState<ResumeNotifications>({
-    non_lues: 0, urgentes: 0, hautes: 0, plus_ancienne: null,
-  });
+  }, [scopeKey]);
+  useEffect(() => { setNotificationsOpen(false); void chargerNotifications(); }, [chargerNotifications]);
   const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
@@ -348,6 +352,30 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
     setNotificationsOpen(false);
     setProfileOpen(false);
   }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const drawer = document.querySelector<HTMLElement>('.national-shell__mobile-sidebar');
+    if (!drawer) return;
+    const previous = document.activeElement;
+    const focusable = () => Array.from(drawer.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex="0"]'))
+      .filter(element => element.offsetParent !== null);
+    drawer.querySelector<HTMLElement>('nav a, nav button')?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); setMobileOpen(false); }
+      if (event.key !== 'Tab') return;
+      const elements = focusable();
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
+    };
+  }, [mobileOpen]);
 
   const toggleLanguageMenu = () => {
     setNotificationsOpen(false);
@@ -432,26 +460,8 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
       isDgmg && 'is-dgmg',
       sidebarCollapsed && 'is-collapsed',
     )} aria-label={label('Navigation principale')}>
-      <div className="national-sidebar__brand">
-        <img src={isDgi || isMine ? '/sonasp-logo-clair.png' : '/sonasp_logo.png'} alt="SONASP" />
-        {isMine && !sidebarCollapsed && (
-          <span className="national-sidebar__mine-identity" title={companyName || undefined}>
-            <Mountain aria-hidden="true" />
-            <span><small>ESPACE MINE</small><strong>{mineDisplayName}</strong></span>
-          </span>
-        )}
-        {(isComptoir || isCollector) && !sidebarCollapsed && (
-          <span
-            className="national-sidebar__mine-name"
-            title={(isCollector ? collectorWorkspace?.collectorName : isComptoir ? comptoirWorkspace?.name : companyName) || undefined}
-          >
-            {isCollector ? collectorDisplayName : isComptoir ? comptoirDisplayName : mineDisplayName}
-          </span>
-        )}
-      </div>
-
       <div className="national-sidebar__section-title">
-        <span>NAVIGATION</span>
+        <span>{theme.space}</span>
         <button
           type="button"
           className="national-sidebar__collapse"
@@ -467,13 +477,15 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
         {!isDgmg && (
           <Link
             to={dashboardPath}
+            aria-label={label('Tableau de bord')}
+            title={label('Tableau de bord')}
             className={cn(
               'national-sidebar__dashboard-link',
               isMine ? mineDashboardActive && 'is-active' : isActive(dashboardPath) && 'is-active'
             )}
             onClick={() => setMobileOpen(false)}
           >
-            <span className="national-sidebar__icon" style={{ color: '#e2a100' }}>
+            <span className="national-sidebar__icon">
               <LayoutDashboard aria-hidden="true" />
             </span>
             <span>{label('Tableau de bord')}</span>
@@ -505,8 +517,10 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                   )}
                   onClick={(evenement) => basculerGroupe(group.id, evenement.currentTarget)}
                   aria-expanded={isOpen}
+                  aria-label={label(group.label)}
+                  title={label(group.label)}
                 >
-                  <span className="national-sidebar__icon" style={{ color: group.color }}>
+                  <span className="national-sidebar__icon">
                     <Icon aria-hidden="true" />
                   </span>
                   <span title={label(group.label)}>{label(group.label)}</span>
@@ -550,11 +564,13 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
               return (
                 <Link
                   to={group.path}
+                  aria-label={label(group.label)}
+                  title={label(group.label)}
                   className={cn('national-sidebar__group-trigger national-sidebar__group-link', groupActive && 'is-current')}
                   key={group.id}
                   onClick={() => setMobileOpen(false)}
                 >
-                  <span className="national-sidebar__icon" style={{ color: group.color }}>
+                  <span className="national-sidebar__icon">
                     <Icon aria-hidden="true" />
                   </span>
                   {/* Ni plus ni chevron : cette entree n'a pas de sous-menu a deplier, et le
@@ -570,34 +586,21 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
 
       {(isDgi || isDgmg) && <DgiGoldSidebarCard />}
       {isMine && <MineGoldSidebarCard />}
+      <Link className="national-sidebar__help" to="/help" aria-label="Centre d’assistance" title="Centre d’assistance" onClick={() => setMobileOpen(false)}><HelpCircle aria-hidden="true" /><span>Centre d’assistance</span></Link>
 
     </aside>
   );
 
   return (
-    <div data-testid="app-shell" className={cn(
+    <div data-testid="app-shell" data-portal={theme.id} style={portalThemeVariables(theme)} className={cn(
       'national-shell',
+      sidebarCollapsed && 'has-collapsed-sidebar',
       isMine && 'is-mine',
       isComptoir && 'is-comptoir',
       isCollector && 'is-collector',
       isDgi && 'is-dgi',
       isDgmg && 'is-dgmg',
     )}>
-      <ProfileErrorBanner />
-      <div className={cn('national-shell__desktop-sidebar', sidebarCollapsed && 'is-collapsed')}>{sidebar}</div>
-      {mobileOpen && (
-        <div className="national-shell__mobile-sidebar">
-          <button
-            className="national-shell__sidebar-backdrop"
-            type="button"
-            aria-label={label('Fermer la navigation')}
-            onClick={() => setMobileOpen(false)}
-          />
-          {sidebar}
-        </div>
-      )}
-
-      <div className="national-shell__body">
         <header className="national-header" data-testid="app-header">
           <button
             type="button"
@@ -608,75 +611,13 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
             <Menu aria-hidden="true" />
           </button>
 
+          <HeaderWaves />
+          <PortalBrandPair brand={brand} />
           <div className="national-header__identity">
-            <div>
-              {isDgi ? (
-                <>
-                  <h1>{label('Plateforme SONASP')}</h1>
-                  <p>{label('Traçabilité, fiscalité et valorisation du secteur aurifère')}</p>
-                </>
-              ) : isDgmg ? (
-                <>
-                  <h1>{label('Plateforme SONASP')}</h1>
-                  <p>{label('Traçabilité, supervision et régulation du secteur aurifère')}</p>
-                </>
-              ) : isCollector ? (
-                <>
-                  <p className="national-header__eyebrow">{label('Espace collecteur d’or')}</p>
-                  <h1 title={collectorWorkspace?.collectorName}>{collectorDisplayName}</h1>
-                </>
-              ) : isComptoir ? (
-                <>
-                  <p className="national-header__eyebrow">{label('Espace comptoir d’or')}</p>
-                  <h1 title={comptoirWorkspace?.name}>{comptoirDisplayName}</h1>
-                </>
-              ) : isMine ? (
-                <>
-                  <h1>{label('Plateforme SONASP')}</h1>
-                  <p>{label('Traçabilité et opérations du secteur aurifère')}</p>
-                </>
-              ) : (
-                <>
-                  <h1>{label('Plateforme SONASP')}</h1>
-                  <p>{label('Collecte, traçabilité et valorisation de l’or')}</p>
-                </>
-              )}
-            </div>
+            <PlatformTraceIcon />
+            <div><h1>Plateforme Nationale de Traçabilité de l’Or</h1><p>Production, collecte, commercialisation et suivi des recettes</p></div>
           </div>
-
-          {isDgi && (
-            <>
-              <div className="national-header__dgi-portal" aria-label="Portail DGI">
-                <span><Landmark aria-hidden="true" /></span>
-                <div><strong>PORTAIL DGI</strong><small>Direction Générale des Impôts</small></div>
-              </div>
-              <div className="national-header__dgi-ministry">
-                <Landmark aria-hidden="true" />
-                <span>MINISTÈRE DE L’ÉCONOMIE<br />ET DES FINANCES</span>
-              </div>
-            </>
-          )}
-
-          {isDgmg && (
-            <>
-              <div className="national-header__dgmg-portal" aria-label="Portail DGMG">
-                <span><Landmark aria-hidden="true" /></span>
-                <div><strong>PORTAIL DGMG</strong><small>Direction Générale des Mines et de la Géologie</small></div>
-              </div>
-              <div className="national-header__dgmg-ministry">MINISTÈRE DES MINES</div>
-            </>
-          )}
-
-          {isMine && (
-            <div className="national-header__mine-portal" aria-label="Portail Société Minière">
-              <span><Mountain aria-hidden="true" /></span>
-              <div>
-                <small>PORTAIL SOCIÉTÉ MINIÈRE</small>
-                <strong title={companyName || undefined}>{mineDisplayName}</strong>
-              </div>
-              <em>MINE INDUSTRIELLE</em>
-            </div>
-          )}
+          <PortalIdentity theme={theme} />
 
           <div className="national-header__actions" ref={headerActionsRef}>
             <div className="national-header__popover">
@@ -750,7 +691,6 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                       </button>
                     )}
                   </header>
-
                   {notifications.length === 0 ? (
                     <p className="national-header__vide">
                       {label('Rien à signaler pour le moment.')}
@@ -796,9 +736,9 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
                 aria-haspopup="menu"
                 aria-controls="profile-menu"
               >
-                <span className="national-header__avatar"><UserRound aria-hidden="true" /></span>
+                <span className="national-header__avatar" aria-hidden="true">{displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}</span>
                 <span className="national-header__profile-copy">
-                  <strong>{displayName}</strong>
+                  <strong title={displayName}>{displayName}</strong>
                   <small>{label(
                     isDgi || isDgmg || isMine
                       ? (user?.access_role_name?.trim() || getRoleLabel(user?.role))
@@ -840,18 +780,34 @@ export function NationalDashboardChrome({ children }: NationalDashboardLayoutPro
           </button>
         </header>
 
+      <ProfileErrorBanner />
+      <div className={cn('national-shell__desktop-sidebar', sidebarCollapsed && 'is-collapsed')}>{sidebar}</div>
+      {mobileOpen && (
+        <div className="national-shell__mobile-sidebar">
+          <button
+            className="national-shell__sidebar-backdrop"
+            type="button"
+            aria-label={label('Fermer la navigation')}
+            onClick={() => setMobileOpen(false)}
+          />
+          {sidebar}
+        </div>
+      )}
+
+      <div className="national-shell__body">
+
+
+
         {/* Le repli de suspense vit dans la zone de contenu : le chargement d'une
             page ne doit pas effacer l'en-tete ni la barre laterale. */}
         <main className="national-shell__content">
-          <ChromeContext.Provider value={true}>
+          <ChromeContext.Provider key={scopeKey} value={true}>
             <Suspense fallback={<RouteFallback />}>{children ?? <Outlet />}</Suspense>
           </ChromeContext.Provider>
         </main>
 
         <footer className="national-shell__footer" data-testid="app-footer">
-          <span>{isDgmg
-            ? `© ${new Date().getFullYear()} SONASP — Plateforme nationale de traçabilité de l’or`
-            : `© ${new Date().getFullYear()} SONASP — Société Nationale des Substances Précieuses`}</span>
+          <span>© {new Date().getFullYear()} FASO SANAMA</span>
           <span className="national-shell__footer-motto">{label('Confidentialité · Intégrité · Transparence')}</span>
         </footer>
       </div>

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   NationalDashboardChrome,
@@ -87,18 +87,21 @@ describe('NationalDashboardChrome', () => {
   });
 
   it('conserve l’habillage d’une page à l’autre', () => {
-    const { unmount } = rendre(
+    rendre(
       '/dashboard',
-      <Route path="/dashboard" element={<PageAvecHabillage titre="Tableau de bord" />} />
+      <>
+        <Route path="/dashboard" element={<><PageAvecHabillage titre="Tableau de bord" /><Link to="/ventes">Ouvrir les ventes</Link></>} />
+        <Route path="/ventes" element={<PageAvecHabillage titre="Ventes d’or" />} />
+      </>
     );
     const barreInitiale = screen.getByRole('complementary', { name: 'Navigation principale' });
     expect(barreInitiale).toBeInTheDocument();
-    unmount();
-
-    // L'habillage vit sur la route parente : changer d'enfant ne le détruit plus.
-    rendre('/ventes', <Route path="/ventes" element={<PageAvecHabillage titre="Ventes d’or" />} />);
+    const headerInitial = screen.getByRole('banner');
+    fireEvent.click(screen.getByRole('link', { name: 'Ouvrir les ventes' }));
     expect(screen.getByRole('heading', { name: 'Ventes d’or' })).toBeInTheDocument();
     expect(screen.getAllByRole('complementary', { name: 'Navigation principale' })).toHaveLength(1);
+    expect(screen.getByRole('complementary', { name: 'Navigation principale' })).toBe(barreInitiale);
+    expect(screen.getByRole('banner')).toBe(headerInitial);
   });
 
   it('garde l’en-tête et la barre hors du périmètre du repli de suspense', () => {

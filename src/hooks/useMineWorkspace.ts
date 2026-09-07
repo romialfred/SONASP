@@ -88,15 +88,16 @@ export function useMineWorkspace() {
     };
   }, [companyId]);
 
+  const activeCompany = company?.id === companyId ? company : null;
   return useMemo(
     () => ({
       isMine,
       companyId,
-      company,
-      companyName: company?.name || (isMine ? 'Votre société minière' : null),
-      companyCode: company?.code || company?.abbreviation || null,
+      company: activeCompany,
+      companyName: activeCompany?.name || (isMine ? 'Votre société minière' : null),
+      companyCode: activeCompany?.code || activeCompany?.abbreviation || null,
       loading,
     }),
-    [company, companyId, isMine, loading]
+    [activeCompany, companyId, isMine, loading]
   );
 }

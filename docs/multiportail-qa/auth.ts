@@ -1,0 +1,14 @@
+import { useSyncExternalStore } from 'react';
+import { CAPABILITIES } from '../../src/lib/capabilities';
+const listeners = new Set<() => void>();
+let selected = sessionStorage.getItem('qa-portal') || 'owner';
+export const cases = ['owner','admin','management','manager','dgmg','dgi','mine','mine-b','comptoir','comptoir-b','collector','customer','factory','airport','refinery'];
+export const currentCase = () => selected;
+const typeFor = (key: string) => key.startsWith('comptoir') ? 'comptoir' : key === 'collector' ? 'sonasp' : key === 'dgi' || key === 'dgmg' ? key : 'sonasp';
+export function organization() { const type = typeFor(selected); return { id: '10000000-0000-4000-8000-00000000000' + (selected.endsWith('-b') ? '2' : '1'), organization_type: type, code: type === 'comptoir' ? (selected.endsWith('-b') ? 'CPT BÊTA' : 'CPT ALPHA') : type.toUpperCase(), name: type === 'comptoir' ? (selected.endsWith('-b') ? 'Comptoir Bêta Burkina SARL' : 'Comptoir Alpha Burkina SA') : type === 'sonasp' ? 'SONASP' : type === 'dgi' ? 'Direction Générale des Impôts' : 'Direction Générale des Mines et de la Géologie' }; }
+export function mine() { return { id: selected.endsWith('-b') ? 'mine-b' : 'mine-a', name: selected.endsWith('-b') ? 'Société minière Bêta Burkina SA' : 'Société minière Alpha Burkina SA', code: selected.endsWith('-b') ? 'BÊTA' : 'ALPHA', abbreviation: selected.endsWith('-b') ? 'BÊTA' : 'ALPHA' }; }
+function profile() { const role = selected.replace('-b',''); const required = { mine: CAPABILITIES.MINE_OPERATE, comptoir: CAPABILITIES.COMPTOIR_MANAGE, collector: CAPABILITIES.COLLECTOR_OPERATE, customer: CAPABILITIES.CUSTOMER_OPERATE, factory: CAPABILITIES.FACTORY_OPERATE, airport: CAPABILITIES.AIRPORT_OPERATE, refinery: CAPABILITIES.REFINERY_OPERATE, dgi: CAPABILITIES.DGI_FISCAL_CONTROL, dgmg: CAPABILITIES.DGMG_SUPERVISE }[role]; return { id:'qa-'+selected, full_name:'Profil de vérification', email:'verification@example.test', is_active:true, role, mining_company_id:role==='mine'?mine().id:null, organization_id:role==='mine'?null:organization().id, organization_type:role==='mine'?null:organization().organization_type, capabilities:required?[required,'reports.read','sonasp.workflow.read']:Object.values(CAPABILITIES), permissions:[], module_codes:null, access_role_name:role==='owner'?'Administrateur':undefined }; }
+let user = profile();
+export function setCase(next: string) { selected=next; sessionStorage.setItem('qa-portal',next); user=profile(); listeners.forEach(fn=>fn()); }
+export const useAuth = () => { useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn);},currentCase); return {user, signOut:async()=>setCase('owner'),session:{user},initialized:true,loading:false,profileLoading:false,profileError:null,permissionsLoading:false,refreshProfile:async()=>{}}; };
+export const getProfile=()=>user;

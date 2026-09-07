@@ -1,0 +1,100 @@
+[
+  {
+    "profile": "admin",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "management",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "manager",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "dgmg",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "dgi",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "mine",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "mine-b",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "comptoir",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "comptoir-b",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "collector",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "customer",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "factory",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "airport",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  {
+    "profile": "refinery",
+    "brokenImages": [],
+    "height": 1024,
+    "scrollWidth": 1536,
+    "width": 1536
+  }
+]

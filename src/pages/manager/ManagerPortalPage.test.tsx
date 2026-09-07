@@ -5,7 +5,7 @@ import { managerPortalService } from '@/services/managerPortalService';
 import ManagerPortalPage from './ManagerPortalPage';
 
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { email: 'direction@sonasp.bf', full_name: 'Direction générale' }, signOut: vi.fn() }),
+  useAuth: () => ({ user: { email: 'direction@sonasp.bf', full_name: 'Direction générale', role: 'manager', is_active: true, id: 'manager-test' }, signOut: vi.fn() }),
 }));
 vi.mock('@/services/managerPortalService', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/services/managerPortalService')>();
@@ -25,8 +25,8 @@ describe('ManagerPortalPage', () => {
   it('affiche un portail Direction distinct et explicitement consultatif', async () => {
     render(<MemoryRouter initialEntries={['/portail-direction']}><ManagerPortalPage /></MemoryRouter>);
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Pilotage national' })).toBeInTheDocument());
-    expect(screen.getByRole('complementary', { name: 'Navigation Direction' })).toBeInTheDocument();
-    expect(screen.getByText('Consultation uniquement')).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Navigation principale' })).toBeInTheDocument();
+    expect(screen.getByText(/Consultation uniquement · Direction SONASP/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Production nationale' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /créer|modifier|valider/i })).not.toBeInTheDocument();
   });

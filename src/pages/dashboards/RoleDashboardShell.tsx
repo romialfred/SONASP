@@ -119,8 +119,8 @@ export function RoleDashboardShell({
                 <AreaChart data={data.serie} margin={{ top: 8, right: 12, left: 8, bottom: 42 }}>
                   <defs>
                     <linearGradient id="roleSerieFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#0f7a56" stopOpacity={0.22} />
-                      <stop offset="100%" stopColor="#0f7a56" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor="var(--portal-primary, #0f7a56)" stopOpacity={0.22} />
+                      <stop offset="100%" stopColor="var(--portal-primary, #0f7a56)" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} stroke="#e7edf2" strokeDasharray="2 3" />
@@ -130,7 +130,7 @@ export function RoleDashboardShell({
                   <Area
                     type="monotone"
                     dataKey="valeur"
-                    stroke="#0f7a56"
+                    stroke="var(--portal-primary, #0f7a56)"
                     strokeWidth={2}
                     fill="url(#roleSerieFill)"
                     name={serieUnite}

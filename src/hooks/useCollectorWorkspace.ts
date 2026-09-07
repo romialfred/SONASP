@@ -17,6 +17,8 @@ export interface CollectorWorkspace {
 export function useCollectorWorkspace() {
   const { user } = useAuth();
   const isCollector = isCollectorScopedUser(user);
+  const contextKey = [user?.id, user?.organization_id, isCollector].join(":");
+  const [loadedContext, setLoadedContext] = useState<string | null>(null);
   const [workspace, setWorkspace] = useState<CollectorWorkspace | null>(null);
   const [loading, setLoading] = useState(isCollector);
 
@@ -30,6 +32,7 @@ export function useCollectorWorkspace() {
     let active = true;
     const load = async () => {
       setLoading(true);
+      setWorkspace(null);
       try {
         const [{ data: collectorId, error: collectorError }, { data: organizationId, error: organizationError }] = await Promise.all([
           supabase.rpc('snp_current_collector_id'),
@@ -78,13 +81,13 @@ export function useCollectorWorkspace() {
         console.warn('[Collecteur] Périmètre indisponible:', error);
         if (active) setWorkspace(null);
       } finally {
-        if (active) setLoading(false);
+        if (active) { setLoadedContext(contextKey); setLoading(false); }
       }
     };
 
     void load();
     return () => { active = false; };
-  }, [isCollector, user?.id]);
+  }, [isCollector, contextKey]);
 
-  return { isCollector, workspace, loading };
+  return { isCollector, workspace: loadedContext === contextKey ? workspace : null, loading: loading || (isCollector && loadedContext !== contextKey) };
 }

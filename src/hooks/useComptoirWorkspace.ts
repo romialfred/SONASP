@@ -11,6 +11,8 @@ export interface ComptoirWorkspace {
 export function useComptoirWorkspace() {
   const { user } = useAuth();
   const isComptoir = isComptoirScopedUser(user);
+  const contextKey = [user?.id, user?.organization_id, isComptoir].join(":");
+  const [loadedContext, setLoadedContext] = useState<string | null>(null);
   const [workspace, setWorkspace] = useState<ComptoirWorkspace | null>(null);
   const [loading, setLoading] = useState(isComptoir);
 
@@ -24,6 +26,7 @@ export function useComptoirWorkspace() {
     let active = true;
     const load = async () => {
       setLoading(true);
+      setWorkspace(null);
       try {
         const client = supabase as any;
         const { data: organizationId, error: idError } = await client.rpc('snp_current_organization_id');
@@ -42,7 +45,7 @@ export function useComptoirWorkspace() {
         console.warn('[Comptoir] Périmètre indisponible:', error);
         if (active) setWorkspace(null);
       } finally {
-        if (active) setLoading(false);
+        if (active) { setLoadedContext(contextKey); setLoading(false); }
       }
     };
 
@@ -50,12 +53,12 @@ export function useComptoirWorkspace() {
     return () => {
       active = false;
     };
-  }, [isComptoir, user?.id]);
+  }, [isComptoir, contextKey]);
 
   return {
     isComptoir,
-    workspace,
-    loading,
-    displayName: workspace?.code || workspace?.name || 'Comptoir d’or',
+    workspace: loadedContext === contextKey ? workspace : null,
+    loading: loading || (isComptoir && loadedContext !== contextKey),
+    displayName: (loadedContext === contextKey ? workspace?.code || workspace?.name : null) || 'Comptoir d’or',
   };
 }

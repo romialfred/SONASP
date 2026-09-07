@@ -1,34 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import {
-  BarChart3, Bell, Building2, ClipboardCheck,
-  FileSignature, LayoutDashboard, LogOut, ReceiptText,
-  RefreshCw, ShieldCheck, TrendingUp, UserRound, WalletCards, type LucideIcon,
+  BarChart3, Building2, FileSignature, ReceiptText,
+  RefreshCw, ShieldCheck, WalletCards, type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loading } from '@/components/ui/Loading';
-import { cn } from '@/utils/cn';
+import { NationalDashboardLayout } from '@/components/layout/NationalDashboardLayout';
 import { formatStatusFr } from '@/utils/statusFormatter';
 import {
   ManagerPortalDataError, managerPortalService, type ManagerPortalSnapshot,
 } from '@/services/managerPortalService';
 import './manager-portal.css';
 
-type Section = 'synthese' | 'production' | 'previsions' | 'achats' | 'contrats' | 'finances' | 'performance' | 'rapports' | 'alertes' | 'compte';
-type NavItem = { id: Section; label: string; icon: LucideIcon };
-
-const navigation: NavItem[] = [
-  { id: 'synthese', label: 'Vue exécutive', icon: LayoutDashboard },
-  { id: 'production', label: 'Production nationale', icon: BarChart3 },
-  { id: 'previsions', label: 'Budgets et prévisions', icon: TrendingUp },
-  { id: 'achats', label: 'Achats et demandes', icon: ClipboardCheck },
-  { id: 'contrats', label: 'Contrats', icon: FileSignature },
-  { id: 'finances', label: 'Factures et paiements', icon: WalletCards },
-  { id: 'performance', label: 'Performance des sociétés', icon: Building2 },
-  { id: 'rapports', label: 'Rapports', icon: ReceiptText },
-  { id: 'alertes', label: 'Alertes', icon: Bell },
-  { id: 'compte', label: 'Mon compte', icon: UserRound },
-];
+import { navigation, type Section } from './managerNavigation';
 const validSections = new Set(navigation.map((item) => item.id));
 const number = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
 const money = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -45,7 +30,11 @@ function fmtDate(value: string | null): string {
 }
 
 export default function ManagerPortalPage() {
-  const { user, signOut } = useAuth();
+  return <NationalDashboardLayout><ManagerPortalContent /></NationalDashboardLayout>;
+}
+
+function ManagerPortalContent() {
+  const { user } = useAuth();
   const location = useLocation();
   const section = sectionFromPath(location.pathname);
   const [snapshot, setSnapshot] = useState<ManagerPortalSnapshot | null>(null);
@@ -71,25 +60,9 @@ export default function ManagerPortalPage() {
   if (error || !snapshot) return <main className="manager-error" role="alert"><img src="/sonasp_logo.png" alt="SONASP" /><h1>Vue Direction indisponible</h1><p>{error}</p><button type="button" onClick={() => void load()}><RefreshCw aria-hidden="true" /> Réessayer</button></main>;
 
   return (
-    <div className="manager-shell">
-      <aside className="manager-sidebar" aria-label="Navigation Direction">
-        <div className="manager-sidebar__brand"><img src="/sonasp-logo-clair.png" alt="SONASP" /><div><strong>Direction</strong><span>Décision & pilotage</span></div></div>
-        <div className="manager-sidebar__scope"><ShieldCheck aria-hidden="true" /><div><small>Niveau d’accès</small><strong>Lecture seule</strong></div></div>
-        <nav>
-          {navigation.map((item) => { const Icon = item.icon; return <Link key={item.id} to={item.id === 'synthese' ? '/portail-direction' : `/portail-direction/${item.id}`} className={cn(section === item.id && 'is-active')}><Icon aria-hidden="true" /><span>{item.label}</span></Link>; })}
-        </nav>
-        <div className="manager-sidebar__user"><UserRound aria-hidden="true" /><div><strong>{user?.full_name || user?.email}</strong><small>Manager</small></div></div>
-      </aside>
-
-      <div className="manager-main">
-        <header className="manager-topbar">
-          <div><small>Portail de pilotage</small><strong>{navigation.find((item) => item.id === section)?.label}</strong></div>
-          <div><span><ShieldCheck aria-hidden="true" /> Consultation uniquement</span><button type="button" onClick={() => void signOut()}><LogOut aria-hidden="true" /> Déconnexion</button></div>
-        </header>
-        <main className="manager-content">
+    <div className="manager-content">
+      <div className="manager-access-note"><ShieldCheck aria-hidden="true" /> Consultation uniquement · Direction SONASP <button type="button" onClick={() => void load()}><RefreshCw aria-hidden="true" /> Actualiser</button></div>
           <SectionContent section={section} data={snapshot} userName={user?.full_name || user?.email || 'Manager'} />
-        </main>
-      </div>
     </div>
   );
 }

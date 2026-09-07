@@ -14,6 +14,7 @@ vi.mock('@/contexts/AuthContext', () => ({
       full_name: 'Responsable Mine',
       email: 'mine@example.test',
       role: 'mine',
+      capabilities: ['mine.operate'],
       access_role_name: 'Responsable des opérations',
       is_active: true,
       mining_company_id: 'mine-1',
@@ -77,14 +78,13 @@ describe('NationalDashboardLayout — espace Mine', () => {
     );
 
     expect(container.querySelector('.national-shell')).toHaveClass('is-mine');
-    expect(screen.getByRole('heading', { name: 'Plateforme SONASP' })).toBeInTheDocument();
-    expect(screen.getByText('Traçabilité et opérations du secteur aurifère')).toBeInTheDocument();
-    expect(screen.getByText('PORTAIL SOCIÉTÉ MINIÈRE')).toBeInTheDocument();
-    expect(screen.getByText('MINE INDUSTRIELLE')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Plateforme Nationale de Traçabilité de l’Or' })).toBeInTheDocument();
+    expect(screen.getByText('Production, collecte, commercialisation et suivi des recettes')).toBeInTheDocument();
+    expect(screen.getByLabelText('Portail Société minière')).toBeInTheDocument();
 
     const sidebar = screen.getAllByRole('complementary', { name: 'Navigation principale' })[0];
-    expect(within(sidebar).getByText('ESPACE MINE')).toBeInTheDocument();
-    expect(within(sidebar).getByText('Burkina Mining SA')).toBeInTheDocument();
+    expect(within(sidebar).getByText('ESPACE SOCIÉTÉ MINIÈRE')).toBeInTheDocument();
+    expect(within(screen.getByTestId('app-header')).getByText('Burkina Mining SA')).toBeInTheDocument();
     expect(within(sidebar).queryByText('Responsable Mine')).not.toBeInTheDocument();
     expect(within(sidebar).queryByRole('link', { name: 'Accueil' })).not.toBeInTheDocument();
     expect(within(sidebar).getByRole('link', { name: 'Tableau de bord' })).toHaveAttribute('href', '/portail-mine');

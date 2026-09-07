@@ -1,3 +1,4 @@
+import { navigation as managerNavigation } from '@/pages/manager/managerNavigation';
 import {
   Scale,
   ShieldCheck,
@@ -768,7 +769,8 @@ export function getNavigationSectionsForUser(
   moduleAvailability?: ModuleAvailabilityMap | null,
 ): NavigationSection[] {
   const accountType: AccountType = accountTypeFor(user);
-  if (!user || accountType === 'unknown' || accountType === 'direction') return [];
+  if (!user || accountType === 'unknown') return [];
+  if (accountType === 'direction') return [{ id: 'direction', title: 'Pilotage et consultation', groups: managerNavigation.filter(item => item.id !== 'synthese').map(item => ({ id: `direction-${item.id}`, label: item.label, icon: item.icon, color: '#8B995C', path: `/portail-direction/${item.id}` })) }];
   if (accountType === 'dgmg') return filterNavigationSections(DGMG_NAVIGATION_SECTIONS, user, moduleAvailability);
   if (accountType === 'dgi') return filterNavigationSections(DGI_NAVIGATION_SECTIONS, user, moduleAvailability);
   if (isCollectorScopedUser(user)) return filterNavigationSections(COLLECTOR_NAVIGATION_SECTIONS, user, moduleAvailability);

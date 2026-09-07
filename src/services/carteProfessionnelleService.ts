@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { readAllPages } from '@/lib/readAllPages';
 
 export type CarteProfessionnelleStatut =
   | 'en_cours'
@@ -208,22 +209,20 @@ export const carteProfessionnelleService = {
     type_artisan?: string;
     mining_company_id?: string;
   }) {
-    let query = supabase
-      .from('snp_cartes_professionnelles')
-      .select(`
-        *,
-        artisan:snp_artisans_miniers(*)
-      `);
+    const data = await readAllPages((from, to) => {
+      let query = supabase
+        .from('snp_cartes_professionnelles')
+        .select(`
+          *,
+          artisan:snp_artisans_miniers(*)
+        `, { count: 'exact' });
 
-    if (filters?.statut) {
-      query = query.eq('statut', filters.statut);
-    }
+      if (filters?.statut) {
+        query = query.eq('statut', filters.statut);
+      }
 
-    query = query.order('created_at', { ascending: false });
-
-    const { data, error } = await query;
-
-    if (error) throw error;
+      return query.order('created_at', { ascending: false }).order('id').range(from, to);
+    });
 
     let filteredData = data;
 

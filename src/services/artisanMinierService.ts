@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { readAllPages } from '@/lib/readAllPages';
 import { artisanDocumentService } from './artisanDocumentService';
 import { genererNumeroCarte } from './carteNumberService';
 import type { ResponsableArtisan } from '@/lib/artisanDossier';
@@ -110,13 +111,12 @@ export interface CarteStatistics {
 
 export const artisanMinierService = {
   async getAll() {
-    const { data, error } = await supabase
+    return readAllPages((from, to) => supabase
       .from('snp_artisans_miniers')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .order('id')
+      .range(from, to));
   },
 
   async getById(id: string) {

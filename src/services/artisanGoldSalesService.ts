@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { readAllPages } from '@/lib/readAllPages';
 import type { Database } from '@/types/database';
 import { genererNumeroRecu } from './venteRecuNumberService';
 
@@ -85,13 +86,14 @@ function normalizeSale(row: ArtisanGoldSaleRow): ArtisanGoldSale {
 export const artisanGoldSalesService = {
   async getAll(): Promise<ArtisanGoldSale[]> {
     try {
-      const { data, error } = await supabase
+      const data = await readAllPages((from, to) => supabase
         .from('snp_artisan_ventes_or')
-        .select('*, attribution_site:snp_artisan_vente_site_origins(site_id)')
-        .order('date_vente', { ascending: false });
+        .select('*, attribution_site:snp_artisan_vente_site_origins(site_id)', { count: 'exact' })
+        .order('date_vente', { ascending: false })
+        .order('id')
+        .range(from, to));
 
-      if (error) throw error;
-      return (data || []).map(normalizeSale);
+      return data.map(normalizeSale);
     } catch (error) {
       console.error('Error fetching gold sales:', error);
       throw error;
@@ -100,14 +102,15 @@ export const artisanGoldSalesService = {
 
   async getByArtisan(artisanId: string): Promise<ArtisanGoldSale[]> {
     try {
-      const { data, error } = await supabase
+      const data = await readAllPages((from, to) => supabase
         .from('snp_artisan_ventes_or')
-        .select('*, attribution_site:snp_artisan_vente_site_origins(site_id)')
+        .select('*, attribution_site:snp_artisan_vente_site_origins(site_id)', { count: 'exact' })
         .eq('artisan_id', artisanId)
-        .order('date_vente', { ascending: false });
+        .order('date_vente', { ascending: false })
+        .order('id')
+        .range(from, to));
 
-      if (error) throw error;
-      return (data || []).map(normalizeSale);
+      return data.map(normalizeSale);
     } catch (error) {
       console.error('Error fetching artisan gold sales:', error);
       throw error;

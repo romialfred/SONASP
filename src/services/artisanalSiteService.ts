@@ -2,6 +2,7 @@ import { validateSiteAea } from '@/lib/siteFormalization';
 import { secureRandomId } from '@/lib/secureRandom';
 import { siteAeaDocumentService } from '@/services/siteAeaDocumentService';
 import { supabase } from '@/lib/supabase';
+import { readAllPages } from '@/lib/readAllPages';
 import { artisanMinierService, type ArtisanMinier } from '@/services/artisanMinierService';
 import { artisanGoldSalesService } from '@/services/artisanGoldSalesService';
 import { buildProductionFromArtisanSales } from '@/services/artisanalSiteInsights';
@@ -101,15 +102,13 @@ export const summarizeSiteProduction = (
     .sort((a, b) => b.productionKilograms - a.productionKilograms);
 
 const listSites = async (): Promise<ArtisanalSite[]> => {
-  const [{ data: sites, error: sitesError }, { data: assignments, error: assignmentsError }] =
-    await Promise.all([
-      supabase.from('artisanal_sites').select('*').order('name'),
-      supabase.from('artisanal_site_assignments').select('*'),
-    ]);
-
-  if (sitesError) throw sitesError;
-  if (assignmentsError) throw assignmentsError;
-  return (sites || []).map((row) => mapSiteRow(row as SiteRow, (assignments || []) as SiteRow[]));
+  const [sites, assignments] = await Promise.all([
+    readAllPages((from, to) => supabase.from('artisanal_sites')
+      .select('*', { count: 'exact' }).order('name').order('id').range(from, to)),
+    readAllPages((from, to) => supabase.from('artisanal_site_assignments')
+      .select('*', { count: 'exact' }).order('id').range(from, to)),
+  ]);
+  return sites.map((row) => mapSiteRow(row as SiteRow, assignments as SiteRow[]));
 };
 
 /**
@@ -192,8 +191,13 @@ export const artisanalSiteService = {
   loadSiteData,
   saveSite,
   async getSite(id: string) {
-    const sites = await listSites();
-    return sites.find((site) => site.id === id) || null;
+    const { data: site, error } = await supabase.from('artisanal_sites')
+      .select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    if (!site) return null;
+    const assignments = await readAllPages((from, to) => supabase.from('artisanal_site_assignments')
+      .select('*', { count: 'exact' }).eq('site_id', id).order('id').range(from, to));
+    return mapSiteRow(site as SiteRow, assignments as SiteRow[]);
   },
   isUsingLocalFallback: () => false,
 };

@@ -7,8 +7,10 @@ const git = (...args) => execFileSync('git', args, { encoding: 'utf8' });
 const roots = [
   'docs/amelioration/audit/',
   'docs/amelioration/environnement/reprise-r02/',
+  'docs/amelioration/environnement/reprise-r04/',
   'docs/amelioration/lot-artisanat/',
   'docs/amelioration/preuves/recette-r02/',
+  'docs/amelioration/preuves/recette-r04/',
   'docs/amelioration/preuves/lecture-sites-ui/',
   'docs/amelioration/preuves/integration-r03/',
   'docs/header-identity-qa/',

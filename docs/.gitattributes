@@ -2,8 +2,10 @@
 # These rules do not change application source or historical captures on disk.
 /amelioration/audit/** -text
 /amelioration/environnement/reprise-r02/** -text
+/amelioration/environnement/reprise-r04/** -text
 /amelioration/lot-artisanat/** -text
 /amelioration/preuves/recette-r02/** -text
+/amelioration/preuves/recette-r04/** -text
 /amelioration/preuves/lecture-sites-ui/** -text
 /amelioration/preuves/integration-r03/** -text
 /header-identity-qa/** -text

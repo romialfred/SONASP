@@ -1,0 +1,9 @@
+{
+  "projectRef": "yyverzuhkdonjjuficor",
+  "startedAt": "2026-09-07T16:21:44.424Z",
+  "readOnly": true,
+  "command": "supabase 2.115.0 db query --linked --file preflight.sql -o json",
+  "sqlSha256": "3e8d6d9271bc768153ea0143fb9efe086047d195de33903517f06c60791f22a3",
+  "exitCode": 0,
+  "finishedAt": "2026-09-07T16:21:50.259Z"
+}

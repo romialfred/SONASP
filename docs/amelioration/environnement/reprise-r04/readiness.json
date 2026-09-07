@@ -1,0 +1,32 @@
+{
+  "preparedAt": "2026-09-07T16:26:59.550Z",
+  "runPrefix": "QA20260907-R04",
+  "projectRef": "yyverzuhkdonjjuficor",
+  "baselineAt": "2026-09-07T16:21:34.272695+00:00",
+  "readOnlyCalls": 2,
+  "remoteWrites": 0,
+  "siteSubmitted": false,
+  "uploadsSubmitted": false,
+  "waitingForUiAccess": true,
+  "waitingForExactUiUuid": true,
+  "scriptsSyntaxCheckExitCode": 0,
+  "scriptsFunctionalTests": false,
+  "uiVerified": false,
+  "binaryStorageVerified": false,
+  "storageHistoricalObjects": 3,
+  "hashes": {
+    "baseline-before.json": "cb6d26199e7053a503768699185078295ef3edb4fb4fe73677ff5b02ddf5cdc0",
+    "baseline-before.execution.json": "d1de1106cfd7f2722112573b00086839e3e0f071b6aa403e02506b8717f080e7",
+    "preflight.json": "c16e63e01871c9e8a1745b5509dfac5530809bcd316f77d32e3c64ce3aa57245",
+    "preflight.execution.json": "1b65d75a4d154daaeb0abc47c13d998e2419a20d7f3822e436afc3538d7dbde0",
+    "baseline.sql": "b297f9ef9391c37fad25b79566439aff7238944e479b66a36a6c413e31cbdb13",
+    "preflight.sql": "3e8d6d9271bc768153ea0143fb9efe086047d195de33903517f06c60791f22a3",
+    "run-readonly.mjs": "58356847348fe7ed40639979744c696c1ed6c1740062b424a154d40b2bcde052",
+    "prepare-dossier-read.mjs": "d6442df1bbe4203578554375aabfc52bed16f7fe80e15e3dfee5d21dc0889e91",
+    "compare-dossier.mjs": "b242259b74130f7b2b1493cb4d330adc592866b321483f00bcc8192f3253efa3",
+    "compare-baseline.mjs": "0520ec69c32b0c04c79e2537aebfd8aeffdb4a4c6b82a0e81182a91ef5d3eb7e",
+    "prepare-uploads-read.mjs": "21bb7300fd7bfd37d5b034d73941a38ff14ed94663b5a8ea2e037cd404b3061e",
+    "verify-uploads.mjs": "bd9dc3ddee3bbbcdcbedfd4c5b4aaccc2bce95a52b4536acd05e6ef2a131e07c",
+    "README.md": "e0110814f62a49172908a8c531ef3650fd1b890d2d1d5af5db8df6b921b2b983"
+  }
+}

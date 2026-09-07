@@ -1,0 +1,182 @@
+{
+  "id": "AUD-FINAL-R03-R02-V2-20260907",
+  "checkedAt": "2026-09-07T16:10:46.874Z",
+  "localEvidenceReadsOnly": true,
+  "integration": {
+    "head": "5d0d29f9fc9cc20564298a9346f0a67c17387381",
+    "startedAt": "2026-09-07T14:00:05.403Z",
+    "endedAt": "2026-09-07T14:18:37.028Z",
+    "assertions": 2938,
+    "files": 366,
+    "passedModules": 366,
+    "reason": "passed",
+    "unhandledErrors": [],
+    "gates": [
+      {
+        "name": "tests",
+        "code": 0,
+        "stdoutMatches": true,
+        "stderrMatches": true
+      },
+      {
+        "name": "database-types",
+        "code": 0,
+        "stdoutMatches": true,
+        "stderrMatches": true
+      },
+      {
+        "name": "typescript",
+        "code": 0,
+        "stdoutMatches": true,
+        "stderrMatches": true
+      },
+      {
+        "name": "lint",
+        "code": 0,
+        "stdoutMatches": true,
+        "stderrMatches": true
+      },
+      {
+        "name": "french-ui",
+        "code": 0,
+        "stdoutMatches": true,
+        "stderrMatches": true
+      },
+      {
+        "name": "build-source",
+        "code": 0,
+        "stdoutMatches": true,
+        "stderrMatches": true
+      },
+      {
+        "name": "build",
+        "code": 0,
+        "stdoutMatches": true,
+        "stderrMatches": true
+      }
+    ],
+    "inputCount": 1628,
+    "stableBeforeAfter": true,
+    "currentInputsMatch": true,
+    "oldGlobal2870Retained": true
+  },
+  "cleanup": {
+    "candidateSha256": "7420606a3828626d652dfd79887f89da1cfc90b3865478e1af520901743a5a73",
+    "exactV1ToV2ReplacementOnly": true,
+    "v1FailureDidNotChangeBaselineOrSchema": true,
+    "preflightAndValidationBaselinesEqual": true,
+    "deletedCount": 3,
+    "removed": [
+      {
+        "table": "artisanal_site_assignments",
+        "id": "12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12"
+      },
+      {
+        "table": "artisanal_site_assignments",
+        "id": "d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c"
+      },
+      {
+        "table": "artisanal_sites",
+        "id": "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c"
+      }
+    ],
+    "otherRowsAdded": [],
+    "otherRowsChanged": [],
+    "comparedRowFingerprintTables": 10,
+    "outsidePreservationTables": 14,
+    "outsidePreservationMatches": true,
+    "storageMetadataMatches": true,
+    "schemaMatches": true,
+    "thirdPartyChecks": [
+      {
+        "id": "5a29b656-c992-4a84-91fa-eb6819121ebb",
+        "preserved": true
+      },
+      {
+        "id": "be44ea0d-fb3b-4b02-88b4-cc6ccaf67c56",
+        "preserved": true
+      },
+      {
+        "id": "b0035b68-1fbb-45ef-a911-36a03d2e10e6",
+        "preserved": true
+      }
+    ],
+    "capturedSqlReceiptExit": 0,
+    "capturedPostflightReceiptExit": 0
+  },
+  "pixels15": {
+    "checks": [
+      {
+        "file": "docs/amelioration/preuves/lecture-sites-ui/15-production-erreur-sans-panneau.jpg",
+        "sha256": "c5f441b6a59c83c3caf4729b7ab4bcd0dcc7db978ea9357dd2b5bb759273caaf",
+        "matches": true
+      },
+      {
+        "file": "docs/amelioration/preuves/lecture-sites-ui/15-production-erreur-sans-panneau.txt",
+        "sha256": "f0943f0b4c8217a8ce666f7f060e86a74d36b071ddf7cab0405b95f401dc37c7",
+        "matches": true
+      }
+    ],
+    "directlyInspected": true,
+    "dimensions": {
+      "width": 1280,
+      "height": 720
+    },
+    "retryButtonVisible": true,
+    "previous07VisibilityReservationResolvedOnly": true,
+    "fullPage": false,
+    "memoryFixtureOnly": true
+  },
+  "limitations": [
+    "Aucun test ou SQL relancé par cet audit.",
+    "Les comparaisons de données portent sur les empreintes capturées, pas une relecture du serveur.",
+    "Storage : métadonnées de trois buckets, pas empreintes binaires.",
+    "Schéma : périmètre présent dans les preuves, pas inventaire complet de la base.",
+    "Les trois changements tiers restent sans attribution.",
+    "Aucune validation des workflows complets, permissions réelles, photos/AEA distantes ou déploiement."
+  ],
+  "artifacts": {
+    "docs/amelioration/audit/integration-locale-r03-evidence.json": "524cf7269582251fbf07b347a2af4902a495351436da4fcb36d38a004e4836b6",
+    "docs/amelioration/audit/integration-locale-r03-tests.json": "6464ff8c5411601992c2a2caefa9e5bbf26509b84e439c5ec6ee4273f7b67d30",
+    "docs/amelioration/audit/integration-locale-r03-test-end.json": "90d2cb407cd8112350b40700c73a3a5ce83bd30a19d5daca18a3c39388fc9770",
+    "docs/amelioration/audit/integration-locale-r03-tests.stdout.txt": "140648eb1117987a344b7cd21622fedce28a3c04ddd7ede6ea80325a630815c7",
+    "docs/amelioration/audit/integration-locale-r03-tests.stderr.txt": "d98b2620deeaf078e92f5aaa47268ee20fadc035e20bc2bf572533e38c761c49",
+    "docs/amelioration/audit/integration-locale-r03-database-types.stdout.txt": "8ab1d1ee7f4520962f218610744854fb79659900e558d19c1f4d3493e5bfed83",
+    "docs/amelioration/audit/integration-locale-r03-database-types.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/amelioration/audit/integration-locale-r03-typescript.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/amelioration/audit/integration-locale-r03-typescript.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/amelioration/audit/integration-locale-r03-lint.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/amelioration/audit/integration-locale-r03-lint.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/amelioration/audit/integration-locale-r03-french-ui.stdout.txt": "de91802471b94b5fd4d56ac0a1b55de6f78356b6743752e818347c8a2942bfeb",
+    "docs/amelioration/audit/integration-locale-r03-french-ui.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/amelioration/audit/integration-locale-r03-build-source.stdout.txt": "a4adf9e4b112f1f9969aa92f9111bd57c55554c6d5d1637d845f5c6753ffcac1",
+    "docs/amelioration/audit/integration-locale-r03-build-source.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/amelioration/audit/integration-locale-r03-build.stdout.txt": "c09ba08609aee64fc185421858c540e7c8e75d57a9d14736ed27d45d20e076ab",
+    "docs/amelioration/audit/integration-locale-r03-build.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/amelioration/preuves/recette-r02/manifest-donnees.json": "aa718adc94fef84f8d3533516d9c7ffecae25121545cbbe47984b73baed74080",
+    "docs/amelioration/environnement/reprise-r02/cleanup-plan-v2.json": "fc86371051a2ba337bbb65a1c1570d365ad455c9b6ab4eb93428d93a979b41fa",
+    "docs/amelioration/environnement/reprise-r02/cleanup-execution-v2.json": "e49e92147a591d661cb23b8907fa421821753dfde4f86a0b027d4d34794802c8",
+    "docs/amelioration/environnement/reprise-r02/cleanup-result-v2.json": "7ee2ebf1d235e80f364649810ecacdcb31919a55ee364f88753315695209f7e3",
+    "docs/amelioration/environnement/reprise-r02/cleanup-preflight.json": "d5a239cc845e09301ef4a350b65c4ec6bb2f4d40b83e476f9b3a25451827eb59",
+    "docs/amelioration/environnement/reprise-r02/cleanup-apres-echec.json": "55784eb0aa368b72633069f7eca66229b177b03908c772d3385d64a278422fb8",
+    "docs/amelioration/environnement/reprise-r02/cleanup-postflight-v2-avant-delete.json": "1a63d7c518e5d648280ecc5540fe7da24a5770a02f1d36e307a4575a5cc0b44f",
+    "docs/amelioration/environnement/reprise-r02/cleanup-postflight-v2-apres-delete.json": "3451ca6f129d678bbdb3140a4bebd2f75bed7b3a79dbbb4230837ec4b7e69faa",
+    "docs/amelioration/environnement/reprise-r02/cleanup-postflight-v2-apres-delete.execution.json": "6b6ca967445cd786ab1cf8f4ec7d7611176163d73809d060fef7f315af646ba3",
+    "docs/amelioration/environnement/reprise-r02/cleanup-verification-v2.json": "dcb51639f8214e8913bac50313855898806ffc4af697dc1a25c63f4bdec50623",
+    "docs/amelioration/environnement/reprise-r02/cleanup-validation-v2.evidence.json": "08c82de37ddb1eac5fb116b22ff6145133351b8b9a390914f8ff9ed6cc1f213c",
+    "docs/amelioration/environnement/reprise-r02/cleanup-candidate-v2.sql": "7420606a3828626d652dfd79887f89da1cfc90b3865478e1af520901743a5a73",
+    "docs/amelioration/environnement/reprise-r02/cleanup-postflight-v2.sql": "af8e6b870ea19212ccbfa85307c93acc27b5ce480743829587b1dd8f5b6b9ebf",
+    "docs/amelioration/environnement/reprise-r02/cleanup-validate-v2.sql": "4a732b52920f381b541663af339cb072a899294d840f61104560cb7d88e498ef",
+    "docs/amelioration/environnement/reprise-r02/cleanup-validation-v2.json": "d016f0199ca485ccaa5ba33e8040cc49cac2dff167eb6afaa83f1680365471a1",
+    "docs/amelioration/environnement/reprise-r02/cleanup-validation-v2.execution.json": "d5cc230761fd5bb143087cfddd6923e3769b26399698f6d953be440d256b483a",
+    "docs/amelioration/environnement/reprise-r02/cleanup-postflight-v2-avant-delete.execution.json": "873626f1d1502ba20bab3d188f1e4d0d36afd2cae552e94aff85d4e5d321a203",
+    "docs/amelioration/environnement/reprise-r02/run-cleanup-v2.mjs": "f249a20adce2e323b246b97ab43aa9cd7106f84d32820220827d3f9322983122",
+    "docs/amelioration/environnement/reprise-r02/cleanup-candidate.sql": "3da1169b8d0497d277c12aed2715bbca099c096692d0ac520a55fd2161238650",
+    "docs/amelioration/preuves/lecture-sites-ui/manifest.json": "eafc0d5978b99f00b69d440ef56ede55b6e6a8df3c824de0dbec720d858b45ef",
+    "docs/amelioration/preuves/lecture-sites-ui/15-production-erreur-sans-panneau.jpg": "c5f441b6a59c83c3caf4729b7ab4bcd0dcc7db978ea9357dd2b5bb759273caaf",
+    "docs/amelioration/preuves/lecture-sites-ui/15-production-erreur-sans-panneau.txt": "f0943f0b4c8217a8ce666f7f060e86a74d36b071ddf7cab0405b95f401dc37c7",
+    "docs/amelioration/audit/reprise-locale-suite-finale.json": "3f23f1a85165e6acd2e55ec04f7f16ee75cce5c3bc517001081238a0c92ec935",
+    "docs/amelioration/audit/REVUE_SORTIE_GLOBALE_2870.md": "fcc3d6f8560ef7aa9fef5753313e7b11a5cfb39402c2bd53cf8ce9730c3c8a1f",
+    "docs/amelioration/audit/reprise-locale-suite-finale.log": "2ffabb5838fc8eab8684f3eeb7639f66b01ee14561f4f2ae585b9a9102c98f64"
+  }
+}

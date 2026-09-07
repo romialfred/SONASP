@@ -1,0 +1,359 @@
+- banner:
+  - generic "FASO SANAMA — Administrateur":
+    - img "FASO SANAMA"
+    - generic "Administrateur":
+      - img "Armoiries du Burkina Faso"
+  - heading "Plateforme Nationale de Traçabilité de l’Or" [level=1]
+  - paragraph: Production, collecte, commercialisation et suivi des recettes
+  - generic "Portail Administrateur":
+    - generic: Portail
+    - strong: Administrateur
+  - button "Choisir la langue (FR)":
+    - generic: FR
+  - button "Afficher les notifications":
+  - button "Ouvrir le menu utilisateur":
+    - generic: TR
+    - strong: TIEGNAN Romuald
+    - generic: Administrateur
+- complementary "Navigation principale":
+  - generic: ESPACE ADMINISTRATEUR
+  - button "Réduire le menu":
+  - navigation:
+    - link "Tableau de bord":
+      - /url: /dashboard
+      - generic: Tableau de bord
+    - region "Sites artisanaux & Artisans":
+      - heading "Sites artisanaux & Artisans" [level=2]
+      - button "Sites artisanaux" [expanded]:
+        - generic "Sites artisanaux"
+      - link "Vue d'ensemble":
+        - /url: /artisan-sites
+        - generic: Vue d'ensemble
+      - link "Productions":
+        - /url: /artisan-sites/production
+        - generic: Productions
+      - button "Artisans miniers":
+        - generic "Artisans miniers"
+    - region "Mine industrielle":
+      - heading "Mine industrielle" [level=2]
+      - button "Prévisions & licences":
+        - generic "Prévisions & licences"
+      - button "Gestion de la production":
+        - generic "Gestion de la production"
+      - button "Achat aux mines industrielles":
+        - generic "Achat aux mines industrielles"
+      - button "Gestion des expéditions":
+        - generic "Gestion des expéditions"
+    - region "Vente & achat d’or":
+      - heading "Vente & achat d’or" [level=2]
+      - button "Marché d’or artisanal":
+        - generic "Marché d’or artisanal"
+    - region "Raffinage & stocks":
+      - heading "Raffinage & stocks" [level=2]
+      - button "Gestion du raffinage":
+        - generic "Gestion du raffinage"
+      - button "Suivi du stock d’or":
+        - generic "Suivi du stock d’or"
+    - region "Réserve d’or du Burkina Faso":
+      - heading "Réserve d’or du Burkina Faso" [level=2]
+      - button "Réserve nationale d’or":
+        - generic "Réserve nationale d’or"
+    - region "Vente internationale":
+      - heading "Vente internationale" [level=2]
+      - button "Marchés internationaux":
+        - generic "Marchés internationaux"
+      - button "Ventes d’or internationales":
+        - generic "Ventes d’or internationales"
+      - button "Parties prenantes":
+        - generic "Parties prenantes"
+      - button "Documents":
+        - generic "Documents"
+    - region "Utilisateurs & Portails":
+      - heading "Utilisateurs & Portails" [level=2]
+      - button "Accès & portails":
+        - generic "Accès & portails"
+    - region "Paramètres et configuration":
+      - heading "Paramètres et configuration" [level=2]
+      - button "Paramètres":
+        - generic "Paramètres"
+      - button "Administration":
+        - generic "Administration"
+    - region "Rapports et analyses":
+      - heading "Rapports et analyses" [level=2]
+      - link "Analyses des ventes":
+        - /url: /analytics/ventes
+        - generic: Analyses des ventes
+      - link "Rapports de production":
+        - /url: /analytics/production
+        - generic: Rapports de production
+      - link "Rapports institutionnels":
+        - /url: /reports
+        - generic: Rapports institutionnels
+      - link "Performance nationale":
+        - /url: /analytics
+        - generic: Performance nationale
+    - region "Relations avec les comptoirs":
+      - heading "Relations avec les comptoirs" [level=2]
+      - link "Cessions comptoirs":
+        - /url: /sonasp/cessions-comptoirs
+        - generic: Cessions comptoirs
+  - link "Centre d’assistance":
+    - /url: /help
+    - generic: Centre d’assistance
+- main:
+  - heading "Ajouter un site artisanal" [level=2]
+  - paragraph: Renseignez les informations réglementaires, opérationnelles et humaines du site.
+  - paragraph:
+    - text: Code du site
+  - status: SA-CEN-2026-0004
+  - generic: Attribué automatiquement
+  - paragraph: Fiche complétée
+  - status: 100 %
+  - paragraph: Taux d’occupation
+  - status: 20 %
+  - generic: 2 / 10 artisans
+  - region "Identification":
+    - heading "Identification" [level=3]
+    - paragraph: Références administratives du site et régime d’exploitation.
+    - text: Nom du site
+    - generic: "*"
+    - textbox "Nom du site":
+      - /placeholder: Site artisanal de…
+      - text: QA20260907-R02-SITE
+    - text: Statut
+    - generic: "*"
+    - radiogroup "Statut du site":
+      - radio "Planifié" [checked]
+      - text: Planifié
+      - radio "Actif"
+      - text: Actif
+      - radio "Suspendu"
+      - text: Suspendu
+    - generic: Type d’exploitation
+    - strong: Site artisanal
+    - group "Catégorie du site":
+      - generic: Catégorie du site *
+      - radio "Site formalisé Dispose d’une attestation d’exploitation artisanale (AEA)."
+      - strong: Site formalisé
+      - generic: Dispose d’une attestation d’exploitation artisanale (AEA).
+      - radio "Site non formalisé Ne dispose pas d’une AEA." [checked]
+      - strong: Site non formalisé
+      - generic: Ne dispose pas d’une AEA.
+  - region "Localisation":
+    - heading "Localisation" [level=3]
+    - paragraph: Rattachement territorial et point cartographique du périmètre.
+    - text: Région
+    - generic: "*"
+    - combobox "Région":
+      - option "Sélectionner une région"
+      - option "Boucle du Mouhoun"
+      - option "Cascades"
+      - option "Centre" [selected]
+      - option "Centre-Est"
+      - option "Centre-Nord"
+      - option "Centre-Ouest"
+      - option "Centre-Sud"
+      - option "Est"
+      - option "Hauts-Bassins"
+      - option "Nord"
+      - option "Plateau-Central"
+      - option "Sahel"
+      - option "Sud-Ouest"
+    - text: Province
+    - generic: "*"
+    - combobox "Province":
+      - option "Sélectionner une province"
+      - option "Kadiogo" [selected]
+    - text: Localité
+    - generic: "*"
+    - combobox "Localité": Ouagadougou QA R02
+    - 'img "Carte des régions et provinces du Burkina Faso : cliquez pour positionner le site"':
+      - 'generic "Balé — Boucle du Mouhoun (chef-lieu : Boromo)"'
+      - 'generic "Banwa — Boucle du Mouhoun (chef-lieu : Solenzo)"'
+      - 'generic "Kossi — Boucle du Mouhoun (chef-lieu : Nouna)"'
+      - 'generic "Mouhoun — Boucle du Mouhoun (chef-lieu : Dédougou)"'
+      - 'generic "Nayala — Boucle du Mouhoun (chef-lieu : Toma)"'
+      - 'generic "Sourou — Boucle du Mouhoun (chef-lieu : Tougan)"'
+      - 'generic "Comoé — Cascades (chef-lieu : Banfora)"'
+      - 'generic "Léraba — Cascades (chef-lieu : Sindou)"'
+      - 'generic "Kadiogo — Centre (chef-lieu : Ouagadougou)"'
+      - 'generic "Boulgou — Centre-Est (chef-lieu : Tenkodogo)"'
+      - 'generic "Koulpélogo — Centre-Est (chef-lieu : Ouargaye)"'
+      - 'generic "Kouritenga — Centre-Est (chef-lieu : Koupéla)"'
+      - 'generic "Bam — Centre-Nord (chef-lieu : Kongoussi)"'
+      - 'generic "Namentenga — Centre-Nord (chef-lieu : Boulsa)"'
+      - 'generic "Sanmatenga — Centre-Nord (chef-lieu : Kaya)"'
+      - 'generic "Boulkiemdé — Centre-Ouest (chef-lieu : Koudougou)"'
+      - 'generic "Sanguié — Centre-Ouest (chef-lieu : Réo)"'
+      - 'generic "Sissili — Centre-Ouest (chef-lieu : Léo)"'
+      - 'generic "Ziro — Centre-Ouest (chef-lieu : Sapouy)"'
+      - 'generic "Bazèga — Centre-Sud (chef-lieu : Kombissiri)"'
+      - 'generic "Nahouri — Centre-Sud (chef-lieu : Pô)"'
+      - 'generic "Zoundwéogo — Centre-Sud (chef-lieu : Manga)"'
+      - 'generic "Gnagna — Est (chef-lieu : Bogandé)"'
+      - 'generic "Gourma — Est (chef-lieu : Fada N''Gourma)"'
+      - 'generic "Komondjari — Est (chef-lieu : Gayéri)"'
+      - 'generic "Kompienga — Est (chef-lieu : Pama)"'
+      - 'generic "Tapoa — Est (chef-lieu : Diapaga)"'
+      - 'generic "Houet — Hauts-Bassins (chef-lieu : Bobo-Dioulasso)"'
+      - 'generic "Kénédougou — Hauts-Bassins (chef-lieu : Orodara)"'
+      - 'generic "Tuy — Hauts-Bassins (chef-lieu : Houndé)"'
+      - 'generic "Loroum — Nord (chef-lieu : Titao)"'
+      - 'generic "Passoré — Nord (chef-lieu : Yako)"'
+      - 'generic "Yatenga — Nord (chef-lieu : Ouahigouya)"'
+      - 'generic "Zondoma — Nord (chef-lieu : Gourcy)"'
+      - 'generic "Ganzourgou — Plateau-Central (chef-lieu : Zorgho)"'
+      - 'generic "Kourwéogo — Plateau-Central (chef-lieu : Boussé)"'
+      - 'generic "Oubritenga — Plateau-Central (chef-lieu : Ziniaré)"'
+      - 'generic "Oudalan — Sahel (chef-lieu : Gorom-Gorom)"'
+      - 'generic "Séno — Sahel (chef-lieu : Dori)"'
+      - 'generic "Soum — Sahel (chef-lieu : Djibo)"'
+      - 'generic "Yagha — Sahel (chef-lieu : Sebba)"'
+      - 'generic "Bougouriba — Sud-Ouest (chef-lieu : Diébougou)"'
+      - 'generic "Ioba — Sud-Ouest (chef-lieu : Dano)"'
+      - 'generic "Noumbiel — Sud-Ouest (chef-lieu : Batié)"'
+      - 'generic "Poni — Sud-Ouest (chef-lieu : Gaoua)"'
+      - generic: Kadiogo
+    - paragraph:
+      - text: Cliquez sur la carte pour positionner le site —
+      - strong: 12.37140, -1.51970
+    - text: Superficie (hectares)
+    - generic: "*"
+    - spinbutton "Superficie (hectares)": "2.5"
+    - text: Latitude
+    - generic: "*"
+    - spinbutton "Latitude": "12.3714"
+    - text: Longitude
+    - generic: "*"
+    - spinbutton "Longitude": "-1.5197"
+    - paragraph: "Cliquez sur la carte : la région, la province et les coordonnées se renseignent ensemble."
+  - region "Capacité d’exploitation":
+    - heading "Capacité d’exploitation" [level=3]
+    - paragraph: Effectifs autorisés, profondeur des puits et produits chimiques admis.
+    - text: Artisans autorisés
+    - generic: "*"
+    - spinbutton "Artisans autorisés": "10"
+    - text: Artisans actifs
+    - generic: "*"
+    - spinbutton "Artisans actifs": "2"
+    - text: Profondeur moyenne (m)
+    - generic: "*"
+    - spinbutton "Profondeur moyenne (m)": "4"
+    - group "Produits chimiques autorisés":
+      - generic: Produits chimiques autorisés
+      - checkbox "Borax"
+      - text: Borax
+      - checkbox "Charbon actif"
+      - text: Charbon actif
+      - checkbox "Cyanure"
+      - text: Cyanure
+      - checkbox "Mercure"
+      - text: Mercure
+      - checkbox "Aucun produit chimique" [checked]
+      - text: Aucun produit chimique
+    - paragraph:
+      - text: "La production du site n’est pas saisie ici : elle est consolidée automatiquement à partir des ventes d’or déclarées par les artisans rattachés au site."
+  - region "Photos du site":
+    - heading "Photos du site" [level=3]
+    - paragraph: "Jusqu’à 3 vues : accès, puits, aire de traitement."
+    - generic: Ajouter une photo
+    - generic: JPEG ou PNG · 0/3
+  - region "Responsables":
+    - heading "Responsables" [level=3]
+    - paragraph: Interlocuteurs SONASP pour le suivi et la collecte sur le terrain.
+    - article:
+      - generic: QR
+      - heading "Responsable du site" [level=4]
+      - paragraph: Autorité de terrain, garant de l’exploitation
+      - text: Nom complet
+      - generic: "*"
+      - textbox "Nom complet":
+        - /placeholder: Prénom et nom
+        - text: QA20260907-R02 Responsable
+      - text: Téléphone
+      - generic: "*"
+      - textbox "Téléphone" [active]:
+        - /placeholder: +226 …
+      - generic: Adresse e-mail
+      - textbox "Adresse e-mail":
+        - /placeholder: prenom.nom@sonasp.bf
+    - article:
+      - generic: QC
+      - heading "Chargé de la collecte" [level=4]
+      - paragraph: Interlocuteur SONASP pour la remontée de l’or
+      - text: Nom complet
+      - generic: "*"
+      - textbox "Nom complet":
+        - /placeholder: Prénom et nom
+        - text: QA20260907-R02 Collecte
+      - text: Téléphone
+      - generic: "*"
+      - textbox "Téléphone":
+        - /placeholder: +226 …
+      - generic: Adresse e-mail
+      - textbox "Adresse e-mail":
+        - /placeholder: prenom.nom@sonasp.bf
+  - region "Observations":
+    - heading "Observations" [level=3]
+    - paragraph: Contraintes, conditions particulières et historique du site.
+    - generic: Notes et observations
+    - textbox "Notes et observations":
+      - /placeholder: Contraintes, conditions particulières, historique…
+      - text: Dossier temporaire QA20260907-R02. Recette interface et persistance, nettoyage après vérification.
+  - button "Annuler"
+  - button "Enregistrer le site":
+    - text: Enregistrer le site
+  - complementary "Sites référencés et définitions":
+    - heading "Sites artisanaux" [level=3]
+    - paragraph: 9 site(s) référencé(s)
+    - searchbox "Rechercher un site référencé"
+    - list:
+      - button "DƐTHIÍ Actif SA-2026-003 · Sud-Ouest 128 / 160 artisans":
+        - strong: DƐTHIÍ
+        - emphasis: Actif
+        - generic: SA-2026-003 · Sud-Ouest
+        - generic: 128 / 160 artisans
+      - button "DUUNI GOLD Actif SA-2026-004 · Centre-Nord 174 / 205 artisans":
+        - strong: DUUNI GOLD
+        - emphasis: Actif
+        - generic: SA-2026-004 · Centre-Nord
+        - generic: 174 / 205 artisans
+      - button "Kalsaka OR Actif SA-2026-001 · Nord 146 / 180 artisans":
+        - strong: Kalsaka OR
+        - emphasis: Actif
+        - generic: SA-2026-001 · Nord
+        - generic: 146 / 180 artisans
+      - button "Kan-ŋe Gorom N1 Actif SA-2026-006 · Sahel 0 / 120 artisans":
+        - strong: Kan-ŋe Gorom N1
+        - emphasis: Actif
+        - generic: SA-2026-006 · Sahel
+        - generic: 0 / 120 artisans
+      - button "NAFOLO Actif SA-CAS-2026-0003 · Cascades 0 / 92 artisans":
+        - strong: NAFOLO
+        - emphasis: Actif
+        - generic: SA-CAS-2026-0003 · Cascades
+        - generic: 0 / 92 artisans
+      - button "SANOU GOLD Actif SA-2026-002 · Boucle du Mouhoun 211 / 240 artisans":
+        - strong: SANOU GOLD
+        - emphasis: Actif
+        - generic: SA-2026-002 · Boucle du Mouhoun
+        - generic: 211 / 240 artisans
+      - button "SANU Actif SA-CAS-2026-0002 · Cascades 92 / 120 artisans":
+        - strong: SANU
+        - emphasis: Actif
+        - generic: SA-CAS-2026-0002 · Cascades
+        - generic: 92 / 120 artisans
+      - button "TAANBA Mining Planifié SA-HAU-2026-0001 · Hauts-Bassins 90 / 100 artisans":
+        - strong: TAANBA Mining
+        - emphasis: Planifié
+        - generic: SA-HAU-2026-0001 · Hauts-Bassins
+        - generic: 90 / 100 artisans
+      - button "TÍNÍ Gold Planifié SA-2026-005 · Hauts-Bassins 0 / 190 artisans":
+        - strong: TÍNÍ Gold
+        - emphasis: Planifié
+        - generic: SA-2026-005 · Hauts-Bassins
+        - generic: 0 / 190 artisans
+- contentinfo:
+  - generic: © 2026 FASO SANAMA
+  - generic: Confidentialité · Intégrité · Transparence
+- generic: "0"

@@ -1,0 +1,134 @@
+{
+  "checkedAt": "2026-09-07T13:02:02.0137048Z",
+  "localOnly": true,
+  "remoteWrites": 0,
+  "sourceFrozen": true,
+  "onlineRpcOrderVerified": false,
+  "browserVerified": false,
+  "tests": {
+    "total": 78,
+    "passed": 78,
+    "failed": 0,
+    "files": 9,
+    "exitCode": 0
+  },
+  "baselineReplay": {
+    "total": 24,
+    "passed": 1,
+    "failed": 23,
+    "exitCode": 1
+  },
+  "lateReplyBaseline": {
+    "total": 11,
+    "passed": 0,
+    "failed": 3,
+    "skipped": 8,
+    "exitCode": 1
+  },
+  "lint": {
+    "exitCode": 0,
+    "files": 7
+  },
+  "typecheck": {
+    "command": "npx tsc --noEmit -p tsconfig.app.json",
+    "exitCode": 0
+  },
+  "sources": [
+    {
+      "file": "src/pages/collector/CollectorsPage.tsx",
+      "sha256": "d5b8981f93608a60cc081d98258b375fb8e63e19486983056c9fa67260790454"
+    },
+    {
+      "file": "src/pages/collector/ComptoirsPage.tsx",
+      "sha256": "4decc33ba596568fc08c993f415b45a3b90e39b1a7fa134cd790557680bf1b74"
+    },
+    {
+      "file": "src/services/collectorService.ts",
+      "sha256": "8b650d5ca91c1be6d831a5e5c9c8d79f786be90ea0071ca10e8d1b4b4da72bdc"
+    },
+    {
+      "file": "src/pages/collector/CollectorsPage.test.tsx",
+      "sha256": "c25bb51a1786035b4b004bfd33f48dffae8175caf7c0c9c5844359f3eee1b8b2"
+    },
+    {
+      "file": "src/pages/collector/ComptoirsPage.test.tsx",
+      "sha256": "7169daa9297b6ff437eb5a9425a0552e549bdede81dfa30b133a8f78b64acc61"
+    },
+    {
+      "file": "src/services/collectorService.test.ts",
+      "sha256": "b99f910511349f56b2919e4edd61d91ff2f69d813fbec9a66555e9d8643d3264"
+    },
+    {
+      "file": "src/services/rpcClientBinding.test.ts",
+      "sha256": "e9b848c3b03737256ad4dba8ede17c2da3e93d90a724bc4438948c73941109a0"
+    }
+  ],
+  "preserved": [
+    {
+      "file": "src/pages/collector/CollectorForm.tsx",
+      "beforeSha256": "963d98140888ab8e9ec794785ad458251dfaf378d7ce235c07106e8f70761ec7",
+      "afterSha256": "963d98140888ab8e9ec794785ad458251dfaf378d7ce235c07106e8f70761ec7",
+      "unchanged": true
+    },
+    {
+      "file": "src/pages/collector/ComptoirForm.tsx",
+      "beforeSha256": "ad95df441430fdbd643140cfce29a2b32497d24013cb51d65f8944516ba29f32",
+      "afterSha256": "ad95df441430fdbd643140cfce29a2b32497d24013cb51d65f8944516ba29f32",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/routeAccessRegistry.ts",
+      "beforeSha256": "9fa0b5fc87d9a1b21961960be4e0d88d0f806cdee4fa5c6a2bb364e54852c01d",
+      "afterSha256": "9fa0b5fc87d9a1b21961960be4e0d88d0f806cdee4fa5c6a2bb364e54852c01d",
+      "unchanged": true
+    },
+    {
+      "file": "supabase/migrations/20260906145430_collecteurs_comptoirs_ventes.sql",
+      "beforeSha256": "2787fff0ea6f9fdd044090a309a72eabf34565b2f8d2d9b35f28df9fb6955302",
+      "afterSha256": "2787fff0ea6f9fdd044090a309a72eabf34565b2f8d2d9b35f28df9fb6955302",
+      "unchanged": true
+    },
+    {
+      "file": "supabase/migrations/20260906174800_dossiers_comptoirs_entreprises.sql",
+      "beforeSha256": "f99ff8909cfe1df228406407fdcde99baac8e42bdf2353cd307f3519d0d04dc9",
+      "afterSha256": "f99ff8909cfe1df228406407fdcde99baac8e42bdf2353cd307f3519d0d04dc9",
+      "unchanged": true
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "apres-scope-final.json",
+      "sha256": "9ac0549e77c83e371f416bcbe2ea6d0890e517a3db1afaa3a6eadeab63e805f6"
+    },
+    {
+      "file": "apres-scope-final.log",
+      "sha256": "27d3528d16015249de5b0afdde403d528c3feb463e400e610644efce18eebcc2"
+    },
+    {
+      "file": "lint-scope-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "typecheck-scope-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "CORRECTION_CONTEXTE.md",
+      "sha256": "8a964f06d2b75add5ada024c405de18c96c15043f6fbe54f6091b2e28d97f124"
+    },
+    {
+      "file": "pagination-compatibilite.md",
+      "sha256": "424d88976232ec6119e2d74961965af213eab542fdb9370c91eff5134afeb50b"
+    }
+  ],
+  "scopeAuditRed": {
+    "file": "docs/amelioration/audit/collector-comptoir-scope-before.json",
+    "passed": 0,
+    "failed": 4,
+    "sha256": "3d6d70434dddc52328d9b1026f6115f62902470a51334dbc2b1a073ef0a69b03"
+  },
+  "independentTest": {
+    "file": "docs/amelioration/audit/collector-comptoir-scope-independent.test.tsx",
+    "sha256": "e6ca31cb40ce40a5e955e039a41598e7ceddf00cdb3e5c7eb3ad6dcefe2765bf"
+  }
+}

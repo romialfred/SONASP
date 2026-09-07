@@ -1,0 +1,134 @@
+- note: BANC LOCAL — données fictives, Auth et Storage simulés, sauvegarde en mémoire uniquement
+- banner:
+  - generic "FASO SANAMA — DGMG — contexte fictif de présentation":
+    - img "FASO SANAMA"
+    - generic "DGMG — contexte fictif de présentation":
+      - img "Armoiries du Burkina Faso"
+  - heading "Plateforme Nationale de Traçabilité de l’Or" [level=1]
+  - paragraph: Production, collecte, commercialisation et suivi des recettes
+  - generic "Portail Mines · DGMG":
+    - generic: Portail
+    - strong: Mines · DGMG
+  - button "Choisir la langue (FR)":
+    - generic: FR
+  - button "Afficher les notifications":
+  - button "Ouvrir le menu utilisateur":
+    - generic: AQ
+    - strong: Agent QA local
+    - generic: DGMG simulée
+- complementary "Navigation principale":
+  - generic: ESPACE MINES · DGMG
+  - button "Réduire le menu":
+  - navigation:
+    - region "Supervision & régulation":
+      - heading "Supervision & régulation" [level=2]
+      - link "Vue d’ensemble":
+        - /url: /portail-dgmg
+        - generic: Vue d’ensemble
+      - link "Registre des sites":
+        - /url: /artisan-sites
+        - generic: Registre des sites
+      - link "Artisans et opérateurs":
+        - /url: /artisan-minier/liste
+        - generic: Artisans et opérateurs
+      - link "Collecteurs":
+        - /url: /artisan-minier/collecteurs
+        - generic: Collecteurs
+      - link "Sociétés minières":
+        - /url: /stakeholders/mining-companies
+        - generic: Sociétés minières
+      - link "Comptoirs":
+        - /url: /stakeholders/organizations
+        - generic: Comptoirs
+      - link "Déclarations de production":
+        - /url: /production/daily
+        - generic: Déclarations de production
+      - link "Validations Réserve":
+        - /url: /portail-dgmg/reserve-validations
+        - generic: Validations Réserve
+  - region "Cours de l’or":
+    - text: COURS DE L’OR
+    - button "Actualiser le cours de l’or":
+    - paragraph: Cours non chargé dans cet aperçu isolé
+    - button "Réessayer":
+      - text: Réessayer
+  - link "Centre d’assistance":
+    - /url: /help
+    - generic: Centre d’assistance
+- main:
+  - link "Tous les sites artisanaux":
+    - /url: /artisan-sites
+    - text: Tous les sites artisanaux
+  - paragraph: Référentiel des sites artisanaux · SA-NOR-2026-0001
+  - heading "Site QA — présentation simulée" [level=1]
+  - paragraph:
+    - text: Kalsaka · Yatenga · Nord
+  - button "Actualiser":
+    - text: Actualiser
+  - link "Modifier la fiche":
+    - /url: /artisan-sites/qa-site/modifier
+    - text: Modifier la fiche
+  - article:
+    - generic: Catégorie du site
+    - strong: Site non formalisé
+    - generic: Sans AEA
+  - article:
+    - generic: Situation administrative
+    - strong: Actif
+    - generic: "Type d’exploitation : artisanal"
+  - article:
+    - generic: Artisans / capacité
+    - strong:
+      - text: "146"
+      - emphasis: / 180
+    - generic: Effectif déclaré dans la fiche
+  - article:
+    - generic: Indice opérationnel
+    - strong: 70 / 100
+    - generic: À surveiller
+  - tablist "Détails du site":
+    - tab "Vue d’ensemble" [selected]
+    - tab "AEA et documents"
+    - tab "Conformité"
+  - tabpanel "Vue d’ensemble":
+    - article:
+      - heading "Localisation et exploitation" [level=2]:
+        - text: Localisation et exploitation
+      - term: Superficie
+      - definition: 42,5 hectares
+      - term: Coordonnées GPS
+      - definition: 13.178, -1.992
+      - term: Profondeur moyenne
+      - definition: 23 m
+      - term: Produits autorisés
+      - definition: Borax, Charbon actif
+      - term: Ventes d’or rattachées
+      - definition: 0 kg
+      - term: Dernière déclaration
+      - definition: Aucune déclaration
+    - article:
+      - heading "Responsables du site" [level=2]:
+        - text: Responsables du site
+      - generic: Responsable du site
+      - strong: Responsable QA
+      - generic: +226 70 12 34 56
+      - generic: responsable@example.test
+      - generic: Chargé de la collecte
+      - strong: Agent QA
+      - generic: +226 76 22 18 04
+      - generic: collecte@example.test
+    - article:
+      - heading "Photos du site" [level=2]
+      - img "Photo 1 du site Site QA — présentation simulée"
+      - alert:
+        - text: "Photo 2 du site Site QA — présentation simulée : aperçu indisponible."
+      - button "Réessayer photo 2 du site site qa — présentation simulée":
+        - text: Réessayer
+    - article:
+      - heading "Observations" [level=2]
+      - paragraph: Dossier fictif local. Aucune donnée distante ni base réelle.
+    - paragraph: Créé le 17 août 2026 · Mis à jour le 17 août 2026
+- contentinfo:
+  - generic: © 2026 FASO SANAMA
+  - generic: Confidentialité · Intégrité · Transparence
+- generic "Commandes du banc isolé"

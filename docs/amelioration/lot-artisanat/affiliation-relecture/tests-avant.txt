@@ -1,0 +1,110 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ❯ src/components/artisan/AffiliationDossier.test.tsx (14 tests | 5 failed) 6913ms
+     × ne présente pas une lecture initiale échouée comme une absence de dossier 380ms
+     × ne confirme pas une actualisation si la liste des cartes est inaccessible 941ms
+     × ne confirme pas une actualisation si la relecture des droits échoue 514ms
+     × distingue une action enregistrée de sa relecture échouée et reprend sans la rejouer 540ms
+     × relit les droits liés à la carte retournée par la dernière actualisation 353ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > ne présente pas une lecture initiale échouée comme une absence de dossier
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <h2>
+  Aucun dossier d’affiliation disponible
+</h2> instead
+ ❯ src/components/artisan/AffiliationDossier.test.tsx:23:78
+     21|     render(<MemoryRouter><AffiliationDossier artisanId="artisan" /></M…
+     22|     await screen.findByRole('alert');
+     23|     expect(screen.queryByText('Aucun dossier d’affiliation disponible'…
+       |                                                                              ^
+     24|     expect(screen.queryByText('Enregistrez d’abord le dossier de l’art…
+     25|     fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > ne confirme pas une actualisation si la liste des cartes est inaccessible
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <p
+  class="sn-note sn-note--success"
+  role="status"
+>
+  Statut actualisé.
+</p> instead
+ ❯ src/components/artisan/AffiliationDossier.test.tsx:35:46
+     33|     await screen.findByRole('alert');
+     34|     await waitFor(() => expect(screen.getByRole('button', { name: 'Act…
+     35|     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+       |                                              ^
+     36|     expect(screen.getByRole('button', { name: 'Activer la carte' })).t…
+     37|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > ne confirme pas une actualisation si la relecture des droits échoue
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <p
+  class="sn-note sn-note--success"
+  role="status"
+>
+  Statut actualisé.
+</p> instead
+ ❯ src/components/artisan/AffiliationDossier.test.tsx:45:46
+     43|     await screen.findAllByRole('alert');
+     44|     await waitFor(() => expect(screen.getByRole('button', { name: 'Act…
+     45|     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+       |                                              ^
+     46|     expect(screen.queryByText('Aucune opération tracée pour cette émis…
+     47|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > distingue une action enregistrée de sa relecture échouée et reprend sans la rejouer
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  L’opération est enregistrée
+Received:
+  lecture indisponible
+ ❯ src/components/artisan/AffiliationDossier.test.tsx:53:46
+     51|     mocks.list.mockRejectedValueOnce(new Error('lecture indisponible')…
+     52|     fireEvent.click(screen.getByRole('button', { name: 'Activer la car…
+     53|     expect(await screen.findByRole('alert')).toHaveTextContent('L’opér…
+       |                                              ^
+     54|     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+     55|     expect(mocks.activate).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > relit les droits liés à la carte retournée par la dernière actualisation
+AssertionError: expected last "vi.fn()" call to have been called with [ 'renewed-dues-card' ]
+
+- Expected
++ Received
+
+  [
+-   "renewed-dues-card",
++   "card",
+  ]
+
+ ❯ src/components/artisan/AffiliationDossier.test.tsx:67:24
+     65|     fireEvent.click(screen.getByRole('button', { name: 'Actualiser' })…
+     66|     await screen.findByRole('status');
+     67|     expect(mocks.dues).toHaveBeenLastCalledWith('renewed-dues-card');
+       |                        ^
+     68|   });
+     69|   it('le chargement d’une carte payée ne déclenche aucune activation',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 9 passed (14)
+   Start at  11:07:59
+   Duration  17.68s (transform 1.29s, setup 1.93s, import 2.27s, tests 6.91s, environment 5.62s)
+

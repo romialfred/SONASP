@@ -1,0 +1,509 @@
+{
+  "scope": "Banc local avec composants réels ; authentification, organismes, données et logo du comptoir simulés ; aucune écriture en base",
+  "checks": [
+    {
+      "name": "01-administrateur-ordinateur",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Tableau de bord",
+          "tag": "A"
+        }
+      ],
+      "badge": true,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 76,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 100
+        },
+        {
+          "alt": "Armoiries du Burkina Faso",
+          "height": 76,
+          "loaded": true,
+          "src": "/institutional/armoiries-burkina-faso.png",
+          "width": 106
+        }
+      ],
+      "path": "/dashboard",
+      "portal": "PortailAdministrateur",
+      "viewport": [
+        1440,
+        675
+      ]
+    },
+    {
+      "name": "02-administrateur-sous-menu",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Comptoirs",
+          "tag": "A"
+        }
+      ],
+      "badge": true,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 76,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 100
+        },
+        {
+          "alt": "Armoiries du Burkina Faso",
+          "height": 76,
+          "loaded": true,
+          "src": "/institutional/armoiries-burkina-faso.png",
+          "width": 106
+        }
+      ],
+      "path": "/artisan-minier/comptoirs",
+      "portal": "PortailAdministrateur",
+      "viewport": [
+        1440,
+        675
+      ]
+    },
+    {
+      "name": "03-collecteur-sonasp",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Tableau de bord",
+          "tag": "A"
+        }
+      ],
+      "badge": false,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 76,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 100
+        },
+        {
+          "alt": "SONASP",
+          "height": 76,
+          "loaded": true,
+          "src": "/sonasp_logo.png",
+          "width": 106
+        }
+      ],
+      "path": "/portail-collecteur",
+      "portal": "PortailAgent collecteur",
+      "viewport": [
+        1440,
+        675
+      ]
+    },
+    {
+      "name": "04-collecteur-menu-actif",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Registre des collectes",
+          "tag": "A"
+        }
+      ],
+      "badge": false,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 76,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 100
+        },
+        {
+          "alt": "SONASP",
+          "height": 76,
+          "loaded": true,
+          "src": "/sonasp_logo.png",
+          "width": 106
+        }
+      ],
+      "path": "/collecte/ventes",
+      "portal": "PortailAgent collecteur",
+      "viewport": [
+        1440,
+        675
+      ]
+    },
+    {
+      "name": "07-mine-sans-logo",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Tableau de bord",
+          "tag": "A"
+        }
+      ],
+      "badge": false,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 76,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 100
+        },
+        {
+          "alt": "Armoiries du Burkina Faso",
+          "height": 76,
+          "loaded": true,
+          "src": "/institutional/armoiries-burkina-faso.png",
+          "width": 106
+        }
+      ],
+      "path": "/portail-mine",
+      "portal": "PortailSociété minière",
+      "viewport": [
+        1440,
+        675
+      ]
+    },
+    {
+      "name": "08-comptoir-logo",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Tableau de bord",
+          "tag": "A"
+        }
+      ],
+      "badge": false,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 76,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 100
+        },
+        {
+          "alt": "Comptoir Alpha Burkina SA",
+          "height": 76,
+          "loaded": true,
+          "src": "/logo-test-comptoir.svg",
+          "width": 106
+        }
+      ],
+      "path": "/portail-comptoir",
+      "portal": "PortailComptoir",
+      "viewport": [
+        1440,
+        675
+      ]
+    },
+    {
+      "name": "09-comptoir-sans-logo",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Tableau de bord",
+          "tag": "A"
+        }
+      ],
+      "badge": false,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 76,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 100
+        },
+        {
+          "alt": "Armoiries du Burkina Faso",
+          "height": 76,
+          "loaded": true,
+          "src": "/institutional/armoiries-burkina-faso.png",
+          "width": 106
+        }
+      ],
+      "path": "/portail-comptoir",
+      "portal": "PortailComptoir",
+      "viewport": [
+        1440,
+        675
+      ]
+    },
+    {
+      "name": "10-administrateur-mobile",
+      "active": [],
+      "badge": true,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 54,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 72
+        },
+        {
+          "alt": "Armoiries du Burkina Faso",
+          "height": 50,
+          "loaded": true,
+          "src": "/institutional/armoiries-burkina-faso.png",
+          "width": 72
+        }
+      ],
+      "path": "/dashboard",
+      "portal": "PortailAdministrateur",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "name": "11-menu-actif-mobile",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Comptoirs",
+          "tag": "A"
+        }
+      ],
+      "badge": true,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 54,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 72
+        },
+        {
+          "alt": "Armoiries du Burkina Faso",
+          "height": 50,
+          "loaded": true,
+          "src": "/institutional/armoiries-burkina-faso.png",
+          "width": 72
+        }
+      ],
+      "path": "/artisan-minier/comptoirs",
+      "portal": "PortailAdministrateur",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "name": "12-administrateur-1024",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Tableau de bord",
+          "tag": "A"
+        }
+      ],
+      "badge": true,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 76,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 100
+        },
+        {
+          "alt": "Armoiries du Burkina Faso",
+          "height": 76,
+          "loaded": true,
+          "src": "/institutional/armoiries-burkina-faso.png",
+          "width": 106
+        }
+      ],
+      "path": "/dashboard",
+      "portal": "PortailAdministrateur",
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "name": "13-administrateur-menu-reduit",
+      "active": [
+        {
+          "background": "rgba(240, 199, 80, 0.22)",
+          "current": "page",
+          "label": "Tableau de bord",
+          "tag": "A"
+        }
+      ],
+      "badge": true,
+      "headerOverflow": false,
+      "horizontalOverflow": false,
+      "images": [
+        {
+          "alt": "FASO SANAMA",
+          "height": 47,
+          "loaded": true,
+          "src": "/login-faso/faso-sanama.png",
+          "width": 66
+        },
+        {
+          "alt": "Armoiries du Burkina Faso",
+          "height": 34,
+          "loaded": true,
+          "src": "/institutional/armoiries-burkina-faso.png",
+          "width": 66
+        }
+      ],
+      "path": "/dashboard",
+      "portal": "PortailAdministrateur",
+      "viewport": [
+        1440,
+        675
+      ]
+    }
+  ],
+  "rejectedChecks": [
+    {
+      "name": "05-finances-dgi",
+      "evidenceStatus": "rejected-dom-image-correspondence",
+      "reason": "Header DGI visible, mais corps Navigation de vérification /collecte/ventes sans lien actif. La route et le lien actif déclarés ne correspondent pas à cette capture.",
+      "originalReportedDom": {
+        "name": "05-finances-dgi",
+        "active": [
+          {
+            "background": "rgba(240, 199, 80, 0.22)",
+            "current": "page",
+            "label": "Tableau de bord",
+            "tag": "A"
+          }
+        ],
+        "badge": false,
+        "headerOverflow": false,
+        "horizontalOverflow": false,
+        "images": [
+          {
+            "alt": "FASO SANAMA",
+            "height": 76,
+            "loaded": true,
+            "src": "/login-faso/faso-sanama.png",
+            "width": 100
+          },
+          {
+            "alt": "Armoiries du Burkina Faso",
+            "height": 76,
+            "loaded": true,
+            "src": "/institutional/armoiries-burkina-faso.png",
+            "width": 106
+          }
+        ],
+        "path": "/portail-dgi",
+        "portal": "PortailFinances · DGI",
+        "viewport": [
+          1440,
+          675
+        ]
+      }
+    },
+    {
+      "name": "06-dgmg",
+      "evidenceStatus": "rejected-dom-image-correspondence",
+      "reason": "La capture affiche Finances · DGI et Collecte des taxes et impôts, pas DGMG. Route, portail et lien actif déclarés non recevables comme preuve DGMG.",
+      "originalReportedDom": {
+        "name": "06-dgmg",
+        "active": [
+          {
+            "background": "rgba(240, 199, 80, 0.22)",
+            "current": "page",
+            "label": "Vue d’ensemble",
+            "tag": "A"
+          }
+        ],
+        "badge": false,
+        "headerOverflow": false,
+        "horizontalOverflow": false,
+        "images": [
+          {
+            "alt": "FASO SANAMA",
+            "height": 76,
+            "loaded": true,
+            "src": "/login-faso/faso-sanama.png",
+            "width": 100
+          },
+          {
+            "alt": "Armoiries du Burkina Faso",
+            "height": 76,
+            "loaded": true,
+            "src": "/institutional/armoiries-burkina-faso.png",
+            "width": 106
+          }
+        ],
+        "path": "/portail-dgmg",
+        "portal": "PortailMines · DGMG",
+        "viewport": [
+          1440,
+          675
+        ]
+      }
+    }
+  ],
+  "captureAudit": {
+    "date": "2026-09-07",
+    "reviewer": "audit_independant",
+    "imagesUnchanged": true,
+    "originalImageSha256": {
+      "docs/header-identity-qa/05-finances-dgi.png": "df1a1ed48c1b1c761a22a082b89d41f85b0f2eee5b8fcb403b31f17584c49b21",
+      "docs/header-identity-qa/06-dgmg.png": "cef9020cbae53e53f363306641e2d7983422380e726e83916d3ba67ee2acd932"
+    },
+    "dgmgVisualValidated": false,
+    "observations": [
+      {
+        "image": "05-finances-dgi.png",
+        "visiblePortal": "Finances · DGI",
+        "visibleHeading": "Navigation de vérification",
+        "visibleRouteText": "/collecte/ventes",
+        "visibleHighlightedLinks": [],
+        "actualBrowserUrl": null,
+        "scope": "Header DGI uniquement ; aucun contrôle du contenu métier."
+      },
+      {
+        "image": "06-dgmg.png",
+        "visiblePortal": "Finances · DGI",
+        "visibleHeading": "Collecte des taxes et impôts",
+        "visibleHighlightedLinks": [
+          "Tableau de bord"
+        ],
+        "actualBrowserUrl": null,
+        "scope": "Image rejetée pour DGMG ; conservée sous son nom historique."
+      }
+    ]
+  }
+}

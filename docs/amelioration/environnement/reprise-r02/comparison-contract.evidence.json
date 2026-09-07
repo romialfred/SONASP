@@ -1,0 +1,51 @@
+{
+  "checkedAt": "2026-09-07T12:07:12.562Z",
+  "localFixturesOnly": true,
+  "remoteCalls": 0,
+  "testCount": 7,
+  "passed": true,
+  "results": [
+    {
+      "name": "exact",
+      "expectedAccepted": true,
+      "actualAccepted": true,
+      "passed": true
+    },
+    {
+      "name": "missing-id",
+      "expectedAccepted": false,
+      "actualAccepted": false,
+      "passed": true
+    },
+    {
+      "name": "missing-kind",
+      "expectedAccepted": false,
+      "actualAccepted": false,
+      "passed": true
+    },
+    {
+      "name": "different-id",
+      "expectedAccepted": false,
+      "actualAccepted": false,
+      "passed": true
+    },
+    {
+      "name": "different-kind",
+      "expectedAccepted": false,
+      "actualAccepted": false,
+      "passed": true
+    },
+    {
+      "name": "different-parent",
+      "expectedAccepted": false,
+      "actualAccepted": false,
+      "passed": true
+    },
+    {
+      "name": "missing-child",
+      "expectedAccepted": false,
+      "actualAccepted": false,
+      "passed": true
+    }
+  ]
+}

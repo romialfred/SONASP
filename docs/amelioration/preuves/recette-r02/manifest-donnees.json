@@ -1,0 +1,13 @@
+{
+  "runPrefix": "QA20260907-R02",
+  "environment": "Interface locale 127.0.0.1:5192, base de test existante SONASP_OPS",
+  "entities": {
+    "artisanal_sites": ["d9f7160a-aadd-41d9-ad4d-c9f886d41e0c"],
+    "artisanal_site_assignments": ["12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12", "d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c"]
+  },
+  "storageObjects": [],
+  "cleanupStatus": "Terminé et vérifié : V2 autorisée séparément, exécutée une fois à 16:00 UTC ; exactement 1 site et 2 responsables supprimés. Postflight READ ONLY : UUID absents, 14 tables hors manifeste, métadonnées Storage et schéma préservés. V1 échouée avant DELETE conservée dans les preuves.",
+  "cleanupEvidence": "docs/amelioration/environnement/reprise-r02/cleanup-verification-v2.json",
+  "lastVerifiedStep": "Création UI, relecture de la fiche et de la liste, comparaison SQL, puis suppression des trois données QA et postflight de préservation",
+  "notYetVerified": ["Modification", "AEA", "Photos Storage réelles"]
+}

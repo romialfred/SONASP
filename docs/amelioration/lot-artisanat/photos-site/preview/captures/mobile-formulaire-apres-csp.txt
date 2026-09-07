@@ -1,0 +1,246 @@
+- note: BANC LOCAL — données fictives, Auth et Storage simulés, sauvegarde en mémoire uniquement
+- banner:
+  - button "Ouvrir la navigation":
+  - generic "FASO SANAMA — DGMG — contexte fictif de présentation":
+    - img "FASO SANAMA"
+    - generic "DGMG — contexte fictif de présentation":
+      - img "Armoiries du Burkina Faso"
+  - heading "Plateforme Nationale de Traçabilité de l’Or" [level=1]
+  - paragraph: Production, collecte, commercialisation et suivi des recettes
+  - generic "Portail Mines · DGMG":
+    - generic: Portail
+    - strong: Mines · DGMG
+  - button "Choisir la langue (FR)":
+    - generic: FR
+  - button "Afficher les notifications":
+  - button "Ouvrir le menu utilisateur":
+    - generic: AQ
+- main:
+  - heading "Modifier le site artisanal" [level=2]
+  - paragraph: Renseignez les informations réglementaires, opérationnelles et humaines du site.
+  - paragraph:
+    - text: Code du site
+  - status: SA-NOR-2026-0001
+  - generic: Attribué automatiquement
+  - paragraph: Fiche complétée
+  - status: 100 %
+  - paragraph: Taux d’occupation
+  - status: 81 %
+  - generic: 146 / 180 artisans
+  - region "Identification":
+    - heading "Identification" [level=3]
+    - paragraph: Références administratives du site et régime d’exploitation.
+    - text: Nom du site
+    - generic: "*"
+    - textbox "Nom du site":
+      - /placeholder: Site artisanal de…
+      - text: Site QA — présentation simulée
+    - text: Statut
+    - generic: "*"
+    - radiogroup "Statut du site":
+      - radio "Planifié"
+      - text: Planifié
+      - radio "Actif" [checked]
+      - text: Actif
+      - radio "Suspendu"
+      - text: Suspendu
+    - generic: Type d’exploitation
+    - strong: Site artisanal
+    - group "Catégorie du site":
+      - generic: Catégorie du site *
+      - radio "Site formalisé Dispose d’une attestation d’exploitation artisanale (AEA)."
+      - strong: Site formalisé
+      - generic: Dispose d’une attestation d’exploitation artisanale (AEA).
+      - radio "Site non formalisé Ne dispose pas d’une AEA." [checked]
+      - strong: Site non formalisé
+      - generic: Ne dispose pas d’une AEA.
+  - region "Localisation":
+    - heading "Localisation" [level=3]
+    - paragraph: Rattachement territorial et point cartographique du périmètre.
+    - text: Région
+    - generic: "*"
+    - combobox "Région":
+      - option "Sélectionner une région"
+      - option "Boucle du Mouhoun"
+      - option "Cascades"
+      - option "Centre"
+      - option "Centre-Est"
+      - option "Centre-Nord"
+      - option "Centre-Ouest"
+      - option "Centre-Sud"
+      - option "Est"
+      - option "Hauts-Bassins"
+      - option "Nord" [selected]
+      - option "Plateau-Central"
+      - option "Sahel"
+      - option "Sud-Ouest"
+    - text: Province
+    - generic: "*"
+    - combobox "Province":
+      - option "Sélectionner une province"
+      - option "Loroum"
+      - option "Passoré"
+      - option "Yatenga" [selected]
+      - option "Zondoma"
+    - text: Localité
+    - generic: "*"
+    - combobox "Localité": Kalsaka
+    - 'img "Carte des régions et provinces du Burkina Faso : cliquez pour positionner le site"':
+      - 'generic "Balé — Boucle du Mouhoun (chef-lieu : Boromo)"'
+      - 'generic "Banwa — Boucle du Mouhoun (chef-lieu : Solenzo)"'
+      - 'generic "Kossi — Boucle du Mouhoun (chef-lieu : Nouna)"'
+      - 'generic "Mouhoun — Boucle du Mouhoun (chef-lieu : Dédougou)"'
+      - 'generic "Nayala — Boucle du Mouhoun (chef-lieu : Toma)"'
+      - 'generic "Sourou — Boucle du Mouhoun (chef-lieu : Tougan)"'
+      - 'generic "Comoé — Cascades (chef-lieu : Banfora)"'
+      - 'generic "Léraba — Cascades (chef-lieu : Sindou)"'
+      - 'generic "Kadiogo — Centre (chef-lieu : Ouagadougou)"'
+      - 'generic "Boulgou — Centre-Est (chef-lieu : Tenkodogo)"'
+      - 'generic "Koulpélogo — Centre-Est (chef-lieu : Ouargaye)"'
+      - 'generic "Kouritenga — Centre-Est (chef-lieu : Koupéla)"'
+      - 'generic "Bam — Centre-Nord (chef-lieu : Kongoussi)"'
+      - 'generic "Namentenga — Centre-Nord (chef-lieu : Boulsa)"'
+      - 'generic "Sanmatenga — Centre-Nord (chef-lieu : Kaya)"'
+      - 'generic "Boulkiemdé — Centre-Ouest (chef-lieu : Koudougou)"'
+      - 'generic "Sanguié — Centre-Ouest (chef-lieu : Réo)"'
+      - 'generic "Sissili — Centre-Ouest (chef-lieu : Léo)"'
+      - 'generic "Ziro — Centre-Ouest (chef-lieu : Sapouy)"'
+      - 'generic "Bazèga — Centre-Sud (chef-lieu : Kombissiri)"'
+      - 'generic "Nahouri — Centre-Sud (chef-lieu : Pô)"'
+      - 'generic "Zoundwéogo — Centre-Sud (chef-lieu : Manga)"'
+      - 'generic "Gnagna — Est (chef-lieu : Bogandé)"'
+      - 'generic "Gourma — Est (chef-lieu : Fada N''Gourma)"'
+      - 'generic "Komondjari — Est (chef-lieu : Gayéri)"'
+      - 'generic "Kompienga — Est (chef-lieu : Pama)"'
+      - 'generic "Tapoa — Est (chef-lieu : Diapaga)"'
+      - 'generic "Houet — Hauts-Bassins (chef-lieu : Bobo-Dioulasso)"'
+      - 'generic "Kénédougou — Hauts-Bassins (chef-lieu : Orodara)"'
+      - 'generic "Tuy — Hauts-Bassins (chef-lieu : Houndé)"'
+      - 'generic "Loroum — Nord (chef-lieu : Titao)"'
+      - 'generic "Passoré — Nord (chef-lieu : Yako)"'
+      - 'generic "Yatenga — Nord (chef-lieu : Ouahigouya)"'
+      - 'generic "Zondoma — Nord (chef-lieu : Gourcy)"'
+      - 'generic "Ganzourgou — Plateau-Central (chef-lieu : Zorgho)"'
+      - 'generic "Kourwéogo — Plateau-Central (chef-lieu : Boussé)"'
+      - 'generic "Oubritenga — Plateau-Central (chef-lieu : Ziniaré)"'
+      - 'generic "Oudalan — Sahel (chef-lieu : Gorom-Gorom)"'
+      - 'generic "Séno — Sahel (chef-lieu : Dori)"'
+      - 'generic "Soum — Sahel (chef-lieu : Djibo)"'
+      - 'generic "Yagha — Sahel (chef-lieu : Sebba)"'
+      - 'generic "Bougouriba — Sud-Ouest (chef-lieu : Diébougou)"'
+      - 'generic "Ioba — Sud-Ouest (chef-lieu : Dano)"'
+      - 'generic "Noumbiel — Sud-Ouest (chef-lieu : Batié)"'
+      - 'generic "Poni — Sud-Ouest (chef-lieu : Gaoua)"'
+      - generic: Loroum
+      - generic: Passoré
+      - generic: Yatenga
+      - generic: Zondoma
+    - paragraph:
+      - text: Cliquez sur la carte pour positionner le site —
+      - strong: 13.17800, -1.99200
+    - text: Superficie (hectares)
+    - generic: "*"
+    - spinbutton "Superficie (hectares)": "42.5"
+    - text: Latitude
+    - generic: "*"
+    - spinbutton "Latitude": "13.178"
+    - text: Longitude
+    - generic: "*"
+    - spinbutton "Longitude": "-1.992"
+    - paragraph: "Cliquez sur la carte : la région, la province et les coordonnées se renseignent ensemble."
+  - region "Capacité d’exploitation":
+    - heading "Capacité d’exploitation" [level=3]
+    - paragraph: Effectifs autorisés, profondeur des puits et produits chimiques admis.
+    - text: Artisans autorisés
+    - generic: "*"
+    - spinbutton "Artisans autorisés": "180"
+    - text: Artisans actifs
+    - generic: "*"
+    - spinbutton "Artisans actifs": "146"
+    - text: Profondeur moyenne (m)
+    - generic: "*"
+    - spinbutton "Profondeur moyenne (m)": "23"
+    - group "Produits chimiques autorisés":
+      - generic: Produits chimiques autorisés
+      - checkbox "Borax" [checked]
+      - text: Borax
+      - checkbox "Charbon actif" [checked]
+      - text: Charbon actif
+      - checkbox "Cyanure"
+      - text: Cyanure
+      - checkbox "Mercure"
+      - text: Mercure
+      - checkbox "Aucun produit chimique"
+      - text: Aucun produit chimique
+    - paragraph:
+      - text: "La production du site n’est pas saisie ici : elle est consolidée automatiquement à partir des ventes d’or déclarées par les artisans rattachés au site."
+  - region "Photos du site":
+    - heading "Photos du site" [level=3]
+    - paragraph: "Jusqu’à 3 vues : accès, puits, aire de traitement."
+    - figure:
+      - img "Photo 1 du site"
+      - button "Retirer la photo 1":
+    - figure:
+      - img "Photo 2 du site"
+      - button "Retirer la photo 2":
+    - figure:
+      - img "Photo 3 du site"
+      - button "Retirer la photo 3":
+  - region "Responsables":
+    - heading "Responsables" [level=3]
+    - paragraph: Interlocuteurs SONASP pour le suivi et la collecte sur le terrain.
+    - article:
+      - generic: RQ
+      - heading "Responsable du site" [level=4]
+      - paragraph: Autorité de terrain, garant de l’exploitation
+      - text: Nom complet
+      - generic: "*"
+      - textbox "Nom complet":
+        - /placeholder: Prénom et nom
+        - text: Responsable QA
+      - text: Téléphone
+      - generic: "*"
+      - textbox "Téléphone":
+        - /placeholder: +226 …
+      - generic: Adresse e-mail
+      - textbox "Adresse e-mail":
+        - /placeholder: prenom.nom@sonasp.bf
+    - article:
+      - generic: AQ
+      - heading "Chargé de la collecte" [level=4]
+      - paragraph: Interlocuteur SONASP pour la remontée de l’or
+      - text: Nom complet
+      - generic: "*"
+      - textbox "Nom complet":
+        - /placeholder: Prénom et nom
+        - text: Agent QA
+      - text: Téléphone
+      - generic: "*"
+      - textbox "Téléphone":
+        - /placeholder: +226 …
+      - generic: Adresse e-mail
+      - textbox "Adresse e-mail":
+        - /placeholder: prenom.nom@sonasp.bf
+  - region "Observations":
+    - heading "Observations" [level=3]
+    - paragraph: Contraintes, conditions particulières et historique du site.
+    - generic: Notes et observations
+    - textbox "Notes et observations":
+      - /placeholder: Contraintes, conditions particulières, historique…
+      - text: Dossier fictif local. Aucune donnée distante ni base réelle.
+  - button "Annuler"
+  - button "Enregistrer le site":
+    - text: Enregistrer le site
+  - complementary "Sites référencés et définitions":
+    - heading "Sites artisanaux" [level=3]
+    - paragraph: 1 site(s) référencé(s)
+    - searchbox "Rechercher un site référencé"
+    - list:
+      - button "Site QA — présentation simulée Actif SA-NOR-2026-0001 · Nord 146 / 180 artisans":
+        - strong: Site QA — présentation simulée
+        - emphasis: Actif
+        - generic: SA-NOR-2026-0001 · Nord
+        - generic: 146 / 180 artisans
+- contentinfo:
+  - generic: © 2026 FASO SANAMA
+- generic "Commandes du banc isolé"

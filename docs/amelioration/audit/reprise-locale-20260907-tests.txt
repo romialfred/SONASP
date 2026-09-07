@@ -1,0 +1,573 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > aligne les deux identités au-dessus de la sidebar réduisible 3054ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > déploie les sous-menus des groupes métier 3955ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > ouvre deux groupes métier de façon exclusive 1499ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > borne le chrome bleu, l’identité et la navigation au compte DGI 508ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > borne la charte minérale, le header et la navigation au compte DGMG réel 359ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > surligne seulement la page active à /artisan-minier/comptoirs et jamais son groupe 929ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > surligne seulement la page active à /artisan-minier/comptoirs/comptoir-id et jamais son groupe 1248ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > ne surligne pas deux liens vers l’accueil du collecteur 212ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > rend tous les modules au Owner même sans périmètre explicite 1060ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > conserve les six écrans Réserve du Owner après chargement et désactivation du catalogue 1032ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > marque les groupes d’un plus, remplacé par un moins une fois dépliés 1324ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > marque les sous-menus d’une puce, sans icône de module 1105ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > garde le groupe ouvert quand la navigation reconstruit la barre 2258ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > rouvre le groupe de la route quand la navigation change de module 1000ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > ferme réellement le menu utilisateur et y expose la documentation 1201ms
+ ✓ src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > n’ouvre jamais deux menus d’en-tête simultanément 1685ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > affiche les indicateurs et panneaux de la vue territoriale 1188ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > affiche le nom du site et les artisans qui lui sont rattachés 250ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > bascule la carte vers la liste des régions 612ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > n’affiche plus de zone de recherche 163ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ouvre les filtres dans un volet et le referme à l’application 578ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > referme le volet au clic hors du panneau, par le bouton et par Échap 1917ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > compte les filtres appliqués sur le bouton 1128ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > signale le rejet de getAll sans faux zéros ni détails techniques 200ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > signale le rejet de getAllCartes sans faux zéros ni détails techniques 250ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > signale le rejet de listSites sans faux zéros ni détails techniques 212ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ne traite pas une réponse absente de getAll comme une liste vide 120ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ne traite pas une réponse absente de getAllCartes comme une liste vide 248ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ne traite pas une réponse absente de listSites comme une liste vide 192ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > attend les trois lectures avant de calculer les indicateurs 619ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > réessaie toutes les lectures et distingue une réponse réellement vide 511ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > conserve un état indisponible si une autre source échoue lors de la reprise 311ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > sépare deux sites de même localité et exclut les artisans sans rattachement 1186ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > filtre la province par le site enregistré plutôt que par une commune homonyme 660ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > conserve le site hérité de l’exploitant lorsque le filtre ne garde que les aides 925ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte id change 622ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte organization_id change 763ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte mining_company_id change 759ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte access_role_id change 782ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte role change 652ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte organization_type change 671ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte account_type change 727ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte access_portal_id change 776ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte is_active change 732ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte capabilities change 506ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte module_codes change 379ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ignore les réponses tardives du contexte précédent 179ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > réinitialise les filtres de l’ancien contexte sans remonter le cadre de navigation 1007ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ignore une ancienne lecture encore en vol après une reprise réussie 441ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > une reprise après échec de artisans ignore les anciennes sources encore pendantes 1228ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > une reprise après échec de cards ignore les anciennes sources encore pendantes 448ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > une reprise après échec de sites ignore les anciennes sources encore pendantes 501ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > le rejet tardif de artisans ne remplace pas les résultats du nouvel organisme 377ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > le rejet tardif de cards ne remplace pas les résultats du nouvel organisme 500ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > le rejet tardif de sites ne remplace pas les résultats du nouvel organisme 343ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de site_ids seul masque les données et ignore l’ancienne réponse 285ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de responsibilities seul masque les données et ignore l’ancienne réponse 230ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de module_domains seul masque les données et ignore l’ancienne réponse 264ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de access_portal_code seul masque les données et ignore l’ancienne réponse 344ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de actor_category_code seul masque les données et ignore l’ancienne réponse 325ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > le cumul site/type/statut garde uniquement l’aide du parent explicite, même si le parent est filtré 1025ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > aucun nom/localité ni ancien site propre d’un aide ne supplée son lien parent autoritatif 2ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > calculs du tableau de bord national > convertit la production en onces troy 3ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > calculs du tableau de bord national > ne présente pas de variation sans référence 2ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > calculs du tableau de bord national > calcule la fenêtre précédente de même durée 3ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > calculs du tableau de bord national > déduit la répartition par origine des ventes réelles 1ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > calculs du tableau de bord national > construit les transactions à partir des ventes 3ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > calculs du tableau de bord national > borne la période par défaut sur l’exercice en cours 2ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > affiche les indicateurs issus des données chargées 823ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > interroge la période effectivement retenue 406ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > n’affiche aucune donnée inventée quand tout est vide 294ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > annonce les sources indisponibles au lieu de les masquer 142ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > bascule le graphique et filtre les transactions à valider 736ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > ne relance pas le chargement sur une période inversée 462ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > ignore une réponse ancienne après un changement de période 458ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > change d’onglet sans recharger les données et conserve les unités 637ms
+ ✓ src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > exporte uniquement les opérations du filtre actif dans le CSV 877ms
+ ✓ src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > monte l’habillage une seule fois, même si la page en demande un 1095ms
+ ✓ src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > rend l’Outlet quand la page n’appelle pas la mise en page 429ms
+ ✓ src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > conserve l’habillage d’une page à l’autre 654ms
+ ✓ src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > garde l’en-tête et la barre hors du périmètre du repli de suspense 364ms
+ ✓ src/components/layout/NationalDashboardMine.test.tsx > NationalDashboardLayout — espace Mine > affiche l’identité société dynamique et la navigation métier or/anthracite 2093ms
+ ✓ src/components/layout/NationalDashboardMine.test.tsx > NationalDashboardLayout — espace Mine > maintient l’ancienne URL du tableau de bord sur la même entrée active 372ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé owner 6ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé admin 1ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé management 1ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé manager 1ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé dgi 1ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé dgmg 0ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé comptoir 0ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé collector 0ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé customer 0ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé factory 0ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé airport 0ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout le thème du compte autorisé refinery 0ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > ne transforme pas une couleur de portail en autorisation 3ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > ignore une réponse tardive de l’ancien organisme 155ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > retire immédiatement l’identité précédente avant la nouvelle réponse 85ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > utilise le dernier logo du dossier autorisé et son service privé existant 84ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > conserve les armoiries pour owner même avec un organisme rattaché 529ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > conserve les armoiries pour admin même avec un organisme rattaché 38ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > résout la SONASP de rattachement du collecteur depuis la session 75ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > utilise aussi le logo du comptoir auquel le collecteur est rattaché 74ms
+ ✓ src/components/layout/portalThemes.test.tsx > Identité et thème des portails > affiche les armoiries quand un logo est absent ou inaccessible puis accepte le logo suivant 113ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > intitulés de la barre latérale > retire les ventes de collecte du module Artisans miniers 5ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > intitulés de la barre latérale > réserve l’ellipse et l’infobulle aux intitulés métier volontairement longs 3ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > intitulés de la barre latérale > tient sur une ligne pour chaque entrée sans sous-menu 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > intitulés de la barre latérale > tient sur une ligne pour chaque entrée de sous-menu 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > intitulés de la barre latérale > mesure bien les intitulés connus 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > section « Rapports et analyses » > porte les intitulés retenus 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > section « Rapports et analyses » > ne présente aucun sous-menu 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > suit la chaîne de valeur sans doublon entre les sections métier 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > garde le pilotage des comptes dans le module achats et dans le registre RBAC 3ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > projette tous les modules pour le Owner actif malgré un périmètre serveur vide 3ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > sépare les stocks opérationnels de la Réserve nationale 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > applique les bascules du catalogue aux sous-modules des profils non Owner 10ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > conserve tous les modules et sous-modules au Owner avec un catalogue absent 3ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > conserve tous les modules et sous-modules au Owner avec un catalogue désactivé 2ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > conserve tous les modules et sous-modules au Owner avec un catalogue masqué 2ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > projette pour dgmg uniquement les modules institutionnels attribués 8ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > projette pour dgi uniquement les modules institutionnels attribués 5ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > structure le portail DGI selon le contrôle, les recettes et le rapprochement 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > affiche la validation Réserve DGMG seulement avec le module et la capability dédiés 5ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > ne construit aucun menu institutionnel pour une organisation incompatible 0ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > organise la vente internationale et ses parties prenantes 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > conserve la conciliation selon son propre module quand le module ventes est masqué 2ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > supprime l’ancien écran Approbateurs au profit du wizard utilisateurs 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > n'expose qu'un seul intitulé « Tableau de bord » 0ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > ne pointe jamais deux entrées d'une même section vers la même route 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > ne duplique aucune destination fonctionnelle dans la navigation nationale 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > regroupe la prévision annuelle et le forecast dans une seule entrée 1ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > projette pour une mine les modules industriels sans Achats aux mines 20ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > projette pour un comptoir uniquement collecte, DGI, taxes, stock et SONASP 12ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation > projette un menu Collecteur local avec circuit de collecte et sans vente internationale 7ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation de la boîte Comptoir → SONASP > affiche la boîte aux agents SONASP opérationnels uniquement 85ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation de la boîte Comptoir → SONASP > ne remplace jamais le menu dédié du comptoir 20ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation de la boîte Mine → SONASP > affiche la boîte uniquement avec la capability AAL2 autoritative 117ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation des profils partenaires > ne présente aucune entrée nationale par défaut au profil 'mine'/'mine-partner' 35ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation des profils partenaires > ne présente aucune entrée nationale par défaut au profil 'customer'/'customer-partner' 17ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation des profils partenaires > ne présente aucune entrée nationale par défaut au profil 'customer'/'customer-partner' 7ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation des profils partenaires > ne présente aucune entrée nationale par défaut au profil 'factory'/'factory-partner' 44ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation des profils partenaires > ne présente aucune entrée nationale par défaut au profil 'airport'/'airport-partner' 45ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation des profils partenaires > ne présente aucune entrée nationale par défaut au profil 'refinery'/'refinery-partner' 54ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation des profils partenaires > ne présente aucune entrée nationale par défaut au profil 'customer'/'customer-partner' 42ms
+ ✓ src/components/layout/sidebarNavigation.test.ts > navigation des profils partenaires > ne présente rien pour un rôle inconnu ou un partenaire désactivé 0ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > retient la carte la plus récente de chaque artisan 5ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > agrège les artisans et les sites actifs par région 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > rattache les artisans aux sites par leur identifiant et note l’état du site 2ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > ne rattache pas les homonymes, les anciennes fiches sans site ni les artisans d’un autre site 2ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > utilise le lien exploitant des aides et conserve cette jointure après filtrage par type 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > laisse le site inconnu si l’exploitant est absent du périmètre ou n’est pas un exploitant 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > calcule la répartition par type d’artisan 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > calcule l’état administratif des cartes 2ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > construit la série mensuelle des enregistrements 3ms
+ ✓ src/components/layout/national-dashboard-layout.styles.test.ts > National dashboard layout overflow > confine le défilement des pages avant le footer 7ms
+
+ Test Files  10 passed (10)
+      Tests  155 passed (155)
+   Start at  11:13:59
+   Duration  164.13s (transform 10.23s, setup 14.87s, import 25.40s, tests 60.35s, environment 53.10s)
+
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > borne le chrome bleu, l’identité et la navigation au compte DGI
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > borne la charte minérale, le header et la navigation au compte DGMG réel
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > rend tous les modules au Owner même sans périmètre explicite
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > marque les sous-menus d’une puce, sans icône de module
+[Collecteur] Périmètre indisponible: {
+  code: '42501',
+  details: null,
+  hint: null,
+  message: 'permission denied for function snp_current_collector_id'
+}
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > garde le groupe ouvert quand la navigation reconstruit la barre
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardLayout.test.tsx > NationalDashboardLayout > rouvre le groupe de la route quand la navigation change de module
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > affiche les indicateurs issus des données chargées
+Warning: The tag <stop> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at stop
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+Warning: The tag <linearGradient> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+Warning: The tag <defs> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > interroge la période effectivement retenue
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > n’affiche aucune donnée inventée quand tout est vide
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > annonce les sources indisponibles au lieu de les masquer
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > bascule le graphique et filtre les transactions à valider
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > ne relance pas le chargement sur une période inversée
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > ignore une réponse ancienne après un changement de période
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > change d’onglet sans recharger les données et conserve les unités
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/pages/dashboards/GlobalDashboardEnhanced.test.tsx > GlobalDashboardEnhanced > exporte uniquement les opérations du filtre actif dans le CSV
+Warning: <linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at linearGradient
+    at defs
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at Boite (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:22:20)
+    at div
+    at article
+    at section
+    at div
+    at div
+    at div
+    at NationalDashboardLayout (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.test.tsx:15:31)
+    at GlobalDashboardEnhanced (F:/Development/SONASP/src/pages/dashboards/GlobalDashboardEnhanced.tsx:113:61)
+
+stderr | src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > monte l’habillage une seule fois, même si la page en demande un
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at RenderedRoute (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6218:26)
+    at Routes (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7097:3)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > rend l’Outlet quand la page n’appelle pas la mise en page
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at RenderedRoute (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6218:26)
+    at Routes (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7097:3)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > conserve l’habillage d’une page à l’autre
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at RenderedRoute (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6218:26)
+    at Routes (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7097:3)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardChrome.test.tsx > NationalDashboardChrome > garde l’en-tête et la barre hors du périmètre du repli de suspense
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at RenderedRoute (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6218:26)
+    at Routes (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7097:3)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardMine.test.tsx > NationalDashboardLayout — espace Mine > maintient l’ancienne URL du tableau de bord sur la même entrée active
+Warning: An update to MineGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at MineGoldSidebarCard (F:/Development/SONASP/src/components/layout/MineGoldSidebarCard.tsx:45:67)
+    at aside
+    at div
+    at div
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+Warning: An update to MineGoldSidebarCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at MineGoldSidebarCard (F:/Development/SONASP/src/components/layout/MineGoldSidebarCard.tsx:45:67)
+    at aside
+    at div
+    at div
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+
+stderr | src/components/layout/NationalDashboardMine.test.tsx > NationalDashboardLayout — espace Mine > maintient l’ancienne URL du tableau de bord sur la même entrée active
+Warning: An update to NationalDashboardChrome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at NationalDashboardChrome (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:94:36)
+    at NationalDashboardLayout (F:/Development/SONASP/src/components/layout/NationalDashboardLayout.tsx:81:36)
+    at Router (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:7036:13)
+    at MemoryRouter (file:///F:/Development/SONASP/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:6952:3)
+

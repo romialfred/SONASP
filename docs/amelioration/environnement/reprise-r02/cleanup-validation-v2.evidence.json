@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-09-07T15:58:19.439Z",
+  "passed": true,
+  "readOnly": true,
+  "remoteMutations": 0,
+  "beforeAfterExpressionsEvaluated": true,
+  "postflightFullyEvaluated": true,
+  "guardsPassed": true,
+  "sitePresent": 1,
+  "assignmentsPresent": 2,
+  "allBaselineRowsUnchanged": true,
+  "storageMetadataUnchanged": true,
+  "schemaUnchanged": true,
+  "preservedTables": 14,
+  "candidateNotExecuted": true,
+  "hashes": {
+    "cleanup-candidate-v2.sql": "7420606a3828626d652dfd79887f89da1cfc90b3865478e1af520901743a5a73",
+    "cleanup-postflight-v2.sql": "af8e6b870ea19212ccbfa85307c93acc27b5ce480743829587b1dd8f5b6b9ebf",
+    "cleanup-validate-v2.sql": "4a732b52920f381b541663af339cb072a899294d840f61104560cb7d88e498ef",
+    "cleanup-validation-v2.json": "d016f0199ca485ccaa5ba33e8040cc49cac2dff167eb6afaa83f1680365471a1",
+    "cleanup-validation-v2.execution.json": "d5cc230761fd5bb143087cfddd6923e3769b26399698f6d953be440d256b483a",
+    "cleanup-postflight-v2-avant-delete.json": "1a63d7c518e5d648280ecc5540fe7da24a5770a02f1d36e307a4575a5cc0b44f",
+    "cleanup-postflight-v2-avant-delete.execution.json": "873626f1d1502ba20bab3d188f1e4d0d36afd2cae552e94aff85d4e5d321a203"
+  }
+}

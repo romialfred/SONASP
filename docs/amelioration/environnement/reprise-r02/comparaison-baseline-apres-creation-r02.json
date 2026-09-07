@@ -1,0 +1,47 @@
+{
+  "comparedAt": "2026-09-07T13:10:01.760Z",
+  "beforeFile": "docs/amelioration/environnement/reprise-r02/baseline-before.json",
+  "afterFile": "docs/amelioration/environnement/reprise-r02/baseline-apres-creation-r02.json",
+  "manifestFile": "docs/amelioration/preuves/recette-r02/manifest-donnees.json",
+  "preexistingPreserved": false,
+  "newRowsFullyAttributed": false,
+  "missing": [],
+  "changed": [
+    {
+      "table": "snp_artisans_miniers",
+      "id": "5a29b656-c992-4a84-91fa-eb6819121ebb"
+    }
+  ],
+  "added": [
+    {
+      "table": "artisanal_site_assignments",
+      "id": "12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12"
+    },
+    {
+      "table": "artisanal_site_assignments",
+      "id": "d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c"
+    },
+    {
+      "table": "artisanal_sites",
+      "id": "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c"
+    },
+    {
+      "table": "snp_artisans_miniers",
+      "id": "be44ea0d-fb3b-4b02-88b4-cc6ccaf67c56"
+    },
+    {
+      "table": "snp_cartes_professionnelles",
+      "id": "b0035b68-1fbb-45ef-a911-36a03d2e10e6"
+    }
+  ],
+  "unknownAdded": [
+    {
+      "table": "snp_artisans_miniers",
+      "id": "be44ea0d-fb3b-4b02-88b4-cc6ccaf67c56"
+    },
+    {
+      "table": "snp_cartes_professionnelles",
+      "id": "b0035b68-1fbb-45ef-a911-36a03d2e10e6"
+    }
+  ]
+}

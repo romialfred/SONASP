@@ -1,0 +1,9 @@
+{
+  "projectRef": "yyverzuhkdonjjuficor",
+  "startedAt": "2026-09-07T14:08:48.638Z",
+  "readOnly": true,
+  "command": "supabase 2.115.0 db query --linked --file cleanup-preflight.sql -o json",
+  "sqlSha256": "44a9d1ca4bf2b365382fea7b0ee77bfacf13952576748ce41b0123b579d19d25",
+  "exitCode": 0,
+  "finishedAt": "2026-09-07T14:08:57.279Z"
+}

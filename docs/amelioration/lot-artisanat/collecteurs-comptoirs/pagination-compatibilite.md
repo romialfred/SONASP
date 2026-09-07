@@ -1,0 +1,13 @@
+# Compatibilité de la lecture paginée Collecteurs
+
+Vérification du 7 septembre 2026, dans le cadre du correctif local uniquement.
+
+- Client installé : `@supabase/supabase-js` 2.89.0 et `@supabase/postgrest-js` 2.89.0. Le code installé accepte le troisième argument `{ count: 'exact' }` de `rpc` et retourne un constructeur qui expose `range`. Le test `src/services/collectorService.test.ts` utilise ce véritable client avec une fonction `fetch` entièrement simulée ; aucune adresse Supabase réelle n’est utilisée.
+- Version REST notée dans le cache du projet lié : `supabase/.temp/rest-version` indique `v14.1`. Cette information est un cache local, pas une nouvelle mesure du serveur.
+- Le RPC existant retourne `SETOF jsonb`. Il ne faut donc pas lui appliquer `.order('id')` comme à une ligne de table. Le générateur SQL de PostgREST **v14.1** nomme la valeur scalaire `pgrst_scalar`. Le correctif utilise les chemins JSON `pgrst_scalar->identity->>nom`, `pgrst_scalar->identity->>prenoms`, puis `pgrst_scalar->>id` pour départager les homonymes. [Source officielle v14.1](https://github.com/PostgREST/postgrest/blob/v14.1/src/PostgREST/Query/QueryBuilder.hs), [ordre sur les champs JSON](https://postgrest.org/en/v14/references/api/tables_views.html#ordering).
+- Le transport demande un total exact à chaque page. Le helper commun refuse les totaux absents ou modifiés, les doublons, les réponses nulles et les pages vides prématurées. Il avance du nombre effectivement reçu quand la limite serveur est inférieure à 500. Il ne fabrique aucun total. [Documentation officielle des compteurs](https://postgrest.org/en/v14/references/api/pagination_count.html), [RPC Supabase](https://supabase.com/docs/reference/javascript/rpc).
+- La lecture reste soumise au RPC de visibilité existant avec ses arguments vides ; aucune lecture directe de table, aucune nouvelle règle d’accès, aucune migration et aucune modification des formulaires.
+
+**Limites :** le transport simulé prouve les requêtes produites et le comportement du client, pas l’acceptation de ces requêtes par l’API en ligne. Le tri scalaire doit être confirmé par une lecture de l’endpoint réel dans la session autorisée avant de déclarer la recette distante réussie. Les pages HTTP ne constituent pas un instantané transactionnel : certains changements concurrents sont détectés, mais une substitution de lignes conservant le même total peut échapper à ces contrôles, comme pour les autres lecteurs paginés.
+
+Le changelog Supabase a été relu. Les changements annoncés de journaux Management API, d’extensions et de passerelle auto-hébergée n’affectent pas ce correctif de client RPC. Aucune dépendance n’a été installée ou modifiée.

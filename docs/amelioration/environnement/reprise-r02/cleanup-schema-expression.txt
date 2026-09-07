@@ -1,0 +1,16 @@
+jsonb_build_object(
+ 'foreign_keys',(SELECT coalesce(jsonb_agg(jsonb_build_object('table',c.conrelid::regclass::text,'name',c.conname,
+   'referenced_table',c.confrelid::regclass::text,'definition',pg_get_constraintdef(c.oid),'delete_action',c.confdeltype,
+   'columns',(SELECT jsonb_agg(a.attname ORDER BY k.n) FROM unnest(c.conkey) WITH ORDINALITY k(attnum,n) JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=k.attnum),
+   'referenced_columns',(SELECT jsonb_agg(a.attname ORDER BY k.n) FROM unnest(c.confkey) WITH ORDINALITY k(attnum,n) JOIN pg_attribute a ON a.attrelid=c.confrelid AND a.attnum=k.attnum))
+   ORDER BY c.conrelid::regclass::text,c.conname),'[]'::jsonb) FROM pg_constraint c
+   WHERE c.contype='f' AND c.confrelid IN ('public.artisanal_sites'::regclass,'public.artisanal_site_assignments'::regclass)),
+ 'triggers',(SELECT coalesce(jsonb_agg(jsonb_build_object('table',t.tgrelid::regclass::text,'name',t.tgname,'internal',t.tgisinternal,
+   'enabled',t.tgenabled,'definition',pg_get_triggerdef(t.oid),'function',t.tgfoid::regprocedure::text,
+   'function_md5',CASE WHEN NOT t.tgisinternal THEN md5(pg_get_functiondef(t.tgfoid)) ELSE NULL END)
+   ORDER BY t.tgrelid::regclass::text,t.tgname),'[]'::jsonb) FROM pg_trigger t
+   WHERE t.tgrelid IN ('public.artisanal_sites'::regclass,'public.artisanal_site_assignments'::regclass)),
+ 'rules',(SELECT coalesce(jsonb_agg(jsonb_build_object('table',r.ev_class::regclass::text,'name',r.rulename,'definition',pg_get_ruledef(r.oid))
+   ORDER BY r.ev_class::regclass::text,r.rulename),'[]'::jsonb) FROM pg_rewrite r
+   WHERE r.ev_class IN ('public.artisanal_sites'::regclass,'public.artisanal_site_assignments'::regclass))
+)

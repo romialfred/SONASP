@@ -1,0 +1,31 @@
+{
+  "id": "AUD-ERROR-BOUNDARY-EXIT-20260907",
+  "startedAt": "2026-09-07T13:32:14.691Z",
+  "finishedAt": "2026-09-07T13:32:19.164Z",
+  "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=1 --reporter=default --reporter=json --reporter=./docs/amelioration/audit/run-end-errors-reporter.mjs --outputFile.json=docs/amelioration/audit/error-boundary-exit-diagnostic.json src/components/common/ErrorBoundary.test.tsx",
+  "exitCode": 0,
+  "processError": null,
+  "passed": 4,
+  "failed": 0,
+  "total": 4,
+  "reason": "passed",
+  "unhandledErrors": [],
+  "stableInputs": true,
+  "before": {
+    "src/components/common/ErrorBoundary.test.tsx": "d31be7a37129d7a7cf4011a40434e0505b54b29a07510d3ae3b2582ba592b8f2",
+    "src/components/common/ErrorBoundary.tsx": "1d786bb5a54f057f319857af5bf0af2c415862f549f9455e90b0659ae8139609",
+    "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+    "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+    "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc",
+    "docs/amelioration/audit/run-end-errors-reporter.mjs": "ebb72bccee1c88eb55cd44f9a3655d52d5dd50cf57b7fdf4fa605b5c086df021"
+  },
+  "after": {
+    "src/components/common/ErrorBoundary.test.tsx": "d31be7a37129d7a7cf4011a40434e0505b54b29a07510d3ae3b2582ba592b8f2",
+    "src/components/common/ErrorBoundary.tsx": "1d786bb5a54f057f319857af5bf0af2c415862f549f9455e90b0659ae8139609",
+    "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+    "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+    "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc",
+    "docs/amelioration/audit/run-end-errors-reporter.mjs": "ebb72bccee1c88eb55cd44f9a3655d52d5dd50cf57b7fdf4fa605b5c086df021"
+  },
+  "replacesGlobalRun": false
+}

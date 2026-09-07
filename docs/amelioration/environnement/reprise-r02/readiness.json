@@ -1,0 +1,209 @@
+{
+  "checkedAt": "2026-09-07T11:47:21.0273538Z",
+  "projectRef": "yyverzuhkdonjjuficor",
+  "readOnly": true,
+  "remoteWrites": 0,
+  "prepared": true,
+  "waitingForUiUuids": true,
+  "sqlPreflightSucceeded": true,
+  "preflightReadOnly": "on",
+  "tables": [
+    {
+      "name": "artisanal_site_assignments",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "artisanal_sites",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "snp_adhesion_baremes",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "snp_adhesion_droits",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "snp_adhesion_encaissements",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "snp_artisan_documents",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "snp_artisan_moyens_paiement",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "snp_artisan_responsables",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "snp_artisans_miniers",
+      "rls": true,
+      "authenticatedSelect": true
+    },
+    {
+      "name": "snp_cartes_professionnelles",
+      "rls": true,
+      "authenticatedSelect": true
+    }
+  ],
+  "baseline": [
+    {
+      "table": "artisanal_site_assignments",
+      "count": 18,
+      "md5": "a0304947bdced228a812782f7bd66cfa"
+    },
+    {
+      "table": "artisanal_sites",
+      "count": 9,
+      "md5": "0d02dce8b16ff0d8ade2009f129f11af"
+    },
+    {
+      "table": "snp_adhesion_baremes",
+      "count": 0,
+      "md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "snp_adhesion_droits",
+      "count": 0,
+      "md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "snp_adhesion_encaissements",
+      "count": 0,
+      "md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "snp_artisan_documents",
+      "count": 0,
+      "md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "snp_artisan_moyens_paiement",
+      "count": 31,
+      "md5": "ce0ccd4b7d7ec036536591b62bb2a28c"
+    },
+    {
+      "table": "snp_artisan_responsables",
+      "count": 0,
+      "md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table": "snp_artisans_miniers",
+      "count": 64,
+      "md5": "bc4192e298adb6b8da1bcd348f8e0e30"
+    },
+    {
+      "table": "snp_cartes_professionnelles",
+      "count": 25,
+      "md5": "ee930e85a23cf93b63bccf46e0833a19"
+    }
+  ],
+  "storageObjectsBefore": 3,
+  "authUiVerifiedByThisAgent": false,
+  "dossierUiPersistenceVerified": false,
+  "evidence": [
+    {
+      "file": "affiliation-contract.execution.json",
+      "sha256": "3909dc76b0ef5f9da3396532aca1e88b634f52751e523a1c90b70fa488debf8a"
+    },
+    {
+      "file": "affiliation-contract.json",
+      "sha256": "f277a9d1ee21daed23aea3d9582e0d3fd62b6c7c7fbe2ac8cd2953d2a0c70ab3"
+    },
+    {
+      "file": "affiliation-contract.sql",
+      "sha256": "dbda6f89bf3befad4f9fe4e443e5b370409e3283692eebfb9f312dfcaedb122c"
+    },
+    {
+      "file": "baseline-before.execution.json",
+      "sha256": "58141fee08e8602e5cb3d4c275fe1a475e7dc6ed7c0901c4b3e6e6db42abb083"
+    },
+    {
+      "file": "baseline-before.json",
+      "sha256": "8aad378d220af3290d31c8a161560eb88b63a38b0521594d9a3629b803039366"
+    },
+    {
+      "file": "baseline.sql",
+      "sha256": "7f85e0a8ed71e6a01ce850bd12f52e4a42decf4998113def7a2e7f095bd413e6"
+    },
+    {
+      "file": "check-comparison-contract.mjs",
+      "sha256": "ec50037edfa1591ef9959b9690f9dab8ff430e76982c130d84e4f169f9206182"
+    },
+    {
+      "file": "compare-baseline.mjs",
+      "sha256": "a858c9943ef8b690cf8b56e38701efb4970255e56f15cb9c93cde6297f86c6cc"
+    },
+    {
+      "file": "compare-dossier.mjs",
+      "sha256": "a34a6599b658a0f7989cbf95dcc69524c67d8860bd2948837f548558cf12b5bd"
+    },
+    {
+      "file": "comparison-contract.evidence.json",
+      "sha256": "a3dd3b712740d48a4780bb72554c52ac9975c8065a1425ed00b448fe1c1505f0"
+    },
+    {
+      "file": "functions-readonly.sql",
+      "sha256": "694a05998e616d690430d8bf8f76406ed256eddd08d219abb1ff54fea73c1d79"
+    },
+    {
+      "file": "functions.execution.json",
+      "sha256": "eb274be6d2165fd09cec83413cfe481638258412901f4b141eb68ea3f375fd9f"
+    },
+    {
+      "file": "functions.json",
+      "sha256": "fd8a33f4c5bf7385fc9d81410f7f9660f090c47511ee21bf355e1e75f24b6a98"
+    },
+    {
+      "file": "health.json",
+      "sha256": "39a9c8ebab044d1802493b36dc3796e531816406caa51c10b19d816892330532"
+    },
+    {
+      "file": "health.mjs",
+      "sha256": "ecf11eacd748b734bb8ff473dccb38670c3348be1d6049a280fad50efd9a655e"
+    },
+    {
+      "file": "preflight.execution.json",
+      "sha256": "b58332eb01563bbe932a621097a059a6c169518be7e96e304156851e32dc52f8"
+    },
+    {
+      "file": "preflight.json",
+      "sha256": "438b2f4cb6b27a8a9c2188eff7d65a9e5699ea86db1bc0d36185558694f15c5a"
+    },
+    {
+      "file": "preflight.sql",
+      "sha256": "00bd33887d89c14ec36a689d0e688d639e6902bf5ff00a463e979a18341e81df"
+    },
+    {
+      "file": "prepare-baseline.mjs",
+      "sha256": "751d3b04f703cf4bca520ae72a412da1bd2c929f81b45990e44bc8f64305b7c4"
+    },
+    {
+      "file": "prepare-dossier-read.mjs",
+      "sha256": "b559bf2824e32f43694e71e0dbf768076a455a07fc1d67e88de0f48727874535"
+    },
+    {
+      "file": "README.md",
+      "sha256": "1e42ba94862b710d99eb2645edc53016986feb2af0c927856e016a3ad01498c7"
+    },
+    {
+      "file": "run-readonly.mjs",
+      "sha256": "58c025d899354b5223099f0131ed2f115b92af4f6aef689ba4fffc297d8bcea3"
+    }
+  ],
+  "protocolUpdatedAt": "2026-09-07T12:07:39.9204113Z",
+  "comparisonContractChecks": 7
+}

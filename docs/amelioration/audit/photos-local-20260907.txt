@@ -1,0 +1,56 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ docs/amelioration/audit/site-photos-reprise-independent.test.tsx > efface le dossier et ses photos puis relit le site quand le périmètre change sans navigation 484ms
+ ✓ docs/amelioration/audit/site-photos-reprise-independent.test.tsx > ignore la réponse du vrai hook de l’ancien périmètre après lecture du nouveau dossier 370ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > affiche les références AEA uniquement pour un site formalisé et les conserve à la sauvegarde 1263ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > permet de compléter une fiche historique comme non formalisée sans AEA 463ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > empêche l’enregistrement après un échec du chargement en modification 146ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > identifie les sites référencés par leur nom et conserve la navigation vers leur fiche 336ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > conserve un dépôt réussi quand un autre échoue, puis ne reprend que le fichier échoué 822ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > permet le retrait explicite d’un fichier échoué avant la sauvegarde 330ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > ne perd pas les références existantes quand une lecture d’aperçu est refusée 204ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > compense le retrait d’un nouveau dépôt sans supprimer une ancienne photo stockée 556ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > garde une photo si sa compensation échoue et permet de retirer à nouveau 444ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > nettoie les nouveaux dépôts à l’annulation et reste sur place si le nettoyage échoue 369ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > ne supprime jamais une photo soumise à une sauvegarde dont le résultat est incertain 328ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > refuse un lot trop grand plutôt que d’ignorer silencieusement certains fichiers 128ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > bloque les doubles ajouts et nettoie un résultat tardif après un changement de site 261ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > ne recommence que les compensations échouées quand l’annulation est partiellement réussie 417ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > n’efface pas une photo enregistrée et ne navigue pas après un changement de contexte pendant la sauvegarde 289ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteForm.test.tsx > Formulaire artisanal et AEA > nettoie un dépôt en cours si les droits changent sur le même site 141ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx > Fiche du site et conformité > explique pourquoi le site planifié n’est pas évalué et propose les quatre règles 628ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx > Fiche du site et conformité > affiche 70 points pour un site actif sans déclaration avec une occupation normale 224ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx > Fiche du site et conformité > permet de naviguer au clavier entre les onglets sans donner la modification à la consultation 243ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx > Fiche du site et conformité > maintient la galerie et les autres photos quand une lecture échoue, avec reprise ciblée 449ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx > Fiche du site et conformité > ne demande aucune URL lorsque le dossier ne comporte réellement aucune photo 47ms
+ ✓ src/components/artisanal-sites/SitePhotoPreview.test.tsx > aperçu de photo privée > présente le chargement puis l’image 210ms
+ ✓ src/components/artisanal-sites/SitePhotoPreview.test.tsx > aperçu de photo privée > permet la reprise ciblée après refus de lecture sans afficher le détail technique 66ms
+ ✓ src/components/artisanal-sites/SitePhotoPreview.test.tsx > aperçu de photo privée > renouvelle une URL dont le chargement image a échoué 39ms
+ ✓ src/components/artisanal-sites/SitePhotoPreview.test.tsx > aperçu de photo privée > efface l’ancienne URL si reference change et ignore une réponse tardive 29ms
+ ✓ src/components/artisanal-sites/SitePhotoPreview.test.tsx > aperçu de photo privée > efface l’ancienne URL si contextKey change et ignore une réponse tardive 16ms
+ ✓ src/components/artisanal-sites/SitePhotoPreview.test.tsx > aperçu de photo privée > préserve une autre photo réussie pendant la reprise d’une photo en échec 52ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > dépose dans le bucket privé et ne retourne que la référence 10ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > ne remplace pas un échec Storage (response) par des données encodées 3ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > ne remplace pas un échec Storage (exception) par des données encodées 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > propage une conversion du fichier impossible sans contacter Storage 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse une lecture signée indisponible : {"data":null,"error":{}} 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse une lecture signée indisponible : {"data":null,"error":null} 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse une lecture signée indisponible : {"data":{"signedUrl":""},"error":null} 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > signale également une exception réseau pendant la lecture 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > préserve la compatibilité de lecture des références historiques 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > signe une référence privée pour la durée existante 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > rejette une compression sans canvas 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > retire uniquement une référence de dépôt de photo et propage les refus 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse la compensation d’une référence non générée : https://example.test/photo.jpg 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse la compensation d’une référence non générée : data:image/jpeg;base64,aA== 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse la compensation d’une référence non générée : ../other/photo.jpg 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse la compensation d’une référence non générée : sites/../../photo.jpg 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > rejette une exception de compression au lieu de laisser le traitement suspendu 1ms
+
+ Test Files  5 passed (5)
+      Tests  46 passed (46)
+   Start at  11:38:07
+   Duration  33.83s (transform 938ms, setup 5.00s, import 2.75s, tests 9.41s, environment 13.55s)
+
+

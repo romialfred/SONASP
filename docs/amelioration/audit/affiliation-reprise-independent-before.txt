@@ -1,0 +1,733 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ × docs/amelioration/audit/affiliation-reprise-independent.test.tsx > Audit indépendant : portée et relecture affiliation > masque immédiatement les données lors du changement de session à artisan identique 336ms
+   → expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <p>
+  FINANCE-
+  card-a
+</p> instead
+ × docs/amelioration/audit/affiliation-reprise-independent.test.tsx > Audit indépendant : portée et relecture affiliation > reprend les droits de la nouvelle émission si la sélection change pendant la relecture 5893ms
+   → Unable to find an element with the text: FINANCE-card-b. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<article[39m
+      [33maria-busy[39m=[32m"false"[39m
+      [33mclass[39m=[32m"affiliation-detail"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"affiliation-detail__header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"affiliation-detail__title"[39m
+          [36m>[39m
+            [36m<h1>[39m
+              [0mCarte d’affiliation — [0m
+              [0mTitulaire autorisé A[0m
+            [36m</h1>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"affiliation-state affiliation-state--inactive"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"lucide lucide-shield-check "[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"14"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"14"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 12 2 2 4-4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mActivation en attente[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p>[39m
+            [0mFS-B[0m
+            [0m · Émission [0m
+            [0m2[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"affiliation-detail__toolbar"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [36m<span>[39m
+              [0mÉmission consultée[0m
+            [36m</span>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Émission consultée"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"card-a"[39m
+              [36m>[39m
+                [0mVersion [0m
+                [0m1[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"card-b"[39m
+              [36m>[39m
+                [0mVersion [0m
+                [0m2[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sn-btn sn-btn--secondary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"lucide lucide-refresh-cw "[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"17"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"17"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 16H3v5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mActualiser[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"affiliation-detail__sheet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"affiliation-detail__overview"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"affiliation-detail__preview"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"lucide lucide-credit-card "[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"22"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"22"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"20"[39m
+                  [33mx[39m=[32m"2"[39m
+                  [33my[39m=[32m"5"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"2"[39m
+                  [33mx2[39m=[32m"22"[39m
+                  [33my1[39m=[32m"10"[39m
+                  [33my2[39m=[32m"10"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mAperçu de la carte[0m
+            [36m</h2>[39m
+            [36m<p>[39m
+              [0mAPERÇU-[0m
+              [0mcard-b[0m
+            [36m</p>[39m
+          [36m</section>[39m
+          [36m<aside[39m
+            [33mclass[39m=[32m"affiliation-detail__operations"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"affiliation-detail__issuance"[39m
+            [36m>[39m
+              [36m<h2>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"lucide lucide-badge-check "[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"22"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"22"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<article[39m
+      [33maria-busy[39m=[32m"false"[39m
+      [33mclass[39m=[32m"affiliation-detail"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"affiliation-detail__header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"affiliation-detail__title"[39m
+          [36m>[39m
+            [36m<h1>[39m
+              [0mCarte d’affiliation — [0m
+              [0mTitulaire autorisé A[0m
+            [36m</h1>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"affiliation-state affiliation-state--inactive"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"lucide lucide-shield-check "[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"14"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"14"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 12 2 2 4-4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mActivation en attente[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p>[39m
+            [0mFS-B[0m
+            [0m · Émission [0m
+            [0m2[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"affiliation-detail__toolbar"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [36m<span>[39m
+              [0mÉmission consultée[0m
+            [36m</span>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Émission consultée"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"card-a"[39m
+              [36m>[39m
+                [0mVersion [0m
+                [0m1[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"card-b"[39m
+              [36m>[39m
+                [0mVersion [0m
+                [0m2[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sn-btn sn-btn--secondary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"lucide lucide-refresh-cw "[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"17"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"17"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 16H3v5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mActualiser[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"affiliation-detail__sheet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"affiliation-detail__overview"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"affiliation-detail__preview"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"lucide lucide-credit-card "[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"22"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"22"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"20"[39m
+                  [33mx[39m=[32m"2"[39m
+                  [33my[39m=[32m"5"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"2"[39m
+                  [33mx2[39m=[32m"22"[39m
+                  [33my1[39m=[32m"10"[39m
+                  [33my2[39m=[32m"10"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mAperçu de la carte[0m
+            [36m</h2>[39m
+            [36m<p>[39m
+              [0mAPERÇU-[0m
+              [0mcard-b[0m
+            [36m</p>[39m
+          [36m</section>[39m
+          [36m<aside[39m
+            [33mclass[39m=[32m"affiliation-detail__operations"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"affiliation-detail__issuance"[39m
+            [36m>[39m
+              [36m<h2>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"lucide lucide-badge-check "[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"22"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"22"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1...
+ ✓ docs/amelioration/audit/affiliation-reprise-independent.test.tsx > Audit indépendant : portée et relecture affiliation > ne laisse pas une relecture lente de nouveaux droits bloquée par le changement dues_card_id 251ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/amelioration/audit/affiliation-reprise-independent.test.tsx > Audit indépendant : portée et relecture affiliation > masque immédiatement les données lors du changement de session à artisan identique
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <p>
+  FINANCE-
+  card-a
+</p> instead
+ ❯ docs/amelioration/audit/affiliation-reprise-independent.test.tsx:34:54
+     32|     mocks.user = { ...mocks.user, id: 'controller-b', organization_id:…
+     33|     rerender(view());
+     34|     expect(screen.queryByText('FINANCE-card-a')).not.toBeInTheDocument…
+       |                                                      ^
+     35|     expect(screen.queryByText('APERÇU-card-a')).not.toBeInTheDocument(…
+     36|     expect(mocks.list).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  docs/amelioration/audit/affiliation-reprise-independent.test.tsx > Audit indépendant : portée et relecture affiliation > reprend les droits de la nouvelle émission si la sélection change pendant la relecture
+TestingLibraryElementError: Unable to find an element with the text: FINANCE-card-b. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <article
+      aria-busy="false"
+      class="affiliation-detail"
+    >
+      <header
+        class="affiliation-detail__header"
+      >
+        <div>
+          <div
+            class="affiliation-detail__title"
+          >
+            <h1>
+              Carte d’affiliation — 
+              Titulaire autorisé A
+            </h1>
+            <span
+              class="affiliation-state affiliation-state--inactive"
+            >
+              <svg
+                class="lucide lucide-shield-check "
+                fill="none"
+                height="14"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="14"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path
+                  d="m9 12 2 2 4-4"
+                />
+              </svg>
+              Activation en attente
+            </span>
+          </div>
+          <p>
+            FS-B
+             · Émission 
+            2
+          </p>
+        </div>
+        <div
+          class="affiliation-detail__toolbar"
+        >
+          <label>
+            <span>
+              Émission consultée
+            </span>
+            <select
+              aria-label="Émission consultée"
+            >
+              <option
+                value="card-a"
+              >
+                Version 
+                1
+              </option>
+              <option
+                value="card-b"
+              >
+                Version 
+                2
+              </option>
+            </select>
+          </label>
+          <button
+            class="sn-btn sn-btn--secondary"
+          >
+            <svg
+              class="lucide lucide-refresh-cw "
+              fill="none"
+              height="17"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="17"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"
+              />
+              <path
+                d="M21 3v5h-5"
+              />
+              <path
+                d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
+              />
+              <path
+                d="M8 16H3v5"
+              />
+            </svg>
+            Actualiser
+          </button>
+        </div>
+      </header>
+      <div
+        class="affiliation-detail__sheet"
+      >
+        <div
+          class="affiliation-detail__overview"
+        >
+          <section
+            class="affiliation-detail__preview"
+          >
+            <h2>
+              <svg
+                class="lucide lucide-credit-card "
+                fill="none"
+                height="22"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="22"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="14"
+                  rx="2"
+                  width="20"
+                  x="2"
+                  y="5"
+                />
+                <line
+                  x1="2"
+                  x2="22"
+                  y1="10"
+                  y2="10"
+                />
+              </svg>
+              Aperçu de la carte
+            </h2>
+            <p>
+              APERÇU-
+              card-b
+            </p>
+          </section>
+          <aside
+            class="affiliation-detail__operations"
+          >
+            <section
+              class="affiliation-detail__issuance"
+            >
+              <h2>
+                <svg
+                  class="lucide lucide-badge-check "
+                  fill="none"
+                  height="22"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="22"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <article
+      aria-busy="false"
+      class="affiliation-detail"
+    >
+      <header
+        class="affiliation-detail__header"
+      >
+        <div>
+          <div
+            class="affiliation-detail__title"
+          >
+            <h1>
+              Carte d’affiliation — 
+              Titulaire autorisé A
+            </h1>
+            <span
+              class="affiliation-state affiliation-state--inactive"
+            >
+              <svg
+                class="lucide lucide-shield-check "
+                fill="none"
+                height="14"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="14"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path
+                  d="m9 12 2 2 4-4"
+                />
+              </svg>
+              Activation en attente
+            </span>
+          </div>
+          <p>
+            FS-B
+             · Émission 
+            2
+          </p>
+        </div>
+        <div
+          class="affiliation-detail__toolbar"
+        >
+          <label>
+            <span>
+              Émission consultée
+            </span>
+            <select
+              aria-label="Émission consultée"
+            >
+              <option
+                value="card-a"
+              >
+                Version 
+                1
+              </option>
+              <option
+                value="card-b"
+              >
+                Version 
+                2
+              </option>
+            </select>
+          </label>
+          <button
+            class="sn-btn sn-btn--secondary"
+          >
+            <svg
+              class="lucide lucide-refresh-cw "
+              fill="none"
+              height="17"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="17"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"
+              />
+              <path
+                d="M21 3v5h-5"
+              />
+              <path
+                d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
+              />
+              <path
+                d="M8 16H3v5"
+              />
+            </svg>
+            Actualiser
+          </button>
+        </div>
+      </header>
+      <div
+        class="affiliation-detail__sheet"
+      >
+        <div
+          class="affiliation-detail__overview"
+        >
+          <section
+            class="affiliation-detail__preview"
+          >
+            <h2>
+              <svg
+                class="lucide lucide-credit-card "
+                fill="none"
+                height="22"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="22"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="14"
+                  rx="2"
+                  width="20"
+                  x="2"
+                  y="5"
+                />
+                <line
+                  x1="2"
+                  x2="22"
+                  y1="10"
+                  y2="10"
+                />
+              </svg>
+              Aperçu de la carte
+            </h2>
+            <p>
+              APERÇU-
+              card-b
+            </p>
+          </section>
+          <aside
+            class="affiliation-detail__operations"
+          >
+            <section
+              class="affiliation-detail__issuance"
+            >
+              <h2>
+                <svg
+                  class="lucide lucide-badge-check "
+                  fill="none"
+                  height="22"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="22"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ docs/amelioration/audit/affiliation-reprise-independent.test.tsx:50:25
+     48|     await act(async () => pending.resolve(finance('card-a')));
+     49|     await waitFor(() => expect(screen.getByRole('button', { name: 'Act…
+     50|     expect(await screen.findByText('FINANCE-card-b')).toBeInTheDocumen…
+       |                         ^
+     51|     expect(screen.queryByText('FINANCE-card-a')).not.toBeInTheDocument…
+     52|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  11:16:41
+   Duration  17.57s (transform 1.34s, setup 2.06s, import 2.40s, tests 6.49s, environment 5.41s)
+

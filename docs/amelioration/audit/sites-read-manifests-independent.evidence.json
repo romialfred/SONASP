@@ -1,0 +1,363 @@
+{
+  "checkedAt": "2026-09-07T13:59:11.949Z",
+  "comparisons": [
+    {
+      "group": "production_sources",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteProduction.tsx",
+      "expected": "7d5c82201e32effc83cf494381ecd6e0957125520c7a39d83cc4bb12c4fbcc74",
+      "actual": "7d5c82201e32effc83cf494381ecd6e0957125520c7a39d83cc4bb12c4fbcc74",
+      "matches": true
+    },
+    {
+      "group": "production_sources",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteDetails.tsx",
+      "expected": "eb982246e697cf5c581a3af8ffc8a9a1b402ee94056ce44df2f1c8d6b214df77",
+      "actual": "eb982246e697cf5c581a3af8ffc8a9a1b402ee94056ce44df2f1c8d6b214df77",
+      "matches": true
+    },
+    {
+      "group": "production_sources",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteReadState.test.tsx",
+      "expected": "e0571c04ae3e955df27643cf3d633a9b3dd2d712c6dda5f439bad890433674eb",
+      "actual": "e0571c04ae3e955df27643cf3d633a9b3dd2d712c6dda5f439bad890433674eb",
+      "matches": true
+    },
+    {
+      "group": "production_sources",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteProduction.test.tsx",
+      "expected": "3bfc924ccd8dd1c368d78b29abc78c973d4e21fe5b7d6b8faff8aca27bd3dda9",
+      "actual": "3bfc924ccd8dd1c368d78b29abc78c973d4e21fe5b7d6b8faff8aca27bd3dda9",
+      "matches": true
+    },
+    {
+      "group": "production_sources",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx",
+      "expected": "abacb2caec07cc13097733b8913a4ed8ab9696eb4a24d4da9bbf0b5c37bb4f28",
+      "actual": "abacb2caec07cc13097733b8913a4ed8ab9696eb4a24d4da9bbf0b5c37bb4f28",
+      "matches": true
+    },
+    {
+      "group": "production_sources",
+      "file": "src/hooks/useArtisanalSiteData.test.tsx",
+      "expected": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0",
+      "actual": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0",
+      "matches": true
+    },
+    {
+      "group": "production_preserved",
+      "file": "src/hooks/useArtisanalSiteData.ts",
+      "expected": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+      "actual": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+      "matches": true
+    },
+    {
+      "group": "production_preserved",
+      "file": "src/services/artisanalSiteService.ts",
+      "expected": "b99061c333c422ad9f4af8f0a589ef46c623959755a06aa1252752164ceae315",
+      "actual": "b99061c333c422ad9f4af8f0a589ef46c623959755a06aa1252752164ceae315",
+      "matches": true
+    },
+    {
+      "group": "production_preserved",
+      "file": "src/services/siteAeaDocumentService.ts",
+      "expected": "756f94ed09432e1ebc5c89a29cba04f1059a4f444bb078b608ac52ff2671467d",
+      "actual": "756f94ed09432e1ebc5c89a29cba04f1059a4f444bb078b608ac52ff2671467d",
+      "matches": true
+    },
+    {
+      "group": "production_preserved",
+      "file": "src/services/sitePhotoService.ts",
+      "expected": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+      "actual": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+      "matches": true
+    },
+    {
+      "group": "production_preserved",
+      "file": "src/lib/miningRegistryAccess.ts",
+      "expected": "202122cd7e004161dfda13beb1d64e4107364ab6ad76c54c904c83002a8f86ab",
+      "actual": "202122cd7e004161dfda13beb1d64e4107364ab6ad76c54c904c83002a8f86ab",
+      "matches": true
+    },
+    {
+      "group": "production_preserved",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteForm.tsx",
+      "expected": "ce29f3d9db2be2599e54b92bfbbe949757fed6a6f16bea55211b1431c81a4a78",
+      "actual": "ce29f3d9db2be2599e54b92bfbbe949757fed6a6f16bea55211b1431c81a4a78",
+      "matches": true
+    },
+    {
+      "group": "production_artifacts",
+      "file": "docs/amelioration/lot-artisanat/lecture-production-details/avant-reproduction.json",
+      "expected": "75ae52821f6ef1749356f9b4f87c88bcad11dbbabfcb2cfbd89eecd12119b774",
+      "actual": "75ae52821f6ef1749356f9b4f87c88bcad11dbbabfcb2cfbd89eecd12119b774",
+      "matches": true
+    },
+    {
+      "group": "production_artifacts",
+      "file": "docs/amelioration/lot-artisanat/lecture-production-details/avant-reproduction.log",
+      "expected": "22567db9433da58d8192c91df2a52c89f5dff7c84925f841e5550a1314dd2abc",
+      "actual": "22567db9433da58d8192c91df2a52c89f5dff7c84925f841e5550a1314dd2abc",
+      "matches": true
+    },
+    {
+      "group": "production_artifacts",
+      "file": "docs/amelioration/lot-artisanat/lecture-production-details/apres.json",
+      "expected": "0f62ad2f8d3bf2d8c2edb1f2d13f541b39eaa6adfd8dc453b4e82a8820c66a28",
+      "actual": "0f62ad2f8d3bf2d8c2edb1f2d13f541b39eaa6adfd8dc453b4e82a8820c66a28",
+      "matches": true
+    },
+    {
+      "group": "production_artifacts",
+      "file": "docs/amelioration/lot-artisanat/lecture-production-details/apres.log",
+      "expected": "021793be24f27163049733f5ad013a1afc67582d5045c659ec9d821f7890d463",
+      "actual": "021793be24f27163049733f5ad013a1afc67582d5045c659ec9d821f7890d463",
+      "matches": true
+    },
+    {
+      "group": "production_artifacts",
+      "file": "docs/amelioration/lot-artisanat/lecture-production-details/lint.log",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matches": true
+    },
+    {
+      "group": "production_artifacts",
+      "file": "docs/amelioration/lot-artisanat/lecture-production-details/typecheck.log",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matches": true
+    },
+    {
+      "group": "production_artifacts",
+      "file": "docs/amelioration/lot-artisanat/lecture-production-details/ArtisanalSiteProduction.before.txt",
+      "expected": "6a12050bc3f43c427c3b447023d528d3fc8565483e8fe4cd7677e4a1c2cdf598",
+      "actual": "6a12050bc3f43c427c3b447023d528d3fc8565483e8fe4cd7677e4a1c2cdf598",
+      "matches": true
+    },
+    {
+      "group": "production_artifacts",
+      "file": "docs/amelioration/lot-artisanat/lecture-production-details/ArtisanalSiteDetails.before.txt",
+      "expected": "0d8b94078f8fdf4530ae3a0afe6d5fa616242f0b28a1476800a7f9a6a7970535",
+      "actual": "0d8b94078f8fdf4530ae3a0afe6d5fa616242f0b28a1476800a7f9a6a7970535",
+      "matches": true
+    },
+    {
+      "group": "overview_sources",
+      "file": "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx",
+      "expected": "4e0bbda969ec17aa3498ea59c57c0c06a8a392041c3abd2cf6914a79fb4ceeb0",
+      "actual": "4e0bbda969ec17aa3498ea59c57c0c06a8a392041c3abd2cf6914a79fb4ceeb0",
+      "matches": true
+    },
+    {
+      "group": "overview_sources",
+      "file": "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx",
+      "expected": "7e483e937eeca6a3c6d1c549362db095d38d37fe21ff29e5abea4850bee425b9",
+      "actual": "7e483e937eeca6a3c6d1c549362db095d38d37fe21ff29e5abea4850bee425b9",
+      "matches": true
+    },
+    {
+      "group": "overview_sources",
+      "file": "src/services/artisanalSiteInsights.ts",
+      "expected": "e354ef795d695afb4678a910ace1e963c6ddb9d9dbcdb5c9b68401d1d90e7082",
+      "actual": "e354ef795d695afb4678a910ace1e963c6ddb9d9dbcdb5c9b68401d1d90e7082",
+      "matches": true
+    },
+    {
+      "group": "overview_sources",
+      "file": "src/services/artisanalSiteInsights.test.ts",
+      "expected": "f5f08b859043bcd72f23842f53e2e833bed0c8e55709f115d7cd8a411df7fdc1",
+      "actual": "f5f08b859043bcd72f23842f53e2e833bed0c8e55709f115d7cd8a411df7fdc1",
+      "matches": true
+    },
+    {
+      "group": "overview_sources",
+      "file": "src/hooks/useArtisanalSiteData.ts",
+      "expected": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+      "actual": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+      "matches": true
+    },
+    {
+      "group": "overview_sources",
+      "file": "src/hooks/useArtisanalSiteData.test.tsx",
+      "expected": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0",
+      "actual": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx",
+      "expected": "4e0bbda969ec17aa3498ea59c57c0c06a8a392041c3abd2cf6914a79fb4ceeb0",
+      "actual": "4e0bbda969ec17aa3498ea59c57c0c06a8a392041c3abd2cf6914a79fb4ceeb0",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteProduction.tsx",
+      "expected": "7d5c82201e32effc83cf494381ecd6e0957125520c7a39d83cc4bb12c4fbcc74",
+      "actual": "7d5c82201e32effc83cf494381ecd6e0957125520c7a39d83cc4bb12c4fbcc74",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteDetails.tsx",
+      "expected": "eb982246e697cf5c581a3af8ffc8a9a1b402ee94056ce44df2f1c8d6b214df77",
+      "actual": "eb982246e697cf5c581a3af8ffc8a9a1b402ee94056ce44df2f1c8d6b214df77",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/hooks/useArtisanalSiteData.ts",
+      "expected": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+      "actual": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/services/artisanalSiteInsights.ts",
+      "expected": "e354ef795d695afb4678a910ace1e963c6ddb9d9dbcdb5c9b68401d1d90e7082",
+      "actual": "e354ef795d695afb4678a910ace1e963c6ddb9d9dbcdb5c9b68401d1d90e7082",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/services/artisanalSiteService.ts",
+      "expected": "b99061c333c422ad9f4af8f0a589ef46c623959755a06aa1252752164ceae315",
+      "actual": "b99061c333c422ad9f4af8f0a589ef46c623959755a06aa1252752164ceae315",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/services/siteAeaDocumentService.ts",
+      "expected": "756f94ed09432e1ebc5c89a29cba04f1059a4f444bb078b608ac52ff2671467d",
+      "actual": "756f94ed09432e1ebc5c89a29cba04f1059a4f444bb078b608ac52ff2671467d",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/services/sitePhotoService.ts",
+      "expected": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+      "actual": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/components/artisanal-sites/SitePhotoPreview.tsx",
+      "expected": "c0ebb0fb4d094b771627e2239e0bc5dec6e3a06112bb077bf4205c9825c38ee4",
+      "actual": "c0ebb0fb4d094b771627e2239e0bc5dec6e3a06112bb077bf4205c9825c38ee4",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/lib/siteFormalization.ts",
+      "expected": "011c00d78a97039b83517d13c48282e54912dff18e6d10b2944b66a211cd169d",
+      "actual": "011c00d78a97039b83517d13c48282e54912dff18e6d10b2944b66a211cd169d",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/lib/miningRegistryAccess.ts",
+      "expected": "202122cd7e004161dfda13beb1d64e4107364ab6ad76c54c904c83002a8f86ab",
+      "actual": "202122cd7e004161dfda13beb1d64e4107364ab6ad76c54c904c83002a8f86ab",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "vitest.config.ts",
+      "expected": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+      "actual": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/test/setup.ts",
+      "expected": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+      "actual": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "package-lock.json",
+      "expected": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc",
+      "actual": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "docs/amelioration/audit/run-end-errors-reporter.mjs",
+      "expected": "ebb72bccee1c88eb55cd44f9a3655d52d5dd50cf57b7fdf4fa605b5c086df021",
+      "actual": "ebb72bccee1c88eb55cd44f9a3655d52d5dd50cf57b7fdf4fa605b5c086df021",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "docs/amelioration/audit/run-sites-read-audit.mjs",
+      "expected": "5359b97c1996a677d6eecd3c8ec04cb301a9e01a16d75ad9af458c9308091650",
+      "actual": "5359b97c1996a677d6eecd3c8ec04cb301a9e01a16d75ad9af458c9308091650",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx",
+      "expected": "7e483e937eeca6a3c6d1c549362db095d38d37fe21ff29e5abea4850bee425b9",
+      "actual": "7e483e937eeca6a3c6d1c549362db095d38d37fe21ff29e5abea4850bee425b9",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteReadState.test.tsx",
+      "expected": "e0571c04ae3e955df27643cf3d633a9b3dd2d712c6dda5f439bad890433674eb",
+      "actual": "e0571c04ae3e955df27643cf3d633a9b3dd2d712c6dda5f439bad890433674eb",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteProduction.test.tsx",
+      "expected": "3bfc924ccd8dd1c368d78b29abc78c973d4e21fe5b7d6b8faff8aca27bd3dda9",
+      "actual": "3bfc924ccd8dd1c368d78b29abc78c973d4e21fe5b7d6b8faff8aca27bd3dda9",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx",
+      "expected": "abacb2caec07cc13097733b8913a4ed8ab9696eb4a24d4da9bbf0b5c37bb4f28",
+      "actual": "abacb2caec07cc13097733b8913a4ed8ab9696eb4a24d4da9bbf0b5c37bb4f28",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/hooks/useArtisanalSiteData.test.tsx",
+      "expected": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0",
+      "actual": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "src/services/artisanalSiteInsights.test.ts",
+      "expected": "f5f08b859043bcd72f23842f53e2e833bed0c8e55709f115d7cd8a411df7fdc1",
+      "actual": "f5f08b859043bcd72f23842f53e2e833bed0c8e55709f115d7cd8a411df7fdc1",
+      "matches": true
+    },
+    {
+      "group": "independent_frozen_inputs",
+      "file": "docs/amelioration/audit/site-photos-reprise-independent.test.tsx",
+      "expected": "c0a665e2a78704a2f55d538c526746a86d9a4a1c9b537e2289cc0d08a3eb4b7e",
+      "actual": "c0a665e2a78704a2f55d538c526746a86d9a4a1c9b537e2289cc0d08a3eb4b7e",
+      "matches": true
+    }
+  ],
+  "allHashesMatch": true,
+  "independentExitCode": 0,
+  "independentReason": "passed",
+  "independentUnhandledErrors": [],
+  "independentPassed": 97,
+  "gatesFromImplementer": {
+    "production": {
+      "eslintExitCode": 0,
+      "typecheckExitCode": 0,
+      "diffCheckExitCode": 0
+    },
+    "overview": "Lint et typecheck compiler annoncés 0 ; journaux locaux conservés. Ces commandes ne sont pas rejouées par cet audit."
+  },
+  "browserVerified": false,
+  "persistenceVerified": false
+}

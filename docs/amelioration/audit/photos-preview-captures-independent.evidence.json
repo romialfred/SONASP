@@ -1,0 +1,89 @@
+{
+  "id": "AUD-PHOTOS-PREVIEW-CAPTURES-20260907",
+  "checkedAt": "2026-09-07T13:37:53.792Z",
+  "mode": "Inspection visuelle indépendante de six captures existantes et lecture des AX/du banc ; aucune interaction navigateur par l’auditeur.",
+  "captures": [
+    {
+      "file": "docs/amelioration/lot-artisanat/photos-site/preview/captures/desktop-partiel-apres-csp.png",
+      "sha256": "c04ccf6d653dadd13e242aa9571ee9d86efbb53f1d2b56b196e891243cc0757e",
+      "width": 1280,
+      "height": 720,
+      "actualFormat": "JPEG",
+      "extension": "png",
+      "fullPage": false
+    },
+    {
+      "file": "docs/amelioration/lot-artisanat/photos-site/preview/captures/desktop-detail-apres-csp.png",
+      "sha256": "09a42ae806ea91b0f576aded2ef7ec171779a65d435dc3d7c8877b239dbfdd50",
+      "width": 1280,
+      "height": 720,
+      "actualFormat": "JPEG",
+      "extension": "png",
+      "fullPage": false
+    },
+    {
+      "file": "docs/amelioration/lot-artisanat/photos-site/preview/captures/mobile-formulaire-apres-csp.png",
+      "sha256": "fec8bf594c3f1a7b7a8d0c800daf4813131ea325a350ca89d80e4792d531e2a5",
+      "width": 390,
+      "height": 844,
+      "actualFormat": "JPEG",
+      "extension": "png",
+      "fullPage": false
+    },
+    {
+      "file": "docs/amelioration/lot-artisanat/photos-site/preview/captures/mobile-detail-apres-csp.png",
+      "sha256": "074cba3976c2239aef65b0fa270c0c3a209d49b858757d5aee5a3ed15e01296c",
+      "width": 390,
+      "height": 844,
+      "actualFormat": "JPEG",
+      "extension": "png",
+      "fullPage": false
+    },
+    {
+      "file": "docs/amelioration/lot-artisanat/photos-site/preview/captures/desktop-lecture-partielle.png",
+      "sha256": "3a96280532747c259981b3a828a7815cce3f844c7bc56cb8ce9f293a89d92a25",
+      "width": 1280,
+      "height": 720,
+      "actualFormat": "JPEG",
+      "extension": "png",
+      "fullPage": false
+    },
+    {
+      "file": "docs/amelioration/lot-artisanat/photos-site/preview/captures/desktop-lecture-retablie.png",
+      "sha256": "4d885dd51649a277af4681133220811083699c9e731c0f249367a0a6d3d46754",
+      "width": 1280,
+      "height": 720,
+      "actualFormat": "JPEG",
+      "extension": "png",
+      "fullPage": false
+    }
+  ],
+  "records": {
+    "docs/amelioration/lot-artisanat/photos-site/preview/captures/desktop-partiel-apres-csp.txt": "20de84b825df9c7f472c8792c423c85b901027c47c6bc8a32679b906e977321a",
+    "docs/amelioration/lot-artisanat/photos-site/preview/captures/desktop-detail-apres-csp.txt": "319875b3d1372e2aa1c9bdc063e339945b6d1e9266d7bfd6b826f6f640291d29",
+    "docs/amelioration/lot-artisanat/photos-site/preview/captures/mobile-formulaire-apres-csp.txt": "d2bdec2b3871d9aa1486b086b9f40b81f1878a1691e994f7b1061630ac051d21",
+    "docs/amelioration/lot-artisanat/photos-site/preview/captures/desktop-lecture-partielle.txt": "352a5ec318eebaa107e982b51d95a328e86898efa55211d1e8fa53b3ec48b590",
+    "docs/amelioration/lot-artisanat/photos-site/preview/captures/desktop-lecture-retablie.txt": "6b48894634b23de7146885e44ef5cde81c0bc42366d4de943458e8e942bc31ec",
+    "docs/amelioration/lot-artisanat/photos-site/preview/captures/console-apres-correction.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "docs/amelioration/lot-artisanat/photos-site/preview/main.tsx": "84a34af9a2c4cffa11bd05208be3b3950076576c481308d1e7bab71e545a7689",
+    "docs/amelioration/lot-artisanat/photos-site/preview/transport.ts": "0fd2e8ecc37007fda5b1dcfb551329cc8e65c20b42f54b2694c297f329f2e070",
+    "docs/amelioration/lot-artisanat/photos-site/preview/site-service.ts": "d99026ad92dab68591d9f385979b9ead4d9af4f3a0de33437ad74c0161682b08",
+    "docs/amelioration/lot-artisanat/photos-site/preview/auth.ts": "ff85eba2ac71f9f4660e9d0a8076f52a1620538ddf33e3b3c26cc26f46b1736f",
+    "docs/amelioration/lot-artisanat/photos-site/preview/vite.config.ts": "66f985afeae328edeae0e8aa6ed6558bce5c5d23ca31068874869fbfca4187d1",
+    "docs/amelioration/lot-artisanat/photos-site/preview/etat-verification-interface.md": "93e4996c5523306545087a152935fc862e7feafc3043e1379945d4e78d9d54cb"
+  },
+  "consoleEntries": 0,
+  "consoleWindowKnown": false,
+  "fixtureAuth": true,
+  "memoryOnlyStorage": true,
+  "memoryOnlySave": true,
+  "realDatabaseValidated": false,
+  "realRlsValidated": false,
+  "fullPageValidated": false,
+  "limitations": [
+    "Les captures attestent les états présents, pas à elles seules tous les gestes précédents ou les appels exacts de reprise.",
+    "Le formulaire mobile est capturé à un défilement qui coupe une partie du header sous la bannière du banc.",
+    "Les anciens etat-verification-interface.md et captures/sha256.json décrivent l’étape avant CSP ; cet audit est un complément, pas une correction rétrospective.",
+    "Les fichiers portent une extension .png mais contiennent des octets JPEG natifs ; aucun renommage ni réencodage par l’auditeur."
+  ]
+}

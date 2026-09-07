@@ -1,0 +1,35 @@
+{
+  "baseline": "901b5ebb with the local Overview reading fix already applied",
+  "scope": "Local DOM, helper and hook tests only. Real useArtisanalSiteData and computeGlobalCompliance; mocked Auth, route, service transport and charts. No browser or database validation.",
+  "modifiedSourcePaths": [
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx",
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx",
+    "src/services/artisanalSiteInsights.ts",
+    "src/services/artisanalSiteInsights.test.ts"
+  ],
+  "readOnlyHookPaths": [
+    "src/hooks/useArtisanalSiteData.ts",
+    "src/hooks/useArtisanalSiteData.test.tsx"
+  ],
+  "startedUtc": "2026-09-07T13:55:26.2635629Z",
+  "completedUtc": "2026-09-07T13:55:56.1209660Z",
+  "command": "npx vitest run src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx src/services/artisanalSiteInsights.test.ts src/hooks/useArtisanalSiteData.test.tsx --reporter=verbose",
+  "exitCode": 0,
+  "sourceHashesBefore": {
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx": "4e0bbda969ec17aa3498ea59c57c0c06a8a392041c3abd2cf6914a79fb4ceeb0",
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx": "7e483e937eeca6a3c6d1c549362db095d38d37fe21ff29e5abea4850bee425b9",
+    "src/services/artisanalSiteInsights.ts": "e354ef795d695afb4678a910ace1e963c6ddb9d9dbcdb5c9b68401d1d90e7082",
+    "src/services/artisanalSiteInsights.test.ts": "f5f08b859043bcd72f23842f53e2e833bed0c8e55709f115d7cd8a411df7fdc1",
+    "src/hooks/useArtisanalSiteData.ts": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+    "src/hooks/useArtisanalSiteData.test.tsx": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0"
+  },
+  "sourceHashesAfter": {
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx": "4e0bbda969ec17aa3498ea59c57c0c06a8a392041c3abd2cf6914a79fb4ceeb0",
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx": "7e483e937eeca6a3c6d1c549362db095d38d37fe21ff29e5abea4850bee425b9",
+    "src/services/artisanalSiteInsights.ts": "e354ef795d695afb4678a910ace1e963c6ddb9d9dbcdb5c9b68401d1d90e7082",
+    "src/services/artisanalSiteInsights.test.ts": "f5f08b859043bcd72f23842f53e2e833bed0c8e55709f115d7cd8a411df7fdc1",
+    "src/hooks/useArtisanalSiteData.ts": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+    "src/hooks/useArtisanalSiteData.test.tsx": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0"
+  },
+  "sourcesStable": true
+}

@@ -1,0 +1,74 @@
+- banner:
+  - img "Armoiries du Burkina Faso"
+  - navigation "Navigation de connexion":
+    - link "Retour à la vitrine":
+      - /url: /
+      - generic: Retour à la vitrine
+    - 'button "Actuel: Français. Changer de langue"':
+      - generic: Français
+- main:
+  - region "Plateforme Nationale de Traçabilité du Secteur Minier":
+    - heading "Plateforme Nationale de Traçabilité du Secteur Minier" [level=1]:
+      - generic: Plateforme Nationale
+      - generic: de Traçabilité du
+      - generic: Secteur Minier
+    - paragraph:
+      - generic: Production, collecte et vente
+      - generic: Impôts et taxes · Artisans miniers
+    - paragraph: La performance minière au service du citoyen
+  - form "Connexion":
+    - img "Faso SANAMA"
+    - heading "Connexion" [level=2]
+    - generic: Nom d’utilisateur
+    - textbox "Nom d’utilisateur":
+      - /placeholder: Entrez votre nom d’utilisateur
+    - generic: Mot de passe
+    - textbox "Mot de passe":
+      - /placeholder: Entrez votre mot de passe
+    - button "Afficher le mot de passe":
+    - link "Mot de passe oublié ?":
+      - /url: /recuperer-acces
+    - button "Se connecter":
+      - text: Se connecter
+    - paragraph:
+      - text: Besoin d’aide ?
+      - link "Contactez l’administrateur":
+        - /url: /assistance#incident
+- region "Institutions du secteur minier":
+  - heading "Institutions du secteur minier" [level=2]
+  - list:
+    - button "À propos de Présidence du Faso":
+      - img "Présidence du Faso"
+      - generic: Présidence du Faso
+    - button "À propos de SONASP":
+      - img "SONASP"
+      - generic: SONASP
+    - button "À propos de Ministère des Finances":
+      - img "Ministère des Finances"
+      - generic: Ministère des Finances
+    - button "À propos de Ministère des Mines et de l’Énergie":
+      - img "Ministère des Mines et de l’Énergie"
+      - generic: Ministère des Mines et de l’Énergie
+    - button "À propos de BUMIGEB":
+      - img "BUMIGEB"
+      - generic: BUMIGEB
+  - list:
+    - button:
+      - generic: Présidence du Faso
+    - button:
+      - generic: SONASP
+    - button:
+      - generic: Ministère des Finances
+    - button:
+      - generic: Ministère des Mines et de l’Énergie
+    - button:
+      - generic: BUMIGEB
+- contentinfo:
+  - paragraph: © 2026 Présidence du Burkina Faso. Tous droits réservés.
+  - paragraph: "Conception & support : Quantix Solutions Burkina Faso"
+  - navigation "Informations et assistance":
+    - link "Confidentialité":
+      - /url: /confidentialite
+    - generic: ·
+    - link "Assistance":
+      - /url: /assistance

@@ -1,0 +1,145 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 0 lignes visibles sans troncature 6ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 1 lignes visibles sans troncature 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 499 lignes visibles sans troncature 34ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 500 lignes visibles sans troncature 4ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 501 lignes visibles sans troncature 4ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 999 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 1000 lignes visibles sans troncature 8ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 1001 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > restitue les 1500 lignes visibles sans troncature 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > supporte un plafond REST inférieur à la tranche demandée 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > propage une erreur sur une page ultérieure sans retourner le début de liste 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > refuse une réponse incomplète : null 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > refuse une réponse incomplète : total absent 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > refuse une réponse incomplète : page vide 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > refuse une réponse incomplète : total changé 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'artisans' > refuse une réponse incomplète : doublon 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 0 lignes visibles sans troncature 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 1 lignes visibles sans troncature 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 499 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 500 lignes visibles sans troncature 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 501 lignes visibles sans troncature 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 999 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 1000 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 1001 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > restitue les 1500 lignes visibles sans troncature 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > supporte un plafond REST inférieur à la tranche demandée 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > propage une erreur sur une page ultérieure sans retourner le début de liste 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > refuse une réponse incomplète : null 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > refuse une réponse incomplète : total absent 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > refuse une réponse incomplète : page vide 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > refuse une réponse incomplète : total changé 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes nationales' > refuse une réponse incomplète : doublon 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 0 lignes visibles sans troncature 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 1 lignes visibles sans troncature 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 499 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 500 lignes visibles sans troncature 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 501 lignes visibles sans troncature 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 999 lignes visibles sans troncature 5ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 1000 lignes visibles sans troncature 5ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 1001 lignes visibles sans troncature 5ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > restitue les 1500 lignes visibles sans troncature 7ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > supporte un plafond REST inférieur à la tranche demandée 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > propage une erreur sur une page ultérieure sans retourner le début de liste 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > refuse une réponse incomplète : null 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > refuse une réponse incomplète : total absent 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > refuse une réponse incomplète : page vide 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > refuse une réponse incomplète : total changé 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'ventes par artisan' > refuse une réponse incomplète : doublon 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 0 lignes visibles sans troncature 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 1 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 499 lignes visibles sans troncature 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 500 lignes visibles sans troncature 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 501 lignes visibles sans troncature 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 999 lignes visibles sans troncature 4ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 1000 lignes visibles sans troncature 4ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 1001 lignes visibles sans troncature 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > restitue les 1500 lignes visibles sans troncature 3ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > supporte un plafond REST inférieur à la tranche demandée 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > propage une erreur sur une page ultérieure sans retourner le début de liste 2ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > refuse une réponse incomplète : null 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > refuse une réponse incomplète : total absent 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > refuse une réponse incomplète : page vide 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > refuse une réponse incomplète : total changé 1ms
+ ✓ src/services/artisanReadVolume.test.ts > LECT-VOL-006 — 'sites' > refuse une réponse incomplète : doublon 1ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > conserve le filtre artisan et la relation historique sur toutes les pages 2ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > conserve les tris métier avant le départage par identifiant 1ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > récupère aussi les affectations après le plafond REST 3ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > rejette la liste entière si une page des affectations échoue 2ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > retrouve directement un site au-delà de la première tranche et filtre ses affectations 2ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > ne déclare absent que le site réellement absent ou non visible au lecteur 0ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > pagine les affectations du détail sans perdre le filtre du site 1ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > propage un échec du détail (artisanal_sites) au lieu de retourner null 0ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > propage un échec du détail (artisanal_site_assignments) au lieu de retourner null 0ms
+ ✓ src/services/artisanReadVolume.test.ts > Relations et lectures unitaires > ne publie aucun agrégat du pipeline si une page de ventes échoue 5ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > ne confond pas une dernière tranche pleine avec une liste incomplète 9ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : null 4ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : undefined 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : -1 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : 1.5 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : NaN 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : Infinity 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : 9007199254740992 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse une tranche incompatible avec le total ou la plage 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse une tranche incompatible avec le total ou la plage 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse une tranche incompatible avec le total ou la plage 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse les identifiants absents ou répétés 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse les identifiants absents ou répétés 0ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse les identifiants absents ou répétés 0ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse les identifiants absents ou répétés 0ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > propage le rejet réseau et ne renvoie aucune tranche intermédiaire 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > conserve le tri, le filtre et le total avec le véritable client PostgREST sur un transport local simulé 29ms
+ ✓ src/services/artisanalSiteSave.test.ts > Sauvegarde atomique du site > sauvegarde site et responsables dans un appel, puis notifie les vues ouvertes 11ms
+ ✓ src/services/artisanalSiteSave.test.ts > Sauvegarde atomique du site > refuse une catégorie absente ou un site formalisé sans document avant toute écriture 4ms
+ ✓ src/services/artisanalSiteSave.test.ts > Sauvegarde atomique du site > dépose le justificatif avant de sauvegarder et retire le dépôt si la transaction échoue 3ms
+ ✓ src/services/artisanalSiteSave.test.ts > Sauvegarde atomique du site > conserve le document existant pendant une modification sans nouveau fichier 1ms
+ ✓ src/services/factureVenteService.test.ts > montantEnLettres > écrit le montant de la facture de référence 3ms
+ ✓ src/services/factureVenteService.test.ts > montantEnLettres > respecte les accords du français 1ms
+ ✓ src/services/factureVenteService.test.ts > montantEnLettres > couvre les grands montants et le zéro 1ms
+ ✓ src/services/factureVenteService.test.ts > montantEnLettres > arrondit : le FCFA n’a pas de subdivision 0ms
+ ✓ src/services/factureVenteService.test.ts > numeroFacture > dérive le numéro de facture du numéro de vente 0ms
+ ✓ src/services/factureVenteService.test.ts > numeroFacture > ne fabrique rien à partir d’un numéro inconnu 1ms
+ ✓ src/services/factureVenteService.test.ts > groupePourTaux > rattache le taux au groupe de taxation 1ms
+ ✓ src/services/factureVenteService.test.ts > recapitulerGroupes > cumule les bases par groupe et applique le taux du groupe 2ms
+ ✓ src/services/factureVenteService.test.ts > composerFacture > rend chaque composante du net à payer visible 1ms
+ ✓ src/services/factureVenteService.test.ts > composerFacture > nomme la taxe de développement communal plutôt que de la noyer 1ms
+ ✓ src/services/factureVenteService.test.ts > composerFacture > reprend le numéro de vente et en dérive le numéro de facture 1ms
+ ✓ src/services/factureVenteService.test.ts > composerFacture > écrit le net à payer en toutes lettres 0ms
+ ✓ src/services/factureVenteService.test.ts > composerFacture > marque la pièce comme spécimen et n’émet aucune certification 1ms
+ ✓ src/services/factureVenteService.test.ts > contenuQrSpecimen > annonce en clair qu’il ne s’agit pas d’une certification 0ms
+ ✓ src/services/factureVenteService.test.ts > contenuQrSpecimen > n’imite aucune charge utile de certification 0ms
+ ✓ src/services/factureVenteService.test.ts > contenuQrSpecimen > reprend les références de la pièce 0ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > retient la carte la plus récente de chaque artisan 5ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > agrège les artisans et les sites actifs par région 2ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > rattache les artisans aux sites par leur identifiant et note l’état du site 3ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > ne rattache pas les homonymes, les anciennes fiches sans site ni les artisans d’un autre site 3ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > utilise le lien exploitant des aides et conserve cette jointure après filtrage par type 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > laisse le site inconnu si l’exploitant est absent du périmètre ou n’est pas un exploitant 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > calcule la répartition par type d’artisan 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > calcule l’état administratif des cartes 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > construit la série mensuelle des enregistrements 3ms
+ ✓ src/services/artisanalSiteInsights.test.ts > production reconstituée depuis les ventes des artisans > rattache chaque vente au site dont la localité correspond à la commune de l’artisan 7ms
+ ✓ src/services/artisanalSiteInsights.test.ts > production reconstituée depuis les ventes des artisans > privilégie le rattachement explicite (artisanal_site_id) sur la localité 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > production reconstituée depuis les ventes des artisans > ignore les ventes annulées et les artisans hors site 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > production reconstituée depuis les ventes des artisans > préserve le site d’origine et les déclarations initialement non rattachées 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > production reconstituée depuis les ventes des artisans > alimente les agrégats du tableau de bord 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > artisanalSiteInsights > consolide production, recettes et dernière déclaration par site 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > artisanalSiteInsights > ne note pas les sites planifiés et sanctionne la suspension 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > artisanalSiteInsights > bascule un site actif « sous surveillance » sous le seuil de conformité 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > artisanalSiteInsights > pénalise le dépassement de capacité autorisée 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > artisanalSiteInsights > compte les alertes de vigilance opérationnelle 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > artisanalSiteInsights > calcule un indice global pondéré par les artisans actifs 1ms
+ ✓ src/services/artisanalSiteInsights.test.ts > artisanalSiteInsights > produit 12 points mensuels avec un objectif constant 2ms
+ ✓ src/services/artisanalSiteInsights.test.ts > artisanalSiteInsights > répartit la contribution régionale et regroupe la traîne dans « Autres » 2ms
+ ✓ src/services/artisanalSiteService.test.ts > artisanalSiteService analytics > calculates the national indicators from sites and productions 6ms
+ ✓ src/services/artisanalSiteService.test.ts > artisanalSiteService analytics > ranks sites by recorded production 2ms
+
+ Test Files  7 passed (7)
+      Tests  135 passed (135)
+   Start at  11:26:32
+   Duration  31.69s (transform 521ms, setup 6.14s, import 1.26s, tests 380ms, environment 19.98s)
+
+

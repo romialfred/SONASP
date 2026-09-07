@@ -1,0 +1,110 @@
+- note: BANC LOCAL — données fictives, Auth et Storage simulés, sauvegarde en mémoire uniquement
+- banner:
+  - generic "FASO SANAMA — DGMG — contexte fictif de présentation":
+    - img "FASO SANAMA"
+    - generic "DGMG — contexte fictif de présentation":
+      - img "Armoiries du Burkina Faso"
+  - heading "Plateforme Nationale de Traçabilité de l’Or" [level=1]
+  - paragraph: Production, collecte, commercialisation et suivi des recettes
+  - generic "Portail Mines · DGMG":
+    - generic: Portail
+    - strong: Mines · DGMG
+  - button "Choisir la langue (FR)":
+    - generic: FR
+  - button "Afficher les notifications":
+  - button "Ouvrir le menu utilisateur":
+    - generic: AQ
+    - strong: Agent QA local
+    - generic: DGMG simulée
+- complementary "Navigation principale":
+  - generic: ESPACE MINES · DGMG
+  - button "Réduire le menu":
+  - navigation:
+    - region "Supervision & régulation":
+      - heading "Supervision & régulation" [level=2]
+      - link "Vue d’ensemble":
+        - /url: /portail-dgmg
+        - generic: Vue d’ensemble
+      - link "Registre des sites":
+        - /url: /artisan-sites
+        - generic: Registre des sites
+      - link "Artisans et opérateurs":
+        - /url: /artisan-minier/liste
+        - generic: Artisans et opérateurs
+      - link "Collecteurs":
+        - /url: /artisan-minier/collecteurs
+        - generic: Collecteurs
+      - link "Sociétés minières":
+        - /url: /stakeholders/mining-companies
+        - generic: Sociétés minières
+      - link "Comptoirs":
+        - /url: /stakeholders/organizations
+        - generic: Comptoirs
+      - link "Déclarations de production":
+        - /url: /production/daily
+        - generic: Déclarations de production
+      - link "Validations Réserve":
+        - /url: /portail-dgmg/reserve-validations
+        - generic: Validations Réserve
+  - region "Cours de l’or":
+    - text: COURS DE L’OR
+    - button "Actualiser le cours de l’or":
+    - paragraph: Cours non chargé dans cet aperçu isolé
+    - button "Réessayer":
+      - text: Réessayer
+  - link "Centre d’assistance":
+    - /url: /help
+    - generic: Centre d’assistance
+- main:
+  - link "Vue d’ensemble":
+    - /url: /artisan-sites
+    - text: Vue d’ensemble
+  - paragraph: Performance des sites
+  - heading "Production des sites artisanaux" [level=2]
+  - paragraph: Consolidation de la production d’or, du chiffre d’affaires et des taxes par site.
+  - button "Ajouter un site":
+    - text: Ajouter un site
+  - alert:
+    - generic: Les données de production sont momentanément indisponibles.
+    - button "Réessayer":
+      - text: Réessayer
+- contentinfo:
+  - generic: © 2026 FASO SANAMA
+  - generic: Confidentialité · Intégrité · Transparence
+- generic "Commandes du banc isolé"
+- navigation:
+  - link "Vue d'ensemble":
+    - /url: /artisan-sites
+  - link "Production":
+    - /url: /artisan-sites/production
+  - link "Modifier la fixture":
+    - /url: /artisan-sites/qa-site/modifier
+  - link "Créer":
+    - /url: /artisan-sites/new
+  - link "Détails":
+    - /url: /artisan-sites/qa-site
+- checkbox "Refuser les dépôts simulés"
+- text: Refuser les dépôts simulés
+- checkbox "Refuser la seconde lecture simulée"
+- text: Refuser la seconde lecture simulée
+- checkbox "Refuser les retraits simulés"
+- text: Refuser les retraits simulés
+- checkbox "Refuser la sauvegarde simulée"
+- text: Refuser la sauvegarde simulée
+- checkbox "Refuser la lecture du dossier simulé" [checked]
+- text: Refuser la lecture du dossier simulé
+- checkbox "Retarder la lecture du dossier de 5 secondes"
+- text: Retarder la lecture du dossier de 5 secondes
+- checkbox "Retourner une liste de sites vide"
+- text: Retourner une liste de sites vide
+- button "Relire les données simulées" [active]
+- 'button "Sélection QA : photo valide"'
+- 'button "Sélection QA : valide + illisible"'
+- paragraph: "Transport en mémoire : 0 objet(s). Aucun serveur de données."
+- list:
+  - listitem: "Lecture dossier simulée : réussie"
+  - listitem: "Lecture dossier simulée : liste vide"
+  - listitem: "Lecture dossier simulée : réussie"
+  - listitem: "Lecture dossier simulée : réussie"
+  - listitem: "Lecture dossier simulée : refus"
+- generic: 0 M

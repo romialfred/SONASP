@@ -1,0 +1,13 @@
+{
+  "kind": "site",
+  "id": "22222222-2222-4222-8222-222222222222",
+  "parent": {
+    "name": "QA20260907-R02-FIXTURE"
+  },
+  "assignments": [
+    {
+      "id": "contact-a",
+      "role": "responsable"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-09-07T11:37:48.146Z",
+  "projectRef": "yyverzuhkdonjjuficor",
+  "credentialsExposed": false,
+  "dns": [
+    "172.64.149.246",
+    "104.18.38.10"
+  ],
+  "http": [
+    {
+      "path": "/auth/v1/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/",
+      "method": "GET",
+      "status": 401
+    }
+  ]
+}

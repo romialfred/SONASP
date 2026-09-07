@@ -1,0 +1,56 @@
+{
+  "id": "AUD-R02-BASELINE-COMPARAISON-20260907",
+  "checkedAt": "2026-09-07T13:21:52.359Z",
+  "beforeTimestamp": "2026-09-07T11:40:40.938435+00:00",
+  "afterTimestamp": "2026-09-07T13:09:31.938504+00:00",
+  "tables": 10,
+  "readOnlyFlags": true,
+  "sqlHashMatchesReceipt": true,
+  "missing": [],
+  "changed": [
+    {
+      "table": "snp_artisans_miniers",
+      "id": "5a29b656-c992-4a84-91fa-eb6819121ebb"
+    }
+  ],
+  "added": [
+    {
+      "table": "artisanal_site_assignments",
+      "id": "12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12",
+      "attributed": true
+    },
+    {
+      "table": "artisanal_site_assignments",
+      "id": "d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c",
+      "attributed": true
+    },
+    {
+      "table": "artisanal_sites",
+      "id": "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c",
+      "attributed": true
+    },
+    {
+      "table": "snp_artisans_miniers",
+      "id": "be44ea0d-fb3b-4b02-88b4-cc6ccaf67c56",
+      "attributed": false
+    },
+    {
+      "table": "snp_cartes_professionnelles",
+      "id": "b0035b68-1fbb-45ef-a911-36a03d2e10e6",
+      "attributed": false
+    }
+  ],
+  "stableStorage": true,
+  "agreesWithEnvironmentComparison": true,
+  "preexistingPreserved": false,
+  "newRowsFullyAttributed": false,
+  "sourceHashes": {
+    "docs/amelioration/environnement/reprise-r02/baseline-before.json": "8aad378d220af3290d31c8a161560eb88b63a38b0521594d9a3629b803039366",
+    "docs/amelioration/environnement/reprise-r02/baseline-apres-creation-r02.json": "b192a61f53956e79b4f786edbb96d29593f64b968ad121fed2cf6abea48cf5d9",
+    "docs/amelioration/environnement/reprise-r02/comparaison-baseline-apres-creation-r02.json": "245bb32eeb404ca0716f1a80be8e6d36782cade7c1e2e4003058e331bb4d8a42",
+    "docs/amelioration/environnement/reprise-r02/baseline.sql": "7f85e0a8ed71e6a01ce850bd12f52e4a42decf4998113def7a2e7f095bd413e6",
+    "docs/amelioration/environnement/reprise-r02/baseline-apres-creation-r02.execution.json": "c458f0de3b99e912bbe5f38ac5bf273d0865ffebd357892fa86f2de81950c0ed",
+    "docs/amelioration/preuves/recette-r02/manifest-donnees.json": "6d0ec9d26c49ec40577c54b9dd4b2339951d6d53cbfcc6d09da8718bf8329903"
+  },
+  "scope": "Comparaison locale des empreintes de preuves existantes uniquement ; aucune attribution de cause et aucun nettoyage. content_md5 de la baseline historique décrit les métadonnées Storage, pas les octets."
+}

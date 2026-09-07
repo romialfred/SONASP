@@ -1,0 +1,79 @@
+{
+  "scope": "Conservation des preuves après capture ; pas un horodatage atomique du build",
+  "recordedUtc": "2026-09-07T13:31:38.3152670Z",
+  "environment": "Banc mémoire 5188 ; aucun Storage ou Auth distant",
+  "files": [
+    {
+      "name": "desktop-partiel-apres-csp.png",
+      "bytes": 100369,
+      "fileModifiedUtc": "2026-09-07T12:37:36.3053812Z",
+      "sha256": "c04ccf6d653dadd13e242aa9571ee9d86efbb53f1d2b56b196e891243cc0757e"
+    },
+    {
+      "name": "desktop-partiel-apres-csp.txt",
+      "bytes": 12256,
+      "fileModifiedUtc": "2026-09-07T12:37:36.3551150Z",
+      "sha256": "20de84b825df9c7f472c8792c423c85b901027c47c6bc8a32679b906e977321a"
+    },
+    {
+      "name": "desktop-detail-apres-csp.png",
+      "bytes": 95059,
+      "fileModifiedUtc": "2026-09-07T12:44:08.9089739Z",
+      "sha256": "09a42ae806ea91b0f576aded2ef7ec171779a65d435dc3d7c8877b239dbfdd50"
+    },
+    {
+      "name": "desktop-detail-apres-csp.txt",
+      "bytes": 4858,
+      "fileModifiedUtc": "2026-09-07T12:44:08.9450473Z",
+      "sha256": "319875b3d1372e2aa1c9bdc063e339945b6d1e9266d7bfd6b826f6f640291d29"
+    },
+    {
+      "name": "mobile-detail-apres-csp.png",
+      "bytes": 46553,
+      "fileModifiedUtc": "2026-09-07T12:50:58.8818367Z",
+      "sha256": "074cba3976c2239aef65b0fa270c0c3a209d49b858757d5aee5a3ed15e01296c"
+    },
+    {
+      "name": "mobile-formulaire-apres-csp.png",
+      "bytes": 47242,
+      "fileModifiedUtc": "2026-09-07T12:55:04.1386289Z",
+      "sha256": "fec8bf594c3f1a7b7a8d0c800daf4813131ea325a350ca89d80e4792d531e2a5"
+    },
+    {
+      "name": "mobile-formulaire-apres-csp.txt",
+      "bytes": 10345,
+      "fileModifiedUtc": "2026-09-07T12:55:04.3667744Z",
+      "sha256": "d2bdec2b3871d9aa1486b086b9f40b81f1878a1691e994f7b1061630ac051d21"
+    },
+    {
+      "name": "desktop-lecture-partielle.png",
+      "bytes": 89264,
+      "fileModifiedUtc": "2026-09-07T13:09:01.0293975Z",
+      "sha256": "3a96280532747c259981b3a828a7815cce3f844c7bc56cb8ce9f293a89d92a25"
+    },
+    {
+      "name": "desktop-lecture-partielle.txt",
+      "bytes": 4867,
+      "fileModifiedUtc": "2026-09-07T13:09:01.1802269Z",
+      "sha256": "352a5ec318eebaa107e982b51d95a328e86898efa55211d1e8fa53b3ec48b590"
+    },
+    {
+      "name": "desktop-lecture-retablie.png",
+      "bytes": 94496,
+      "fileModifiedUtc": "2026-09-07T13:10:52.7067145Z",
+      "sha256": "4d885dd51649a277af4681133220811083699c9e731c0f249367a0a6d3d46754"
+    },
+    {
+      "name": "desktop-lecture-retablie.txt",
+      "bytes": 4726,
+      "fileModifiedUtc": "2026-09-07T13:10:52.8463682Z",
+      "sha256": "6b48894634b23de7146885e44ef5cde81c0bc42366d4de943458e8e942bc31ec"
+    },
+    {
+      "name": "console-apres-correction.json",
+      "bytes": 2,
+      "fileModifiedUtc": "2026-09-07T13:10:52.8929291Z",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ]
+}

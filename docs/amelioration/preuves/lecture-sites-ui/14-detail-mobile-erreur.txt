@@ -1,0 +1,27 @@
+- note: BANC LOCAL — données fictives, Auth et Storage simulés, sauvegarde en mémoire uniquement
+- banner:
+  - button "Ouvrir la navigation":
+  - generic "FASO SANAMA — DGMG — contexte fictif de présentation":
+    - img "FASO SANAMA"
+    - generic "DGMG — contexte fictif de présentation":
+      - img "Armoiries du Burkina Faso"
+  - heading "Plateforme Nationale de Traçabilité de l’Or" [level=1]
+  - paragraph: Production, collecte, commercialisation et suivi des recettes
+  - generic "Portail Mines · DGMG":
+    - generic: Portail
+    - strong: Mines · DGMG
+  - button "Choisir la langue (FR)":
+    - generic: FR
+  - button "Afficher les notifications":
+  - button "Ouvrir le menu utilisateur":
+    - generic: AQ
+- main:
+  - link "Retour aux sites":
+    - /url: /artisan-sites
+    - text: Retour aux sites
+  - alert: Les données des sites sont momentanément indisponibles.
+  - button "Réessayer"
+- contentinfo:
+  - generic: © 2026 FASO SANAMA
+- generic "Commandes du banc isolé" [active]
+- generic: "0"

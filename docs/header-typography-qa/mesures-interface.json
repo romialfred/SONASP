@@ -1,0 +1,109 @@
+{
+  "scope": "Contrôles graphiques sur banc local isolé",
+  "checks": [
+    {
+      "name": "apres-1440",
+      "active": [
+        "Tableau de bord"
+      ],
+      "clippedMenus": [],
+      "headerHeight": 91,
+      "horizontalOverflow": false,
+      "imagesLoaded": true,
+      "pageTitleFont": "26px",
+      "subtitleFont": "13px",
+      "titleFont": "19.44px",
+      "viewport": [
+        1440,
+        675
+      ],
+      "wrappedMenus": []
+    },
+    {
+      "name": "apres-1366",
+      "active": [
+        "Tableau de bord"
+      ],
+      "clippedMenus": [],
+      "headerHeight": 91,
+      "horizontalOverflow": false,
+      "imagesLoaded": true,
+      "pageTitleFont": "26px",
+      "subtitleFont": "13px",
+      "titleFont": "19px",
+      "viewport": [
+        1366,
+        768
+      ],
+      "wrappedMenus": []
+    },
+    {
+      "name": "apres-1920",
+      "active": [
+        "Tableau de bord"
+      ],
+      "clippedMenus": [],
+      "headerHeight": 91,
+      "horizontalOverflow": false,
+      "imagesLoaded": true,
+      "pageTitleFont": "26px",
+      "subtitleFont": "13px",
+      "titleFont": "21px",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "wrappedMenus": []
+    },
+    {
+      "name": "apres-768",
+      "active": [],
+      "clippedMenus": [],
+      "headerHeight": 119,
+      "horizontalOverflow": false,
+      "imagesLoaded": true,
+      "pageTitleFont": "26px",
+      "subtitleFont": "13px",
+      "titleFont": "19px",
+      "viewport": [
+        768,
+        1024
+      ],
+      "wrappedMenus": []
+    },
+    {
+      "name": "apres-360",
+      "active": [],
+      "clippedMenus": [],
+      "headerHeight": 157,
+      "horizontalOverflow": false,
+      "imagesLoaded": true,
+      "pageTitleFont": "23px",
+      "subtitleFont": "12px",
+      "titleFont": "17px",
+      "viewport": [
+        360,
+        800
+      ],
+      "wrappedMenus": []
+    },
+    {
+      "name": "menus-mobile-360",
+      "active": [
+        "Tableau de bord"
+      ],
+      "clippedMenus": [],
+      "headerHeight": 157,
+      "horizontalOverflow": false,
+      "imagesLoaded": true,
+      "pageTitleFont": "23px",
+      "subtitleFont": "12px",
+      "titleFont": "17px",
+      "viewport": [
+        360,
+        800
+      ],
+      "wrappedMenus": []
+    }
+  ]
+}

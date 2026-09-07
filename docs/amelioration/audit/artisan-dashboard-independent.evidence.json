@@ -1,0 +1,80 @@
+{
+  "evidence_id": "AUD-ART-DASH-01",
+  "date_utc": "2026-09-07T07:20:28.804Z",
+  "finished_at_utc": "2026-09-07T07:21:03.101Z",
+  "evidence_kind": "COMPOSANTS_JSDOM_ET_CALCULS_SERVICES_AUTH_SIMULES",
+  "environment": {
+    "name": "Vitest jsdom local",
+    "network_backend": false,
+    "auth_simulated": true,
+    "actual_browser": false,
+    "map_charts_layout_simulated": true
+  },
+  "application": {
+    "base_commit": "4d6d828d76515dee68266c6db85504923c364eec",
+    "integrated_release_commit": null,
+    "source_file_hashes": {
+      "src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx": "b90c726d7bb3bee37a5ec410dee45ab0f36e9134a545be8443e015d98922d975",
+      "src/services/artisanTerritoryInsights.test.ts": "7b57870bd90d2327bd77c53bde30116217780cf651eb3d754754be4def60a84c",
+      "docs/amelioration/audit/artisan-dashboard-independent.test.tsx": "561001086b592d2027e7b3198a45ad586d7ff2590fcbf39e297fcb189eaea4ca",
+      "src/pages/artisan-minier/ArtisanMinierDashboard.tsx": "b83d31bd36ffb6e6dd9b60916a8fd71c6d3220ac26a9a0a72758f1aef3c0bd7d",
+      "src/services/artisanTerritoryInsights.ts": "6099366bc5c216265c2dd9bbec09be13add53fd05214f016daeea92361ecc909",
+      "src/pages/artisan-minier/artisan-minier-dashboard.css": "b3ecc1a6302f4eed52d125ccb0d4ca811fddfd1362ea4750794ff48ffdf8149f",
+      "src/types/artisanalSite.ts": "6301a3f454ef8d6ab6e23748edb2f9b212e2a7d79ea56d56aecac90cfd5e1857",
+      "src/services/artisanMinierService.ts": "820431f3be82bfb73983475a7d747a5666b7d1044162f601c00dd56702a84e4e",
+      "src/services/carteProfessionnelleService.ts": "a396d4269835eca93fa7554d65d85e46541ecb5d2318fb325d3b567db7cb5a7f",
+      "src/services/artisanalSiteService.ts": "da4e18077083a12633c8d3e9114c4de3d4f8a57cd9ea4ee90f3eb77ee1e6d4fc",
+      "src/data/burkinaProvinces.ts": "23ba6615d81025a63dff1cafe8ea8b0322ff2983d353a4acb75045b3567398c8",
+      "src/test/fixtures/artisanalSites.ts": "f58c43fdae141363813e60b0271014bf9aa5f64949f1d610e09f2a3b8632776e",
+      "supabase/migrations/20260906111030_refonte_dossier_artisan.sql": "29e774d4d48084f48bff8e9c14932d11ad6595040b87f76bbcc1934e0024f954",
+      "supabase/migrations/20260906235254_affiliation_payment_evidence_and_paid_generation.sql": "5ce91f95441def7551c3e4465c24c5a2495d43a0e76bb53b0ab61f16854d9a71",
+      "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+      "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+      "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+    },
+    "source_file_hashes_after": {
+      "src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx": "b90c726d7bb3bee37a5ec410dee45ab0f36e9134a545be8443e015d98922d975",
+      "src/services/artisanTerritoryInsights.test.ts": "7b57870bd90d2327bd77c53bde30116217780cf651eb3d754754be4def60a84c",
+      "docs/amelioration/audit/artisan-dashboard-independent.test.tsx": "561001086b592d2027e7b3198a45ad586d7ff2590fcbf39e297fcb189eaea4ca",
+      "src/pages/artisan-minier/ArtisanMinierDashboard.tsx": "b83d31bd36ffb6e6dd9b60916a8fd71c6d3220ac26a9a0a72758f1aef3c0bd7d",
+      "src/services/artisanTerritoryInsights.ts": "6099366bc5c216265c2dd9bbec09be13add53fd05214f016daeea92361ecc909",
+      "src/pages/artisan-minier/artisan-minier-dashboard.css": "b3ecc1a6302f4eed52d125ccb0d4ca811fddfd1362ea4750794ff48ffdf8149f",
+      "src/types/artisanalSite.ts": "6301a3f454ef8d6ab6e23748edb2f9b212e2a7d79ea56d56aecac90cfd5e1857",
+      "src/services/artisanMinierService.ts": "820431f3be82bfb73983475a7d747a5666b7d1044162f601c00dd56702a84e4e",
+      "src/services/carteProfessionnelleService.ts": "a396d4269835eca93fa7554d65d85e46541ecb5d2318fb325d3b567db7cb5a7f",
+      "src/services/artisanalSiteService.ts": "da4e18077083a12633c8d3e9114c4de3d4f8a57cd9ea4ee90f3eb77ee1e6d4fc",
+      "src/data/burkinaProvinces.ts": "23ba6615d81025a63dff1cafe8ea8b0322ff2983d353a4acb75045b3567398c8",
+      "src/test/fixtures/artisanalSites.ts": "f58c43fdae141363813e60b0271014bf9aa5f64949f1d610e09f2a3b8632776e",
+      "supabase/migrations/20260906111030_refonte_dossier_artisan.sql": "29e774d4d48084f48bff8e9c14932d11ad6595040b87f76bbcc1934e0024f954",
+      "supabase/migrations/20260906235254_affiliation_payment_evidence_and_paid_generation.sql": "5ce91f95441def7551c3e4465c24c5a2495d43a0e76bb53b0ab61f16854d9a71",
+      "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+      "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+      "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+    },
+    "stable_inputs_during_execution": true
+  },
+  "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=1 --reporter=verbose src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx src/services/artisanTerritoryInsights.test.ts docs/amelioration/audit/artisan-dashboard-independent.test.tsx",
+  "exit_code": 0,
+  "test_result": "RÉUSSI",
+  "summary": {
+    "passed": 55,
+    "test_files": 3,
+    "independent_cases": 13
+  },
+  "artifacts": [
+    {
+      "path": "docs/amelioration/audit/artisan-dashboard-independent.txt",
+      "sha256": "a338f74d65832e0b0033429f91629fa32d360140e53b24c0684403cbdbd85eb0",
+      "kind": "vitest-verbose-output"
+    }
+  ],
+  "executor": "audit_independant",
+  "limitations": [
+    "Auth, services, shell, carte et graphiques remplacés par des doubles dans les cas indépendants.",
+    "Les migrations sont lues pour le contrat de rattachement, pas exécutées par ce runner.",
+    "Aucun parcours navigateur, permission serveur, MFA ou persistance réelle éprouvés.",
+    "Les données de la cible en ligne et les autres indicateurs/workflows Artisan restent à vérifier."
+  ],
+  "ui_form_validated": false,
+  "deployment_authorised_by_this_evidence": false
+}

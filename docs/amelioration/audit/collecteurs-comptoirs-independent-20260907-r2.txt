@@ -1,0 +1,89 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > relit le dossier après modification avec une réponse immédiate 3954ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > relit le dossier après modification avec une réponse différée 2376ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > recalcule la validité lorsque les deux dates sont renseignées 605ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > présente les champs entreprise, fiscalité, autorisation et responsable sans tutelle institutionnelle 808ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > empêche un enregistrement vide et indique le champ à corriger 1139ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > enregistre les nouveaux champs, puis relit le serveur avant navigation 1409ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > conserve la même clé de reprise quand la réponse de création est perdue 3283ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > réessaie uniquement la pièce échouée sans recréer le comptoir ni perdre les fichiers 3030ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > refuse un PDF dans la photo et un document trop volumineux 1114ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > affiche en détail toutes les données enregistrées, sans action d’enregistrement 230ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > n’annonce pas 100 % lorsque les pièces ou le responsable sont absents 15ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > gère les années bissextiles, les expirations et les dates invalides 30ms
+ ✓ src/pages/collector/ComptoirForm.test.tsx > Dossier entreprise du comptoir > propose les 70 structures DGI sourcées et la DME Centre V 3ms
+ ✓ src/pages/collector/CollectorDetails.test.tsx > Fiche collecteur > présente le dossier incomplet et une activité vide vérifiée sans inventer de référence 2621ms
+ ✓ src/pages/collector/CollectorDetails.test.tsx > Fiche collecteur > n’affiche pas de zéros trompeurs en cas d’échec et permet une nouvelle tentative 658ms
+ ✓ src/pages/collector/CollectorDetails.test.tsx > Fiche collecteur > réserve la configuration aux habilités et distingue une délégation expirée 1284ms
+ ✓ src/pages/collector/CollectorDetails.test.tsx > Fiche collecteur > masque les actions de gestion pour une lecture seule 791ms
+ ✓ src/pages/collector/CollectorDetails.test.tsx > Fiche collecteur > ignore la réponse tardive d’un dossier quitté 244ms
+ ✓ src/pages/collector/CollectorForm.test.tsx > Dossier collecteur > exige un organisme et des sites, sans choix de personne morale 1357ms
+ ✓ src/pages/collector/CollectorForm.test.tsx > Dossier collecteur > calcule la complétion sur les champs réels et enregistre les données du collecteur 784ms
+ ✓ src/pages/collector/CollectorForm.test.tsx > Dossier collecteur > conserve les deux sites et retire uniquement le site demandé 915ms
+ ✓ src/pages/collector/CollectorForm.test.tsx > Dossier collecteur > reprend un dépôt échoué sans créer un second dossier 1239ms
+ ✓ src/pages/collector/CollectorForm.test.tsx > Dossier collecteur > refuse les dates incohérentes et l’identité d’un mineur 2ms
+ ✓ src/pages/collector/CollectorsPage.test.tsx > Lecture du registre des collecteurs > ne présente ni liste vide ni statistiques après un échec initial 937ms
+ ✓ src/pages/collector/CollectorsPage.test.tsx > Lecture du registre des collecteurs > ne déclare pas un dossier introuvable quand sa lecture échoue 40ms
+ ✓ src/pages/collector/CollectorsPage.test.tsx > Lecture du registre des collecteurs > permet de reprendre puis affiche un vide réellement vérifié 523ms
+ ✓ src/pages/collector/CollectorsPage.test.tsx > Lecture du registre des collecteurs > conserve le message introuvable après une lecture complète réussie 37ms
+ ✓ src/pages/collector/CollectorsPage.test.tsx > Lecture du registre des collecteurs > retire les anciens compteurs si une actualisation échoue 205ms
+ ✓ src/pages/collector/CollectorsPage.test.tsx > Lecture du registre des collecteurs > ignore une réponse précédente arrivée après la navigation vers une autre fiche 289ms
+ ✓ src/pages/collector/CollectorsPage.test.tsx > Lecture du registre des collecteurs > réinitialise la délégation et la fiche quand les habilitations du même compte changent 105ms
+ ✓ src/pages/collector/ComptoirsPage.test.tsx > Lecture du registre des comptoirs > ne présente pas de zéros avant la fin du chargement 592ms
+ ✓ src/pages/collector/ComptoirsPage.test.tsx > Lecture du registre des comptoirs > ne présente pas de statistiques à zéro après un refus de lecture 154ms
+ ✓ src/pages/collector/ComptoirsPage.test.tsx > Lecture du registre des comptoirs > affiche le vide vérifié après une reprise réussie 590ms
+ ✓ src/pages/collector/ComptoirsPage.test.tsx > Lecture du registre des comptoirs > retire les anciens compteurs quand une actualisation échoue 378ms
+ ✓ src/pages/collector/ComptoirsPage.test.tsx > Lecture du registre des comptoirs > ignore une réponse ancienne après un nouveau chargement de route 269ms
+ ✓ docs/amelioration/audit/collector-comptoir-scope-independent.test.tsx > collecteurs : masque les lignes du précédent organisme sans changement d’utilisateur ni navigation 254ms
+ ✓ docs/amelioration/audit/collector-comptoir-scope-independent.test.tsx > comptoirs : masque les lignes du précédent organisme sans changement d’utilisateur ni navigation 123ms
+ ✓ docs/amelioration/audit/collector-comptoir-scope-independent.test.tsx > collecteurs : ignore une réponse de l’ancien rôle après une lecture du nouveau rôle 86ms
+ ✓ docs/amelioration/audit/collector-comptoir-scope-independent.test.tsx > comptoirs : ignore une réponse de l’ancien rôle après une lecture du nouveau rôle 85ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > restitue les 0 dossiers visibles 17ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > restitue les 1 dossiers visibles 45ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > restitue les 499 dossiers visibles 9ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > restitue les 500 dossiers visibles 8ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > restitue les 501 dossiers visibles 8ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > restitue les 1000 dossiers visibles 16ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > restitue les 1001 dossiers visibles 15ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > restitue les 1500 dossiers visibles 15ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > avance selon la taille reçue quand le serveur impose une limite plus petite 5ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > ne renvoie pas la première page si une page suivante échoue 10ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > refuse une lecture non exhaustive : count absent 6ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > refuse une lecture non exhaustive : count changé 9ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > refuse une lecture non exhaustive : vide prématuré 6ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > refuse une lecture non exhaustive : doublon 7ms
+ ✓ src/services/collectorService.test.ts > Collecteurs : pagination avec le véritable client Supabase et transport simulé > refuse une lecture non exhaustive : null 2ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > ne confond pas une dernière tranche pleine avec une liste incomplète 14ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : null 6ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : undefined 2ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : -1 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : 1.5 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : NaN 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : Infinity 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse un total non exact : 9007199254740992 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse une tranche incompatible avec le total ou la plage 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse une tranche incompatible avec le total ou la plage 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse une tranche incompatible avec le total ou la plage 0ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse les identifiants absents ou répétés 0ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse les identifiants absents ou répétés 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse les identifiants absents ou répétés 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > refuse les identifiants absents ou répétés 1ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > propage le rejet réseau et ne renvoie aucune tranche intermédiaire 2ms
+ ✓ src/lib/readAllPages.test.ts > readAllPages — contrat de lecture exhaustive > conserve le tri, le filtre et le total avec le véritable client PostgREST sur un transport local simulé 32ms
+ ✓ src/services/rpcClientBinding.test.ts > liaison des services au véritable client Supabase > enregistre et relit le comptoir à travers le véritable transport RPC 46ms
+ ✓ src/services/rpcClientBinding.test.ts > liaison des services au véritable client Supabase > refuse une réponse serveur de comptoir incomplète 8ms
+ ✓ src/services/rpcClientBinding.test.ts > liaison des services au véritable client Supabase > charge les collecteurs et leurs références via PostgREST 9ms
+ ✓ src/services/rpcClientBinding.test.ts > liaison des services au véritable client Supabase > transmet un refus serveur sans planter avant la requête 4ms
+ ✓ src/services/rpcClientBinding.test.ts > liaison des services au véritable client Supabase > conserve le contexte pour l’enregistrement de stock 8ms
+ ✓ src/services/rpcClientBinding.test.ts > liaison des services au véritable client Supabase > conserve le contexte pour la création d’une vente 4ms
+ ✓ src/services/rpcClientBinding.test.ts > liaison des services au véritable client Supabase > conserve le contexte pour consulter les lots éligibles 5ms
+
+ Test Files  9 passed (9)
+      Tests  78 passed (78)
+   Start at  13:02:09
+   Duration  146.15s (transform 4.33s, setup 21.03s, import 17.38s, tests 33.03s, environment 63.21s)
+
+JSON report written to F:/Development/SONASP/docs/amelioration/audit/collecteurs-comptoirs-independent-20260907-r2.json
+

@@ -1,0 +1,9 @@
+{
+  "projectRef": "yyverzuhkdonjjuficor",
+  "startedAt": "2026-09-07T15:57:17.930Z",
+  "readOnly": true,
+  "command": "supabase 2.115.0 db query --linked --file cleanup-validate-v2.sql -o json",
+  "sqlSha256": "4a732b52920f381b541663af339cb072a899294d840f61104560cb7d88e498ef",
+  "exitCode": 0,
+  "finishedAt": "2026-09-07T15:57:23.738Z"
+}

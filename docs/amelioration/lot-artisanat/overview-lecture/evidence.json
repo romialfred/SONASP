@@ -1,0 +1,29 @@
+{
+  "baseline": "901b5ebb",
+  "scope": "Local DOM and hook tests only. Real useArtisanalSiteData; mocked Auth, route, service transport and charts. No browser, Auth service or database validation.",
+  "modifiedSourcePaths": [
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx",
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx"
+  ],
+  "readOnlyHookPaths": [
+    "src/hooks/useArtisanalSiteData.ts",
+    "src/hooks/useArtisanalSiteData.test.tsx"
+  ],
+  "startedUtc": "2026-09-07T13:35:06.9585304Z",
+  "completedUtc": "2026-09-07T13:35:29.7680678Z",
+  "command": "npx vitest run src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx src/hooks/useArtisanalSiteData.test.tsx --reporter=verbose",
+  "exitCode": 0,
+  "sourceHashesBefore": {
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx": "fc6086fbdca51dac07b27b0d74ce93a54a27af893345a0f8fdf8841455bac13c",
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx": "9d2f965ec1716851123251994a0614a94a039f60a71686e2bae05e7cd82dadb0",
+    "src/hooks/useArtisanalSiteData.ts": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+    "src/hooks/useArtisanalSiteData.test.tsx": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0"
+  },
+  "sourceHashesAfter": {
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx": "fc6086fbdca51dac07b27b0d74ce93a54a27af893345a0f8fdf8841455bac13c",
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx": "9d2f965ec1716851123251994a0614a94a039f60a71686e2bae05e7cd82dadb0",
+    "src/hooks/useArtisanalSiteData.ts": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+    "src/hooks/useArtisanalSiteData.test.tsx": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0"
+  },
+  "sourcesStable": true
+}

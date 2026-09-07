@@ -1,0 +1,40 @@
+{
+  "id": "AUD-GLOBAL-EXIT-DISCORDANCE-20260907",
+  "checkedAt": "2026-09-07T13:37:53.805Z",
+  "jsonSummary": {
+    "total": 2870,
+    "passed": 2870,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "success": true,
+    "files": 364,
+    "suites": 887
+  },
+  "nonPassingFiles": [],
+  "filesWithMessages": [],
+  "reportedShellExit": {
+    "session": 99078,
+    "code": 1,
+    "source": "Message du coordinateur root ; reçu original non extrait par l’auditeur"
+  },
+  "expectedErrorBoundaryStackOccurrences": 6,
+  "narrowDiagnostic": {
+    "passed": 4,
+    "total": 4,
+    "exitCode": 0,
+    "reason": "passed",
+    "unhandledErrors": []
+  },
+  "causeDetermined": false,
+  "jsonIgnoresUnhandledErrors": true,
+  "globalGateValidated": false,
+  "hashes": {
+    "docs/amelioration/audit/reprise-locale-suite-finale.json": "3f23f1a85165e6acd2e55ec04f7f16ee75cce5c3bc517001081238a0c92ec935",
+    "docs/amelioration/audit/reprise-locale-suite-finale.log": "2ffabb5838fc8eab8684f3eeb7639f66b01ee14561f4f2ae585b9a9102c98f64",
+    "node_modules/vitest/dist/chunks/index.UpGiHP7g.js": "cdafaf8e508042dddba72f8c7bbae84e2836ddb6b06c7026520c35d91af4e798",
+    "node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js": "a236001d048380e2c67d05423fc9ea3f26b07ee019ba8d6e622082f29d49102e",
+    "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+    "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+  }
+}

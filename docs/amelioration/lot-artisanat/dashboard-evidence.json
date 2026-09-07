@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-07T07:21:35.9760267Z",
+  "base_git": "4d6d828d76515dee68266c6db85504923c364eec",
+  "branch": "codex/amelioration-integrale",
+  "scope": "ART-DASH-002 / ART-DASH-003",
+  "status": "COMPONENT_TESTS_PASSED_UI_DATABASE_NOT_EXECUTED",
+  "sources": [
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDashboard.tsx",
+      "sha256": "b83d31bd36ffb6e6dd9b60916a8fd71c6d3220ac26a9a0a72758f1aef3c0bd7d"
+    },
+    {
+      "path": "src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx",
+      "sha256": "b90c726d7bb3bee37a5ec410dee45ab0f36e9134a545be8443e015d98922d975"
+    },
+    {
+      "path": "src/services/artisanTerritoryInsights.ts",
+      "sha256": "6099366bc5c216265c2dd9bbec09be13add53fd05214f016daeea92361ecc909"
+    },
+    {
+      "path": "src/services/artisanTerritoryInsights.test.ts",
+      "sha256": "7b57870bd90d2327bd77c53bde30116217780cf651eb3d754754be4def60a84c"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npx vitest run --maxWorkers=2 src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx src/services/artisanTerritoryInsights.test.ts",
+      "exit_code": 0,
+      "test_files": 2,
+      "tests": 42,
+      "passed": 42,
+      "failed": 0
+    },
+    {
+      "command": "npx eslint src/pages/artisan-minier/ArtisanMinierDashboard.tsx src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx src/services/artisanTerritoryInsights.ts src/services/artisanTerritoryInsights.test.ts",
+      "exit_code": 0
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.app.json",
+      "exit_code": 0
+    }
+  ],
+  "red_phase": {
+    "tests": 31,
+    "passed": 7,
+    "failed": 24,
+    "note": "Component tests before correction; console test summary retained."
+  },
+  "logs": [
+    {
+      "path": "docs\\amelioration\\lot-artisanat\\test-dashboard-red.log",
+      "sha256": "b8203aa3ef25f51c53e4da518ff09de610063291cae670cd4a7b11160fee463b"
+    },
+    {
+      "path": "docs\\amelioration\\lot-artisanat\\test-dashboard.log",
+      "sha256": "2ec601856128f1c8182d1e18b4f634f8b5d19863837e1ff3ee37e8a870794d15"
+    },
+    {
+      "path": "docs\\amelioration\\lot-artisanat\\eslint-dashboard.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs\\amelioration\\lot-artisanat\\typecheck-dashboard.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limitations": [
+    "No browser or real API/Auth/database testing in this subtask.",
+    "No RLS validation or changes to forms, workflows, permissions, migrations.",
+    "Independent audit recorded separately.",
+    "List truncation risk LECT-VOL-006 remains open."
+  ],
+  "independent_audit": {
+    "path": "docs/amelioration/audit/artisan-dashboard-independent.evidence.json",
+    "evidence_id": "AUD-ART-DASH-01",
+    "total_passed": 55,
+    "additional_independent_cases": 13,
+    "stable_inputs": true,
+    "ui_database_validated": false
+  }
+}

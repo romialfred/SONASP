@@ -1,0 +1,9 @@
+{
+  "projectRef": "yyverzuhkdonjjuficor",
+  "startedAt": "2026-09-07T12:18:14.960Z",
+  "readOnly": true,
+  "command": "supabase 2.115.0 db query --linked --file site-creation-d9f7160a-aadd-41d9-ad4d-c9f886d41e0c.sql -o json",
+  "sqlSha256": "4cc5eade0a0e003fe3554893e56444cb341c62b414caca345b9a43e16f15bf0c",
+  "exitCode": 0,
+  "finishedAt": "2026-09-07T12:18:21.024Z"
+}

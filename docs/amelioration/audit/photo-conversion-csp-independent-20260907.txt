@@ -1,0 +1,29 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > dépose dans le bucket privé et ne retourne que la référence 9ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > ne remplace pas un échec Storage (response) par des données encodées 3ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > ne remplace pas un échec Storage (exception) par des données encodées 2ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > propage une conversion du fichier impossible sans contacter Storage 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > dépose le JPEG compressé même quand la politique de connexion interdit fetch(data:) 3ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse une lecture signée indisponible : {"data":null,"error":{}} 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse une lecture signée indisponible : {"data":null,"error":null} 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse une lecture signée indisponible : {"data":{"signedUrl":""},"error":null} 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > signale également une exception réseau pendant la lecture 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > préserve la compatibilité de lecture des références historiques 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > signe une référence privée pour la durée existante 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > rejette une compression sans canvas 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > retire uniquement une référence de dépôt de photo et propage les refus 1ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse la compensation d’une référence non générée : https://example.test/photo.jpg 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse la compensation d’une référence non générée : data:image/jpeg;base64,aA== 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse la compensation d’une référence non générée : ../other/photo.jpg 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > refuse la compensation d’une référence non générée : sites/../../photo.jpg 0ms
+ ✓ src/services/sitePhotoService.test.ts > photos de site privées > rejette une exception de compression au lieu de laisser le traitement suspendu 1ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  12:21:40
+   Duration  4.71s (transform 139ms, setup 942ms, import 111ms, tests 28ms, environment 3.01s)
+
+JSON report written to F:/Development/SONASP/docs/amelioration/audit/photo-conversion-csp-independent-20260907.json
+

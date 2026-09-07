@@ -1,0 +1,43 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ docs/amelioration/audit/affiliation-reprise-independent.test.tsx > Audit indépendant : portée et relecture affiliation > masque immédiatement les données lors du changement de session à artisan identique 248ms
+ ✓ docs/amelioration/audit/affiliation-reprise-independent.test.tsx > Audit indépendant : portée et relecture affiliation > reprend les droits de la nouvelle émission si la sélection change pendant la relecture 662ms
+ ✓ docs/amelioration/audit/affiliation-reprise-independent.test.tsx > Audit indépendant : portée et relecture affiliation > ne laisse pas une relecture lente de nouveaux droits bloquée par le changement dues_card_id 265ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > ne présente pas une lecture initiale échouée comme une absence de dossier 576ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > ne confirme pas une actualisation si la liste des cartes est inaccessible 759ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > ne confirme pas une actualisation si la relecture des droits échoue 508ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > distingue une action enregistrée de sa relecture échouée et reprend sans la rejouer 732ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > relit les droits liés à la carte retournée par la dernière actualisation 389ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > le chargement d’une carte payée ne déclenche aucune activation 333ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > exige la confirmation manuelle et empêche une double activation 381ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > un paiement confirmé séparément ne déclenche pas l’activation 383ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > le paiement partiel reste bloquant 217ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > ne lit ni n’affiche les encaissements à un utilisateur sans habilitation financière 71ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > distingue une activation réussie d’un échec du rendu définitif 382ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > génère après confirmation intégrale et attend toujours la validation et l’activation manuelles 520ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > ne génère pas lorsqu’un encaissement confirmé ne couvre qu’une partie des droits 478ms
+ ✓ src/components/artisan/AffiliationDossier.test.tsx > Dossier d’affiliation et activation > reprend seulement le rendu après un paiement confirmé dont la génération échoue 489ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > configure l’année, le barème du titulaire et la période inclusive sans générer de carte 535ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > respecte la durée du barème lors d’un début personnalisé et d’une année bissextile 77ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > prépare l’identité interne avant de configurer un dossier historique 145ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > demande un barème existant sans inventer de montant ni de durée 82ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > enregistre l’année, la date, le lieu et la preuve avec le paiement après dépôt du fichier 122ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > ne crée pas d’encaissement sans justificatif et refuse un fichier invalide 226ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > conserve les données et la clé d’idempotence lors d’un échec puis d’une reprise 204ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > ne crée aucun paiement si le dépôt du justificatif échoue 166ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > désactive toute saisie pendant une opération et ignore un nouvel envoi 105ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > limite le montant au solde non réservé, sans compter l’attente comme un paiement confirmé 132ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > bloque un second règlement lorsque le montant complet est déjà en attente 54ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > réserve la confirmation à un autre agent habilité 117ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > permet de consulter la preuve privée et ferme l’onglet si la signature échoue 163ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > ne demande pas d’URL privée lorsqu’un navigateur bloque l’ouverture 109ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > masque les actions de modification sans habilitation de gestion 14ms
+ ✓ src/components/artisan/AffiliationPaymentPanel.test.tsx > Configuration et paiement des droits d’affiliation > révise un encaissement confirmé avec un motif explicite et recalcule son état via le service 94ms
+
+ Test Files  3 passed (3)
+      Tests  33 passed (33)
+   Start at  11:36:49
+   Duration  28.13s (transform 1.08s, setup 3.13s, import 3.05s, tests 9.77s, environment 10.22s)
+
+

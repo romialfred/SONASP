@@ -1,0 +1,30 @@
+{
+  "startedAt": "2026-09-07T12:21:37.663Z",
+  "finishedAt": "2026-09-07T12:21:45.730Z",
+  "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=1 --reporter=verbose --reporter=json --outputFile.json=docs/amelioration/audit/photo-conversion-csp-independent-20260907.json src/services/sitePhotoService.test.ts",
+  "exitCode": 0,
+  "passed": 18,
+  "failed": 0,
+  "total": 18,
+  "stableInputs": true,
+  "before": {
+    "src/services/sitePhotoService.ts": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+    "src/services/sitePhotoService.test.ts": "7ed4cb15d0ed4b31656da58996dcffc72985ef2e483ca73b0f214ca990ee5377",
+    "src/lib/secureRandom.ts": "e60ea103a59e80209d6a838845f9649ca8db1b1004ef7f99095db62ef53467f6",
+    "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+    "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+    "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+  },
+  "after": {
+    "src/services/sitePhotoService.ts": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+    "src/services/sitePhotoService.test.ts": "7ed4cb15d0ed4b31656da58996dcffc72985ef2e483ca73b0f214ca990ee5377",
+    "src/lib/secureRandom.ts": "e60ea103a59e80209d6a838845f9649ca8db1b1004ef7f99095db62ef53467f6",
+    "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+    "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+    "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+  },
+  "logSha256": "5123780abab074586c9eb0ddb8bdbbe500a37825fa2ad40093fedb5dfa8e91bd",
+  "scope": "Service réel sous jsdom ; canvas, Image, fetch et Storage simulés. Ne prouve pas une CSP navigateur ni un dépôt Storage réel.",
+  "uiValidated": false,
+  "databaseValidated": false
+}

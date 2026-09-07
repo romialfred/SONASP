@@ -1,0 +1,51 @@
+{
+  "id": "AUD-GLOBAL-FAILURES-RECHECK-20260907",
+  "startedAt": "2026-09-07T12:20:13.357Z",
+  "finishedAt": "2026-09-07T12:20:24.207Z",
+  "startCommit": "8016b69863f85b701eb30b0ef13647a169b6d74f",
+  "endCommit": "8016b69863f85b701eb30b0ef13647a169b6d74f",
+  "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=1 --reporter=verbose --reporter=json --outputFile.json=docs/amelioration/audit/global-failures-recheck-20260907.json src/services/sensitiveUploadInventory.test.ts docs/amelioration/audit/site-photos-reprise-independent.test.tsx",
+  "exitCode": 0,
+  "processError": null,
+  "passed": 17,
+  "failed": 0,
+  "total": 17,
+  "stableInputs": true,
+  "before": {
+    "scannedSourceCount": 599,
+    "scannedSourceSha256": "61bbd964fa9d2ba3d13f2a41cd4663df37898898a34e018591f6127b95117528",
+    "selected": {
+      "src/services/sensitiveUploadInventory.test.ts": "ae3ff3f0ff8397544e6ed9430c068b2791f8496d41a9ea9f104f6f46704baf5d",
+      "docs/amelioration/audit/site-photos-reprise-independent.test.tsx": "c0a665e2a78704a2f55d538c526746a86d9a4a1c9b537e2289cc0d08a3eb4b7e",
+      "docs/audits/sensitive-upload-surfaces-2i.json": "7daa675f88dc257904061d09d9d0bec7bc11592ff20336243d282b33fe7a94a8",
+      "src/pages/artisanal-sites/ArtisanalSiteDetails.tsx": "0d8b94078f8fdf4530ae3a0afe6d5fa616242f0b28a1476800a7f9a6a7970535",
+      "src/services/sitePhotoService.ts": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+      "src/components/artisanal-sites/SitePhotoPreview.tsx": "c0ebb0fb4d094b771627e2239e0bc5dec6e3a06112bb077bf4205c9825c38ee4",
+      "src/hooks/useArtisanalSiteData.ts": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+      "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+      "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+      "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+    }
+  },
+  "after": {
+    "scannedSourceCount": 599,
+    "scannedSourceSha256": "61bbd964fa9d2ba3d13f2a41cd4663df37898898a34e018591f6127b95117528",
+    "selected": {
+      "src/services/sensitiveUploadInventory.test.ts": "ae3ff3f0ff8397544e6ed9430c068b2791f8496d41a9ea9f104f6f46704baf5d",
+      "docs/amelioration/audit/site-photos-reprise-independent.test.tsx": "c0a665e2a78704a2f55d538c526746a86d9a4a1c9b537e2289cc0d08a3eb4b7e",
+      "docs/audits/sensitive-upload-surfaces-2i.json": "7daa675f88dc257904061d09d9d0bec7bc11592ff20336243d282b33fe7a94a8",
+      "src/pages/artisanal-sites/ArtisanalSiteDetails.tsx": "0d8b94078f8fdf4530ae3a0afe6d5fa616242f0b28a1476800a7f9a6a7970535",
+      "src/services/sitePhotoService.ts": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+      "src/components/artisanal-sites/SitePhotoPreview.tsx": "c0ebb0fb4d094b771627e2239e0bc5dec6e3a06112bb077bf4205c9825c38ee4",
+      "src/hooks/useArtisanalSiteData.ts": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+      "vitest.config.ts": "adc605f7149580771ec4a338ef1c9b7220dd105334bd22d922e1f2be59c66c69",
+      "src/test/setup.ts": "650f59289da69685ac6227ee4be04615498c101cda086bd82bb58c8bfbbbaf90",
+      "package-lock.json": "812f8455f95f24e7fa8696db91366a78ee9ca9b0bb1446729860d190ee1e14cc"
+    }
+  },
+  "logSha256": "f3e6fb91270c88216a66167f279e297593243fe2d2c322650b329e47afec5f8f",
+  "scope": "Deux fichiers ciblés uniquement ; inventaire statique et rendu React sous jsdom avec Auth/services simulés.",
+  "replacesFailedGlobalRun": false,
+  "uiValidated": false,
+  "databaseValidated": false
+}

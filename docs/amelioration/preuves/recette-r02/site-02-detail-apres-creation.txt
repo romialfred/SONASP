@@ -1,0 +1,174 @@
+- banner:
+  - generic "FASO SANAMA — Administrateur":
+    - img "FASO SANAMA"
+    - generic "Administrateur":
+      - img "Armoiries du Burkina Faso"
+  - heading "Plateforme Nationale de Traçabilité de l’Or" [level=1]
+  - paragraph: Production, collecte, commercialisation et suivi des recettes
+  - generic "Portail Administrateur":
+    - generic: Portail
+    - strong: Administrateur
+  - button "Choisir la langue (FR)":
+    - generic: FR
+  - button "Afficher les notifications":
+  - button "Ouvrir le menu utilisateur":
+    - generic: TR
+    - strong: TIEGNAN Romuald
+    - generic: Administrateur
+- complementary "Navigation principale":
+  - generic: ESPACE ADMINISTRATEUR
+  - button "Réduire le menu":
+  - navigation:
+    - link "Tableau de bord":
+      - /url: /dashboard
+      - generic: Tableau de bord
+    - region "Sites artisanaux & Artisans":
+      - heading "Sites artisanaux & Artisans" [level=2]
+      - button "Sites artisanaux" [expanded]:
+        - generic "Sites artisanaux"
+      - link "Vue d'ensemble":
+        - /url: /artisan-sites
+        - generic: Vue d'ensemble
+      - link "Productions":
+        - /url: /artisan-sites/production
+        - generic: Productions
+      - button "Artisans miniers":
+        - generic "Artisans miniers"
+    - region "Mine industrielle":
+      - heading "Mine industrielle" [level=2]
+      - button "Prévisions & licences":
+        - generic "Prévisions & licences"
+      - button "Gestion de la production":
+        - generic "Gestion de la production"
+      - button "Achat aux mines industrielles":
+        - generic "Achat aux mines industrielles"
+      - button "Gestion des expéditions":
+        - generic "Gestion des expéditions"
+    - region "Vente & achat d’or":
+      - heading "Vente & achat d’or" [level=2]
+      - button "Marché d’or artisanal":
+        - generic "Marché d’or artisanal"
+    - region "Raffinage & stocks":
+      - heading "Raffinage & stocks" [level=2]
+      - button "Gestion du raffinage":
+        - generic "Gestion du raffinage"
+      - button "Suivi du stock d’or":
+        - generic "Suivi du stock d’or"
+    - region "Réserve d’or du Burkina Faso":
+      - heading "Réserve d’or du Burkina Faso" [level=2]
+      - button "Réserve nationale d’or":
+        - generic "Réserve nationale d’or"
+    - region "Vente internationale":
+      - heading "Vente internationale" [level=2]
+      - button "Marchés internationaux":
+        - generic "Marchés internationaux"
+      - button "Ventes d’or internationales":
+        - generic "Ventes d’or internationales"
+      - button "Parties prenantes":
+        - generic "Parties prenantes"
+      - button "Documents":
+        - generic "Documents"
+    - region "Utilisateurs & Portails":
+      - heading "Utilisateurs & Portails" [level=2]
+      - button "Accès & portails":
+        - generic "Accès & portails"
+    - region "Paramètres et configuration":
+      - heading "Paramètres et configuration" [level=2]
+      - button "Paramètres":
+        - generic "Paramètres"
+      - button "Administration":
+        - generic "Administration"
+    - region "Rapports et analyses":
+      - heading "Rapports et analyses" [level=2]
+      - link "Analyses des ventes":
+        - /url: /analytics/ventes
+        - generic: Analyses des ventes
+      - link "Rapports de production":
+        - /url: /analytics/production
+        - generic: Rapports de production
+      - link "Rapports institutionnels":
+        - /url: /reports
+        - generic: Rapports institutionnels
+      - link "Performance nationale":
+        - /url: /analytics
+        - generic: Performance nationale
+    - region "Relations avec les comptoirs":
+      - heading "Relations avec les comptoirs" [level=2]
+      - link "Cessions comptoirs":
+        - /url: /sonasp/cessions-comptoirs
+        - generic: Cessions comptoirs
+  - link "Centre d’assistance":
+    - /url: /help
+    - generic: Centre d’assistance
+- main:
+  - link "Tous les sites artisanaux":
+    - /url: /artisan-sites
+    - text: Tous les sites artisanaux
+  - status:
+    - text: Le site et ses responsables ont été enregistrés.
+  - paragraph: Référentiel des sites artisanaux · SA-CEN-2026-0004
+  - heading "QA20260907-R02-SITE" [level=1]
+  - paragraph:
+    - text: Ouagadougou QA R02 · Kadiogo · Centre
+  - button "Actualiser":
+    - text: Actualiser
+  - link "Modifier la fiche":
+    - /url: /artisan-sites/d9f7160a-aadd-41d9-ad4d-c9f886d41e0c/modifier
+    - text: Modifier la fiche
+  - article:
+    - generic: Catégorie du site
+    - strong: Site non formalisé
+    - generic: Sans AEA
+  - article:
+    - generic: Situation administrative
+    - strong: Planifié
+    - generic: "Type d’exploitation : artisanal"
+  - article:
+    - generic: Artisans / capacité
+    - strong:
+      - text: "2"
+      - emphasis: / 10
+    - generic: Effectif déclaré dans la fiche
+  - article:
+    - generic: Indice opérationnel
+    - strong: Non évalué
+    - generic: Site planifié
+  - tablist "Détails du site":
+    - tab "Vue d’ensemble" [selected]
+    - tab "AEA et documents"
+    - tab "Conformité"
+  - tabpanel "Vue d’ensemble":
+    - article:
+      - heading "Localisation et exploitation" [level=2]:
+        - text: Localisation et exploitation
+      - term: Superficie
+      - definition: 2,5 hectares
+      - term: Coordonnées GPS
+      - definition: 12.3714, -1.5197
+      - term: Profondeur moyenne
+      - definition: 4 m
+      - term: Produits autorisés
+      - definition: Aucun produit chimique
+      - term: Ventes d’or rattachées
+      - definition: 0 kg
+      - term: Dernière déclaration
+      - definition: Aucune déclaration
+    - article:
+      - heading "Responsables du site" [level=2]:
+        - text: Responsables du site
+      - generic: Responsable du site
+      - strong: QA20260907-R02 Responsable
+      - generic: +226 70000001
+      - generic: qa-r02-responsable@example.invalid
+      - generic: Chargé de la collecte
+      - strong: QA20260907-R02 Collecte
+      - generic: +226 70000002
+      - generic: qa-r02-collecte@example.invalid
+    - article:
+      - heading "Observations" [level=2]
+      - paragraph: Dossier temporaire QA20260907-R02. Recette interface et persistance, nettoyage après vérification.
+    - paragraph: Créé le 7 septembre 2026 · Mis à jour le 7 septembre 2026
+- contentinfo:
+  - generic: © 2026 FASO SANAMA
+  - generic: Confidentialité · Intégrité · Transparence
+- generic: "0"

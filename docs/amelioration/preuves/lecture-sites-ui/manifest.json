@@ -1,0 +1,162 @@
+{
+  "recordedUtc": "2026-09-07T16:08:09.9563286Z",
+  "scope": "Captures de viewport et DOM distincts, Auth/transport simulés, pas de preuve DB",
+  "files": [
+    {
+      "name": "01-overview-succes.jpg",
+      "bytes": 98627,
+      "fileModifiedUtc": "2026-09-07T13:45:06.4980722Z",
+      "sha256": "0c26586ddf91afb843ccd82147d57ee7a03dbe23e395424132773b5f1e9d6583"
+    },
+    {
+      "name": "01-overview-succes.txt",
+      "bytes": 10116,
+      "fileModifiedUtc": "2026-09-07T13:45:06.6978248Z",
+      "sha256": "c45a02aaa3ddf364aaf72b6ad25d811e74e224608c857a24a8222fbf968c48f1"
+    },
+    {
+      "name": "02-overview-erreur.jpg",
+      "bytes": 100051,
+      "fileModifiedUtc": "2026-09-07T13:46:58.3128546Z",
+      "sha256": "9d2e64a48e93dbb401545c75a0c76f9ba8aa4992ea571df079221f3c85e66106"
+    },
+    {
+      "name": "02-overview-erreur.txt",
+      "bytes": 4092,
+      "fileModifiedUtc": "2026-09-07T13:46:58.3412190Z",
+      "sha256": "e9bd16e30347d1452a8cd83ca70d15f688fde5e2aa988d1b2d603ad3f1d21852"
+    },
+    {
+      "name": "03-overview-attente.jpg",
+      "bytes": 97501,
+      "fileModifiedUtc": "2026-09-07T13:47:55.7078209Z",
+      "sha256": "56b2c3c2e3a2a8092aaf70c0b494559519c2ced725672643c885ef7bad4bc315"
+    },
+    {
+      "name": "04-overview-vide.txt",
+      "bytes": 10262,
+      "fileModifiedUtc": "2026-09-07T13:48:40.0909038Z",
+      "sha256": "ba7b969d3d8e832e126575eb660d220a5ca63be35803e44611dc81049369d4c1"
+    },
+    {
+      "name": "05-production-succes.jpg",
+      "bytes": 109189,
+      "fileModifiedUtc": "2026-09-07T13:50:29.7921985Z",
+      "sha256": "3be8c4014e7e195124b663dd8422d2809ac1cd261249a11c51c605f5b4eb018d"
+    },
+    {
+      "name": "05-production-succes.txt",
+      "bytes": 6173,
+      "fileModifiedUtc": "2026-09-07T13:50:29.7254128Z",
+      "sha256": "1eb8922e4099a0b4ef0e9d471a1a7994d65ced4fb52bcc4774686a626a4b0187"
+    },
+    {
+      "name": "06-production-attente.jpg",
+      "bytes": 97511,
+      "fileModifiedUtc": "2026-09-07T13:50:31.0422460Z",
+      "sha256": "8278a1301ee9425811bdb4732ab8335e8f795bab6448fcccdc24921661efd94f"
+    },
+    {
+      "name": "07-production-erreur.jpg",
+      "bytes": 99006,
+      "fileModifiedUtc": "2026-09-07T13:51:22.5410001Z",
+      "sha256": "f6eb0e744af3d1acab3570ecb7d77da1b920696d4c4fab66c722e1187c1bbc38"
+    },
+    {
+      "name": "07-production-erreur.txt",
+      "bytes": 4268,
+      "fileModifiedUtc": "2026-09-07T13:51:22.4741340Z",
+      "sha256": "8a7fd3c5bd7f4bbad42b806758c958f28c3b6b3496b9f2b6187a9a1c34b07b51"
+    },
+    {
+      "name": "08-detail-succes.txt",
+      "bytes": 6140,
+      "fileModifiedUtc": "2026-09-07T13:54:57.4619186Z",
+      "sha256": "6c79ccde081ee7036724d6435c1d31029ea180bfd0f21ce74be95afa0e475483"
+    },
+    {
+      "name": "09-detail-erreur.jpg",
+      "bytes": 90312,
+      "fileModifiedUtc": "2026-09-07T13:55:45.8749332Z",
+      "sha256": "41927c2247c1fb9001c5f7ba8d66073e79093728040d0536a1bfc22817fecf16"
+    },
+    {
+      "name": "09-detail-erreur.txt",
+      "bytes": 3940,
+      "fileModifiedUtc": "2026-09-07T13:55:45.7917788Z",
+      "sha256": "6cdfe6b92665a0de5569cb341a144de77e3437b5f5d8684862bb00c59178cf59"
+    },
+    {
+      "name": "10-detail-repris.txt",
+      "bytes": 6134,
+      "fileModifiedUtc": "2026-09-07T13:56:23.7576179Z",
+      "sha256": "d509e38ac6a6e58c6eccc4e699ad91d307973f92036fe2e0318efe77c9d14ac0"
+    },
+    {
+      "name": "11-overview-non-evalue.jpg",
+      "bytes": 84262,
+      "fileModifiedUtc": "2026-09-07T14:02:59.3639754Z",
+      "sha256": "93b58e6a76d809287f1b10c11d0864d910208942a50ede4ac2c810a87ff9d56b"
+    },
+    {
+      "name": "11-overview-non-evalue.txt",
+      "bytes": 10103,
+      "fileModifiedUtc": "2026-09-07T14:02:31.4409327Z",
+      "sha256": "6fa665780d6a982304e2484abbbc5dd2ee73bd9566eea67914398feba8003d0d"
+    },
+    {
+      "name": "12-overview-mobile-erreur.jpg",
+      "bytes": 36255,
+      "fileModifiedUtc": "2026-09-07T14:03:47.9464326Z",
+      "sha256": "9d432c451aae47811b4ee7b7dc151d41ce5ed5cbd818b0abe6fdec07b722a85a"
+    },
+    {
+      "name": "12-overview-mobile-erreur.txt",
+      "bytes": 1310,
+      "fileModifiedUtc": "2026-09-07T14:03:48.0012813Z",
+      "sha256": "e0076da64585b323577221d4d1deb5610c4b23a6479a429520b471f991f426bb"
+    },
+    {
+      "name": "13-production-mobile-erreur.jpg",
+      "bytes": 34438,
+      "fileModifiedUtc": "2026-09-07T14:04:43.1361851Z",
+      "sha256": "ebac9dd690ac7c3ba4046588a3ad705f1f8defb18ab91acb0deac22f268064d3"
+    },
+    {
+      "name": "13-production-mobile-erreur.txt",
+      "bytes": 1328,
+      "fileModifiedUtc": "2026-09-07T14:04:43.1801826Z",
+      "sha256": "17280237f5e4bbb560b220d70446f73f6b6af8aca02c1720d2a7a7b42d50bdd7"
+    },
+    {
+      "name": "14-detail-mobile-erreur.jpg",
+      "bytes": 25582,
+      "fileModifiedUtc": "2026-09-07T14:05:07.5645326Z",
+      "sha256": "d79f1193572e25b9e2d3fe4d3c0ff47baa5ab333f3f6195bfc78dcd4c2177955"
+    },
+    {
+      "name": "14-detail-mobile-erreur.txt",
+      "bytes": 1029,
+      "fileModifiedUtc": "2026-09-07T14:05:07.6034787Z",
+      "sha256": "60131a8fce8198e02678456d70a9df08f85063da5c0d3e18b6df4f4e11598e43"
+    },
+    {
+      "name": "15-production-erreur-sans-panneau.jpg",
+      "bytes": 71069,
+      "fileModifiedUtc": "2026-09-07T15:50:31.5126325Z",
+      "sha256": "c5f441b6a59c83c3caf4729b7ab4bcd0dcc7db978ea9357dd2b5bb759273caaf"
+    },
+    {
+      "name": "15-production-erreur-sans-panneau.txt",
+      "bytes": 2836,
+      "fileModifiedUtc": "2026-09-07T15:50:31.5792576Z",
+      "sha256": "f0943f0b4c8217a8ce666f7f060e86a74d36b071ddf7cab0405b95f401dc37c7"
+    },
+    {
+      "name": "README.md",
+      "bytes": 3974,
+      "fileModifiedUtc": "2026-09-07T16:00:19.2621534Z",
+      "sha256": "b4c413078ec145f4732182cfeb0e0f08f12411eb0eb887a768288b79a8d5574a"
+    }
+  ]
+}

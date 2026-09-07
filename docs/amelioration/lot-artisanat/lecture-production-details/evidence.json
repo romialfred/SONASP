@@ -1,0 +1,61 @@
+{
+  "recordedAt": "2026-09-07T13:46:52.826Z",
+  "head": "901b5ebbc9b62ef9c9a7e65579c07d8e6c1fc27c",
+  "scope": "Production/Détails : contexte Auth, loading/error, invalidation AEA et reprise",
+  "before": {
+    "file": "docs/amelioration/lot-artisanat/lecture-production-details/avant-reproduction.json",
+    "total": 25,
+    "passed": 3,
+    "failed": 22,
+    "exitCode": 1
+  },
+  "after": {
+    "file": "docs/amelioration/lot-artisanat/lecture-production-details/apres.json",
+    "total": 34,
+    "passed": 34,
+    "failed": 0,
+    "files": 4,
+    "exitCode": 0
+  },
+  "gates": {
+    "eslintExitCode": 0,
+    "typecheckExitCode": 0,
+    "diffCheckExitCode": 0
+  },
+  "sourceHashesAfterVerification": {
+    "src/pages/artisanal-sites/ArtisanalSiteProduction.tsx": "7d5c82201e32effc83cf494381ecd6e0957125520c7a39d83cc4bb12c4fbcc74",
+    "src/pages/artisanal-sites/ArtisanalSiteDetails.tsx": "eb982246e697cf5c581a3af8ffc8a9a1b402ee94056ce44df2f1c8d6b214df77",
+    "src/pages/artisanal-sites/ArtisanalSiteReadState.test.tsx": "e0571c04ae3e955df27643cf3d633a9b3dd2d712c6dda5f439bad890433674eb",
+    "src/pages/artisanal-sites/ArtisanalSiteProduction.test.tsx": "3bfc924ccd8dd1c368d78b29abc78c973d4e21fe5b7d6b8faff8aca27bd3dda9",
+    "src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx": "abacb2caec07cc13097733b8913a4ed8ab9696eb4a24d4da9bbf0b5c37bb4f28",
+    "src/hooks/useArtisanalSiteData.test.tsx": "97381156158873e2f893261ba68b174506b7dc1bd42359e0803c13bc91b5c2c0"
+  },
+  "preservedAtHead": {
+    "src/hooks/useArtisanalSiteData.ts": "ce383610c24a2ac60942ac21793b33b595c5ae87ca68bad0a795bb7878507eed",
+    "src/services/artisanalSiteService.ts": "b99061c333c422ad9f4af8f0a589ef46c623959755a06aa1252752164ceae315",
+    "src/services/siteAeaDocumentService.ts": "756f94ed09432e1ebc5c89a29cba04f1059a4f444bb078b608ac52ff2671467d",
+    "src/services/sitePhotoService.ts": "811f573e2d26e43e835e496236ba15c34ecd04b3289dcff48e06838cccc4bffc",
+    "src/lib/miningRegistryAccess.ts": "202122cd7e004161dfda13beb1d64e4107364ab6ad76c54c904c83002a8f86ab",
+    "src/pages/artisanal-sites/ArtisanalSiteForm.tsx": "ce29f3d9db2be2599e54b92bfbbe949757fed6a6f16bea55211b1431c81a4a78"
+  },
+  "artifactHashes": {
+    "avant-reproduction.json": "75ae52821f6ef1749356f9b4f87c88bcad11dbbabfcb2cfbd89eecd12119b774",
+    "avant-reproduction.log": "22567db9433da58d8192c91df2a52c89f5dff7c84925f841e5550a1314dd2abc",
+    "apres.json": "0f62ad2f8d3bf2d8c2edb1f2d13f541b39eaa6adfd8dc453b4e82a8820c66a28",
+    "apres.log": "021793be24f27163049733f5ad013a1afc67582d5045c659ec9d821f7890d463",
+    "lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ArtisanalSiteProduction.before.txt": "6a12050bc3f43c427c3b447023d528d3fc8565483e8fe4cd7677e4a1c2cdf598",
+    "ArtisanalSiteDetails.before.txt": "0d8b94078f8fdf4530ae3a0afe6d5fa616242f0b28a1476800a7f9a6a7970535"
+  },
+  "remoteCalls": 0,
+  "remoteMutations": 0,
+  "localOnly": true,
+  "sourceFrozen": true,
+  "realHook": true,
+  "realProductionCalculations": true,
+  "browserVerified": false,
+  "apiVerified": false,
+  "persistenceVerified": false,
+  "independentAudit": "Coordonné séparément par le principal ; non déduit de ce reçu"
+}

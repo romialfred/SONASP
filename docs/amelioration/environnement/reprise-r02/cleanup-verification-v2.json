@@ -1,0 +1,34 @@
+{
+  "verifiedAt": "2026-09-07T16:01:36.340Z",
+  "passed": true,
+  "removed": [
+    {
+      "table": "artisanal_site_assignments",
+      "id": "12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12"
+    },
+    {
+      "table": "artisanal_site_assignments",
+      "id": "d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c"
+    },
+    {
+      "table": "artisanal_sites",
+      "id": "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c"
+    }
+  ],
+  "otherBaselineRowsUnchanged": true,
+  "allFourteenTablesOutsideQaUnchanged": true,
+  "storageMetadataUnchanged": true,
+  "schemaUnchanged": true,
+  "thirdPartyRowsPreserved": [
+    "5a29b656-c992-4a84-91fa-eb6819121ebb",
+    "be44ea0d-fb3b-4b02-88b4-cc6ccaf67c56",
+    "b0035b68-1fbb-45ef-a911-36a03d2e10e6"
+  ],
+  "preflightSha256": "d5a239cc845e09301ef4a350b65c4ec6bb2f4d40b83e476f9b3a25451827eb59",
+  "postflightSha256": "3451ca6f129d678bbdb3140a4bebd2f75bed7b3a79dbbb4230837ec4b7e69faa",
+  "candidateSha256": "7420606a3828626d652dfd79887f89da1cfc90b3865478e1af520901743a5a73",
+  "limits": [
+    "Hashes Storage de métadonnées uniquement, pas empreinte des fichiers binaires",
+    "Aucune validation Auth/RLS/interface déduite de cette lecture privilégiée"
+  ]
+}

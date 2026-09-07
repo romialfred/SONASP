@@ -1,0 +1,68 @@
+{
+  "id": "AUD-R02-SITE-CREATION",
+  "checkedAt": "2026-09-07T12:30:42.068Z",
+  "siteId": "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c",
+  "run": "QA20260907-R02",
+  "parentFieldsCompared": [
+    "name",
+    "code",
+    "status",
+    "region",
+    "province",
+    "locality",
+    "area_hectares",
+    "exploitation_type",
+    "formalization",
+    "aea_number",
+    "aea_issued_on",
+    "aea_document_path",
+    "authorized_miners",
+    "active_miners",
+    "average_hole_depth_m",
+    "latitude",
+    "longitude",
+    "notes"
+  ],
+  "contactsCompared": 2,
+  "externalReferencesCompared": 6,
+  "passed": true,
+  "stableEvidence": true,
+  "before": {
+    "docs/amelioration/environnement/reprise-r02/site-creation-d9f7160a-aadd-41d9-ad4d-c9f886d41e0c.json": "7963ae3ab0db0af499290f4e590f15eb593db4d1ff841ef4644f8a6f56b5b23a",
+    "docs/amelioration/environnement/reprise-r02/site-creation-d9f7160a-aadd-41d9-ad4d-c9f886d41e0c.sql": "4cc5eade0a0e003fe3554893e56444cb341c62b414caca345b9a43e16f15bf0c",
+    "docs/amelioration/environnement/reprise-r02/site-creation-d9f7160a-aadd-41d9-ad4d-c9f886d41e0c.execution.json": "5539259b0d7183cd0c9a09aa5a06a869f070596fb7f5eb905b602231264d690f",
+    "docs/amelioration/environnement/reprise-r02/site-creation-comparison.json": "91eb4dbbf6f5a8179a234af7f97892d8f61d7bfe0a680d3fd3973996ab1632f6",
+    "docs/amelioration/preuves/recette-r02/site-creation-attendu.json": "10c4359e183a3d6af6e503801220d5e2ea52eda219b976a564f25abb0f865c03",
+    "docs/amelioration/preuves/recette-r02/site-01-formulaire-avant.txt": "ca0eb5c8f9766aedf17fd63464ad324497a0cccada77a472a090a2dd7c4fced7",
+    "docs/amelioration/preuves/recette-r02/site-01-responsables-avant.png": "74907012204e62549355088e2852221251d714a5da908f870b0fcd091b703bea",
+    "docs/amelioration/preuves/recette-r02/site-02-detail-apres-creation.txt": "593e024b5a00d46cbea731aefc69f45fb91a7b693d1ba2ce31fb7da8db84c616",
+    "docs/amelioration/preuves/recette-r02/site-02-detail-apres-creation.png": "234a5e1531cac4670230c7a1fd46671d4fe657740146cb75c2b27c88aae55c9f",
+    "docs/amelioration/preuves/recette-r02/site-03-liste-sans-rechargement.txt": "9385563128bf39e42aa39cd73d205794d2e09ac0e99eb2e0c48f276ddb7ed725",
+    "docs/amelioration/preuves/recette-r02/site-03-liste-sans-rechargement.png": "570455b6b9350b509cc73f26b313a2781b70fd4a16b728db0e2065621fa9adb4"
+  },
+  "after": {
+    "docs/amelioration/environnement/reprise-r02/site-creation-d9f7160a-aadd-41d9-ad4d-c9f886d41e0c.json": "7963ae3ab0db0af499290f4e590f15eb593db4d1ff841ef4644f8a6f56b5b23a",
+    "docs/amelioration/environnement/reprise-r02/site-creation-d9f7160a-aadd-41d9-ad4d-c9f886d41e0c.sql": "4cc5eade0a0e003fe3554893e56444cb341c62b414caca345b9a43e16f15bf0c",
+    "docs/amelioration/environnement/reprise-r02/site-creation-d9f7160a-aadd-41d9-ad4d-c9f886d41e0c.execution.json": "5539259b0d7183cd0c9a09aa5a06a869f070596fb7f5eb905b602231264d690f",
+    "docs/amelioration/environnement/reprise-r02/site-creation-comparison.json": "91eb4dbbf6f5a8179a234af7f97892d8f61d7bfe0a680d3fd3973996ab1632f6",
+    "docs/amelioration/preuves/recette-r02/site-creation-attendu.json": "10c4359e183a3d6af6e503801220d5e2ea52eda219b976a564f25abb0f865c03",
+    "docs/amelioration/preuves/recette-r02/site-01-formulaire-avant.txt": "ca0eb5c8f9766aedf17fd63464ad324497a0cccada77a472a090a2dd7c4fced7",
+    "docs/amelioration/preuves/recette-r02/site-01-responsables-avant.png": "74907012204e62549355088e2852221251d714a5da908f870b0fcd091b703bea",
+    "docs/amelioration/preuves/recette-r02/site-02-detail-apres-creation.txt": "593e024b5a00d46cbea731aefc69f45fb91a7b693d1ba2ce31fb7da8db84c616",
+    "docs/amelioration/preuves/recette-r02/site-02-detail-apres-creation.png": "234a5e1531cac4670230c7a1fd46671d4fe657740146cb75c2b27c88aae55c9f",
+    "docs/amelioration/preuves/recette-r02/site-03-liste-sans-rechargement.txt": "9385563128bf39e42aa39cd73d205794d2e09ac0e99eb2e0c48f276ddb7ed725",
+    "docs/amelioration/preuves/recette-r02/site-03-liste-sans-rechargement.png": "570455b6b9350b509cc73f26b313a2781b70fd4a16b728db0e2065621fa9adb4"
+  },
+  "scope": "Comparaison indépendante des artefacts UI/SQL de création existants ; aucune requête distante ni écriture par cet audit.",
+  "screenshotsReviewed": [
+    "site-01-responsables-avant.png",
+    "site-02-detail-apres-creation.png",
+    "site-03-liste-sans-rechargement.png"
+  ],
+  "caveats": [
+    "PNG liste onglet Tous ; AX liste onglet Non formalisés : instants différents.",
+    "Version UI/URL/chronologie à rattacher au manifeste de recette ; aucune certification du build déduite.",
+    "Photos, AEA, modification, rechargement forcé et nettoyage non validés par ces preuves.",
+    "La lecture SQL privilégiée ne prouve pas les tests négatifs RLS/MFA."
+  ]
+}

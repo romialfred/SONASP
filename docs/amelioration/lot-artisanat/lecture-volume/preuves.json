@@ -1,0 +1,146 @@
+{
+  "checkedAt": "2026-09-07T11:31:33.7435111Z",
+  "scope": "LECT-VOL-006",
+  "environment": "local, transport simulé exclusivement",
+  "before": {
+    "total": 72,
+    "failed": 70,
+    "passed": 2
+  },
+  "after": {
+    "passed": 159,
+    "failed": 0,
+    "total": 159,
+    "files": 8,
+    "startedAt": "2026-09-07T11:29:30.1760000Z",
+    "exitCode": 0
+  },
+  "lintExitCode": 0,
+  "typecheck": "Sortie 0 avant extension getAllCartes ; vérification globale finale après extension coordonnée par root",
+  "sources": [
+    {
+      "path": "src/lib/readAllPages.ts",
+      "sha256": "146f7c2d6ceb0cad7e53a10d860edd616a97fe621b514a52cc0fca36a69876c1"
+    },
+    {
+      "path": "src/lib/readAllPages.test.ts",
+      "sha256": "d3bc75b5e1a249dcf4a33cb761adee17815d12a324dd8219c193ddb77520f47e"
+    },
+    {
+      "path": "src/services/artisanReadVolume.test.ts",
+      "sha256": "946e25af2e9a4b4e67795eb06c788a415662ec5de775c1ad97aab50cb8fa332c"
+    },
+    {
+      "path": "src/services/artisanMinierService.ts",
+      "sha256": "d09a2f486811a31021437e9b674c0aeceeaa7807c5d0f500d563afd3d31caf83"
+    },
+    {
+      "path": "src/services/artisanGoldSalesService.ts",
+      "sha256": "85d7b7c4b0dbadb1a3ef9d92df67e6c06eecd8ada218ef9361e9eb16ebbe49bf"
+    },
+    {
+      "path": "src/services/artisanalSiteService.ts",
+      "sha256": "b99061c333c422ad9f4af8f0a589ef46c623959755a06aa1252752164ceae315"
+    },
+    {
+      "path": "src/services/carteProfessionnelleService.ts",
+      "sha256": "d2083011a9ef63ac5718612460fc0e8d7df76536d4bb7f5f1b6d33d21e952bed"
+    }
+  ],
+  "remoteMutation": false,
+  "browserExecuted": false,
+  "committed": false,
+  "redBoundaryFailures": [
+    {
+      "failure": "AssertionError: expected [ { id: 'row-01000', …(4) }, …(999) ] to have a length of 1001 but got 1000",
+      "name": "LECT-VOL-006 — 'artisans' restitue les 1001 lignes visibles sans troncature"
+    },
+    {
+      "failure": "AssertionError: expected [ { id: 'row-00000', …(4) }, …(72) ] to have a length of 601 but got 73",
+      "name": "LECT-VOL-006 — 'artisans' supporte un plafond REST inférieur à la tranche demandée"
+    },
+    {
+      "failure": "AssertionError: expected [ { id: 'row-01000', …(21) }, …(999) ] to have a length of 1001 but got 1000",
+      "name": "LECT-VOL-006 — 'ventes nationales' restitue les 1001 lignes visibles sans troncature"
+    },
+    {
+      "failure": "AssertionError: expected [ { id: 'row-00000', …(21) }, …(72) ] to have a length of 601 but got 73",
+      "name": "LECT-VOL-006 — 'ventes nationales' supporte un plafond REST inférieur à la tranche demandée"
+    },
+    {
+      "failure": "AssertionError: expected [ { id: 'row-01000', …(21) }, …(999) ] to have a length of 1001 but got 1000",
+      "name": "LECT-VOL-006 — 'ventes par artisan' restitue les 1001 lignes visibles sans troncature"
+    },
+    {
+      "failure": "AssertionError: expected [ { id: 'row-00000', …(21) }, …(72) ] to have a length of 601 but got 73",
+      "name": "LECT-VOL-006 — 'ventes par artisan' supporte un plafond REST inférieur à la tranche demandée"
+    },
+    {
+      "failure": "AssertionError: expected [ { id: 'row-01000', …(22) }, …(999) ] to have a length of 1001 but got 1000",
+      "name": "LECT-VOL-006 — 'sites' restitue les 1001 lignes visibles sans troncature"
+    },
+    {
+      "failure": "AssertionError: expected [ { id: 'row-00000', …(22) }, …(72) ] to have a length of 601 but got 73",
+      "name": "LECT-VOL-006 — 'sites' supporte un plafond REST inférieur à la tranche demandée"
+    },
+    {
+      "failure": "AssertionError: expected undefined to be 'Site cible' // Object.is equality",
+      "name": "Relations et lectures unitaires retrouve directement un site au-delà de la première tranche et filtre ses affectations"
+    }
+  ],
+  "testedFiles": [
+    {
+      "path": "F:/Development/SONASP/src/lib/readAllPages.test.ts",
+      "tests": 17,
+      "passed": 17,
+      "sha256AtReport": "d3bc75b5e1a249dcf4a33cb761adee17815d12a324dd8219c193ddb77520f47e"
+    },
+    {
+      "path": "F:/Development/SONASP/src/services/artisanalSiteInsights.test.ts",
+      "tests": 13,
+      "passed": 13,
+      "sha256AtReport": "7a5199762fe988c7b80f0a271dfaddb60e654fbe59ca68ae3b2fa38f69d3f4ea"
+    },
+    {
+      "path": "F:/Development/SONASP/src/services/artisanalSiteSave.test.ts",
+      "tests": 4,
+      "passed": 4,
+      "sha256AtReport": "452fe0da5601c11c606d16544390431e0d99862b3fc7514d07f593f5986d92b5"
+    },
+    {
+      "path": "F:/Development/SONASP/src/services/artisanalSiteService.test.ts",
+      "tests": 2,
+      "passed": 2,
+      "sha256AtReport": "760f777639a79a36a0c928074f826dff696ea7c460b4bd857c79180fedbfa17a"
+    },
+    {
+      "path": "F:/Development/SONASP/src/services/artisanReadVolume.test.ts",
+      "tests": 91,
+      "passed": 91,
+      "sha256AtReport": "946e25af2e9a4b4e67795eb06c788a415662ec5de775c1ad97aab50cb8fa332c"
+    },
+    {
+      "path": "F:/Development/SONASP/src/services/artisanTerritoryInsights.test.ts",
+      "tests": 9,
+      "passed": 9,
+      "sha256AtReport": "7b57870bd90d2327bd77c53bde30116217780cf651eb3d754754be4def60a84c"
+    },
+    {
+      "path": "F:/Development/SONASP/src/services/carteProfessionnelleService.test.ts",
+      "tests": 7,
+      "passed": 7,
+      "sha256AtReport": "04c336d8cf696f823d60ab59656b5b4b49218c361d45380bc1c0b07da5252381"
+    },
+    {
+      "path": "F:/Development/SONASP/src/services/factureVenteService.test.ts",
+      "tests": 16,
+      "passed": 16,
+      "sha256AtReport": "1393cf9d656d24ef9ffed90b8729fdd4e26bd80bb874df01d9d9356bc08b4060"
+    }
+  ],
+  "cardsBefore": {
+    "skipped": 74,
+    "passed": 0,
+    "failed": 17
+  }
+}

@@ -1,0 +1,28 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ docs/amelioration/audit/site-photos-reprise-independent.test.tsx > efface le dossier et ses photos puis relit le site quand le périmètre change sans navigation 267ms
+ ✓ docs/amelioration/audit/site-photos-reprise-independent.test.tsx > ignore la réponse du vrai hook de l’ancien périmètre après lecture du nouveau dossier 242ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > recense chaque upload Storage direct restant 3ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > recense chaque génération d’URL publique restante 0ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > recense chaque suppression Storage directe restante 0ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/shippingPreparationServi…' ne régresse pas vers un accès Storage direct 2ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/productionDocumentServic…' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/freightCustomsService.ts' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/miningCompanyDocumentSer…' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/assayCertificateService.…' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/paymentService.ts' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/reserveAllocationService…' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/saleInvoiceService.ts' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/artisanMinierService.ts' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/artisanDocumentService.ts' ne régresse pas vers un accès Storage direct 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/freightDocumentService.ts' reste fermé sans accès binaire navigateur 1ms
+ ✓ src/services/sensitiveUploadInventory.test.ts > inventaire machine-vérifiable des uploads sensibles > 'src/services/minePortalService.ts' reste fermé sans accès binaire navigateur 1ms
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  12:20:16
+   Duration  7.59s (transform 432ms, setup 1.02s, import 1.94s, tests 533ms, environment 3.41s)
+
+JSON report written to F:/Development/SONASP/docs/amelioration/audit/global-failures-recheck-20260907.json
+

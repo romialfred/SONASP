@@ -1,0 +1,344 @@
+- banner:
+  - generic "FASO SANAMA — Administrateur":
+    - img "FASO SANAMA"
+    - generic "Administrateur":
+      - img "Armoiries du Burkina Faso"
+  - heading "Plateforme Nationale de Traçabilité de l’Or" [level=1]
+  - paragraph: Production, collecte, commercialisation et suivi des recettes
+  - generic "Portail Administrateur":
+    - generic: Portail
+    - strong: Administrateur
+  - button "Choisir la langue (FR)":
+    - generic: FR
+  - button "Afficher les notifications":
+  - button "Ouvrir le menu utilisateur":
+    - generic: TR
+    - strong: TIEGNAN Romuald
+    - generic: Administrateur
+- complementary "Navigation principale":
+  - generic: ESPACE ADMINISTRATEUR
+  - button "Réduire le menu":
+  - navigation:
+    - link "Tableau de bord":
+      - /url: /dashboard
+      - generic: Tableau de bord
+    - region "Sites artisanaux & Artisans":
+      - heading "Sites artisanaux & Artisans" [level=2]
+      - button "Sites artisanaux" [expanded]:
+        - generic "Sites artisanaux"
+      - link "Vue d'ensemble":
+        - /url: /artisan-sites
+        - generic: Vue d'ensemble
+      - link "Productions":
+        - /url: /artisan-sites/production
+        - generic: Productions
+      - button "Artisans miniers":
+        - generic "Artisans miniers"
+    - region "Mine industrielle":
+      - heading "Mine industrielle" [level=2]
+      - button "Prévisions & licences":
+        - generic "Prévisions & licences"
+      - button "Gestion de la production":
+        - generic "Gestion de la production"
+      - button "Achat aux mines industrielles":
+        - generic "Achat aux mines industrielles"
+      - button "Gestion des expéditions":
+        - generic "Gestion des expéditions"
+    - region "Vente & achat d’or":
+      - heading "Vente & achat d’or" [level=2]
+      - button "Marché d’or artisanal":
+        - generic "Marché d’or artisanal"
+    - region "Raffinage & stocks":
+      - heading "Raffinage & stocks" [level=2]
+      - button "Gestion du raffinage":
+        - generic "Gestion du raffinage"
+      - button "Suivi du stock d’or":
+        - generic "Suivi du stock d’or"
+    - region "Réserve d’or du Burkina Faso":
+      - heading "Réserve d’or du Burkina Faso" [level=2]
+      - button "Réserve nationale d’or":
+        - generic "Réserve nationale d’or"
+    - region "Vente internationale":
+      - heading "Vente internationale" [level=2]
+      - button "Marchés internationaux":
+        - generic "Marchés internationaux"
+      - button "Ventes d’or internationales":
+        - generic "Ventes d’or internationales"
+      - button "Parties prenantes":
+        - generic "Parties prenantes"
+      - button "Documents":
+        - generic "Documents"
+    - region "Utilisateurs & Portails":
+      - heading "Utilisateurs & Portails" [level=2]
+      - button "Accès & portails":
+        - generic "Accès & portails"
+    - region "Paramètres et configuration":
+      - heading "Paramètres et configuration" [level=2]
+      - button "Paramètres":
+        - generic "Paramètres"
+      - button "Administration":
+        - generic "Administration"
+    - region "Rapports et analyses":
+      - heading "Rapports et analyses" [level=2]
+      - link "Analyses des ventes":
+        - /url: /analytics/ventes
+        - generic: Analyses des ventes
+      - link "Rapports de production":
+        - /url: /analytics/production
+        - generic: Rapports de production
+      - link "Rapports institutionnels":
+        - /url: /reports
+        - generic: Rapports institutionnels
+      - link "Performance nationale":
+        - /url: /analytics
+        - generic: Performance nationale
+    - region "Relations avec les comptoirs":
+      - heading "Relations avec les comptoirs" [level=2]
+      - link "Cessions comptoirs":
+        - /url: /sonasp/cessions-comptoirs
+        - generic: Cessions comptoirs
+  - link "Centre d’assistance":
+    - /url: /help
+    - generic: Centre d’assistance
+- main:
+  - paragraph: Pilotage territorial
+  - heading "Tableau de bord des sites miniers artisanaux" [level=2]
+  - paragraph: Supervision nationale de l’activité, de la conformité et de la performance des sites
+  - button "Actualiser":
+    - text: Actualiser
+  - button "Enregistrer un site":
+    - text: Enregistrer un site
+  - region "Filtres de supervision":
+    - button "01 janv. – 31 déc. 2026":
+      - generic: 01 janv. – 31 déc. 2026
+    - generic: Région
+    - combobox "Région":
+      - option "Toutes" [selected]
+      - option "Boucle du Mouhoun"
+      - option "Cascades"
+      - option "Centre"
+      - option "Centre-Nord"
+      - option "Hauts-Bassins"
+      - option "Nord"
+      - option "Sahel"
+      - option "Sud-Ouest"
+    - generic: Statut
+    - combobox "Statut":
+      - option "Tous" [selected]
+      - option "Actif"
+      - option "Planifié"
+      - option "Sous surveillance"
+      - option "Suspendu"
+    - generic: Catégorie du site
+    - combobox "Catégorie du site":
+      - option "Tous" [selected]
+      - option "Site formalisé"
+      - option "Site non formalisé"
+      - option "À renseigner"
+    - searchbox "Rechercher un site": QA20260907-R02
+    - button "Réinitialiser":
+      - text: Réinitialiser
+  - region "Indicateurs des sites artisanaux":
+    - article:
+      - heading "Sites recensés" [level=3]
+      - strong: "1"
+      - generic: 0 actifs
+      - paragraph:
+        - text: +8,2 %
+        - generic: vs année précédente
+    - article:
+      - heading "Artisans autorisés" [level=3]
+      - strong: "10"
+      - generic: 20 % de la capacité
+      - paragraph:
+        - text: +4,6 %
+        - generic: vs année précédente
+    - article:
+      - heading "Production déclarée" [level=3]
+      - strong: 0,0 kg
+      - generic: Objectif 0 %
+      - application
+    - article:
+      - heading "Valeur des transactions" [level=3]
+      - strong: 0 FCFA
+      - generic: Moyenne 0 FCFA / artisan
+    - article:
+      - heading "Taxes et redevances" [level=3]
+      - strong: 0 FCFA
+      - generic: Taux de recouvrement 0 %
+  - article:
+    - heading "Implantation et performance des sites" [level=3]
+    - tablist "Affichage de l’implantation":
+      - tab "Carte" [selected]
+      - tab "Régions"
+    - img "Carte des régions du Burkina Faso":
+      - generic "Boucle du Mouhoun"
+      - generic "Cascades"
+      - generic "Centre"
+      - generic "Centre-Est"
+      - generic "Centre-Nord"
+      - generic "Centre-Ouest"
+      - generic "Centre-Sud"
+      - generic "Est"
+      - generic "Hauts-Bassins"
+      - generic "Nord"
+      - generic "Plateau-Central"
+      - generic "Sahel"
+      - generic "Sud-Ouest"
+      - generic: BOUCLE DU MOUHOUN
+      - generic: CASCADES
+      - generic: CENTRE-EST
+      - generic: CENTRE-NORD
+      - generic: CENTRE-OUEST
+      - generic: CENTRE-SUD
+      - generic: EST
+      - generic: HAUTS-BASSINS
+      - generic: NORD
+      - generic: PLATEAU-CENTRAL
+      - generic: SAHEL
+      - generic: SUD-OUEST
+      - button "QA20260907-R02-SITE, Centre"
+    - button "Agrandir la carte":
+    - button "Réduire la carte" [disabled]:
+    - generic: Actif
+    - generic: Planifié
+    - generic: Sous surveillance
+    - generic: Suspendu
+    - heading "Sites les plus actifs" [level=4]
+    - list:
+      - generic: "1"
+      - strong: QA20260907-R02-SITE
+      - generic: Centre
+      - generic: "2"
+    - button "Voir tous les sites"
+  - article:
+    - heading "Vigilance opérationnelle" [level=3]
+    - paragraph:
+      - text: Indice de conformité
+    - strong: 0 / 100
+    - img "Indice de conformité 0 sur 100":
+      - generic: "0"
+      - generic: "100"
+    - generic: Niveau de conformité global
+    - button "0 autorisations à renouveler":
+      - generic: 0 autorisations à renouveler
+    - button "0 sites sans déclaration récente":
+      - generic: 0 sites sans déclaration récente
+    - button "0 dépassement de capacité":
+      - generic: 0 dépassement de capacité
+    - button "0 site suspendu":
+      - generic: 0 site suspendu
+    - button "Voir le plan d’actions"
+  - article:
+    - heading "Production mensuelle" [level=3]
+    - generic: 0,0 kg cumulés
+    - generic: Production déclarée (kg)
+    - generic: Objectif mensuel (kg)
+    - application:
+      - generic: Jan.
+      - generic: Fév.
+      - generic: Mars
+      - generic: Avr.
+      - generic: Mai
+      - generic: Juin
+      - generic: Juil.
+      - generic: Août
+      - generic: Sept.
+      - generic: Oct.
+      - generic: Nov.
+      - generic: Déc.
+      - generic: "0"
+      - generic: "95"
+      - generic: "190"
+      - generic: "285"
+      - generic: "380"
+  - article:
+    - heading "Répartition des sites" [level=3]
+    - paragraph: Par catégorie de site
+    - list:
+      - generic: Site formalisé
+      - strong: "0"
+      - generic: Site non formalisé
+      - strong: "1"
+      - generic: À renseigner
+      - strong: "0"
+    - paragraph: Par statut
+    - button "Actifs 0":
+      - generic: Actifs
+      - strong: "0"
+    - button "Planifiés 1":
+      - generic: Planifiés
+      - strong: "1"
+    - button "Surveillance 0":
+      - generic: Surveillance
+      - strong: "0"
+    - button "Suspendus 0":
+      - generic: Suspendus
+      - strong: "0"
+  - article:
+    - heading "Contribution régionale" [level=3]
+    - list:
+      - generic: Centre
+      - strong: 0 %
+    - paragraph:
+      - text: Total
+      - strong: 0 %
+  - region "Suivi opérationnel des sites 1 sites":
+    - heading "Suivi opérationnel des sites 1 sites" [level=3]:
+      - text: Suivi opérationnel des sites
+      - generic: 1 sites
+    - tablist "Filtrer la liste des sites":
+      - tab "Tous"
+      - tab "Formalisés"
+      - tab "Non formalisés" [active] [selected]
+      - tab "À surveiller"
+      - tab "Suspendus"
+    - tabpanel "Non formalisés":
+      - table:
+        - rowgroup:
+          - row "Site Région Statut Artisans / Capacité Production Conformité Taxes déclarées Dernière déclaration Actions":
+            - columnheader "Site"
+            - columnheader "Région"
+            - columnheader "Statut"
+            - columnheader "Artisans / Capacité"
+            - columnheader "Production"
+            - columnheader "Conformité"
+            - columnheader "Taxes déclarées"
+            - columnheader "Dernière déclaration"
+            - columnheader "Actions"
+        - rowgroup:
+          - row "QA20260907-R02-SITE SA-CEN-2026-0004 · Site non formalisé Centre Planifié 2 / 10 0,0 kg Non évalué 0 FCFA Aucune déclaration Ouvrir la fiche de QA20260907-R02-SITE":
+            - cell "QA20260907-R02-SITE SA-CEN-2026-0004 · Site non formalisé":
+              - link "QA20260907-R02-SITE":
+                - /url: /artisan-sites/d9f7160a-aadd-41d9-ad4d-c9f886d41e0c
+                - strong: QA20260907-R02-SITE
+              - generic: SA-CEN-2026-0004 · Site non formalisé
+            - cell "Centre"
+            - cell "Planifié":
+              - generic: Planifié
+            - cell "2 / 10":
+              - generic: 2 / 10
+            - cell "0,0 kg"
+            - cell "Non évalué":
+              - generic: Non évalué
+            - cell "0 FCFA"
+            - cell "Aucune déclaration"
+            - cell "Ouvrir la fiche de QA20260907-R02-SITE":
+              - link "Ouvrir la fiche de QA20260907-R02-SITE":
+                - /url: /artisan-sites/d9f7160a-aadd-41d9-ad4d-c9f886d41e0c
+    - text: Afficher
+    - combobox "Afficher":
+      - option "10 lignes" [selected]
+      - option "20 lignes"
+      - option "50 lignes"
+    - generic: 1 – 1 sur 1
+    - button "Première page" [disabled]:
+    - button "Page précédente" [disabled]:
+    - button "1"
+    - button "Page suivante" [disabled]:
+    - button "Dernière page" [disabled]:
+    - button "Voir les 1 sites"
+- contentinfo:
+  - generic: © 2026 FASO SANAMA
+  - generic: Confidentialité · Intégrité · Transparence
+- generic: "0"

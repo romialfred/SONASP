@@ -1,0 +1,21 @@
+{
+  "baseline": "b654eb97",
+  "scope": "Local component and unit tests only; mocked transport and chart rendering; no browser or database validation.",
+  "startedUtc": "2026-09-07T12:45:35.7400568Z",
+  "completedUtc": "2026-09-07T12:45:50.1173832Z",
+  "command": "npx vitest run src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx src/services/artisanalSiteInsights.test.ts --reporter=verbose",
+  "exitCode": 0,
+  "sourceHashesBefore": {
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx": "c1611bb02998b02ae42ef64db06334c03136af815db228480eea14f04b5a0ee6",
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx": "9636ba15fa1753921aa8920639110f48b5cd285257ee587e17bee4d1639301f2",
+    "src/services/artisanalSiteInsights.ts": "8d5f93cf35ee5162f76d8dcf51b03d6f6da1939759b1a5ca232fcc2a3ee0917c",
+    "src/services/artisanalSiteInsights.test.ts": "b02043542ee243caf6c5d82476fb07e7b0e1749bfad68965b75a6541921d82d3"
+  },
+  "sourceHashesAfter": {
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.tsx": "c1611bb02998b02ae42ef64db06334c03136af815db228480eea14f04b5a0ee6",
+    "src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx": "9636ba15fa1753921aa8920639110f48b5cd285257ee587e17bee4d1639301f2",
+    "src/services/artisanalSiteInsights.ts": "8d5f93cf35ee5162f76d8dcf51b03d6f6da1939759b1a5ca232fcc2a3ee0917c",
+    "src/services/artisanalSiteInsights.test.ts": "b02043542ee243caf6c5d82476fb07e7b0e1749bfad68965b75a6541921d82d3"
+  },
+  "sourcesStable": true
+}

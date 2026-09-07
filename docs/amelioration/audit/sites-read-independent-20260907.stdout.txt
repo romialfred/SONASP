@@ -1,0 +1,55 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ src/pages/artisanal-sites/ArtisanalSiteReadState.test.tsx (25 tests) 4862ms
+     ✓ ne rend aucun chiffre, tableau, classement ou graphique pendant la lecture initiale  377ms
+     ✓ masque le dernier résultat pendant un refresh, puis distingue son échec du vrai vide après reprise  454ms
+     ✓ retire données, photos, document et modification dès le refresh puis permet de tout retrouver après reprise  1596ms
+     ✓ ignore une URL AEA tardive issue de la fiche invalidée  860ms
+ ✓ docs/amelioration/audit/site-photos-reprise-independent.test.tsx (2 tests) 1214ms
+   ✓ efface le dossier et ses photos puis relit le site quand le périmètre change sans navigation  602ms
+   ✓ ignore la réponse du vrai hook de l’ancien périmètre après lecture du nouveau dossier  604ms
+ ✓ src/pages/artisanal-sites/ArtisanalSitesOverview.test.tsx (39 tests) 18061ms
+     ✓ affiche les blocs du tableau de bord de pilotage territorial  1767ms
+     ✓ filtre le tableau via les onglets de périmètre  390ms
+     ✓ distingue deux sites de la même localité par leur nom et ouvre la bonne fiche  807ms
+     ✓ filtre les catégories sans assimiler les dossiers historiques aux sites non formalisés  1169ms
+     ✓ bascule la carte vers la vue par régions  485ms
+       ✓ masque les indicateurs pendant le chargement initial et après son rejet, puis permet la reprise  396ms
+       ✓ cache les données précédentes pendant une actualisation échouée et permet de reprendre vers une liste vide  845ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand id change seul  345ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand organization_id change seul  342ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand mining_company_id change seul  350ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand access_role_id change seul  330ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand role change seul  309ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand organization_type change seul  331ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand is_active change seul  310ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand access_portal_code change seul  341ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand actor_category_code change seul  311ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand account_type change seul  337ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand capabilities change seul  325ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand module_codes change seul  338ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand site_ids change seul  361ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand responsibilities change seul  322ms
+       ✓ remonte le vrai hook et masque immédiatement l’ancien périmètre quand module_domains change seul  346ms
+       ✓ ignore une résolution tardive de la relecture du contexte précédent  825ms
+       ✓ ignore une rejet tardive de la relecture du contexte précédent  829ms
+       ✓ conserve la relecture par navigation et masque les données jusqu’à sa réponse  341ms
+       ✓ conserve la relecture par mutation et masque les données jusqu’à sa réponse  356ms
+       ✓ conserve la relecture par focus et masque les données jusqu’à sa réponse  359ms
+       ✓ ignore une réponse tardive après deux relectures du même contexte  765ms
+       ✓ réinitialise recherche, catégorie, onglet, pagination et panneau de dates au changement de contexte  2001ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteDetails.test.tsx (5 tests) 1505ms
+     ✓ explique pourquoi le site planifié n’est pas évalué et propose les quatre règles  664ms
+     ✓ maintient la galerie et les autres photos quand une lecture échoue, avec reprise ciblée  423ms
+ ✓ src/pages/artisanal-sites/ArtisanalSiteProduction.test.tsx (2 tests) 722ms
+     ✓ ne présente pas des zéros comme des données réelles lorsque le chargement échoue  501ms
+ ✓ src/hooks/useArtisanalSiteData.test.tsx (2 tests) 258ms
+ ✓ src/services/artisanalSiteInsights.test.ts (22 tests) 32ms
+
+ Test Files  7 passed (7)
+      Tests  97 passed (97)
+   Start at  13:57:18
+   Duration  37.83s (transform 1.93s, setup 8.10s, import 6.05s, tests 26.65s, environment 26.32s)
+
+JSON report written to F:/Development/SONASP/docs/amelioration/audit/sites-read-independent-20260907.json

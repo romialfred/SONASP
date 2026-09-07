@@ -1,0 +1,28 @@
+{
+  "kind": "site",
+  "id": "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c",
+  "parent": {
+    "name": "QA20260907-R02-SITE",
+    "code": "SA-CEN-2026-0004",
+    "status": "planned",
+    "region": "Centre",
+    "province": "Kadiogo",
+    "locality": "Ouagadougou QA R02",
+    "area_hectares": 2.5,
+    "exploitation_type": "artisanale",
+    "formalization": "non_formalized",
+    "aea_number": null,
+    "aea_issued_on": null,
+    "aea_document_path": null,
+    "authorized_miners": 10,
+    "active_miners": 2,
+    "average_hole_depth_m": 4,
+    "latitude": 12.3714,
+    "longitude": -1.5197,
+    "notes": "Dossier temporaire QA20260907-R02. Recette interface et persistance, nettoyage après vérification."
+  },
+  "assignments": [
+    { "role": "site_manager", "full_name": "QA20260907-R02 Responsable", "phone": "+226 70000001", "email": "qa-r02-responsable@example.invalid" },
+    { "role": "collection_officer", "full_name": "QA20260907-R02 Collecte", "phone": "+226 70000002", "email": "qa-r02-collecte@example.invalid" }
+  ]
+}

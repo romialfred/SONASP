@@ -1,0 +1,278 @@
+{
+  "id": "AUD-LECTURES-SITES-PIXELS-20260907",
+  "checkedAt": "2026-09-07T15:49:09.320Z",
+  "mode": "Relecture indépendante de fichiers existants : neuf images vues directement, DOM et manifeste contrôlés sans navigateur, tests ou réseau.",
+  "manifestSha256": "1236235f86d75e1165965ecc81db1fd5499ca47d5c9d81f2afd613dcba80b7b2",
+  "comparisons": [
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/01-overview-succes.jpg",
+      "expectedSha256": "0c26586ddf91afb843ccd82147d57ee7a03dbe23e395424132773b5f1e9d6583",
+      "actualSha256": "0c26586ddf91afb843ccd82147d57ee7a03dbe23e395424132773b5f1e9d6583",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/01-overview-succes.txt",
+      "expectedSha256": "c45a02aaa3ddf364aaf72b6ad25d811e74e224608c857a24a8222fbf968c48f1",
+      "actualSha256": "c45a02aaa3ddf364aaf72b6ad25d811e74e224608c857a24a8222fbf968c48f1",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/02-overview-erreur.jpg",
+      "expectedSha256": "9d2e64a48e93dbb401545c75a0c76f9ba8aa4992ea571df079221f3c85e66106",
+      "actualSha256": "9d2e64a48e93dbb401545c75a0c76f9ba8aa4992ea571df079221f3c85e66106",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/02-overview-erreur.txt",
+      "expectedSha256": "e9bd16e30347d1452a8cd83ca70d15f688fde5e2aa988d1b2d603ad3f1d21852",
+      "actualSha256": "e9bd16e30347d1452a8cd83ca70d15f688fde5e2aa988d1b2d603ad3f1d21852",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/03-overview-attente.jpg",
+      "expectedSha256": "56b2c3c2e3a2a8092aaf70c0b494559519c2ced725672643c885ef7bad4bc315",
+      "actualSha256": "56b2c3c2e3a2a8092aaf70c0b494559519c2ced725672643c885ef7bad4bc315",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/04-overview-vide.txt",
+      "expectedSha256": "ba7b969d3d8e832e126575eb660d220a5ca63be35803e44611dc81049369d4c1",
+      "actualSha256": "ba7b969d3d8e832e126575eb660d220a5ca63be35803e44611dc81049369d4c1",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/05-production-succes.jpg",
+      "expectedSha256": "3be8c4014e7e195124b663dd8422d2809ac1cd261249a11c51c605f5b4eb018d",
+      "actualSha256": "3be8c4014e7e195124b663dd8422d2809ac1cd261249a11c51c605f5b4eb018d",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/05-production-succes.txt",
+      "expectedSha256": "1eb8922e4099a0b4ef0e9d471a1a7994d65ced4fb52bcc4774686a626a4b0187",
+      "actualSha256": "1eb8922e4099a0b4ef0e9d471a1a7994d65ced4fb52bcc4774686a626a4b0187",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/06-production-attente.jpg",
+      "expectedSha256": "8278a1301ee9425811bdb4732ab8335e8f795bab6448fcccdc24921661efd94f",
+      "actualSha256": "8278a1301ee9425811bdb4732ab8335e8f795bab6448fcccdc24921661efd94f",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/07-production-erreur.jpg",
+      "expectedSha256": "f6eb0e744af3d1acab3570ecb7d77da1b920696d4c4fab66c722e1187c1bbc38",
+      "actualSha256": "f6eb0e744af3d1acab3570ecb7d77da1b920696d4c4fab66c722e1187c1bbc38",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/07-production-erreur.txt",
+      "expectedSha256": "8a7fd3c5bd7f4bbad42b806758c958f28c3b6b3496b9f2b6187a9a1c34b07b51",
+      "actualSha256": "8a7fd3c5bd7f4bbad42b806758c958f28c3b6b3496b9f2b6187a9a1c34b07b51",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/08-detail-succes.txt",
+      "expectedSha256": "6c79ccde081ee7036724d6435c1d31029ea180bfd0f21ce74be95afa0e475483",
+      "actualSha256": "6c79ccde081ee7036724d6435c1d31029ea180bfd0f21ce74be95afa0e475483",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/09-detail-erreur.jpg",
+      "expectedSha256": "41927c2247c1fb9001c5f7ba8d66073e79093728040d0536a1bfc22817fecf16",
+      "actualSha256": "41927c2247c1fb9001c5f7ba8d66073e79093728040d0536a1bfc22817fecf16",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/09-detail-erreur.txt",
+      "expectedSha256": "6cdfe6b92665a0de5569cb341a144de77e3437b5f5d8684862bb00c59178cf59",
+      "actualSha256": "6cdfe6b92665a0de5569cb341a144de77e3437b5f5d8684862bb00c59178cf59",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/10-detail-repris.txt",
+      "expectedSha256": "d509e38ac6a6e58c6eccc4e699ad91d307973f92036fe2e0318efe77c9d14ac0",
+      "actualSha256": "d509e38ac6a6e58c6eccc4e699ad91d307973f92036fe2e0318efe77c9d14ac0",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/11-overview-non-evalue.jpg",
+      "expectedSha256": "93b58e6a76d809287f1b10c11d0864d910208942a50ede4ac2c810a87ff9d56b",
+      "actualSha256": "93b58e6a76d809287f1b10c11d0864d910208942a50ede4ac2c810a87ff9d56b",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/11-overview-non-evalue.txt",
+      "expectedSha256": "6fa665780d6a982304e2484abbbc5dd2ee73bd9566eea67914398feba8003d0d",
+      "actualSha256": "6fa665780d6a982304e2484abbbc5dd2ee73bd9566eea67914398feba8003d0d",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/12-overview-mobile-erreur.jpg",
+      "expectedSha256": "9d432c451aae47811b4ee7b7dc151d41ce5ed5cbd818b0abe6fdec07b722a85a",
+      "actualSha256": "9d432c451aae47811b4ee7b7dc151d41ce5ed5cbd818b0abe6fdec07b722a85a",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/12-overview-mobile-erreur.txt",
+      "expectedSha256": "e0076da64585b323577221d4d1deb5610c4b23a6479a429520b471f991f426bb",
+      "actualSha256": "e0076da64585b323577221d4d1deb5610c4b23a6479a429520b471f991f426bb",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/13-production-mobile-erreur.jpg",
+      "expectedSha256": "ebac9dd690ac7c3ba4046588a3ad705f1f8defb18ab91acb0deac22f268064d3",
+      "actualSha256": "ebac9dd690ac7c3ba4046588a3ad705f1f8defb18ab91acb0deac22f268064d3",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/13-production-mobile-erreur.txt",
+      "expectedSha256": "17280237f5e4bbb560b220d70446f73f6b6af8aca02c1720d2a7a7b42d50bdd7",
+      "actualSha256": "17280237f5e4bbb560b220d70446f73f6b6af8aca02c1720d2a7a7b42d50bdd7",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/14-detail-mobile-erreur.jpg",
+      "expectedSha256": "d79f1193572e25b9e2d3fe4d3c0ff47baa5ab333f3f6195bfc78dcd4c2177955",
+      "actualSha256": "d79f1193572e25b9e2d3fe4d3c0ff47baa5ab333f3f6195bfc78dcd4c2177955",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/14-detail-mobile-erreur.txt",
+      "expectedSha256": "60131a8fce8198e02678456d70a9df08f85063da5c0d3e18b6df4f4e11598e43",
+      "actualSha256": "60131a8fce8198e02678456d70a9df08f85063da5c0d3e18b6df4f4e11598e43",
+      "bytesMatch": true,
+      "hashMatches": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/README.md",
+      "expectedSha256": "6e29266651bc5f06eb667e4a18a6cdbb2c306d1aece82c3c7b6a992428b810c7",
+      "actualSha256": "6e29266651bc5f06eb667e4a18a6cdbb2c306d1aece82c3c7b6a992428b810c7",
+      "bytesMatch": true,
+      "hashMatches": true
+    }
+  ],
+  "captures": [
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/02-overview-erreur.jpg",
+      "sha256": "9d2e64a48e93dbb401545c75a0c76f9ba8aa4992ea571df079221f3c85e66106",
+      "height": 720,
+      "width": 1280,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/03-overview-attente.jpg",
+      "sha256": "56b2c3c2e3a2a8092aaf70c0b494559519c2ced725672643c885ef7bad4bc315",
+      "height": 720,
+      "width": 1280,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/06-production-attente.jpg",
+      "sha256": "8278a1301ee9425811bdb4732ab8335e8f795bab6448fcccdc24921661efd94f",
+      "height": 720,
+      "width": 1280,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/07-production-erreur.jpg",
+      "sha256": "f6eb0e744af3d1acab3570ecb7d77da1b920696d4c4fab66c722e1187c1bbc38",
+      "height": 720,
+      "width": 1280,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/09-detail-erreur.jpg",
+      "sha256": "41927c2247c1fb9001c5f7ba8d66073e79093728040d0536a1bfc22817fecf16",
+      "height": 720,
+      "width": 1280,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/11-overview-non-evalue.jpg",
+      "sha256": "93b58e6a76d809287f1b10c11d0864d910208942a50ede4ac2c810a87ff9d56b",
+      "height": 720,
+      "width": 1280,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/12-overview-mobile-erreur.jpg",
+      "sha256": "9d432c451aae47811b4ee7b7dc151d41ce5ed5cbd818b0abe6fdec07b722a85a",
+      "height": 844,
+      "width": 390,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/13-production-mobile-erreur.jpg",
+      "sha256": "ebac9dd690ac7c3ba4046588a3ad705f1f8defb18ab91acb0deac22f268064d3",
+      "height": 844,
+      "width": 390,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    },
+    {
+      "file": "docs/amelioration/preuves/lecture-sites-ui/14-detail-mobile-erreur.jpg",
+      "sha256": "d79f1193572e25b9e2d3fe4d3c0ff47baa5ab333f3f6195bfc78dcd4c2177955",
+      "height": 844,
+      "width": 390,
+      "actualFormat": "JPEG",
+      "fullPage": false,
+      "visuallyInspected": true
+    }
+  ],
+  "domChecks": {
+    "formerZeroPreservedIn04": true,
+    "correctedUnassessed11": true,
+    "productionRetry07": true,
+    "detailError09": true,
+    "detailRecovered10": true,
+    "mobileRetries": true
+  },
+  "allManifestEntriesMatch": true,
+  "findings": [
+    "07 : panneau du banc superposé au bouton de reprise ; pixels seuls insuffisants pour sa visibilité desktop.",
+    "11 : viewport défilé sur le bloc de conformité, sans preuve de page entière.",
+    "Mesures scrollWidth annoncées par le pilote non exportées dans les fichiers DOM examinés ; absence de débordement seulement observée visuellement ici.",
+    "10 : reprise et deux éléments image présents dans le DOM ; pas de capture de ce stade dans ce répertoire."
+  ],
+  "realAuthVerified": false,
+  "storageVerified": false,
+  "persistenceVerified": false,
+  "fullPageVerified": false
+}

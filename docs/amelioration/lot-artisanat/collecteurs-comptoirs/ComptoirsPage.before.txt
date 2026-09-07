@@ -1,0 +1,257 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Building2,
+  FileCheck2,
+  FileWarning,
+  Plus,
+  RefreshCw,
+  Eye,
+  Pencil,
+} from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { NationalDashboardLayout } from "@/components/layout/NationalDashboardLayout";
+import {
+  Badge,
+  DataTable,
+  Field,
+  Note,
+  PageHeader,
+  StatGrid,
+  type Column,
+} from "@/components/ui/sn";
+import { messageErreurUtilisateur } from "@/lib/presentError";
+import { authorizationStatus, comptoirCompletion } from "@/lib/comptoirDossier";
+import {
+  comptoirService,
+  type ComptoirRecord,
+} from "@/services/comptoirService";
+import "./comptoir.css";
+
+const ROOT = "/artisan-minier/comptoirs";
+export default function ComptoirsPage() {
+  const [rows, setRows] = useState<ComptoirRecord[]>([]);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setRows(await comptoirService.list());
+    } catch (e) {
+      setError(
+        messageErreurUtilisateur(e, "Impossible de charger les comptoirs."),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    void load();
+  }, [load, location.key]);
+  const complete = (row: ComptoirRecord) =>
+    comptoirCompletion(
+      row.values,
+      row.documents.map((d) => d.kind),
+    ).percent === 100;
+  const visible = useMemo(
+    () =>
+      rows.filter((row) => {
+        const match = [
+          row.name,
+          row.code,
+          row.values.ifu_number,
+          row.values.rccm_number,
+          row.values.city,
+        ].some((s) =>
+          s
+            .toLocaleLowerCase("fr")
+            .includes(query.trim().toLocaleLowerCase("fr")),
+        );
+        return (
+          match &&
+          (filter === "all" ||
+            (filter === "complete"
+              ? complete(row)
+              : filter === "incomplete"
+                ? !complete(row)
+                : authorizationStatus(row.values).label === "Expirée"))
+        );
+      }),
+    [rows, query, filter],
+  );
+  const columns: Column<ComptoirRecord>[] = [
+    {
+      key: "name",
+      header: "Comptoir",
+      render: (row) => (
+        <div className="comptoir-list-identity">
+          <strong>{row.name}</strong>
+          <small>
+            {row.code} · {row.values.legal_form || "Type à préciser"}
+          </small>
+        </div>
+      ),
+    },
+    {
+      key: "city",
+      header: "Siège",
+      render: (row) => (
+        <div className="comptoir-list-identity">
+          <strong>{row.values.city || "À renseigner"}</strong>
+          <small>{row.values.district}</small>
+        </div>
+      ),
+    },
+    {
+      key: "fiscal",
+      header: "Identification fiscale",
+      render: (row) => (
+        <div className="comptoir-list-identity">
+          <strong>{row.values.ifu_number || "IFU à renseigner"}</strong>
+          <small>{row.values.tax_regime || "Régime à préciser"}</small>
+        </div>
+      ),
+    },
+    {
+      key: "authorization",
+      header: "Autorisation d’achat",
+      render: (row) => {
+        const status = authorizationStatus(row.values);
+        return <Badge tone={status.tone}>{status.label}</Badge>;
+      },
+    },
+    {
+      key: "dossier",
+      header: "Dossier",
+      render: (row) => (
+        <Badge tone={complete(row) ? "success" : "warning"}>
+          {complete(row) ? "Renseigné" : "À compléter"}
+        </Badge>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (row) => (
+        <div className="comptoir-list-actions">
+          <Link
+            className="sn-btn sn-btn--icon"
+            aria-label={`Consulter ${row.name}`}
+            to={`${ROOT}/${row.id}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Eye />
+          </Link>
+          <Link
+            className="sn-btn sn-btn--icon"
+            aria-label={`Modifier ${row.name}`}
+            to={`${ROOT}/${row.id}/modifier`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Pencil />
+          </Link>
+        </div>
+      ),
+    },
+  ];
+  return (
+    <NationalDashboardLayout>
+      <main className="sn-page comptoir-list-page">
+        <PageHeader
+          icon={Building2}
+          title="Comptoirs d’or"
+          subtitle="Entreprises burkinabè, autorisations d’achat et dossiers administratifs."
+          breadcrumb={[{ label: "Artisans miniers" }, { label: "Comptoirs" }]}
+          actions={
+            <>
+              <button
+                className="sn-btn"
+                type="button"
+                disabled={loading}
+                onClick={() => void load()}
+              >
+                <RefreshCw /> Actualiser
+              </button>
+              <Link className="sn-btn sn-btn--primary" to={`${ROOT}/nouveau`}>
+                <Plus /> Nouveau comptoir
+              </Link>
+            </>
+          }
+        />
+        {error && (
+          <div role="alert">
+            <Note tone="danger">{error}</Note>
+          </div>
+        )}
+        <StatGrid
+          ariaLabel="Synthèse des comptoirs"
+          sober
+          items={[
+            {
+              label: "Comptoirs enregistrés",
+              value: rows.length,
+              icon: Building2,
+              tone: "blue",
+            },
+            {
+              label: "Dossiers renseignés",
+              value: rows.filter(complete).length,
+              icon: FileCheck2,
+              tone: "green",
+            },
+            {
+              label: "Dossiers à compléter",
+              value: rows.filter((r) => !complete(r)).length,
+              icon: FileWarning,
+              tone: "gold",
+            },
+          ]}
+        />
+        <section
+          className="sn-card comptoir-list-filters"
+          aria-label="Rechercher et filtrer les comptoirs"
+        >
+          <Field label="Rechercher un comptoir" htmlFor="comptoir-search">
+            <input
+              id="comptoir-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Dénomination, ville, RCCM ou IFU…"
+            />
+          </Field>
+          <Field label="État du dossier" htmlFor="comptoir-filter">
+            <select
+              id="comptoir-filter"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="all">Tous les dossiers</option>
+              <option value="incomplete">À compléter</option>
+              <option value="complete">Renseignés</option>
+              <option value="expired">Autorisation expirée</option>
+            </select>
+          </Field>
+        </section>
+        <section className="sn-card">
+          <DataTable
+            columns={columns}
+            rows={visible}
+            loading={loading}
+            caption="Liste des comptoirs d’or"
+            empty={
+              error
+                ? "La liste est indisponible. Réessayez le chargement."
+                : "Aucun comptoir ne correspond à la recherche."
+            }
+            onRowClick={(row) => navigate(`${ROOT}/${row.id}`)}
+          />
+        </section>
+      </main>
+    </NationalDashboardLayout>
+  );
+}

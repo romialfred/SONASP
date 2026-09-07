@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-09-07T12:18:41.003Z",
+  "id": "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c",
+  "kind": "site",
+  "runPrefix": "QA20260907-R02",
+  "actualFile": "docs/amelioration/environnement/reprise-r02/site-creation-d9f7160a-aadd-41d9-ad4d-c9f886d41e0c.json",
+  "expectedFile": "docs/amelioration/preuves/recette-r02/site-creation-attendu.json",
+  "expectedParentFields": [
+    "name",
+    "code",
+    "status",
+    "region",
+    "province",
+    "locality",
+    "area_hectares",
+    "exploitation_type",
+    "formalization",
+    "aea_number",
+    "aea_issued_on",
+    "aea_document_path",
+    "authorized_miners",
+    "active_miners",
+    "average_hole_depth_m",
+    "latitude",
+    "longitude",
+    "notes"
+  ],
+  "checkedSections": [
+    "kind",
+    "id",
+    "parent",
+    "assignments"
+  ],
+  "mismatches": [],
+  "passed": true
+}

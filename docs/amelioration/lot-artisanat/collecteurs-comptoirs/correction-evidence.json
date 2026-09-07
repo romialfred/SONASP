@@ -1,0 +1,132 @@
+{
+  "checkedAt": "2026-09-07T12:37:09.2509559Z",
+  "localOnly": true,
+  "remoteWrites": 0,
+  "sourceFrozen": true,
+  "onlineRpcOrderVerified": false,
+  "browserVerified": false,
+  "tests": {
+    "total": 73,
+    "passed": 73,
+    "failed": 0,
+    "files": 8,
+    "exitCode": 0
+  },
+  "baselineReplay": {
+    "total": 24,
+    "passed": 1,
+    "failed": 23,
+    "exitCode": 1
+  },
+  "lateReplyBaseline": {
+    "total": 11,
+    "passed": 0,
+    "failed": 3,
+    "skipped": 8,
+    "exitCode": 1
+  },
+  "lint": {
+    "exitCode": 0,
+    "files": 7
+  },
+  "typecheck": {
+    "command": "npx tsc --noEmit -p tsconfig.app.json",
+    "exitCode": 0
+  },
+  "sources": [
+    {
+      "file": "src/pages/collector/CollectorsPage.tsx",
+      "sha256": "e7b0efbfad8a1ef1dae6fa6af5096153580123ec2631ec3860dca52277fad3ed"
+    },
+    {
+      "file": "src/pages/collector/ComptoirsPage.tsx",
+      "sha256": "7fc9837258e17388c1a8eedf5c632add0718fe2e151ed18f5f9f28dd6d09a88c"
+    },
+    {
+      "file": "src/services/collectorService.ts",
+      "sha256": "8b650d5ca91c1be6d831a5e5c9c8d79f786be90ea0071ca10e8d1b4b4da72bdc"
+    },
+    {
+      "file": "src/pages/collector/CollectorsPage.test.tsx",
+      "sha256": "6e17bfb3be628ce2f2d373b4ef0c5e9efa129953b8e77b292f6a985531353325"
+    },
+    {
+      "file": "src/pages/collector/ComptoirsPage.test.tsx",
+      "sha256": "89ae24ad8f80838b26b702fdea5265173e154c18addb0ab11981907a3c5ef8e2"
+    },
+    {
+      "file": "src/services/collectorService.test.ts",
+      "sha256": "b99f910511349f56b2919e4edd61d91ff2f69d813fbec9a66555e9d8643d3264"
+    },
+    {
+      "file": "src/services/rpcClientBinding.test.ts",
+      "sha256": "e9b848c3b03737256ad4dba8ede17c2da3e93d90a724bc4438948c73941109a0"
+    }
+  ],
+  "preserved": [
+    {
+      "file": "src/pages/collector/CollectorForm.tsx",
+      "beforeSha256": "963d98140888ab8e9ec794785ad458251dfaf378d7ce235c07106e8f70761ec7",
+      "afterSha256": "963d98140888ab8e9ec794785ad458251dfaf378d7ce235c07106e8f70761ec7",
+      "unchanged": true
+    },
+    {
+      "file": "src/pages/collector/ComptoirForm.tsx",
+      "beforeSha256": "ad95df441430fdbd643140cfce29a2b32497d24013cb51d65f8944516ba29f32",
+      "afterSha256": "ad95df441430fdbd643140cfce29a2b32497d24013cb51d65f8944516ba29f32",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/routeAccessRegistry.ts",
+      "beforeSha256": "9fa0b5fc87d9a1b21961960be4e0d88d0f806cdee4fa5c6a2bb364e54852c01d",
+      "afterSha256": "9fa0b5fc87d9a1b21961960be4e0d88d0f806cdee4fa5c6a2bb364e54852c01d",
+      "unchanged": true
+    },
+    {
+      "file": "supabase/migrations/20260906145430_collecteurs_comptoirs_ventes.sql",
+      "beforeSha256": "2787fff0ea6f9fdd044090a309a72eabf34565b2f8d2d9b35f28df9fb6955302",
+      "afterSha256": "2787fff0ea6f9fdd044090a309a72eabf34565b2f8d2d9b35f28df9fb6955302",
+      "unchanged": true
+    },
+    {
+      "file": "supabase/migrations/20260906174800_dossiers_comptoirs_entreprises.sql",
+      "beforeSha256": "f99ff8909cfe1df228406407fdcde99baac8e42bdf2353cd307f3519d0d04dc9",
+      "afterSha256": "f99ff8909cfe1df228406407fdcde99baac8e42bdf2353cd307f3519d0d04dc9",
+      "unchanged": true
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "apres-final.json",
+      "sha256": "ebdd7ea647a655a564c7c0785573753dfa14d0a9caca2777a180ab96fd0e2d64"
+    },
+    {
+      "file": "apres-final.log",
+      "sha256": "983d7d3e1f55485405de0e940e07073a466cc9712c81597af0a24e0e74617a93"
+    },
+    {
+      "file": "avant-reproduction.json",
+      "sha256": "d7a5d236b5bd55e7a885382a66232da491931d83875d687bcb1c3db1ae21b650"
+    },
+    {
+      "file": "avant-reponses-tardives.json",
+      "sha256": "56a3b951003ec28ecccbb7376aaa7c2845459e87a03e959376a94a8c6430ea08"
+    },
+    {
+      "file": "lint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "CORRECTION.md",
+      "sha256": "c98bc6ac20cd721131aeb6a705ca5493b7f81f7cc0c167dd1722fc7bf9f24f11"
+    },
+    {
+      "file": "pagination-compatibilite.md",
+      "sha256": "424d88976232ec6119e2d74961965af213eab542fdb9370c91eff5134afeb50b"
+    }
+  ]
+}

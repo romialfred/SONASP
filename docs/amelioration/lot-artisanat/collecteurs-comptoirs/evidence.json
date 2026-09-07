@@ -1,0 +1,171 @@
+{
+  "checkedAt": "2026-09-07T12:07:39.8209084Z",
+  "scope": "Audit local en lecture seule des listes/formulaires Collecteurs et Comptoirs",
+  "sourceEdits": 0,
+  "remoteCalls": 0,
+  "browserValidation": false,
+  "databasePersistenceValidation": false,
+  "exitCode": 0,
+  "command": "npx vitest run src/lib/collectorAccess.test.ts src/lib/comptoirAccess.test.ts src/services/comptoirPortalService.test.ts src/components/auth/CollectorPortalGuard.test.tsx src/components/auth/ProtectedRoute.collector.test.tsx src/components/auth/ProtectedRoute.comptoir.test.tsx src/pages/collector/collectorActivity.test.ts src/pages/collector/CollectorDetails.test.tsx src/pages/collector/CollectorForm.test.tsx src/pages/collector/ComptoirForm.test.tsx --maxWorkers=2 --reporter=json --outputFile=docs/amelioration/lot-artisanat/collecteurs-comptoirs/tests.json",
+  "tests": {
+    "total": 87,
+    "passed": 87,
+    "failed": 0,
+    "pending": 0,
+    "files": 10,
+    "success": true
+  },
+  "testFiles": [
+    {
+      "file": "src/lib/collectorAccess.test.ts",
+      "status": "passed",
+      "assertions": 21
+    },
+    {
+      "file": "src/lib/comptoirAccess.test.ts",
+      "status": "passed",
+      "assertions": 17
+    },
+    {
+      "file": "src/services/comptoirPortalService.test.ts",
+      "status": "passed",
+      "assertions": 8
+    },
+    {
+      "file": "src/components/auth/CollectorPortalGuard.test.tsx",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "file": "src/components/auth/ProtectedRoute.collector.test.tsx",
+      "status": "passed",
+      "assertions": 8
+    },
+    {
+      "file": "src/components/auth/ProtectedRoute.comptoir.test.tsx",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "file": "src/pages/collector/collectorActivity.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "file": "src/pages/collector/CollectorDetails.test.tsx",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "file": "src/pages/collector/CollectorForm.test.tsx",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "file": "src/pages/collector/ComptoirForm.test.tsx",
+      "status": "passed",
+      "assertions": 13
+    }
+  ],
+  "hashPhase": "Après exécution uniquement ; aucune empreinte antérieure dans ce lot",
+  "sources": [
+    {
+      "file": "src/components/auth/CollectorPortalGuard.test.tsx",
+      "sha256": "3b713366c3978a680158fbe3bbb105bac1e9617e6b4da7d356df167aaa00d90f"
+    },
+    {
+      "file": "src/components/auth/ProtectedRoute.collector.test.tsx",
+      "sha256": "ba9979b23d8d1c1fac03dbafd55ef480e9688e2fdb6b681bc558c10554cdc33d"
+    },
+    {
+      "file": "src/components/auth/ProtectedRoute.comptoir.test.tsx",
+      "sha256": "275e7be01e024d0f8917852681eefd1516bdeda0dfa3779137c817669e9c5f72"
+    },
+    {
+      "file": "src/lib/collectorAccess.test.ts",
+      "sha256": "97ea5b2a2b83610dcfbfc5bb57907e3d678ea7a253df4a92ba1f68ee3e6de81a"
+    },
+    {
+      "file": "src/lib/collectorDossier.ts",
+      "sha256": "a94e4df74c851f5bc127600da2173c6b5dc140bda71d41da603e3b46543d33a5"
+    },
+    {
+      "file": "src/lib/comptoirAccess.test.ts",
+      "sha256": "0709eaf3f4bf118941795f47ad55bbe7102f3c6021f82931a97c2be32017daee"
+    },
+    {
+      "file": "src/lib/comptoirDossier.ts",
+      "sha256": "39c7a31afcad2084126243740d2729d1ad06bdeb4301c6be935a7df08cfecd28"
+    },
+    {
+      "file": "src/lib/routeAccessRegistry.ts",
+      "sha256": "9fa0b5fc87d9a1b21961960be4e0d88d0f806cdee4fa5c6a2bb364e54852c01d"
+    },
+    {
+      "file": "src/pages/collector/collectorActivity.test.ts",
+      "sha256": "d0ba17489648878b72b24c81552ec9e729b6f00b101840817db1ba72a79873e2"
+    },
+    {
+      "file": "src/pages/collector/CollectorDetails.test.tsx",
+      "sha256": "617e553f3420c25f2d78a3a7b023681738459f598deef7918a0d888c2ed84a7b"
+    },
+    {
+      "file": "src/pages/collector/CollectorForm.test.tsx",
+      "sha256": "087b965bcd29c26d7d07053a1c52afcde51537d38dddb3b8ec37c2103c89afc3"
+    },
+    {
+      "file": "src/pages/collector/CollectorForm.tsx",
+      "sha256": "963d98140888ab8e9ec794785ad458251dfaf378d7ce235c07106e8f70761ec7"
+    },
+    {
+      "file": "src/pages/collector/CollectorsPage.tsx",
+      "sha256": "a1cef5d5cfc11156ba8906e8623858fdccf27ca171f1d6830ed8b418803651b2"
+    },
+    {
+      "file": "src/pages/collector/ComptoirForm.test.tsx",
+      "sha256": "fa694e9f98af608cf7960e872622c10190bd3c9031bad218f21be4da57fe3e06"
+    },
+    {
+      "file": "src/pages/collector/ComptoirForm.tsx",
+      "sha256": "ad95df441430fdbd643140cfce29a2b32497d24013cb51d65f8944516ba29f32"
+    },
+    {
+      "file": "src/pages/collector/ComptoirsPage.tsx",
+      "sha256": "2e86a7f43b9f8e8452c192d17093f1d19ec476bb493431330773fa0c22fd42bd"
+    },
+    {
+      "file": "src/services/collectorService.ts",
+      "sha256": "60b3cafcc78f7e7cbca7ab0add7d93e5709c87296c474b042b8a957ee366b7e8"
+    },
+    {
+      "file": "src/services/comptoirPortalService.test.ts",
+      "sha256": "a2bf85b5d8e0efedb4e2760b1a2d1e17952e9b83cf4225324a7945cbeb79497d"
+    },
+    {
+      "file": "src/services/comptoirService.ts",
+      "sha256": "2e2c3ec71c56d2f5576ce3c9ee1a99b9369892bf695a8c80730a44b8d38cbd3d"
+    },
+    {
+      "file": "supabase/migrations/20260906145430_collecteurs_comptoirs_ventes.sql",
+      "sha256": "2787fff0ea6f9fdd044090a309a72eabf34565b2f8d2d9b35f28df9fb6955302"
+    },
+    {
+      "file": "supabase/migrations/20260906174800_dossiers_comptoirs_entreprises.sql",
+      "sha256": "f99ff8909cfe1df228406407fdcde99baac8e42bdf2353cd307f3519d0d04dc9"
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "tests.json",
+      "sha256": "c40444b1a38009326aed1d8965e33d3f40c67b7b9a06ef15597d702754dd7069"
+    },
+    {
+      "file": "tests.log",
+      "sha256": "d15f25a41fc267131fd6fa83a3bdbbf4ffda795fd4df9221b5cd952f87faad6b"
+    },
+    {
+      "file": "README.md",
+      "sha256": "9b8f5b4176b27f2c3c14ee1cb0b401bdc17c006ea12634d2b2d5511c29a97580"
+    }
+  ]
+}

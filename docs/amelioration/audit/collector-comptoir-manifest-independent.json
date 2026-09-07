@@ -1,0 +1,85 @@
+{
+  "id": "AUD-COLL-MANIFEST-20260907",
+  "checkedAt": "2026-09-07T13:04:06.008Z",
+  "manifestSha256": "90f29c5baf4347fc8b0830acb51a35f3286981a966519312bd50622db8c69eec",
+  "sources": [
+    {
+      "file": "src/pages/collector/CollectorsPage.tsx",
+      "ok": true
+    },
+    {
+      "file": "src/pages/collector/ComptoirsPage.tsx",
+      "ok": true
+    },
+    {
+      "file": "src/services/collectorService.ts",
+      "ok": true
+    },
+    {
+      "file": "src/pages/collector/CollectorsPage.test.tsx",
+      "ok": true
+    },
+    {
+      "file": "src/pages/collector/ComptoirsPage.test.tsx",
+      "ok": true
+    },
+    {
+      "file": "src/services/collectorService.test.ts",
+      "ok": true
+    },
+    {
+      "file": "src/services/rpcClientBinding.test.ts",
+      "ok": true
+    }
+  ],
+  "preserved": [
+    {
+      "file": "src/pages/collector/CollectorForm.tsx",
+      "ok": true
+    },
+    {
+      "file": "src/pages/collector/ComptoirForm.tsx",
+      "ok": true
+    },
+    {
+      "file": "src/lib/routeAccessRegistry.ts",
+      "ok": true
+    },
+    {
+      "file": "supabase/migrations/20260906145430_collecteurs_comptoirs_ventes.sql",
+      "ok": true
+    },
+    {
+      "file": "supabase/migrations/20260906174800_dossiers_comptoirs_entreprises.sql",
+      "ok": true
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "apres-scope-final.json",
+      "ok": true
+    },
+    {
+      "file": "apres-scope-final.log",
+      "ok": true
+    },
+    {
+      "file": "lint-scope-final.log",
+      "ok": true
+    },
+    {
+      "file": "typecheck-scope-final.log",
+      "ok": true
+    },
+    {
+      "file": "CORRECTION_CONTEXTE.md",
+      "ok": true
+    },
+    {
+      "file": "pagination-compatibilite.md",
+      "ok": true
+    }
+  ],
+  "allPassed": true,
+  "scope": "Vérification locale des empreintes publiées. Ne remplace pas le rejeu des tests ni la recette distante."
+}

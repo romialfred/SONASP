@@ -1,0 +1,9 @@
+:root { --photo-qa-banner: 34px; }
+.photo-qa-banner { position: fixed; inset: 0 0 auto; min-height: var(--photo-qa-banner); z-index: 1200; display: flex; align-items: center; justify-content: center; padding: 4px 10px; background: #fff4d6; color: #604205; border-bottom: 1px solid #d0ae53; font: 600 13px/1.25 sans-serif; text-align: center; }
+#root .national-shell { margin-top: var(--photo-qa-banner); height: calc(100dvh - var(--photo-qa-banner)); }
+.photo-qa-controls { position: fixed; right: 10px; bottom: 36px; z-index: 1100; max-width: min(340px, 94vw); border: 1px solid #b19753; padding: 8px; background: #fff9e9; color: #3b3427; font: 12px/1.5 sans-serif; border-radius: 8px; box-shadow: 0 3px 15px #0002; }
+.photo-qa-controls summary { cursor: pointer; font-weight: 700; }
+.photo-qa-controls nav, .photo-qa-controls label { display: block; margin-block: 6px; }
+.photo-qa-controls a, .photo-qa-controls button { margin: 3px; padding: 4px; border: 1px solid #b19753; border-radius: 4px; background: #fff; }
+.photo-qa-controls ol { padding-left: 18px; }
+@media (max-width: 600px) { :root { --photo-qa-banner: 49px; } .photo-qa-banner { font-size: 11px; } }

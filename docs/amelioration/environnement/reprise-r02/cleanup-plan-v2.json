@@ -1,0 +1,69 @@
+{
+  "preparedAt": "2026-09-07T15:56:59.890Z",
+  "preparedOnly": true,
+  "executed": false,
+  "projectRef": "yyverzuhkdonjjuficor",
+  "manifestFile": "docs/amelioration/preuves/recette-r02/manifest-donnees.json",
+  "siteId": "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c",
+  "contactIds": [
+    "12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12",
+    "d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c"
+  ],
+  "targetHashes": {
+    "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c": "7a9bcab1cdfb1062397116a3c7c1efe8",
+    "12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12": "946cba19a76e83e069707f15d8adb9d9",
+    "d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c": "07672babd9306e0942c5dc7806c6c02f"
+  },
+  "preflightAt": "2026-09-07T14:08:59.842933+00:00",
+  "targetUnchangedSinceCreation": true,
+  "externalDependencies": 0,
+  "attachments": 0,
+  "preservedTables": [
+    "artisanal_site_assignments",
+    "artisanal_site_productions",
+    "artisanal_sites",
+    "snp_adhesion_baremes",
+    "snp_adhesion_droits",
+    "snp_adhesion_encaissements",
+    "snp_artisan_documents",
+    "snp_artisan_moyens_paiement",
+    "snp_artisan_responsables",
+    "snp_artisan_vente_site_origins",
+    "snp_artisans_miniers",
+    "snp_cartes_professionnelles",
+    "snp_collector_sales",
+    "snp_collector_sites"
+  ],
+  "lockedTables": [
+    "artisanal_site_assignments",
+    "artisanal_site_productions",
+    "artisanal_sites",
+    "snp_artisan_vente_site_origins",
+    "snp_artisans_miniers",
+    "snp_collector_sales",
+    "snp_collector_sites"
+  ],
+  "lockTimeout": "5s",
+  "statementTimeout": "30s",
+  "schemaSha256": "07b8a791df4359767a2c50a116fc4305fa73bf207ec675dd4f57ddc64697da16",
+  "candidateSha256": "7420606a3828626d652dfd79887f89da1cfc90b3865478e1af520901743a5a73",
+  "postflightSha256": "af8e6b870ea19212ccbfa85307c93acc27b5ce480743829587b1dd8f5b6b9ebf",
+  "mutationsAllowedOnlyAfterSeparateInstruction": [
+    "DELETE two exact artisanal_site_assignments",
+    "DELETE one exact artisanal_sites"
+  ],
+  "thirdPartyChangesExcluded": [
+    "5a29b656-c992-4a84-91fa-eb6819121ebb",
+    "be44ea0d-fb3b-4b02-88b4-cc6ccaf67c56",
+    "b0035b68-1fbb-45ef-a911-36a03d2e10e6"
+  ],
+  "version": 2,
+  "changes": [
+    "28 agrégats candidat et 14 agrégats postflight : ORDER BY t.id remplacé par ORDER BY to_jsonb(t)::text COLLATE \"C\""
+  ],
+  "originalCandidateSha256": "3da1169b8d0497d277c12aed2715bbca099c096692d0ac520a55fd2161238650",
+  "readonlySha256": "4a732b52920f381b541663af339cb072a899294d840f61104560cb7d88e498ef",
+  "sourceGuardsUnchanged": true,
+  "deleteStatementsUnchanged": true,
+  "preExecutionReadOnlyValidation": "Réussie : toutes les gardes, les deux expressions et le postflight complet ; cleanup-validation-v2.evidence.json"
+}

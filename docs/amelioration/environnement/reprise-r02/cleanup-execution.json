@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-07T15:50:07.847Z",
+  "projectRef": "yyverzuhkdonjjuficor",
+  "candidateSha256": "3da1169b8d0497d277c12aed2715bbca099c096692d0ac520a55fd2161238650",
+  "wrapperSha256": "13ed9cf427ed2bfbcbeef1929374352639e305a0f3ed6d989850e34ca1a4ca33",
+  "command": "supabase 2.115.0 db query --linked --file cleanup-candidate.sql -o json",
+  "scope": "Suppression unique du site d9f7160a-aadd-41d9-ad4d-c9f886d41e0c et ses deux responsables exacts",
+  "authorizedBy": "Instruction séparée du principal après revue du fichier et du SHA",
+  "exitCode": 1,
+  "error": "Initialising login role...\n\u001b[31munexpected status 400: {\"message\":\"Failed to run sql query: ERROR:  42703: column t.id does not exist\\nQUERY:  before_preservation := (SELECT jsonb_build_object('tables',(SELECT jsonb_agg(to_jsonb(r) ORDER BY table_name) FROM (\\nSELECT 'artisanal_site_assignments' AS table_name,count(*) AS row_count,\\n md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' ORDER BY t.id),'')) AS aggregate_md5 FROM public.artisanal_site_assignments t WHERE NOT(t.id=ANY(ARRAY['12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12','d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c']::uuid[]))\\nUNION ALL\\nSELECT 'artisanal_site_productions' AS table_name,count(*) AS row_count,\\n md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' ORDER BY t.id),'')) AS aggregate_md5 FROM public.artisanal_site_productions t\\nUNION ALL\\nSELECT 'artisanal_sites' AS table_name,count(*) AS row_count,\\n md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' ORDER BY t.id),'')) AS aggregate_md5 FROM public.artisanal_sites t WHERE t.id<>'d9f7160a-aadd-41d9-ad4d-c9f886d41e0c'::uuid\\nUNION ALL\\nSELECT 'snp_adhesion_baremes' AS table_name,count(*) AS row_count,\\n md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' ORDER BY t.id),'')) AS aggregate_md5 FROM public.snp_adhesion_baremes t\\nUNION ALL\\nSELECT 'snp_adhesion_droits' AS table_name,count(*) AS row_count,\\n md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' ORDER BY t.id),'')) AS aggregate_md5 FROM public.snp_adhesion_droits t\\nUNION ALL\\nSELECT 'snp_adhesion_encaissements' AS table_name,count(*) AS row_count,\\n md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' ORDER BY t.id),'')) AS aggregate_md5 FROM public.snp_adhesion_encaissements t\\nUNION ALL\\nSELECT 'snp_artisan_documents' AS table_name,count(*) AS row_count,\\n md5(coalesce(string_agg(md5(to_jsonb(t)::text),'' ORDER ",
+  "finishedAt": "2026-09-07T15:50:14.359Z"
+}

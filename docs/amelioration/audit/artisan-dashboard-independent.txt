@@ -1,0 +1,65 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > une reprise après échec de artisans ignore les anciennes sources encore pendantes 786ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > une reprise après échec de cards ignore les anciennes sources encore pendantes 336ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > une reprise après échec de sites ignore les anciennes sources encore pendantes 275ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > le rejet tardif de artisans ne remplace pas les résultats du nouvel organisme 243ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > le rejet tardif de cards ne remplace pas les résultats du nouvel organisme 216ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > le rejet tardif de sites ne remplace pas les résultats du nouvel organisme 247ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de site_ids seul masque les données et ignore l’ancienne réponse 141ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de responsibilities seul masque les données et ignore l’ancienne réponse 171ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de module_domains seul masque les données et ignore l’ancienne réponse 168ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de access_portal_code seul masque les données et ignore l’ancienne réponse 186ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > un changement de actor_category_code seul masque les données et ignore l’ancienne réponse 174ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > le cumul site/type/statut garde uniquement l’aide du parent explicite, même si le parent est filtré 550ms
+ ✓ docs/amelioration/audit/artisan-dashboard-independent.test.tsx > Audit indépendant du tableau de bord Artisan > aucun nom/localité ni ancien site propre d’un aide ne supplée son lien parent autoritatif 2ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > affiche les indicateurs et panneaux de la vue territoriale 605ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > affiche le nom du site et les artisans qui lui sont rattachés 108ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > bascule la carte vers la liste des régions 241ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > n’affiche plus de zone de recherche 77ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ouvre les filtres dans un volet et le referme à l’application 305ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > referme le volet au clic hors du panneau, par le bouton et par Échap 562ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > compte les filtres appliqués sur le bouton 434ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > signale le rejet de getAll sans faux zéros ni détails techniques 119ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > signale le rejet de getAllCartes sans faux zéros ni détails techniques 117ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > signale le rejet de listSites sans faux zéros ni détails techniques 101ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ne traite pas une réponse absente de getAll comme une liste vide 72ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ne traite pas une réponse absente de getAllCartes comme une liste vide 69ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ne traite pas une réponse absente de listSites comme une liste vide 67ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > attend les trois lectures avant de calculer les indicateurs 186ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > réessaie toutes les lectures et distingue une réponse réellement vide 301ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > conserve un état indisponible si une autre source échoue lors de la reprise 148ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > sépare deux sites de même localité et exclut les artisans sans rattachement 626ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > filtre la province par le site enregistré plutôt que par une commune homonyme 378ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > conserve le site hérité de l’exploitant lorsque le filtre ne garde que les aides 459ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte id change 387ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte organization_id change 374ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte mining_company_id change 451ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte access_role_id change 378ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte role change 375ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte organization_type change 375ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte account_type change 343ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte access_portal_id change 343ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte is_active change 393ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte capabilities change 286ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > masque immédiatement les données quand le contexte module_codes change 304ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ignore les réponses tardives du contexte précédent 130ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > réinitialise les filtres de l’ancien contexte sans remonter le cadre de navigation 667ms
+ ✓ src/pages/artisan-minier/ArtisanMinierDashboard.test.tsx > ArtisanMinierDashboard > ignore une ancienne lecture encore en vol après une reprise réussie 203ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > retient la carte la plus récente de chaque artisan 3ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > agrège les artisans et les sites actifs par région 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > rattache les artisans aux sites par leur identifiant et note l’état du site 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > ne rattache pas les homonymes, les anciennes fiches sans site ni les artisans d’un autre site 3ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > utilise le lien exploitant des aides et conserve cette jointure après filtrage par type 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > laisse le site inconnu si l’exploitant est absent du périmètre ou n’est pas un exploitant 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > calcule la répartition par type d’artisan 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > calcule l’état administratif des cartes 1ms
+ ✓ src/services/artisanTerritoryInsights.test.ts > artisanTerritoryInsights > construit la série mensuelle des enregistrements 2ms
+
+ Test Files  3 passed (3)
+      Tests  55 passed (55)
+   Start at  07:20:34
+   Duration  28.56s (transform 851ms, setup 2.60s, import 1.91s, tests 13.52s, environment 8.73s)
+
+

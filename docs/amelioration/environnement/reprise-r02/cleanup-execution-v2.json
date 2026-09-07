@@ -1,0 +1,11 @@
+{
+  "startedAt": "2026-09-07T16:00:08.805Z",
+  "projectRef": "yyverzuhkdonjjuficor",
+  "candidateSha256": "7420606a3828626d652dfd79887f89da1cfc90b3865478e1af520901743a5a73",
+  "wrapperSha256": "f249a20adce2e323b246b97ab43aa9cd7106f84d32820220827d3f9322983122",
+  "command": "supabase 2.115.0 db query --linked --file cleanup-candidate-v2.sql -o json",
+  "scope": "Suppression unique du site d9f7160a-aadd-41d9-ad4d-c9f886d41e0c et ses deux responsables exacts",
+  "authorizedBy": "Instruction séparée du principal après revue du fichier et du SHA",
+  "exitCode": 0,
+  "finishedAt": "2026-09-07T16:00:19.672Z"
+}

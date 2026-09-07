@@ -1,0 +1,11 @@
+
+ RUN  v4.1.11 F:/Development/SONASP
+
+ ✓ src/components/common/ErrorBoundary.test.tsx (4 tests) 260ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  13:32:16
+   Duration  2.61s (transform 106ms, setup 484ms, import 172ms, tests 260ms, environment 1.42s)
+
+JSON report written to F:/Development/SONASP/docs/amelioration/audit/error-boundary-exit-diagnostic.json

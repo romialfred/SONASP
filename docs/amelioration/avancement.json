@@ -30,7 +30,30 @@
     "BLOQUÉ": 12
   },
   "validatedForms": 0,
-  "realDatabaseTestRecordIds": [],
+  "realDatabaseTestRecordIds": [
+    "dd8ed4a7-8671-42ab-b4b6-215cf78390cd",
+    "d9f7160a-aadd-41d9-ad4d-c9f886d41e0c",
+    "12bd6c4e-52f4-4e9d-a2aa-81e101ab5e12",
+    "d585b8e2-8f0c-4acd-bb90-bfd03acd6a8c"
+  ],
   "productionDeployment": false,
-  "globalScore": null
+  "globalScore": null,
+  "recordsCleanedUp": true,
+  "currentStatus": "Reprise locale : corrections versionnées, 2938 tests réussis ; recette Sites R02 de création effectuée, autres formulaires et validation distante encore ouverts",
+  "historicalMatrixStatuses": true,
+  "localCandidate": {
+    "sourceCommit": "5d0d29f9",
+    "buildId": "local-mtrbrhf4",
+    "url": "http://127.0.0.1:5192",
+    "unitAndComponentTests": { "passed": 2938, "total": 2938, "files": 366, "exitCode": 0, "unhandledErrors": 0 },
+    "typecheckPassed": true,
+    "lintPassed": true,
+    "buildPassed": true,
+    "evidence": "audit/integration-locale-r03-evidence.json"
+  },
+  "qaRuns": [
+    { "id": "QA20260907-R01", "module": "Clients", "cleanupVerified": true, "fullFormValidation": false },
+    { "id": "QA20260907-R02", "module": "Sites", "creationUiAndDatabaseVerified": true, "cleanupVerified": true, "fullFormValidation": false, "manifest": "preuves/recette-r02/manifest-donnees.json" }
+  ],
+  "remotePromotionRequiresNewExplicitGo": true
 }

@@ -1,0 +1,9 @@
+{
+  "projectRef": "yyverzuhkdonjjuficor",
+  "startedAt": "2026-09-07T11:42:44.227Z",
+  "readOnly": true,
+  "command": "supabase 2.115.0 db query --linked --file affiliation-contract.sql -o json",
+  "sqlSha256": "dbda6f89bf3befad4f9fe4e443e5b370409e3283692eebfb9f312dfcaedb122c",
+  "exitCode": 0,
+  "finishedAt": "2026-09-07T11:42:49.388Z"
+}

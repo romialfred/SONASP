@@ -1,0 +1,9 @@
+{
+  "projectRef": "yyverzuhkdonjjuficor",
+  "startedAt": "2026-09-07T11:39:47.854Z",
+  "readOnly": true,
+  "command": "supabase 2.115.0 db query --linked --file functions-readonly.sql -o json",
+  "sqlSha256": "694a05998e616d690430d8bf8f76406ed256eddd08d219abb1ff54fea73c1d79",
+  "exitCode": 0,
+  "finishedAt": "2026-09-07T11:39:53.129Z"
+}

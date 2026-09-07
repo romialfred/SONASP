@@ -41,6 +41,16 @@ test('Dossier client atomique — PostgreSQL embarqué, sans Auth/MFA ou réseau
       const row = await one("SELECT prosecdef,has_function_privilege('anon',oid,'execute') AS anon,has_function_privilege('authenticated',oid,'execute') AS authenticated FROM pg_proc WHERE oid='public.save_customer_dossier(uuid,jsonb,jsonb)'::regprocedure");
       assert.deepEqual(row,{prosecdef:false,anon:false,authenticated:true});
     });
+    await t.test('helper de session privé : contrôle indirect conservé sans élargir ses ACL',async()=>{
+      assert.equal((await one("SELECT has_function_privilege('authenticated','public.snp_session_est_active()','EXECUTE') AS allowed")).allowed,false);
+      await rejects(one('SELECT public.snp_session_est_active()'),'42501');
+      const id=await save(null,customer('private-session'));
+      await actor({session:'expired'});
+      await rejects(save(id,customer('private-session',{name:'Refusé'})),'42501');
+      await actor();
+      assert.equal((await one('SELECT name FROM public.customers WHERE id=$1',[id])).name,'QA private-session');
+      assert.equal((await one("SELECT has_function_privilege('authenticated','public.snp_session_est_active()','EXECUTE') AS allowed")).allowed,false);
+    });
     await t.test('création : tous les champs, zéro crédit, banque principale, normalisation',async()=>{
       const id=await save(null,customer('CREATE'),[bank('A',{is_primary:true})]);
       const row=await one('SELECT * FROM public.customers WHERE id=$1',[id]);
@@ -140,8 +150,8 @@ test('Dossier client atomique — PostgreSQL embarqué, sans Auth/MFA ou réseau
     await t.test('email unique : contrainte serveur propagée sans nouveau dossier',async()=>{
       await save(null,customer('duplicate'));await rejects(save(null,customer('DUPLICATE')),'23505');
     });
-    await t.test('absence de capacité, AAL1, session expirée, absence d’identité et anon refusés',async()=>{
-      for(const context of [{capability:'mine.production'},{aal:'aal1'},{session:'expired'},{uid:''},{role:'anon'}]){
+    await t.test('absence de capacité, AAL1, sessions absente/révoquée/expirée, absence d’identité et anon refusés',async()=>{
+      for(const context of [{capability:'mine.production'},{aal:'aal1'},{session:''},{session:'revoked'},{session:'expired'},{uid:''},{role:'anon'}]){
         await actor(context);await rejects(save(null,customer('denied')),'42501');
       }await actor();
     });

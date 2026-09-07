@@ -2466,8 +2466,18 @@
       "canonical": true,
       "prefixProblem": null,
       "nameProblem": null,
-      "normalizedBytes": 13046,
-      "sha256": "0b87f4df5de4e59c7c7252550018c92d923d978f356289109c142b417c31cb0f"
+      "normalizedBytes": 13160,
+      "sha256": "761181679955bed9f5731a9b42c2768ba72992a9ababc33d663eb0a9babfd7db"
+    },
+    {
+      "path": "supabase/migrations/20260907082254_corriger_lecture_ventes_collecteurs_session.sql",
+      "version": "20260907082254",
+      "description": "corriger_lecture_ventes_collecteurs_session",
+      "canonical": true,
+      "prefixProblem": null,
+      "nameProblem": null,
+      "normalizedBytes": 1789,
+      "sha256": "a059c5b313179cf8621cd62fc3fdbdf91b630ab2d179568caa4294a441a0de84"
     },
     {
       "path": "supabase/migrations/26122025_01_artisan_minier_migration.sql",
@@ -3463,10 +3473,10 @@
       },
       {
         "digits": 14,
-        "count": 150
+        "count": 151
       }
     ],
     "unsupportedSqlEntries": []
   },
-  "catalogueSha256": "fbae1513fdf302f58a61c8ed36fed18fd6341fa6c2d501b943895ca5f1a0a6ab"
+  "catalogueSha256": "dbde2b8417b4ea9a7a8cc6c33efeb94bceef02600e9e32d99a15cf5e2b216cd7"
 }

@@ -9,12 +9,16 @@ GRANT USAGE ON SCHEMA public,auth TO authenticated,anon;
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT nullif(current_setting('test.uid',true),'')::uuid
 $$;
-CREATE FUNCTION public.snp_actor_has_capability(p_code text) RETURNS boolean LANGUAGE sql STABLE AS $$
-  SELECT current_setting('test.capability',true)=p_code
-    AND current_setting('test.aal',true)='aal2'
-$$;
 CREATE FUNCTION public.snp_session_est_active() RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT current_setting('test.session',true)='active'
+$$;
+-- ACL observée sur la cible le 7 septembre : le helper de session est privé.
+REVOKE ALL ON FUNCTION public.snp_session_est_active() FROM PUBLIC,authenticated,anon;
+CREATE FUNCTION public.snp_actor_has_capability(p_code text) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO pg_catalog,public,pg_temp AS $$
+  SELECT current_setting('test.capability',true)=p_code
+    AND current_setting('test.aal',true)='aal2'
+    AND public.snp_session_est_active()
 $$;
 CREATE TABLE public.customers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text NOT NULL, email text NOT NULL UNIQUE,

@@ -56,8 +56,9 @@ DECLARE
   v_expected integer;
   v_updated integer;
 BEGIN
-  IF auth.uid() IS NULL OR public.snp_est_agent_sonasp() IS DISTINCT FROM true
-     OR public.snp_session_est_active() IS DISTINCT FROM true THEN
+  -- Le helper SONASP contrôle déjà la session et le MFA via le lecteur de capacités.
+  -- Le helper privé de session n'est pas exécutable directement par authenticated.
+  IF auth.uid() IS NULL OR public.snp_est_agent_sonasp() IS DISTINCT FROM true THEN
     RAISE EXCEPTION USING ERRCODE='42501', MESSAGE='Vous ne disposez pas des droits nécessaires pour enregistrer ce dossier client.';
   END IF;
   IF jsonb_typeof(p_customer) IS DISTINCT FROM 'object' OR jsonb_typeof(p_banks) IS DISTINCT FROM 'array' THEN
